@@ -1,0 +1,8 @@
+<LOGINSERVER_CONFIG>
+	<IPADDRESS>
+		<LOGIN_SERVER IP="127.0.0.1" PORT="20002"/>
+	</IPADDRESS>
+	<LOG>
+		<LOG_INFO KEY="default"	FILE="../log/loginserver.log" LEVEL="700" />
+	</LOG>
+</LOGINSERVER_CONFIG>

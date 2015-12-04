@@ -1,0 +1,8 @@
+<GATE_CONFIG>
+	<EXTRANET>
+		<GATE_SERVER IPADDRESS="192.168.1.121" PORT="20000"/>
+	</EXTRANET>
+	<LOG>
+		<LOG_INFO KEY="default"	FILE="../log/gateserver.log" LEVEL="700" />
+	</LOG>
+</GATE_CONFIG>
