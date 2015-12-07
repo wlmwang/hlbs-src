@@ -443,7 +443,7 @@ void wTcpServer<T>::Recv()
 	{
 		wTcpTask *pTask = (wTcpTask *)mEpollEventPool[i].data.ptr;
 		
-		if(pTask->Socket()->SocketFD() >0)
+		if(pTask->Socket()->SocketFD() < 0)
 		{
 			if (RemoveEpoll(pTask))
 			{

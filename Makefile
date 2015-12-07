@@ -1,4 +1,14 @@
-SERVER := gateserver dbserver loginserver sceneserver
+
+###############################
+# Copyright (C) Anny.
+# Copyright (C) Disvr, Inc.
+###############################
+
+#
+# Makefile.
+#
+
+SERVER := routerserver agentserver
 
 all:
 	for d in $(SERVER); do echo; echo "compile $$d now"; echo; $(MAKE) clean all -C $$d; done

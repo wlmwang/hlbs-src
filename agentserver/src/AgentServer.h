@@ -17,6 +17,9 @@
 #include "wTcpServer.h"
 #include "wTcpTask.h"
 
+#include "wTcpClient.h"
+#include "wMTcpClient.h"
+
 class AgentServer: public wTcpServer<AgentServer>
 {
 	public:

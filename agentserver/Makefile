@@ -20,25 +20,24 @@ CXXFLAGS=-g #--extra-libs=-lgcc -DUSE_LOG4CPP -DLINUX #-D_DEBUG_
 LIBS=-L./usr/local/lib -llog4cpp -L./../lib/tinyxml -ltinyxml -lpthread -static
 INCPATH=-I./$(BASEPATH) -I./usr/local/include/log4cpp -I./../lib/tinyxml
 
-TARGET=./bin/routersvrd
-OBJECTS=./debug/RouterMain.o ./debug/RouterConfig.o  ./debug/RouterServer.o  ./debug/RouterServerTask.o  ./debug/wLog.o  ./debug/wFunction.o  ./debug/wMisc.o  ./debug/wTcpTask.o  ./debug/wSocket.o
+TARGET=./bin/agentsvrd
+OBJECTS=./debug/AgentMain.o ./debug/AgentConfig.o  ./debug/AgentServer.o  ./debug/AgentServerTask.o  ./debug/wLog.o  ./debug/wFunction.o  ./debug/wMisc.o  ./debug/wTcpTask.o  ./debug/wSocket.o
 
 $(TARGET): $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $(TARGET) $(LIBS)
-	#cp $(TARGET) ../routerserver/bin -f
 
 all: $(TARGET)
 
-./debug/RouterMain.o: src/RouterMain.cpp
+./debug/AgentMain.o: src/AgentMain.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
-./debug/RouterConfig.o: src/RouterConfig.cpp
+./debug/AgentConfig.o: src/AgentConfig.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
-./debug/RouterServer.o: src/RouterServer.cpp
+./debug/AgentServer.o: src/AgentServer.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
-./debug/RouterServerTask.o: src/RouterServerTask.cpp
+./debug/AgentServerTask.o: src/AgentServerTask.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wLog.o: $(BASEPATH)/wLog.cpp

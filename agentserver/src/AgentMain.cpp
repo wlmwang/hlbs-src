@@ -94,7 +94,6 @@ int main(int argc, const char *argv[])
 		exit(1);
 	}
 	pConfig->ParseBaseConfig();
-	//pConfig->ParseRtblConfig();
 	
 	//初始化日志
 	InitailizeLog();
