@@ -1,47 +1,59 @@
-COMMONPATH=../common
-LIBPATH=../lib
-MESSAGEPATH=../message
-CXX=g++
-CXXFLAGS=-g -pg -DUSE_LOG4CPP -DLINUX #-D_DEBUG_
-LIBS=-L./$(LIBPATH)/log4cpp/lib -llog4cpp -L./$(LIBPATH)/tinyxml -ltinyxml -L./$(LIBPATH)/protobuf/lib -lprotobuf -L./$(LIBPATH)/zlib/lib -lz -lpthread -static
-INCPATH=-I./inc/ -I./$(COMMONPATH)/inc -I./$(LIBPATH)/log4cpp/include -I./$(LIBPATH)/zlib/include -I./$(LIBPATH)/tinyxml -I./$(LIBPATH)/protobuf/include -I./$(MESSAGEPATH)
 
-TARGET=./bin/loginsvrd
-OBJECTS=./debug/login_main.o ./debug/object_pool.o ./debug/login_server.o ./debug/log.o ./debug/server_tool.o ./debug/message_decoder.o ./debug/message.hxx.pb.o ./debug/servermessage.hxx.pb.o ./debug/clientmessage.hxx.pb.o ./debug/net_head_pb.hxx.pb.o
+###############################
+# Copyright (C) Anny.
+# Copyright (C) Disvr, Inc.
+###############################
+
+#
+# Makefile
+# 需要预先编译lib目录下的log4cpp|tinyxml软件包
+#
+ 
+BASEPATH=../base
+
+LIBPATH=../lib
+
+CXX=g++
+
+CXXFLAGS=-g #--extra-libs=-lgcc -DUSE_LOG4CPP -DLINUX #-D_DEBUG_
+
+LIBS=-L./usr/local/lib -llog4cpp -L./../lib/tinyxml -ltinyxml -lpthread -static
+INCPATH=-I./$(BASEPATH) -I./usr/local/include/log4cpp -I./../lib/tinyxml
+
+TARGET=./bin/routersvrd
+OBJECTS=./debug/RouterMain.o ./debug/RouterConfig.o  ./debug/RouterServer.o  ./debug/RouterServerTask.o  ./debug/wLog.o  ./debug/wFunction.o  ./debug/wMisc.o  ./debug/wTcpTask.o  ./debug/wSocket.o
 
 $(TARGET): $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $(TARGET) $(LIBS) $(CXXFLAGS)
+	$(CXX) $(OBJECTS) -o $(TARGET) $(LIBS)
+	#cp $(TARGET) ../routerserver/bin -f
 
 all: $(TARGET)
 
-./debug/login_main.o: src/login_main.cpp
+./debug/RouterMain.o: src/RouterMain.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
-./debug/object_pool.o: src/object_pool.cpp
+./debug/RouterConfig.o: src/RouterConfig.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
-./debug/login_server.o: src/login_server.cpp
+./debug/RouterServer.o: src/RouterServer.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
-./debug/log.o: $(COMMONPATH)/src/log.cpp
+./debug/RouterServerTask.o: src/RouterServerTask.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
-./debug/server_tool.o: $(COMMONPATH)/src/server_tool.cpp
+./debug/wLog.o: $(BASEPATH)/wLog.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
-./debug/message_decoder.o: $(COMMONPATH)/src/message_decoder.cpp
+./debug/wFunction.o: $(BASEPATH)/wFunction.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
-./debug/message.hxx.pb.o: $(MESSAGEPATH)/message.hxx.pb.cc
+./debug/wMisc.o: $(BASEPATH)/wMisc.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
-./debug/servermessage.hxx.pb.o: $(MESSAGEPATH)/servermessage.hxx.pb.cc
+./debug/wTcpTask.o: $(BASEPATH)/wTcpTask.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
-./debug/clientmessage.hxx.pb.o: $(MESSAGEPATH)/clientmessage.hxx.pb.cc
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/net_head_pb.hxx.pb.o: $(MESSAGEPATH)/net_head_pb.hxx.pb.cc
+./debug/wSocket.o: $(BASEPATH)/wSocket.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 clean:

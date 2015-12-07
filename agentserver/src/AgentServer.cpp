@@ -12,24 +12,20 @@
 
 #include "wLog.h"
 #include "wFunction.h"
-#include "RouterServer.h"
 #include "wMisc.h"
 
-#include "RouterServerTask.h"
+#include "AgentServer.h"
+#include "AgentServerTask.h"
 
-RouterServer::RouterServer():wTcpServer<RouterServer>("路由服务器")
+AgentServer::AgentServer():wTcpServer<AgentServer>("路由服务器")
 {
 	if(mStatus == SERVER_STATUS_INIT)
 	{
 		Initialize();
 	}
-	
-	//初始化buf
-	//mInMsgQueue.SetBuffer(mInBufferPtr, MSG_QUEUE_LEN);
-	//mOutMsgQueue.SetBuffer(mOutBufferPtr, MSG_QUEUE_LEN);
 }
 
-RouterServer::~RouterServer() 
+AgentServer::~AgentServer() 
 {
 	//...
 }
@@ -37,52 +33,28 @@ RouterServer::~RouterServer()
 /**
  * 初始化
  */
-void RouterServer::Initialize()
+void AgentServer::Initialize()
 {	
 	//初始化定时器
 	mServerReconnectTimer = wTimer(RECONNECT_TIME);
 	mClientCheckTimer = wTimer(CHECK_CLIENT_TIME);
-	
-	//初始化消息队列
-	//InitailizeBuffer();
+	pTcpTask = NULL;
 }
 
-/**
- * 初始化消息队列
- * 队列多进程通信
- */
-/*
- void RouterServer::InitailizeBuffer()
+wTcpTask* AgentServer::NewTcpTask(wSocket *pSocket)
 {
-	//如果没有router_pipe就先创建一个
-	system("touch router_pipe");
-
-	const char *pFilename = "./router_pipe";
-	mInBufferPtr = CreateShareMemory(pFilename, 'i', MSG_QUEUE_LEN);
-	mOutBufferPtr = CreateShareMemory(pFilename, 'o', MSG_QUEUE_LEN);
-	if(mInBufferPtr == NULL || mOutBufferPtr == NULL)
-	{
-		printf("Create share memory for msg queue failed\n");
-		exit(1);
-	}
-}
-*/
-
-wTcpTask* RouterServer::NewTcpTask(wSocket *pSocket)
-{
-	wTcpTask *pTcpTask = new RouterServerTask(pSocket);
+	wTcpTask *pTcpTask = new AgentServerTask(pSocket);
 	return pTcpTask;
 }
 
 //准备工作
-void RouterServer::PrepareRun()
+void AgentServer::PrepareRun()
 {
-	//--------------------------------------------------
-	// mConnectCtrl.ListenToAddress(LISTEN_TO_ALL, RouterConfig::GetSingletonPtr()->mInIPAddr, (short)RouterConfig::GetSingletonPtr()->mInPort);
-	//-------------------------------------------------- 
+	//mConn连接
+	//mConn.AddTcpClient();
 }
 
-void RouterServer::Run()
+void AgentServer::Run()
 {
 	//检查服务器时间
 	CheckTimer();
@@ -93,7 +65,7 @@ void RouterServer::Run()
 }
 
 //检查服务器时间
-void RouterServer::CheckTimer()
+void AgentServer::CheckTimer()
 {
 	int iInterval = (int)(GetTickCount() - mLastTicker);
 
@@ -115,7 +87,7 @@ void RouterServer::CheckTimer()
 	
 	//检测客户端超时
 	if(mClientCheckTimer.CheckTimer(iInterval))
-	{	
+	{
 		CheckTimeout();
 	}
 }
@@ -123,7 +95,7 @@ void RouterServer::CheckTimer()
 /**
  * 检测客户端超时
  */
-void RouterServer::CheckTimeout()
+void AgentServer::CheckTimeout()
 {
 	int iNowTime = time(NULL);
 	int iIntervalTime;
@@ -141,14 +113,11 @@ void RouterServer::CheckTimeout()
 			{
 				continue;
 			}
-			iIntervalTime = iNowTime - (*iter)->Socket()->Stamp();
+			iIntervalTime = iNowTime - (*iter)->mStamp;
 			if(iIntervalTime >= SOCKET_SEND_TIMEOUT)
 			{
 				LOG_ERROR("default", "client ip(%s) fd(%d) do not send msg and timeout, close it", (*iter)->Socket()->IPAddr(), (*iter)->Socket()->SocketFD());
-				if(RemoveEpoll(*iter))
-				{
-					RemoveTaskPool(*iter);
-				}
+				RemoveEpoll(*iter) && RemoveTaskPool(*iter);
 			}
 		}
 	}

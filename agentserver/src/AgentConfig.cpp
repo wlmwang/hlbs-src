@@ -51,13 +51,13 @@ void RouterConfig::ParseBaseConfig()
 			const char *szBacklog = pChildElm->Attribute("BACKLOG");
 
 			mBacklog = atoi(szBacklog);
-			mPort = atoi(szPort);
-			memcpy(mIPAddr, szIPAddr, MAX_IP_LEN);
+			mExPort = atoi(szPort);
+			memcpy(mExIPAddr, szIPAddr, MAX_IP_LEN);
 		}
 	}
 	else
 	{
-		printf("Get Server ip and port from config file failed\n");
+		printf("Get extranet connect ip and port from config file failed\n");
 		exit(1);
 	}
 	

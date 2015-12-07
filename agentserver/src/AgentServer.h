@@ -4,25 +4,24 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#ifndef _ROUTER_SERVER_H_
-#define _ROUTER_SERVER_H_
+#ifndef _AGENT_SERVER_H_
+#define _AGENT_SERVER_H_
 
 #include <arpa/inet.h>
+#include <vector>
 
 #include "wType.h"
 #include "wTimer.h"
 #include "wSingleton.h"
 
-//#include "wMsgQueue.h"
-
 #include "wTcpServer.h"
 #include "wTcpTask.h"
 
-class RouterServer: public wTcpServer<RouterServer>
+class AgentServer: public wTcpServer<AgentServer>
 {
 	public:
-		RouterServer();
-		virtual ~RouterServer();
+		AgentServer();
+		virtual ~AgentServer();
 		
 		virtual void Initialize();
 		
@@ -31,31 +30,20 @@ class RouterServer: public wTcpServer<RouterServer>
 		virtual void Run(); //超时&&心跳
 		
 		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
-		
-		/**
-		 *  输入/输出的消息队列的缓冲区位置
-		 */		
-		//char *mInBufferPtr;
-		//char *mOutBufferPtr;
-		
-		//wMsgQueue mInMsgQueue;	//输入的消息队列
-		//wMsgQueue mOutMsgQueue;	//输出的消息队列
-		
-		//void InitailizeBuffer();
 	    		
 		void CheckTimer();
 		void CheckTimeout();
 		
 	private:
+	
+		wMTcpClient<AgentServer,AgentServerTask> mConn;
+		wTcpClient<AgentServerTask> *mClient;
+		
 		//服务器重连计时器
 		wTimer mServerReconnectTimer;
 
 		//客户端检测计时器
 		wTimer mClientCheckTimer;
-
-	//protected:
-		//发送给指定类型的服务器
-		//bool Send2Server(char *vArray, int vLen);
 };
 
 #endif

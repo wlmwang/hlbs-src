@@ -1,3 +1,0 @@
-[2013-06-21 10:26:34]INFO: get a server connect from 127.0.0.1:48282 fd(6)
-[2013-06-21 10:26:34]DEBUG: send Login response to scene 1
-[2013-06-21 10:27:26]ERROR: connect close by remote from fd(6): Resource temporarily unavailable

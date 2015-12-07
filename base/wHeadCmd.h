@@ -5,36 +5,50 @@
  */
 
 /**
- *  定义了与其他服务器之间的消息头
- *  负责服务器内部交换使用，和客户端交互的指令需要另外定义
+ *  消息头
  */
 #ifndef _W_HEAD_CMD_H_
 #define _W_HEAD_CMD_H_
 
-#include <time.h>
-
-#define HEAD_CMD_LEN 20
+#define HEAD_CMD_LEN 4
 
 #pragma pack(1)
 
-//客户端的消息类型
-enum CLIENT_MSG_TYPE
+enum REQUEST_TYPE
 {
-	TYPE_LOGIC = 1,		// 逻辑控制消息
-	TYPE_STREAM,		// 流消息
-	TYPE_SOUND,			// 声音消息
+	SERVER = 1,
+	CLIENT,
+};
+
+const BYTE CMD_NULL = 0;		/** 空的指令 */
+const BYTE PARA_NULL = 0;		/** 空的指令参数 */
+
+struct Command
+{
+	BYTE cmd;					/** 指令代码 */
+	BYTE para;					/** 指令代码子编号 */
+
+	BYTE GetCmdType() const { return cmd; }
+	BYTE GetParaType() const { return para; }
+	
+	Command(const BYTE cmd = CMD_NULL, const BYTE para = PARA_NULL) : cmd(cmd), para(para) {};
 };
 
 struct wHeadCmd
 {
-	unsigned int mClientIP;		//客户端的IP地址
-	unsigned short mClientPort;	//客户端的端口
-	time_t mSockTime;			//socket的创建时间(发送时间)
-	time_t mTimeStamp;			//接收到此次消息的时间戳
-	short mClientState;			//客户端当前状态，=0表示一切正常，<0表示客户端已经断开连接，>0表示注册消息，这时mClientFD代表服务器的类型
-	unsigned int mCmd;			//消息类型（以此字段定义服务端通信行为）
+	//unsigned int mClientIP;		//客户端的IP地址
+	//unsigned short mClientPort;	//客户端的端口
+	//unsigned short mClientState;//客户端当前状态，=0表示一切正常，<0表示客户端已经断开连接
 	
-	//unsigned int mClientFD;		// gateserver中客户端对应的FD
+	unsigned short mRequestType;
+	Command mCommand;			//消息类型
+	
+	wHeadCmd()
+	{
+		//mClientIP = 0;
+		//mClientPort = 0;
+		//mClientState = 0;
+	}
 	
 	/*
 	bool SerializeToArray(char *vBuffer, int vBufferLen)

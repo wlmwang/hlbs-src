@@ -4,17 +4,16 @@
  * Copyright (C) Disvr, Inc.
  */
  
-#include "RouterServerTask.h"
+#include "AgentServerTask.h"
 
-#include "wHeadCmd.h"
 #include "wAssert.h"
 
-RouterServerTask::RouterServerTask(wSocket *pSocket):wTcpTask(pSocket)
+AgentServerTask::AgentServerTask(wSocket *pSocket):wTcpTask(pSocket)
 {
     //...
 }
 
-RouterServerTask::~RouterServerTask()
+AgentServerTask::~AgentServerTask()
 {
     //...
 }
@@ -22,21 +21,18 @@ RouterServerTask::~RouterServerTask()
 /**
  *  接受数据
  */
-int RouterServerTask::HandleRecvMessage(char * pBuffer, int nLen)
+int AgentServerTask::HandleRecvMessage(char * pBuffer, int nLen)
 {
 	W_ASSERT(pBuffer != NULL, return -1);
 	//解析消息
 	struct wHeadCmd *pHeadCmd = (struct wHeadCmd*) pBuffer;
-	return ParseRecvMessage(pHeadCmd , pBuffer, nLen);
+	return ParseRecvMessage(pHeadCmd , pBuffer - sizeof(struct wHeadCmd), nLen - sizeof(struct wHeadCmd));
 }
 
-int RouterServerTask::ParseRecvMessage(struct wHeadCmd *pHeadCmd, char *pBuffer, int iLen)
+int AgentServerTask::ParseRecvMessage(struct wHeadCmd *pHeadCmd, char *pBuffer, int iLen)
 {
-	switch(pHeadCmd->mCommand.GetCmdType())
+	switch(pHeadCmd->mCmd)
 	{
-		//pHeadCmd->mCommand.GetParaType()
-		
-		
 		//客户端登录Login请求跳转
 		//case ID_C2S_REQUEST_LOGINLOGIC:
 		//{

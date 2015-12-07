@@ -22,8 +22,8 @@
 class RouterConfig: public wSingleton<RouterConfig>
 {
 	public:
-		char mIPAddr[MAX_IP_LEN];
-		unsigned int mPort;
+		char mExIPAddr[MAX_IP_LEN];
+		unsigned int mExPort;
 		unsigned int mBacklog;
 
 		~RouterConfig() {}
@@ -31,9 +31,9 @@ class RouterConfig: public wSingleton<RouterConfig>
 		//初始化
 		void Initialize()
 		{
-			memset(mIPAddr, 0, sizeof(mIPAddr));
-			mPort = 0;
-			mBacklog = 512;
+			memset(mExIPAddr, 0, sizeof(mExIPAddr));
+			mExPort = 0;
+			mBacklog = 1024;
 		}
 
 		RouterConfig()

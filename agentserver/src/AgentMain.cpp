@@ -18,11 +18,10 @@
 #include <fcntl.h>
 
 #include "wType.h"
-#include "wLog.h"
 #include "wFunction.h"
 
-#include "RouterServer.h"
-#include "RouterConfig.h"
+#include "wLog.h"
+#include "AgentServer.h"
 
 /**
  * 对于SIGUSR1信号的处理，用于服务器关闭
@@ -30,7 +29,7 @@
  */
 void Sigusr1Handle(int nSigVal)
 {
-	RouterServer::Instance()->SetStatus();
+	AgentServer::Instance()->SetStatus();
 	signal(SIGUSR1, Sigusr1Handle);
 }
 
@@ -83,39 +82,40 @@ int main(int argc, const char *argv[])
 	if (nDaemonFlag) 
 	{
 		//初始化守护进程
-		const char *pFilename = "./router_server.lock";
+		const char *pFilename = "./agent_server.lock";
 		InitDaemon(pFilename);
 	}
+	
 	//初始化配置
-	RouterConfig *pConfig = RouterConfig::Instance();
+	AgentConfig *pConfig = AgentConfig::Instance();
 	if(pConfig == NULL) 
 	{
-		LOG_ERROR("default", "Get RouterConfig instance failed");
+		LOG_ERROR("default", "Get AgentConfig instance failed");
 		exit(1);
 	}
 	pConfig->ParseBaseConfig();
-	pConfig->ParseRtblConfig();
+	//pConfig->ParseRtblConfig();
 	
 	//初始化日志
 	InitailizeLog();
-	
+
 	//获取服务器实体
-    RouterServer *pServer = RouterServer::Instance();
+    AgentServer *pServer = AgentServer::Instance();
 	if(pServer == NULL) 
 	{
-		LOG_ERROR("default", "Get RouterServer instance failed");
+		LOG_ERROR("default", "Get AgentServer instance failed");
 		exit(1);
 	}
 
 	//准备工作
-	pServer->PrepareStart(pConfig->mIPAddr, pConfig->mPort);
+	pServer->PrepareStart("192.168.8.13", 10006);
 
 	//消息处理函数的注册
 	signal(SIGUSR1, Sigusr1Handle);
 	signal(SIGUSR2, Sigusr2Handle);
 	
 	//服务器开始运行
-	LOG_INFO("default", "RouterServer start succeed");
+	LOG_INFO("default", "AgentServer start succeed");
 	pServer->Start();
 
 	LOG_SHUTDOWN_ALL;

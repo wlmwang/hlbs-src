@@ -98,12 +98,5 @@ typedef signed long SQWORD;
 //客户端从来未发送消息的超时时间
 #define SOCKET_SEND_TIMEOUT 300
 
-//发服务器消息时的服务器ID
-enum SERVER_FE
-{
-	SERVER_ROUTER = 1,
-	SERVER_AGENT,
-};
-
 using namespace std;
 #endif

@@ -14,6 +14,8 @@
 #include <fcntl.h>
 #include <string>
 
+#include "wType.h"
+
 enum SOCKET_TYPE
 {
 	LISTEN_SOCKET = 1,
@@ -53,6 +55,10 @@ class wSocket
 			mIPAddr = "";
 			mPort = 0;
 			mSocketFD = -1;
+			mSocketType = CONNECT_SOCKET;
+			mSocketFlag = RECV_DATA;
+			mCreateTime = time(NULL);
+			mStamp = 0;
 		}
 
 		bool IsConnected()
@@ -68,26 +74,33 @@ class wSocket
 			}
 			mSocketFD = -1;
 		}
-
-		int SetNonBlock()
-		{
-			if( mSocketFD < 0) 
-			{
-				return -1;
-			}
-
-			int iFlags = fcntl(mSocketFD, F_GETFL, 0);
-			if( iFlags == -1 ) 
-			{
-				return -1;
-			}
-			return fcntl(mSocketFD, F_SETFL, iFlags|O_NONBLOCK);
-		}
 		
-		int mSocketFD;				// 网络套接字描述符
-		string mIPAddr;				//需要连接或者需要绑定的IP地址
-		unsigned short mPort;		// 需要连接或者需要绑定的端口
+		int SetNonBlock();
 
+		int RecvBytes(char *vArray, int vLen);
+		int SendBytes(char *vArray, int vLen);
+
+		int & SocketFD() { return mSocketFD; }
+		
+		string & IPAddr() { return mIPAddr; }
+		
+		unsigned short & Port() { return mPort; }
+		
+		int & SocketType() { return mSocketType; }
+		
+		int & SocketFlag() { return mSocketFlag; }
+		
+		time_t & Stamp() { return mStamp; }
+		
+	protected:
+		int mSocketFD;				//网络套接字描述符
+		string mIPAddr;				//需要连接或者需要绑定的IP地址
+		unsigned short mPort;		//需要连接或者需要绑定的端口
+		
+		int mSocketType;			//socket类型：监听socket、连接socket
+		int mSocketFlag;			//socket标志：是否收包
+		time_t mStamp;				//接收到数据包的时间戳		
+		time_t  mCreateTime;		//socket的创建时间
 };
 
 #endif

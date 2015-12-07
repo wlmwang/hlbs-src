@@ -4,8 +4,8 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#ifndef _ROUTER_SERVER_TASK_H_
-#define _ROUTER_SERVER_TASK_H_
+#ifndef _AGENT_SERVER_TASK_H_
+#define _AGENT_SERVER_TASK_H_
 
 #include <arpa/inet.h>
 
@@ -14,12 +14,12 @@
 #include "wTcpTask.h"
 #include "wLog.h"
 
-class RouterServerTask : public wTcpTask
+class AgentServerTask : public wTcpTask
 {
 	public:
-		RouterServerTask() {}
-		~RouterServerTask();
-		RouterServerTask(wSocket *pSocket);
+		AgentServerTask() {}
+		~AgentServerTask();
+		AgentServerTask(wSocket *pSocket);
 		
 		virtual int HandleRecvMessage(char * pBuffer, int nLen);
 		
