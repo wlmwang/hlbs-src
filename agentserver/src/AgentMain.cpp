@@ -19,9 +19,10 @@
 
 #include "wType.h"
 #include "wFunction.h"
-
 #include "wLog.h"
+
 #include "AgentServer.h"
+#include "AgentConfig.h"
 
 /**
  * 对于SIGUSR1信号的处理，用于服务器关闭
@@ -107,7 +108,7 @@ int main(int argc, const char *argv[])
 	}
 
 	//准备工作
-	pServer->PrepareStart("192.168.8.13", 10006);
+	pServer->PrepareStart(pConfig->mIPAddr, pConfig->mPort);
 
 	//消息处理函数的注册
 	signal(SIGUSR1, Sigusr1Handle);

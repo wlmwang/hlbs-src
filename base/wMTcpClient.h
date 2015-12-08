@@ -29,9 +29,8 @@
 #include "wLog.h"
 #include "wSingleton.h"
 #include "wTcpClient.h"
-#include "wTcpTask.h"
 
-template <typename T, typename TCPTASK = wTcpTask>
+template <typename T,typename TASK>
 class wMTcpClient: public wSingleton<T>
 {
 	public:
@@ -40,14 +39,19 @@ class wMTcpClient: public wSingleton<T>
 		
 		void Initialize();
 		
-		bool AddTcpClient(int iType, wTcpClient *pTcpClient);
-		bool CleanTcpClient(int iType, wTcpClient *pTcpClient = NULL);
+		wTcpClient<TASK>* CreateClient(string sClientName, char *vIPAddress, unsigned short vPort);
+		bool AddTcpClient(int iType, wTcpClient<TASK> *pTcpClient);
+		bool CleanTcpClient(int iType, wTcpClient<TASK> *pTcpClient = NULL);
+		
+		bool GenerateClient(int iType, string sClientName, char *vIPAddress, unsigned short vPort);
 		
 		//void PrepareStart();
 		void Start();
 		
 		virtual void Run();
-			
+
+		virtual void Recv();
+		
 		bool IsRunning()
 		{
 			return CLIENT_STATUS_INIT == mStatus;
@@ -66,49 +70,75 @@ class wMTcpClient: public wSingleton<T>
 	protected:
 		CLIENT_STATUS mStatus;	//服务器当前状态
 	
-		map<int, wTcpClient<TCPTASK>**> mTcpClient;	//每种类型客户端，可挂载多个连接
-		typedef map<int, vector<wTcpClient<TCPTASK>*> >::iterator MapIt;
-		typedef map<int, vector<wTcpClient<TCPTASK>*> >::value_type MapValue;
-		typedef pair<int, vector<wTcpClient<TCPTASK>*> > MapPair;
-		
+        std::map<int, vector<wTcpClient<TASK>*> > mTcpClient;	//每种类型客户端，可挂载多个连接
+		//MapIt = typename map<int, vector<wTcpClient<TASK>*> >::iterator;
 };
 
-template <typename T,typename TCPTASK>
-wMTcpClient<T,TCPTASK>::wMTcpClient()
+template <typename T,typename TASK>
+wMTcpClient<T,TASK>::wMTcpClient()
 {
 	mStatus = CLIENT_STATUS_INIT;
 	Initialize();
 }
 
-template <typename T,typename TCPTASK>
-void wMTcpClient<T,TCPTASK>::Initialize()
+template <typename T,typename TASK>
+wMTcpClient<T,TASK>::~wMTcpClient()
+{
+    //...
+}
+
+template <typename T,typename TASK>
+void wMTcpClient<T,TASK>::Initialize()
 {
 	//...
 }
 
-template <typename T,typename TCPTASK>
-bool wMTcpClient<T,TCPTASK>::AddTcpClient(int iType, wTcpClient *pTcpClient)
+template <typename T,typename TASK>
+bool wMTcpClient<T,TASK>::GenerateClient(int iType, string sClientName, char *vIPAddress, unsigned short vPort)
+{
+	wTcpClient<TASK>* pTcpClient = CreateClient(sClientName, vIPAddress , vPort);
+	if(pTcpClient != NULL)
+	{
+	    return AddTcpClient(iType, pTcpClient);
+	}
+	return false;
+}
+
+template <typename T,typename TASK>
+wTcpClient<TASK>* wMTcpClient<T,TASK>::CreateClient(string sClientName, char *vIPAddress, unsigned short vPort)
+{
+	wTcpClient<TASK>* pTcpClient = new wTcpClient<TASK>(sClientName);
+	int iRet = pTcpClient->ConnectToServer(vIPAddress, vPort);
+	if(iRet >= 0)
+	{
+		return pTcpClient;
+	}
+	return NULL;
+}
+
+template <typename T,typename TASK>
+bool wMTcpClient<T,TASK>::AddTcpClient(int iType, wTcpClient<TASK> *pTcpClient)
 {
 	if(pTcpClient == NULL)
 	{
 		return false;
 	}
-	vector<wTcpClient*> vTcpClient;
-	MapIt mt = mTcpClient.find(iType);
+	vector<wTcpClient<TASK>*> vTcpClient;
+    typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClient.find(iType);
 	if(mt != mTcpClient.end())
 	{
-		vTcpClient = mt->second();
+		vTcpClient = mt->second;
 		mTcpClient.erase(mt);
 	}
 	vTcpClient.push_back(pTcpClient);
-	mTcpClient.insert(MapValue(iType, vTcpClient));
+	mTcpClient.insert(pair<int, vector<wTcpClient<TASK>*> >(iType, vTcpClient));
 	return true;
 }
 
-template <typename T,typename TCPTASK>
-bool wMTcpClient<T,TCPTASK>::CleanTcpClient(int iType, wTcpClient *pTcpClient)
+template <typename T,typename TASK>
+bool wMTcpClient<T,TASK>::CleanTcpClient(int iType, wTcpClient<TASK> *pTcpClient)
 {
-	MapIt mt = mTcpClient.find(iType);
+	typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClient.find(iType);
 	if(mt != mTcpClient.end())
 	{
 		if(pTcpClient == NULL)
@@ -117,14 +147,14 @@ bool wMTcpClient<T,TCPTASK>::CleanTcpClient(int iType, wTcpClient *pTcpClient)
 		}
 		else
 		{
-			vector<wTcpClient*> vTcpClient = mt->second();
-			vector<wTcpClient*>::iterator it = find(vTcpClient.begin(), vTcpClient.end(), pTcpClient);
+			vector<wTcpClient<TASK>*> vTcpClient = mt->second;
+			typename vector<wTcpClient<TASK>*>::iterator it = find(vTcpClient.begin(), vTcpClient.end(), pTcpClient);
 			if(it != vTcpClient.end())
 			{
 				vTcpClient.erase(it);
 				SAFE_DELETE(*it);
 				mTcpClient.erase(mt);
-				mTcpClient.insert(MapValue(iType, vTcpClient));
+				mTcpClient.insert(pair<int, vector<wTcpClient<TASK>*> >(iType, vTcpClient));
 				return true;
 			}
 			return false;
@@ -133,8 +163,8 @@ bool wMTcpClient<T,TCPTASK>::CleanTcpClient(int iType, wTcpClient *pTcpClient)
 	return false;
 }
 
-template <typename T,typename TCPTASK>
-void wMTcpClient<T,TCPTASK>::Start()
+template <typename T,typename TASK>
+void wMTcpClient<T,TASK>::Start()
 {
 	mStatus = CLIENT_STATUS_RUNNING;
 	LOG_INFO("default", "Server start succeed");
@@ -148,13 +178,16 @@ void wMTcpClient<T,TCPTASK>::Start()
 	}
 }
 
-template <typename T,typename TCPTASK>
-void wMTcpClient<T,TCPTASK>::Recv()
+template <typename T,typename TASK>
+void wMTcpClient<T,TASK>::Recv()
 {
-	for(MapIt it = mTcpClient.begin(); it!= mTcpClient.end(); it++)
+    typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClient.begin();
+	for(mt; mt != mTcpClient.end(); mt++)
 	{
-		vector<wTcpClient*> vTcpClient = mt->second();
-		for(vector<wTcpClient*>::iterator vIt = vTcpClient.begin(); vIt != vTcpClient.end() ;vIt++)
+		vector<wTcpClient<TASK>* > vTcpClient = mt->second;
+        
+        typename vector<wTcpClient<TASK>*>::iterator vIt = vTcpClient.begin();
+		for(vIt ; vIt != vTcpClient.end() ;vIt++)
 		{
 			if(*vIt == NULL)
 			{
@@ -168,8 +201,8 @@ void wMTcpClient<T,TCPTASK>::Recv()
 	}
 }
 
-template <typename T,typename TCPTASK>
-void wMTcpClient<T,TCPTASK>::Run()
+template <typename T,typename TASK>
+void wMTcpClient<T,TASK>::Run()
 {
 	//...
 }

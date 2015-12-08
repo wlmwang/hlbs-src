@@ -17,8 +17,9 @@
 #include "wTcpServer.h"
 #include "wTcpTask.h"
 
-#include "wTcpClient.h"
+#include "AgentServerTask.h"
 #include "wMTcpClient.h"
+#include "wTcpClient.h"
 
 class AgentServer: public wTcpServer<AgentServer>
 {
@@ -33,14 +34,13 @@ class AgentServer: public wTcpServer<AgentServer>
 		virtual void Run(); //超时&&心跳
 		
 		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
-	    		
+	    
+		void ConnectRouter();
 		void CheckTimer();
 		void CheckTimeout();
 		
 	private:
-	
-		wMTcpClient<AgentServer,AgentServerTask> mConn;
-		wTcpClient<AgentServerTask> *mClient;
+		wMTcpClient<AgentServer,AgentServerTask> mRouterConn;	//连接router
 		
 		//服务器重连计时器
 		wTimer mServerReconnectTimer;

@@ -14,10 +14,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <typeinfo>
 #include <string>
 #include <string.h>
 
-//#include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
@@ -57,7 +57,6 @@ template <typename T>
 class wTcpClient
 {
 	public:
-		
 		void Recv();
 		void Send();
 		
@@ -85,61 +84,64 @@ class wTcpClient
 		
 		void Final();
 		
-		T* NewTcpTask(wSocket *pSocket);
+		wTcpTask* NewTcpTask(wSocket *pSocket);
 		
 		virtual ~wTcpClient();
 		
-        wTcpClient(string ClientName, int vInitFlag = true);
-		
+        wTcpClient(string sClientName, int vInitFlag = true);
+	    	
 		//禁用复制函数
 		wTcpClient(const wTcpClient&);
 		
+        void Initialize();
+
 		CLIENT_STATUS mStatus;	//服务器当前状态
 		//定时记录器
 		unsigned long long mLastTicker;	//服务器当前时间
 		
 	protected:
 		string mClientName;
-		wSocket *mSocket;	//Connect Socket(主服务socket对象)
+		wSocket* mSocket;	//Connect Socket(主服务socket对象)
+		wTcpTask* mTcpTask;
 		
-		T *mTcpTask;
-		
-		unsigned int mTimeout;
+		//unsigned int mTimeout;
 };
 
 template <typename T>
-wTcpClient::wTcpClient(string ClientName, int vInitFlag)
+wTcpClient<T>::wTcpClient(string sClientName, int vInitFlag)
 {
 	if(vInitFlag)
 	{
 		mStatus = CLIENT_STATUS_INIT;
 		Initialize();
 	}
-	mClientName = ClientName;
+	mClientName = sClientName;
 }
 
 template <typename T>
-wTcpClient::~wTcpClient()
+wTcpClient<T>::~wTcpClient()
 {
 	Final();
 }
 
 template <typename T>
-void wTcpClient::Initialize()
+void wTcpClient<T>::Initialize()
 {
 	mLastTicker = GetTickCount();
 	mClientName = "";
 	mSocket = NULL;
+	mTcpTask = NULL;
 }
 
 template <typename T>
-void wTcpClient::Final()
+void wTcpClient<T>::Final()
 {
 	SAFE_DELETE(mSocket);
+	SAFE_DELETE(mTcpTask);
 }
 
 template <typename T>
-int wTcpClient::ConnectToServer(char *vIPAddress, unsigned short vPort)
+int wTcpClient<T>::ConnectToServer(char *vIPAddress, unsigned short vPort)
 {
 	if(vIPAddress == NULL) 
 	{
@@ -170,7 +172,6 @@ int wTcpClient::ConnectToServer(char *vIPAddress, unsigned short vPort)
 	if(setsockopt(iSocketFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) != 0)
 	{
 		LOG_ERROR("default", "set send buffer size to %d failed: %s", iOptVal, strerror(errno));
-		SAFE_DELETE(mSocket);
 		return ETC_SET_BUFF_SIZE_FAILED;
 	}
 	//获取设置完的值
@@ -184,7 +185,6 @@ int wTcpClient::ConnectToServer(char *vIPAddress, unsigned short vPort)
 	if( iRet < 0 )
 	{
 		LOG_ERROR("default", "connect to server port(%d) failed: %s", vPort, strerror(errno));
-		SAFE_DELETE(mSocket);
 		return ETC_CONNECT_FAILED;
 	}
 
@@ -197,22 +197,20 @@ int wTcpClient::ConnectToServer(char *vIPAddress, unsigned short vPort)
 	mSocket->SocketType() = CONNECT_SOCKET;
 	mSocket->SocketFlag() = RECV_DATA;
 	
-	T *pInstance = NewTcpTask(pSocket);
-	mTcpTask = (wTcpTask *) pInstance;
+	mTcpTask = NewTcpTask(mSocket);
 	if(NULL != mTcpTask)
 	{
 		if(mTcpTask->Socket()->SetNonBlock() < 0) 
 		{
 			LOG_ERROR("default", "set non block failed: %d, close it", iSocketFD);
-			SAFE_DELETE(mTcpTask);
-			return ;
+			return -1;
 		}
 	}
 	return 0;
 }
 
 template <typename T>
-void wTcpClient::Recv()
+void wTcpClient<T>::Recv()
 {
 	if(mTcpTask != NULL)
 	{
@@ -221,21 +219,20 @@ void wTcpClient::Recv()
 }
 
 template <typename T>
-void wTcpClient::Send()
+void wTcpClient<T>::Send()
 {
 	//...
 }
 
 template <typename T>
-void wTcpClient::Final()
+wTcpTask* wTcpClient<T>::NewTcpTask(wSocket *pSocket)
 {
-	//...
-}
-
-template <typename T>
-T* wTcpClient::NewTcpTask(wSocket *pSocket);
-{
-	T *pTcpTask = new T(pSocket);
+	wTcpTask *pTcpTask = NULL;
+	if(typeid(T) == typeid(wTcpTask))
+	{
+		T* pT = new T(pSocket);
+		pTcpTask = dynamic_cast<wTcpTask *>(pT);
+	}
 	return pTcpTask;
 }
 

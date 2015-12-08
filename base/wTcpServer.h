@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <algorithm>
+#include <iostream>
 #include <string>
 #include <string.h>
 #include <vector>
@@ -386,6 +387,11 @@ void wTcpServer<T>::AcceptConn(int iSocketFD)
 			AddToTaskPool(mTcpTask);
 		}
 	}
+
+    //debug...
+    const char * pMessage = "welcome!\n";
+    int bytes_sent = send(iNewSocketFD /*连接描述符*/, pMessage /*发送内容*/, strlen(pMessage) /*发关内容长度*/, 0 /*发送标记, 一般置 0*/);
+    cout<<"len:"<<bytes_sent<<endl;
 }
 
 template <typename T>

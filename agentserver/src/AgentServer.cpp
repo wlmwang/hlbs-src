@@ -15,7 +15,7 @@
 #include "wMisc.h"
 
 #include "AgentServer.h"
-#include "AgentServerTask.h"
+#include "AgentConfig.h"
 
 AgentServer::AgentServer():wTcpServer<AgentServer>("路由服务器")
 {
@@ -34,11 +34,19 @@ AgentServer::~AgentServer()
  * 初始化
  */
 void AgentServer::Initialize()
-{	
+{
 	//初始化定时器
 	mServerReconnectTimer = wTimer(RECONNECT_TIME);
 	mClientCheckTimer = wTimer(CHECK_CLIENT_TIME);
-	pTcpTask = NULL;
+	
+	//连接Router服务
+	ConnectRouter();
+}
+
+void AgentServer::ConnectRouter()
+{
+	//mRouterConn
+	mRouterConn.GenerateClient(1, "RouterFromAgent", AgentConfig::Instance()->mRouterIPAddr, AgentConfig::Instance()->mRouterPort);
 }
 
 wTcpTask* AgentServer::NewTcpTask(wSocket *pSocket)
@@ -50,8 +58,6 @@ wTcpTask* AgentServer::NewTcpTask(wSocket *pSocket)
 //准备工作
 void AgentServer::PrepareRun()
 {
-	//mConn连接
-	//mConn.AddTcpClient();
 }
 
 void AgentServer::Run()
@@ -113,12 +119,16 @@ void AgentServer::CheckTimeout()
 			{
 				continue;
 			}
-			iIntervalTime = iNowTime - (*iter)->mStamp;
+			iIntervalTime = iNowTime - (*iter)->Socket()->Stamp();
 			if(iIntervalTime >= SOCKET_SEND_TIMEOUT)
 			{
 				LOG_ERROR("default", "client ip(%s) fd(%d) do not send msg and timeout, close it", (*iter)->Socket()->IPAddr(), (*iter)->Socket()->SocketFD());
-				RemoveEpoll(*iter) && RemoveTaskPool(*iter);
+				if(RemoveEpoll(*iter))
+				{
+					RemoveTaskPool(*iter);
+				}
 			}
 		}
 	}
 }
+

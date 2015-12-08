@@ -7,12 +7,12 @@
 #include <iostream>
 #include "wType.h"
 #include "tinyxml.h"	//lib tinyxml
-#include "RouterConfig.h"
+#include "AgentConfig.h"
 
 /**
  * 解析配置
  */
-void RouterConfig::ParseBaseConfig()
+void AgentConfig::ParseBaseConfig()
 {
 	TiXmlDocument stDoc;
 	bool bLoadOK = stDoc.LoadFile("../config/conf.xml");
@@ -41,7 +41,7 @@ void RouterConfig::ParseBaseConfig()
 	
 	TiXmlElement *pElement = NULL;
 	TiXmlElement *pChildElm = NULL;
-	pElement = pRoot->FirstChildElement("ROUTER_SERVER");
+	pElement = pRoot->FirstChildElement("AGENT_SERVER");
 	if(NULL != pElement)
 	{
 		for(pChildElm = pElement->FirstChildElement(); pChildElm != NULL ; pChildElm = pChildElm->NextSiblingElement())
@@ -51,8 +51,26 @@ void RouterConfig::ParseBaseConfig()
 			const char *szBacklog = pChildElm->Attribute("BACKLOG");
 
 			mBacklog = atoi(szBacklog);
-			mExPort = atoi(szPort);
-			memcpy(mExIPAddr, szIPAddr, MAX_IP_LEN);
+			mPort = atoi(szPort);
+			memcpy(mIPAddr, szIPAddr, MAX_IP_LEN);
+		}
+	}
+	else
+	{
+		printf("Get extranet connect ip and port from config file failed\n");
+		exit(1);
+	}
+
+	pElement = pRoot->FirstChildElement("ROUTER_SERVER");
+	if(NULL != pElement)
+	{
+		for(pChildElm = pElement->FirstChildElement(); pChildElm != NULL ; pChildElm = pChildElm->NextSiblingElement())
+		{
+			const char *szIPAddr = pChildElm->Attribute("IPADDRESS");
+			const char *szPort = pChildElm->Attribute("PORT");
+			
+			mRouterPort = atoi(szPort);
+			memcpy(mRouterIPAddr, szIPAddr, MAX_IP_LEN);
 		}
 	}
 	else
@@ -81,48 +99,6 @@ void RouterConfig::ParseBaseConfig()
 	else
 	{
 		printf("Get log configure from config file failed\n");
-		exit(1);
-	}
-}
-
-void RouterConfig::ParseRtblConfig()
-{
-	TiXmlDocument stDoc;
-	stDoc.LoadFile("../config/rtbl.xml");
-	TiXmlElement *pElement = NULL;
-	TiXmlElement *pChildElm = NULL;
-
-	TiXmlElement *pRoot = stDoc.FirstChildElement();
-	
-	pElement = pRoot->FirstChildElement("SERVER");
-	if(pElement != NULL)
-	{
-		for(pChildElm = pElement->FirstChildElement(); pChildElm != NULL ; pChildElm = pChildElm->NextSiblingElement())
-		{
-			const char *szId = pChildElm->Attribute("ID");
-			const char *szGid = pChildElm->Attribute("GID");
-			const char *szXid = pChildElm->Attribute("XID");
-			const char *szName = pChildElm->Attribute("NAME");
-			const char *szIPAddr = pChildElm->Attribute("IPADDRESS");
-			const char *szPort = pChildElm->Attribute("PORT");
-			const char *szDisabled = pChildElm->Attribute("DISABLED");
-			const char *szWeight = pChildElm->Attribute("WEIGHT");
-			
-			Rtbl_t vRtbl;
-			vRtbl.mId = atoi(szId);
-			vRtbl.mGid = atoi(szGid);
-			vRtbl.mXid = atoi(szXid);
-			vRtbl.mPort = atoi(szPort);
-			vRtbl.mWeight = atoi(szWeight);
-			vRtbl.mDisabled = atoi(szDisabled);
-			memcpy(vRtbl.mName, szName, MAX_NAME_LEN);
-			memcpy(vRtbl.mIp, szIPAddr, MAX_IP_LEN);
-			mRtbl.push_back(vRtbl);
-		}
-	}
-	else
-	{
-		printf("Get extranet connect ip and port from config file failed\n");
 		exit(1);
 	}
 }

@@ -14,29 +14,35 @@
 #include "wLog.h"
 #include "wSingleton.h"
 
-#include "Rtbl.h"
+//#include "Rtbl.h"
 
 /**
  * 配置文件读取的数据结构
  */
-class RouterConfig: public wSingleton<RouterConfig>
+class AgentConfig: public wSingleton<AgentConfig>
 {
 	public:
-		char mExIPAddr[MAX_IP_LEN];
-		unsigned int mExPort;
+		char mIPAddr[MAX_IP_LEN];
+		unsigned int mPort;
 		unsigned int mBacklog;
-
-		~RouterConfig() {}
+		
+		char mRouterIPAddr[MAX_IP_LEN];
+		unsigned int mRouterPort;
+		
+		~AgentConfig() {}
 
 		//初始化
 		void Initialize()
 		{
-			memset(mExIPAddr, 0, sizeof(mExIPAddr));
-			mExPort = 0;
-			mBacklog = 1024;
+			memset(mIPAddr, 0, sizeof(mIPAddr));
+			mPort = 0;
+			mBacklog = 512;
+			
+			memset(mRouterIPAddr, 0, sizeof(mRouterIPAddr));
+			mRouterPort = 0;
 		}
 
-		RouterConfig()
+		AgentConfig()
 		{
             Initialize();
 		}
@@ -45,14 +51,6 @@ class RouterConfig: public wSingleton<RouterConfig>
 		 * 解析配置
 		 */		
 		void ParseBaseConfig();
-		
-		/**
-		 *  解析Rtbl配置
-		 */
-		void ParseRtblConfig();
-		
-	protected:
-		vector<Rtbl_t> mRtbl;
 };
 
 #endif
