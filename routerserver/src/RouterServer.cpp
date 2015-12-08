@@ -52,7 +52,7 @@ void RouterServer::Initialize()
  * 队列多进程通信
  */
 /*
- void RouterServer::InitailizeBuffer()
+void RouterServer::InitailizeBuffer()
 {
 	//如果没有router_pipe就先创建一个
 	system("touch router_pipe");
