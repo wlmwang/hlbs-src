@@ -451,7 +451,7 @@ void wTcpServer<T>::Recv()
 		
 		if(pTask->Socket()->SocketFD() < 0)
 		{
-			if (RemoveEpoll(pTask))
+			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
 			}
@@ -459,7 +459,7 @@ void wTcpServer<T>::Recv()
 		if (mEpollEventPool[i].events & (EPOLLERR | EPOLLPRI))
 		{
 			LOG_ERROR("default", "epoll event recv error from fd(%d): %s, close it", pTask->Socket()->SocketFD(), strerror(errno));
-			if (RemoveEpoll(pTask))
+			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
 			}
@@ -477,7 +477,7 @@ void wTcpServer<T>::Recv()
 				if (pTask->ListeningRecv() < 0)
 				{
 					LOG_ERROR("default", "EPOLLIN(read) failed: %s", strerror(errno));
-					if (RemoveEpoll(pTask))
+					if (RemoveEpoll(pTask) >= 0)
 					{
 						RemoveTaskPool(pTask);
 					}
@@ -489,7 +489,7 @@ void wTcpServer<T>::Recv()
 				if (pTask->ListeningSend() < 0)
 				{
 					LOG_ERROR("default", "EPOLLOUT(write) failed: %s", strerror(errno));
-					if (RemoveEpoll(pTask))
+					if (RemoveEpoll(pTask) >= 0)
 					{
 						RemoveTaskPool(pTask);
 					}

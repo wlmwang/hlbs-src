@@ -128,7 +128,7 @@ void RouterServer::CheckTimeout()
 	int iNowTime = time(NULL);
 	int iIntervalTime;
 	
-	if(!mTcpTaskPool.empty())
+	if(mTcpTaskPool.size() > 0)
 	{
 		vector<wTcpTask*>::iterator iter;
 		for(iter = mTcpTaskPool.begin(); iter != mTcpTaskPool.end(); iter++)
@@ -145,7 +145,7 @@ void RouterServer::CheckTimeout()
 			if(iIntervalTime >= SOCKET_SEND_TIMEOUT)
 			{
 				LOG_ERROR("default", "client ip(%s) fd(%d) do not send msg and timeout, close it", (*iter)->Socket()->IPAddr(), (*iter)->Socket()->SocketFD());
-				if(RemoveEpoll(*iter))
+				if(RemoveEpoll(*iter) >= 0)
 				{
 					RemoveTaskPool(*iter);
 				}
