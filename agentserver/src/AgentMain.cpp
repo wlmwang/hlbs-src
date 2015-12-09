@@ -18,7 +18,7 @@
 #include <fcntl.h>
 
 #include "wType.h"
-#include "wFunction.h"
+#include "wMisc.h"
 #include "wLog.h"
 
 #include "AgentServer.h"

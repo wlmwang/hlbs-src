@@ -11,7 +11,6 @@
 #include <stdlib.h>
 
 #include "wLog.h"
-#include "wFunction.h"
 #include "wMisc.h"
 
 #include "AgentServer.h"

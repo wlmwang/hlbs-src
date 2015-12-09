@@ -4,13 +4,75 @@
  * Copyright (C) Disvr, Inc.
  */
 
+#include <iostream>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>		//atoi random srandom
+#include <string.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/file.h>	//int flock(int fd,int operation);
+
+#include <signal.h>
+#include "wType.h"
+#include "wLog.h"
+
 #include "wMisc.h"
 
-unsigned long long GetTickCount()
+
+//变为守护进程
+int InitDaemon(const char *filename)
 {
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	return (unsigned long long)tv.tv_sec * 1000 + (unsigned long long)tv.tv_usec / 1000;
+	//打开需要锁定的文件
+	int lock_fd = open(filename, O_RDWR|O_CREAT, 0640);
+	if (lock_fd < 0) 
+	{
+		cout << "Open lock file failed when init daemon" <<endl;
+		return -1;
+	}
+	//独占式锁定文件，防止有相同程序的进程已经启动
+	int ret = flock(lock_fd, LOCK_EX | LOCK_NB);
+	if (ret < 0) 
+	{
+		cout << "Lock file failed, server is already running" <<endl;
+		return -1;
+	}
+
+	//获取当前的目录信息
+	char dir_path[256] = {0};
+	getcwd(dir_path, sizeof(dir_path));
+
+	pid_t pid;
+
+	//第一次fork
+	if ((pid = fork()) != 0) exit(0);
+
+	//将该进程设置一个新的进程组的首进程
+	setsid();
+
+	//忽略以下信号
+	signal(SIGINT,  SIG_IGN);
+	signal(SIGHUP,  SIG_IGN);
+	signal(SIGQUIT, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);
+	signal(SIGTTOU, SIG_IGN);
+	signal(SIGTTIN, SIG_IGN);
+	signal(SIGCHLD, SIG_IGN);
+	signal(SIGTERM, SIG_IGN);
+
+	//再次fork
+	if ((pid = fork()) != 0) exit(0);
+
+	if (chdir(dir_path)) 
+	{
+		cout << "Can not change run dir to "<< dir_path << ", init daemon failed" << strerror(errno) <<endl;
+		return -1;		
+	}
+	umask(0);
+
+	return 0;
 }
 
 void itoa(unsigned long val, char *buf, unsigned radix) 

@@ -44,12 +44,9 @@ void wTcpTask::CloseTcpTask(int eReason)
 {
 	if(eReason == 0 || eReason==1) 
 	{
-		//通知各个逻辑服务器这个FD断开连接了
-		/*
-			Send2Server((char *)&mSocketBuff, sizeof(int) + sizeof(short) + sizeof(*mNetHeadPtr));
-		*/
+		//...
 	}
-	SAFE_DELETE(mSocket);
+	mSocket->Close();
 }
 
 /**
@@ -64,8 +61,8 @@ int wTcpTask::ListeningRecv()
 	int iRecvLen = mSocket->RecvBytes(mRecvMsgBuff + iOffset, sizeof(mRecvMsgBuff) - iOffset);
 	if(iRecvLen <= 0)
 	{
-		//LOG_NOTICE("default", "client %s socket fd(%d) close from connect port %d, return %d", mSocket->IPAddr().c_str(), mSocket->SocketFD(), mSocket->Port(), iRecvLen);
-		//CloseTcpTask(1);
+		LOG_NOTICE("default", "client %s socket fd(%d) close from connect port %d, return %d", mSocket->IPAddr().c_str(), mSocket->SocketFD(), mSocket->Port(), iRecvLen);
+		CloseTcpTask(1);
 		return -1;
 	}
 	
@@ -91,7 +88,7 @@ int wTcpTask::ListeningRecv()
 		if(iMsgLen <= MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN )
 		{
 			LOG_ERROR("default", "get invalid len %d from %s fd(%d)", iMsgLen, mSocket->IPAddr().c_str(), mSocket->SocketFD());
-			//CloseTcpTask(0);
+			CloseTcpTask(0);
 			return -1;
 		}
 
@@ -116,7 +113,7 @@ int wTcpTask::ListeningRecv()
 #endif
 		/*start 业务逻辑*/
 		//int iLen = iMsgLen + sizeof(int);
-		HandleRecvMessage(pBuffer - iMsgLen/*iLen*/, iMsgLen/*iLen*/);
+		HandleRecvMessage(pBuffer - iMsgLen /*iLen*/, iMsgLen /*iLen*/);
 		/*end 业务逻辑*/
 	}
 

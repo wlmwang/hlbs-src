@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 
+#include "wAssert.h"
 #include "wType.h"
 #include "wMisc.h"
 #include "wLog.h"
@@ -173,7 +174,7 @@ void wTcpServer<T>::Initialize()
 	mTimeout = 10;
 	mEpollFD = -1;
 	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
-	mEpollEventPool.resize(512);	//epoll事件池默认大小
+	mEpollEventPool.reserve(512);	//容量
 }
 
 template <typename T>
@@ -271,8 +272,8 @@ void wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	int iRet = bind(iSocketFD, (struct sockaddr *)&stSocketAddr, sizeof(stSocketAddr));
 	if(iRet < 0)
 	{
+		LOG_ERROR("default", "Socket bind failed");
 		close(iSocketFD);
-		printf("Socket bind failed\n");
 		exit(1);
 	}
 	//setsockopt socket : 设置发送缓冲大小4M
@@ -280,8 +281,8 @@ void wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	int iOptVal = 0x400000;
 	if(setsockopt(iSocketFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) < -1)
 	{
+		LOG_ERROR("default", "set send buffer size failed");
 		close(iSocketFD);
-		LOG_INFO("default", "set send buffer size failed");
 		exit(1);
 	}
 	if(getsockopt(iSocketFD, SOL_SOCKET, SO_SNDBUF, (void *)&iOptVal, (socklen_t *)&iOptLen) >= 0)
@@ -290,7 +291,8 @@ void wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	}
 
 	//listen
-	iRet = listen(iSocketFD, 512);
+	int backlog = 512;
+	iRet = listen(iSocketFD, backlog);
 	if(iRet < 0)
 	{
 		LOG_ERROR("default", "listen failed: %s", strerror(errno));
@@ -322,6 +324,49 @@ void wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 }
 
 template <typename T>
+wTcpTask* wTcpServer<T>::NewTcpTask(wSocket *pSocket)
+{
+	wTcpTask *pTcpTask = new wTcpTask(pSocket);
+	return pTcpTask;
+}
+
+/**
+ * 添加到epoll监听事件中
+ * @param  stTcpTask [wTcpTask*]
+ * @return           [是否出错]
+ */
+template <typename T>
+int wTcpServer<T>::AddToEpoll(wTcpTask* stTcpTask)
+{
+	mEpollEvent.events = EPOLLIN | EPOLLERR | EPOLLHUP;	//客户端事件
+	mEpollEvent.data.fd = stTcpTask->Socket()->SocketFD();
+	mEpollEvent.data.ptr = stTcpTask;
+	int iRet = epoll_ctl(mEpollFD, EPOLL_CTL_ADD, stTcpTask->Socket()->SocketFD(), &mEpollEvent);
+	if(iRet < 0)
+	{
+		LOG_ERROR("default", "fd(%d) add into epoll failed: %s", stTcpTask->Socket()->SocketFD(), strerror(errno));
+		return -1;
+	}
+	return 0;
+}
+
+template <typename T>
+void wTcpServer<T>::AddToTaskPool(wTcpTask* stTcpTask)
+{
+	W_ASSERT(stTcpTask != NULL, return;);
+
+	//TcpTask池
+	mTcpTaskPool.push_back(stTcpTask);
+
+	//epoll_event大小
+	mTaskCount = mTcpTaskPool.size();
+	if (mTaskCount > mEpollEventPool.capacity())
+	{
+		mEpollEventPool.reserve(mTaskCount * 2);
+	}
+}
+
+template <typename T>
 void wTcpServer<T>::Start()
 {
 	mStatus = SERVER_STATUS_RUNNING;
@@ -329,10 +374,75 @@ void wTcpServer<T>::Start()
 	//进入服务主循环
 	while(IsRunning())
 	{
-		//接受客户端消息
 		Recv();
 		
 		Run();
+	}
+}
+
+template <typename T>
+void wTcpServer<T>::Recv()
+{
+	int iRet = epoll_wait(mEpollFD, &mEpollEventPool[0], mTaskCount, mTimeout /*10ms*/);
+	if(iRet < 0)
+	{
+		LOG_ERROR("default", "epoll_wait failed: %s", strerror(errno));
+		return;
+	}
+	for(int i = 0 ; i < iRet ; i++)
+	{
+		wTcpTask *pTask = (wTcpTask *)mEpollEventPool[i].data.ptr;
+		
+		if(pTask->Socket()->SocketFD() < 0)
+		{
+			LOG_ERROR("default", "socketfd error fd(%d): %s, close it", pTask->Socket()->SocketFD(), strerror(errno));
+			if (RemoveEpoll(pTask) >= 0)
+			{
+				RemoveTaskPool(pTask);
+			}
+			continue;
+		}
+		if (mEpollEventPool[i].events & (EPOLLERR | EPOLLPRI))
+		{
+			LOG_ERROR("default", "epoll event recv error from fd(%d): %s, close it", pTask->Socket()->SocketFD(), strerror(errno));
+			if (RemoveEpoll(pTask) >= 0)
+			{
+				RemoveTaskPool(pTask);
+			}
+			continue;
+		}
+
+		if(pTask->Socket()->SocketType() == LISTEN_SOCKET)
+		{
+			AcceptConn(pTask->Socket()->SocketFD());	//accept connect
+		}
+		else if(pTask->Socket()->SocketType() == CONNECT_SOCKET)	//connect event: read|write
+		{
+			if (mEpollEventPool[i].events & EPOLLIN)
+			{
+				//套接口准备好了读取操作
+				if (pTask->ListeningRecv() < 0)
+				{
+					LOG_ERROR("default", "EPOLLIN(read) failed: %s", strerror(errno));
+					if (RemoveEpoll(pTask) >= 0)
+					{
+						RemoveTaskPool(pTask);
+					}
+				}
+			}
+			else if (mEpollEventPool[i].events & EPOLLOUT)
+			{
+				//套接口准备好了写入操作
+				if (pTask->ListeningSend() < 0)
+				{
+					LOG_ERROR("default", "EPOLLOUT(write) failed: %s", strerror(errno));
+					if (RemoveEpoll(pTask) >= 0)
+					{
+						RemoveTaskPool(pTask);
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -387,116 +497,6 @@ void wTcpServer<T>::AcceptConn(int iSocketFD)
 			AddToTaskPool(mTcpTask);
 		}
 	}
-
-    //debug...
-    //const char * pMessage = "welcome!\n";
-    //int bytes_sent = send(iNewSocketFD /*连接描述符*/, pMessage /*发送内容*/, strlen(pMessage) /*发关内容长度*/, 0 /*发送标记, 一般置 0*/);
-    //cout<<"len:"<<bytes_sent<<endl;
-}
-
-template <typename T>
-wTcpTask* wTcpServer<T>::NewTcpTask(wSocket *pSocket)
-{
-	wTcpTask *pTcpTask = new wTcpTask(pSocket);
-	return pTcpTask;
-}
-
-/**
- * 添加到epoll监听事件中
- * @param  stTcpTask [wTcpTask*]
- * @return           [是否出错]
- */
-template <typename T>
-int wTcpServer<T>::AddToEpoll(wTcpTask* stTcpTask)
-{
-	mEpollEvent.events = EPOLLIN | EPOLLERR | EPOLLHUP;	//客户端事件
-	mEpollEvent.data.fd = stTcpTask->Socket()->SocketFD();
-	mEpollEvent.data.ptr = stTcpTask;
-	int iRet = epoll_ctl(mEpollFD, EPOLL_CTL_ADD, stTcpTask->Socket()->SocketFD(), &mEpollEvent);
-	if(iRet < 0)
-	{
-		LOG_ERROR("default", "fd(%d) add into epoll failed: %s", stTcpTask->Socket()->SocketFD(), strerror(errno));
-		return -1;
-	}
-	return 0;
-}
-
-template <typename T>
-void wTcpServer<T>::AddToTaskPool(wTcpTask* stTcpTask)
-{
-	//TcpTask池
-	mTcpTaskPool.push_back(stTcpTask);
-
-	//epoll_event大小
-	mTaskCount = mTcpTaskPool.size();
-	if (mTaskCount > mEpollEventPool.size())
-	{
-		mEpollEventPool.resize(mTaskCount + 16);
-	}
-}
-
-template <typename T>
-void wTcpServer<T>::Recv()
-{
-	//接受消息写入到消息队列中去（共享队列）
-	int iRet = epoll_wait(mEpollFD, &mEpollEventPool[0], mTaskCount, mTimeout);
-	if(iRet < 0)
-	{
-		LOG_ERROR("default", "epoll_wait failed: %s", strerror(errno));
-		return;
-	}
-	for(int i = 0 ; i < iRet ; i++)
-	{
-		wTcpTask *pTask = (wTcpTask *)mEpollEventPool[i].data.ptr;
-		
-		if(pTask->Socket()->SocketFD() < 0)
-		{
-			if (RemoveEpoll(pTask) >= 0)
-			{
-				RemoveTaskPool(pTask);
-			}
-		}
-		if (mEpollEventPool[i].events & (EPOLLERR | EPOLLPRI))
-		{
-			LOG_ERROR("default", "epoll event recv error from fd(%d): %s, close it", pTask->Socket()->SocketFD(), strerror(errno));
-			if (RemoveEpoll(pTask) >= 0)
-			{
-				RemoveTaskPool(pTask);
-			}
-		}
-		
-		if(pTask->Socket()->SocketType() == LISTEN_SOCKET)
-		{
-			AcceptConn(pTask->Socket()->SocketFD());
-		}
-		else if(pTask->Socket()->SocketType() == CONNECT_SOCKET)
-		{
-			if (mEpollEventPool[i].events & EPOLLIN)
-			{
-				//套接口准备好了读取操作
-				if (pTask->ListeningRecv() < 0)
-				{
-					LOG_ERROR("default", "EPOLLIN(read) failed: %s", strerror(errno));
-					if (RemoveEpoll(pTask) >= 0)
-					{
-						RemoveTaskPool(pTask);
-					}
-				}
-			}
-			else if (mEpollEventPool[i].events & EPOLLOUT)
-			{
-				//套接口准备好了写入操作
-				if (pTask->ListeningSend() < 0)
-				{
-					LOG_ERROR("default", "EPOLLOUT(write) failed: %s", strerror(errno));
-					if (RemoveEpoll(pTask) >= 0)
-					{
-						RemoveTaskPool(pTask);
-					}
-				}
-			}
-		}
-	}
 }
 
 template <typename T>
@@ -518,8 +518,8 @@ void wTcpServer<T>::RemoveTaskPool(wTcpTask* pTcpTask)
     std::vector<wTcpTask*>::iterator it = std::find(mTcpTaskPool.begin(), mTcpTaskPool.end(), pTcpTask);
     if(it != mTcpTaskPool.end())
     {
-        mTcpTaskPool.erase(it);
-		SAFE_DELETE(*it);
+        //mTcpTaskPool.erase(it);
+		//SAFE_DELETE(*it);
     }
     mTaskCount = mTcpTaskPool.size();
 }

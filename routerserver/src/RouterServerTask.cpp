@@ -9,7 +9,7 @@
 #include "wHeadCmd.h"
 #include "wAssert.h"
 
-RouterServerTask::RouterServerTask(wSocket *pSocket):wTcpTask(pSocket)
+RouterServerTask::RouterServerTask(wSocket *pSocket) : wTcpTask(pSocket)
 {
     //...
 }

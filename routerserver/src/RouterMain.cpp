@@ -19,7 +19,7 @@
 
 #include "wType.h"
 #include "wLog.h"
-#include "wFunction.h"
+#include "wMisc.h"
 
 #include "RouterServer.h"
 #include "RouterConfig.h"
@@ -59,33 +59,6 @@ void InitailizeLog()
  */
 int main(int argc, const char *argv[])
 {
-	//是否启动为守护进程
-	int nDaemonFlag = 0;
-	
-	//这个参数用于以后服务器在崩溃后被拉起
-	int nInitFlag = 1;
-	
-	//启动参数 -d -r
-	for (int i = 1; i < argc; i++) 
-	{
-		if (strcasecmp((const char *)argv[i], "-D") == 0) 
-		{
-			nDaemonFlag = 1;
-		}
-
-		if (strcasecmp((const char *)argv[i], "-R") == 0)
-		{
-			nInitFlag = 0;
-		}
-		//...
-	}
-	
-	if (nDaemonFlag) 
-	{
-		//初始化守护进程
-		const char *pFilename = "./router_server.lock";
-		InitDaemon(pFilename);
-	}
 	//初始化配置
 	RouterConfig *pConfig = RouterConfig::Instance();
 	if(pConfig == NULL) 
@@ -93,11 +66,25 @@ int main(int argc, const char *argv[])
 		LOG_ERROR("default", "Get RouterConfig instance failed");
 		exit(1);
 	}
+	pConfig->ParseLineConfig(argc, argv);
+
 	pConfig->ParseBaseConfig();
 	pConfig->ParseRtblConfig();
-	
+
 	//初始化日志
 	InitailizeLog();
+
+	if (pConfig->mDaemonFlag) 
+	{
+		//初始化守护进程
+		const char *pFilename = "./router_server.lock";
+
+		if (InitDaemon(pFilename) < 0)
+		{
+			LOG_ERROR("default", "Create daemon failed!");
+			exit(1);
+		}
+	}
 	
 	//获取服务器实体
     RouterServer *pServer = RouterServer::Instance();

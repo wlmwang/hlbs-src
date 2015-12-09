@@ -13,8 +13,6 @@
 #include "wTimer.h"
 #include "wSingleton.h"
 
-//#include "wMsgQueue.h"
-
 #include "wTcpServer.h"
 #include "wTcpTask.h"
 
@@ -28,20 +26,9 @@ class RouterServer: public wTcpServer<RouterServer>
 		
 		virtual void PrepareRun();
 		
-		virtual void Run(); //超时&&心跳
+		virtual void Run();
 		
 		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
-		
-		/**
-		 *  输入/输出的消息队列的缓冲区位置
-		 */		
-		//char *mInBufferPtr;
-		//char *mOutBufferPtr;
-		
-		//wMsgQueue mInMsgQueue;	//输入的消息队列
-		//wMsgQueue mOutMsgQueue;	//输出的消息队列
-		
-		//void InitailizeBuffer();
 	    		
 		void CheckTimer();
 		void CheckTimeout();
@@ -52,10 +39,6 @@ class RouterServer: public wTcpServer<RouterServer>
 
 		//客户端检测计时器
 		wTimer mClientCheckTimer;
-
-	//protected:
-		//发送给指定类型的服务器
-		//bool Send2Server(char *vArray, int vLen);
 };
 
 #endif

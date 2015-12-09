@@ -21,7 +21,7 @@ LIBS=-L./$(LIBPATH)/log4cpp/lib -llog4cpp -L./../lib/tinyxml -ltinyxml -lpthread
 INCPATH=-I./$(BASEPATH) -I./$(LIBPATH)/log4cpp/include -I./../lib/tinyxml
 
 TARGET=./bin/routersvrd
-OBJECTS=./debug/RouterMain.o ./debug/RouterConfig.o  ./debug/RouterServer.o  ./debug/RouterServerTask.o  ./debug/wLog.o  ./debug/wFunction.o  ./debug/wMisc.o  ./debug/wTcpTask.o  ./debug/wSocket.o
+OBJECTS=./debug/RouterMain.o ./debug/RouterConfig.o  ./debug/RouterServer.o  ./debug/RouterServerTask.o  ./debug/wLog.o ./debug/wMisc.o  ./debug/wTcpTask.o  ./debug/wSocket.o
 
 $(TARGET): $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $(TARGET) $(LIBS)
@@ -42,9 +42,6 @@ all: $(TARGET)
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wLog.o: $(BASEPATH)/wLog.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wFunction.o: $(BASEPATH)/wFunction.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wMisc.o: $(BASEPATH)/wMisc.cpp

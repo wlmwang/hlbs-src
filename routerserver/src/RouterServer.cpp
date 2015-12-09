@@ -11,7 +11,6 @@
 #include <stdlib.h>
 
 #include "wLog.h"
-#include "wFunction.h"
 #include "RouterServer.h"
 #include "wMisc.h"
 
@@ -23,10 +22,6 @@ RouterServer::RouterServer():wTcpServer<RouterServer>("路由服务器")
 	{
 		Initialize();
 	}
-	
-	//初始化buf
-	//mInMsgQueue.SetBuffer(mInBufferPtr, MSG_QUEUE_LEN);
-	//mOutMsgQueue.SetBuffer(mOutBufferPtr, MSG_QUEUE_LEN);
 }
 
 RouterServer::~RouterServer() 
@@ -42,31 +37,7 @@ void RouterServer::Initialize()
 	//初始化定时器
 	mServerReconnectTimer = wTimer(RECONNECT_TIME);
 	mClientCheckTimer = wTimer(CHECK_CLIENT_TIME);
-	
-	//初始化消息队列
-	//InitailizeBuffer();
 }
-
-/**
- * 初始化消息队列
- * 队列多进程通信
- */
-/*
-void RouterServer::InitailizeBuffer()
-{
-	//如果没有router_pipe就先创建一个
-	system("touch router_pipe");
-
-	const char *pFilename = "./router_pipe";
-	mInBufferPtr = CreateShareMemory(pFilename, 'i', MSG_QUEUE_LEN);
-	mOutBufferPtr = CreateShareMemory(pFilename, 'o', MSG_QUEUE_LEN);
-	if(mInBufferPtr == NULL || mOutBufferPtr == NULL)
-	{
-		printf("Create share memory for msg queue failed\n");
-		exit(1);
-	}
-}
-*/
 
 wTcpTask* RouterServer::NewTcpTask(wSocket *pSocket)
 {
@@ -77,22 +48,18 @@ wTcpTask* RouterServer::NewTcpTask(wSocket *pSocket)
 //准备工作
 void RouterServer::PrepareRun()
 {
-	//--------------------------------------------------
-	// mConnectCtrl.ListenToAddress(LISTEN_TO_ALL, RouterConfig::GetSingletonPtr()->mInIPAddr, (short)RouterConfig::GetSingletonPtr()->mInPort);
-	//-------------------------------------------------- 
+	//...
 }
 
 void RouterServer::Run()
 {
 	//检查服务器时间
 	CheckTimer();
-	
-	//--------------------------------------------------
-	// mConnectCtrl.ReceiveAndProcessMessage(ProcessMessage);
-	//-------------------------------------------------- 
 }
 
-//检查服务器时间
+/**
+ * 检查服务器时间 试图重连
+ */
 void RouterServer::CheckTimer()
 {
 	int iInterval = (int)(GetTickCount() - mLastTicker);
@@ -105,14 +72,6 @@ void RouterServer::CheckTimer()
 	//加上间隔时间
 	mLastTicker += iInterval;
 
-	//--------------------------------------------------
-	//检查连接状态，并试图重连
-	// if(mServerReconnectTimer.CheckTimer(iInterval)) 
-	// {
-	// 	mConnectCtrl.CheckConnectStatus();
-	// }
-	//-------------------------------------------------- 
-	
 	//检测客户端超时
 	if(mClientCheckTimer.CheckTimer(iInterval))
 	{	
@@ -133,10 +92,6 @@ void RouterServer::CheckTimeout()
 		vector<wTcpTask*>::iterator iter;
 		for(iter = mTcpTaskPool.begin(); iter != mTcpTaskPool.end(); iter++)
 		{
-			if((*iter)->Socket()->SocketFlag() == 0)
-			{
-				continue;
-			}
 			if ((*iter)->Socket()->SocketType() != CONNECT_SOCKET)
 			{
 				continue;
@@ -144,7 +99,7 @@ void RouterServer::CheckTimeout()
 			iIntervalTime = iNowTime - (*iter)->Socket()->Stamp();
 			if(iIntervalTime >= SOCKET_SEND_TIMEOUT)
 			{
-				LOG_ERROR("default", "client ip(%s) fd(%d) do not send msg and timeout, close it", (*iter)->Socket()->IPAddr(), (*iter)->Socket()->SocketFD());
+				LOG_ERROR("default", "client ip(%s) fd(%d) do not send msg and timeout, close it", (*iter)->Socket()->IPAddr().c_str(), (*iter)->Socket()->SocketFD());
 				if(RemoveEpoll(*iter) >= 0)
 				{
 					RemoveTaskPool(*iter);

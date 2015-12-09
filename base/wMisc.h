@@ -14,7 +14,7 @@
 #include "wType.h"
 
 //计算数组中个体的个数
-#define count_of(entry_v) (sizeof(entry_v) / sizeof((entry_v)[0]))
+#define countOf(entry_v) (sizeof(entry_v) / sizeof((entry_v)[0]))
 
 inline const char* IP2Text(DWORD ip)
 {
@@ -29,8 +29,26 @@ inline DWORD Text2IP(const char* ipstr)
 	return inet_addr(ipstr);
 }
 
+inline unsigned int HashString(const char* s)
+{
+	unsigned int hash = 5381;
+	while (*s)
+	{
+		hash += (hash << 5) + (*s ++);
+	}
+	return hash & 0x7FFFFFFF;
+}
+
 //获取毫秒级时间
-unsigned long long GetTickCount();
+inline unsigned long long GetTickCount()
+{
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return (unsigned long long)tv.tv_sec * 1000 + (unsigned long long)tv.tv_usec / 1000;
+}
+
+//变为守护进程
+int InitDaemon(const char *filename);
 
 //linux没有这个函数,不好说什么时候就用到了
 void itoa(unsigned long val, char *buf, unsigned radix);

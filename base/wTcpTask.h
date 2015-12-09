@@ -13,16 +13,6 @@
 #include "wType.h"
 #include "wSocket.h"
 
-//关闭客户端连接的原因
-/*
-enum CLOSE_REASON
-{
-	CLOSE_BY_ROUTER = 1,
-	CLOSE_BY_PEER,
-	CLOSE_BY_SERVER,
-};
-*/
-
 class wTcpTask
 {
 	public:

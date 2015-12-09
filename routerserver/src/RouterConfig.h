@@ -11,15 +11,14 @@
 #include <vector>
 
 #include "wType.h"
-#include "wLog.h"
-#include "wSingleton.h"
+#include "wConfig.h"
 
 #include "Rtbl.h"
 
 /**
  * 配置文件读取的数据结构
  */
-class RouterConfig: public wSingleton<RouterConfig>
+class RouterConfig: public wConfig<RouterConfig>
 {
 	public:
 		char mIPAddr[MAX_IP_LEN];
