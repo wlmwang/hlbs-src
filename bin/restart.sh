@@ -1,34 +1,21 @@
 #!/bin/bash
 
-export SERVER_HOME=~/server
+export SERVER_HOME=~/disvr
 
 ./stop.sh
 
-gatetarget='gatesvrd -D'
-
-target='dbsvrd -D'
+target='routersvrd -D'
 echo $target
-cd $SERVER_HOME/dbserver/bin
+cd $SERVER_HOME/routerserver/bin
 rm ../log/* -f
 ./$target
 sleep 2
 
-target='loginsvrd -D'
+target='agentsvrd -D'
 echo $target
-cd $SERVER_HOME/loginserver/bin
+cd $SERVER_HOME/agentserver/bin
 rm ../log/* -f
-./$gatetarget
-sleep 1
 ./$target
-sleep 1
-
-target='scenesvrd -D'
-echo $target
-cd $SERVER_HOME/sceneserver/bin
-rm ../log/* -f
-./$gatetarget
-sleep 1
-./$target
-sleep 1
+sleep 2
 
 ps aux | grep $USER | grep -v grep | grep svrd

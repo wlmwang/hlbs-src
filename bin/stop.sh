@@ -13,12 +13,10 @@ kill_proc()
 	echo
 }
 
-kill_proc scenesvrd
-kill_proc gatesvrd
-kill_proc loginsvrd
-kill_proc dbsvrd
+kill_proc routersvrd
+kill_proc agentsvrd
 
-echo "delete share memory" 
-shmid=`ipcs -m | grep -w $USER | awk '$6==0{printf " -m  " $2  " "}'` 
-echo "$shmid" 
-ipcrm $shmid
+#echo "delete share memory" 
+#shmid=`ipcs -m | grep -w $USER | awk '$6==0{printf " -m  " $2  " "}'` 
+#echo "$shmid" 
+#ipcrm $shmid
