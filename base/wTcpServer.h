@@ -199,7 +199,7 @@ void wTcpServer<T>::CleanEpoll()
 template <typename T>
 void wTcpServer<T>::CleanTaskPool()
 {
-	if(!mTcpTaskPool.empty())
+	if(mTcpTaskPool.size() > 0)
 	{
 		vector<wTcpTask*>::iterator iter;
 		for(iter = mTcpTaskPool.begin(); iter != mTcpTaskPool.end(); iter++)
