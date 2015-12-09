@@ -39,13 +39,6 @@ struct LoginFromS_t : LoginCmd_s
 	WORD wdServerType;
 };
 
-//客户端登录Router连接
-const BYTE PARA_CLIENT_LOGIN = 2;
-struct LoginFromC_t : LoginCmd_s
-{
-	LoginFromC_t() : LoginCmd_s(PARA_CLIENT_LOGIN), wdServerID(0), wdServerType(0) {}
-};
-
 #pragma pack()
 
 #endif

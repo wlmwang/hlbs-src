@@ -10,6 +10,8 @@
 #ifndef _W_HEAD_CMD_H_
 #define _W_HEAD_CMD_H_
 
+#include "wType.h"
+
 #define HEAD_CMD_LEN 4
 
 #pragma pack(1)
@@ -49,53 +51,6 @@ struct wHeadCmd
 		//mClientPort = 0;
 		//mClientState = 0;
 	}
-	
-	/*
-	bool SerializeToArray(char *vBuffer, int vBufferLen)
-	{
-		if( vBuffer == 0 || vBufferLen < HEAD_CMD_LEN )
-		{
-			return false;
-		}
-
-		char *pBuffer = vBuffer;
-		*(unsigned int *)pBuffer = mClientIP;
-		pBuffer += sizeof(int);
-		*(unsigned int *)pBuffer = mSockTime;
-		pBuffer += sizeof(int);
-		*(unsigned int *)pBuffer = mTimeStamp;
-		pBuffer += sizeof(int);
-		*(unsigned int *)pBuffer = mClientFD;
-		pBuffer += sizeof(int);
-		*(unsigned short *)pBuffer = mClientPort;
-		pBuffer += sizeof(short);
-		*(unsigned short *)pBuffer = mClientState;
-
-		return true;
-	}
-	bool ParseFromArray(char *vBuffer, int vBufferLen)
-	{
-		if( vBuffer == 0 || vBufferLen < NET_HEAD_LEN )
-		{
-			return false;
-		}
-
-		char *pBuffer = vBuffer;
-		mClientIP = *(unsigned int *)pBuffer;
-		pBuffer += sizeof(int);
-		mSockTime = *(unsigned int *)pBuffer;
-		pBuffer += sizeof(int);
-		mTimeStamp = *(unsigned int *)pBuffer;
-		pBuffer += sizeof(int);
-		mClientFD = *(unsigned int *)pBuffer;
-		pBuffer += sizeof(int);
-		mClientPort = *(unsigned short *)pBuffer;
-		pBuffer += sizeof(short);
-		mClientState = *(unsigned short *)pBuffer;
-
-		return true;
-	}
-	*/
 };
 
 #pragma pack()
