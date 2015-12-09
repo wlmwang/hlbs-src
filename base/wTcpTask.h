@@ -45,9 +45,19 @@ class wTcpTask
 		
 		virtual int HandleRecvMessage(char * pBuffer, int nLen) {}; //业务逻辑入口函数
 		
-		wSocket * Socket() { return mSocket; }		
+		wSocket * Socket() { return mSocket; }
+		
+		int Heartbeat();
+		
+		int HeartbeatOutTimes()
+		{
+			return mHeartbeatTimes > 3;
+		}
+		
 	protected:
 		wSocket *mSocket;
+		
+		int mHeartbeatTimes;
 		//接收消息的缓冲区 100k
 		int mRecvBytes;						//接收的字节数
 		char mRecvMsgBuff[MAX_RECV_BUFFER_LEN];	

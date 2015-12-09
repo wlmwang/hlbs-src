@@ -7,7 +7,7 @@
 #ifndef _W_ROUTER_COMMAND_H_
 #define _W_ROUTER_COMMAND_H_
 
-#include "wHeadCmd.h"
+#include "wCommand.h"
 
 #pragma pack(1)
 
@@ -20,12 +20,12 @@ enum SERVER_TYPE
 
 //Agent->Router的消息体
 const BYTE CMD_LOGIN          = 1;  //登录、连接指令
-struct LoginCmd_s : public wHeadCmd
+struct LoginCmd_s : public wCommand
 {
 	LoginCmd_s(BYTE para)
 	{
-		mCommand.cmd = CMD_LOGIN;
-		mCommand.para = para;
+		mCommand.mCmd = CMD_LOGIN;
+		mCommand.mPara = para;
 	}
 };
 

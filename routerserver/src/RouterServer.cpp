@@ -97,7 +97,20 @@ void RouterServer::CheckTimeout()
 				continue;
 			}
 			iIntervalTime = iNowTime - (*iter)->Socket()->Stamp();
-			if(iIntervalTime >= SOCKET_SEND_TIMEOUT)
+			//心跳检测
+			if(iIntervalTime >= KEEPALIVE_TIME)	//1s
+			{
+				if((*iter)->Heartbeat() < 0 && (*iter)->HeartbeatOutTimes())
+				{
+					LOG_ERROR("default", "client ip(%s) fd(%d) heartbeat pass limit (3) times, close it", (*iter)->Socket()->IPAddr().c_str(), (*iter)->Socket()->SocketFD());
+					if(RemoveEpoll(*iter) >= 0)
+					{
+						RemoveTaskPool(*iter);
+					}
+				}
+			}
+			//超时检测
+			if(iIntervalTime >= SOCKET_SEND_TIMEOUT)	//300ms
 			{
 				LOG_ERROR("default", "client ip(%s) fd(%d) do not send msg and timeout, close it", (*iter)->Socket()->IPAddr().c_str(), (*iter)->Socket()->SocketFD());
 				if(RemoveEpoll(*iter) >= 0)

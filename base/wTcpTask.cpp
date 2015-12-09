@@ -12,6 +12,7 @@
 
 #include "wLog.h"
 #include "wTcpTask.h"
+#include "wCommand.h"
 
 wTcpTask::wTcpTask(wSocket *pSocket)
 {
@@ -32,6 +33,7 @@ wTcpTask::~wTcpTask()
 void wTcpTask::Initialize()
 {
 	mSocket = NULL;
+	mHeartbeat = 0;
 	memset(&mSendMsgBuff, 0, sizeof(mSendMsgBuff));
 	memset(&mRecvMsgBuff, 0, sizeof(mRecvMsgBuff));
 }
@@ -47,6 +49,30 @@ void wTcpTask::CloseTcpTask(int eReason)
 		//...
 	}
 	mSocket->Close();
+}
+
+int wTcpTask::Heartbeat()
+{
+	wCommand cmd;
+	int iLen = 0;
+	char pBuffer = EncodeCmd(&cmd, &iLen);
+	int iSendLen = SyncSend(pBuffer,iLen);
+	SAFE_DELETE(pBuffer);
+	
+	//接受心跳返回
+	if(iSendLen > 0)
+	{
+		char vRecv[32];
+		int iRecvLen = mSocket->RecvBytes(vRecv, sizeof(vRecv));
+		if(iRecvLen > 0)
+		{
+			mHeartbeatTimes = 0;
+			mSocket->Stamp() = time(NULL);
+			return 0;
+		}
+	}
+	mHeartbeatTimes++;
+	return -1;
 }
 
 /**
