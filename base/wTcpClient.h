@@ -66,7 +66,7 @@ class wTcpClient
 
 		bool IsRunning()
 		{
-			return CLIENT_STATUS_INIT == mStatus;
+			return CLIENT_STATUS_RUNNING == mStatus;
 		}
 		
 		void SetStatus(CLIENT_STATUS eStatus = CLIENT_STATUS_QUIT)
@@ -96,19 +96,20 @@ class wTcpClient
 		wTcpClient(const wTcpClient&);
 		
         void Initialize();
-
+		virtual void PrepareRun();
+		virtual void Run();
+		
 		CLIENT_STATUS mStatus;	//服务器当前状态
 		//定时记录器
 		unsigned long long mLastTicker;	//服务器当前时间
 		
 		wTcpTask* TcpTask() { return mTcpTask; }
 		wSocket* Socket() { return mSocket; }
+		
 	protected:
 		string mClientName;
 		wSocket* mSocket;	//Connect Socket(主服务socket对象)
 		wTcpTask* mTcpTask;
-		
-		//unsigned int mTimeout;
 };
 
 template <typename T>
@@ -140,6 +141,7 @@ void wTcpClient<T>::Initialize()
 template <typename T>
 void wTcpClient<T>::Final()
 {
+	SetStatus();
 	SAFE_DELETE(mSocket);
 	SAFE_DELETE(mTcpTask);
 }
@@ -224,16 +226,29 @@ int wTcpClient<T>::ConnectToServer(char *vIPAddress, unsigned short vPort)
 			return -1;
 		}
 	}
+	
 	return 0;
+}
+
+template <typename T>
+void wTcpClient<T>::PrepareRun()
+{
+	SetStatus(CLIENT_STATUS_RUNNING);
+}
+
+template <typename T>
+void wTcpClient<T>::Run()
+{
+	if(IsRunning())
+	{
+		Recv();
+	}
 }
 
 template <typename T>
 void wTcpClient<T>::Recv()
 {
-	if(mTcpTask != NULL)
-	{
-		mTcpTask->ListeningRecv();
-	}
+	mTcpTask->ListeningRecv();
 }
 
 template <typename T>

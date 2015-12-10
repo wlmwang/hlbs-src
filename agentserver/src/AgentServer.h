@@ -31,7 +31,7 @@ class AgentServer: public wTcpServer<AgentServer>
 		
 		virtual void PrepareRun();
 		
-		virtual void Run(); //超时&&心跳
+		virtual void Run();
 		
 		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
 	    
@@ -43,9 +43,6 @@ class AgentServer: public wTcpServer<AgentServer>
 	private:
 		wMTcpClient<AgentServer,AgentServerTask> mRouterConn;	//连接router
 		
-		//服务器重连计时器
-		//wTimer mServerReconnectTimer;
-
 		//客户端检测计时器
 		wTimer mClientCheckTimer;
 };

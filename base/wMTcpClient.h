@@ -55,7 +55,7 @@ class wMTcpClient: public wSingleton<T>
 		
 		bool IsRunning()
 		{
-			return CLIENT_STATUS_INIT == mStatus;
+			return CLIENT_STATUS_RUNNING == mStatus;
 		}
 		
 		void SetStatus(CLIENT_STATUS eStatus = CLIENT_STATUS_QUIT)
@@ -125,6 +125,7 @@ wTcpClient<TASK>* wMTcpClient<T,TASK>::CreateClient(string sClientName, char *vI
 	int iRet = pTcpClient->ConnectToServer(vIPAddress, vPort);
 	if(iRet >= 0)
 	{
+		pTcpClient->PrepareRun();
 		return pTcpClient;
 	}
 	SAFE_DELETE(pTcpClient);
@@ -199,7 +200,7 @@ void wMTcpClient<T,TASK>::Start()
 template <typename T,typename TASK>
 void wMTcpClient<T,TASK>::PrepareStart()
 {
-	//...
+	SetStatus(CLIENT_STATUS_RUNNING);
 }
 
 template <typename T,typename TASK>
@@ -213,7 +214,7 @@ void wMTcpClient<T,TASK>::Recv()
         typename vector<wTcpClient<TASK>*>::iterator vIt = vTcpClient.begin();
 		for(vIt ; vIt != vTcpClient.end() ; vIt++)
 		{
-			(*vIt)->Recv();
+			(*vIt)->Run();
 		}
 	}
 }
