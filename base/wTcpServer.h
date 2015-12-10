@@ -74,7 +74,7 @@ class wTcpServer: public wSingleton<T>
 		void AcceptConn(int iSocketFD);
 		void AddToTaskPool(wTcpTask* stTcpTask);
 		void CleanTaskPool();
-	    void RemoveTaskPool(wTcpTask* stTcpTask);
+	    std::vector<wTcpTask*>::iterator RemoveTaskPool(wTcpTask* stTcpTask);
 
 		/**
 		 * 服务主循环逻辑，继承可以定制服务
@@ -512,16 +512,18 @@ int wTcpServer<T>::RemoveEpoll(wTcpTask* pTcpTask)
 	return 0;
 }
 
+//返回下一个迭代器
 template <typename T>
-void wTcpServer<T>::RemoveTaskPool(wTcpTask* pTcpTask)
+std::vector<wTcpTask*>::iterator wTcpServer<T>::RemoveTaskPool(wTcpTask* pTcpTask)
 {
     std::vector<wTcpTask*>::iterator it = std::find(mTcpTaskPool.begin(), mTcpTaskPool.end(), pTcpTask);
     if(it != mTcpTaskPool.end())
     {
-        //mTcpTaskPool.erase(it);
-		//SAFE_DELETE(*it);
+    	SAFE_DELETE(*it);
+        it = mTcpTaskPool.erase(it);
     }
     mTaskCount = mTcpTaskPool.size();
+    return it;
 }
 
 template <typename T>

@@ -33,7 +33,7 @@ RouterServer::~RouterServer()
  * 初始化
  */
 void RouterServer::Initialize()
-{	
+{
 	//初始化定时器
 	mServerReconnectTimer = wTimer(RECONNECT_TIME);
 	mClientCheckTimer = wTimer(CHECK_CLIENT_TIME);
@@ -105,19 +105,23 @@ void RouterServer::CheckTimeout()
 					LOG_ERROR("default", "client ip(%s) fd(%d) heartbeat pass limit (3) times, close it", (*iter)->Socket()->IPAddr().c_str(), (*iter)->Socket()->SocketFD());
 					if(RemoveEpoll(*iter) >= 0)
 					{
-						RemoveTaskPool(*iter);
+						iter = RemoveTaskPool(*iter);
+						iter--;
 					}
 				}
 			}
 			//超时检测
-			if(iIntervalTime >= SOCKET_SEND_TIMEOUT)	//300ms
+			/*
+			if(iIntervalTime >= CHECK_CLIENT_TIME)	//3s
 			{
 				LOG_ERROR("default", "client ip(%s) fd(%d) do not send msg and timeout, close it", (*iter)->Socket()->IPAddr().c_str(), (*iter)->Socket()->SocketFD());
 				if(RemoveEpoll(*iter) >= 0)
 				{
-					RemoveTaskPool(*iter);
+					iter = RemoveTaskPool(*iter);
+					iter--;
 				}
 			}
+			*/
 		}
 	}
 }

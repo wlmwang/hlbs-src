@@ -10,6 +10,7 @@
 #ifndef _W_COMMAND_H_
 #define _W_COMMAND_H_
 
+#include <string.h>
 #include "wType.h"
 
 #pragma pack(1)
@@ -32,6 +33,24 @@ struct wCommand
 	BYTE GetPara() const { return mPara; }
 	
 	wCommand(const BYTE cmd = CMD_NULL, const BYTE para = PARA_NULL) : mCmd(cmd), mPara(para) {};
+
+	
+	/****每个command都要重写这个函数*****/
+	char* Parse(int& pLen)
+	{
+		//
+	}
+	
+	/******每个command都要重写这个函数****/
+	char* Serialize(int& pLen)
+	{
+		int iSize = sizeof(this);
+		pLen = iSize + sizeof(int);
+		char* pBuffer = new char[pLen];
+		*(int*)pBuffer = iSize;
+		strncpy(pBuffer + sizeof(int), (char*)this, iSize);
+		return pBuffer;
+	}
 };
 
 #pragma pack()

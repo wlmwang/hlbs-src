@@ -31,11 +31,13 @@ int RouterServerTask::HandleRecvMessage(char * pBuffer, int nLen)
 
 int RouterServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen)
 {
-	switch(pHeadCmd->mCommand.GetCmd())
+	switch(pCommand->GetCmd())
 	{
 		case CMD_NULL:
 		{
-			//空消息
+			//空消息(心跳返回)
+			mHeartbeatTimes = 0;
+			mSocket->Stamp() = time(NULL);
 			break;
 		}
 		default:

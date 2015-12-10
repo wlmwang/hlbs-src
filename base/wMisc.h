@@ -54,13 +54,4 @@ int InitDaemon(const char *filename);
 //linux没有这个函数,不好说什么时候就用到了
 void itoa(unsigned long val, char *buf, unsigned radix);
 
-inline char * EncodeCmd(wCommand *pCmd,int *iLen)
-{
-	int iSize = sizeof(*pCmd);
-	iLen = iSize + sizeof(int);
-	char *pBuffer = new char[iLen];
-	*(int*)pBuffer = iSize;
-	strncpy(pBuffer, (char*)pCmd, iSize);
-	return pBuffer;
-}
 #endif

@@ -33,7 +33,7 @@ wTcpTask::~wTcpTask()
 void wTcpTask::Initialize()
 {
 	mSocket = NULL;
-	mHeartbeat = 0;
+	mHeartbeatTimes = 0;
 	memset(&mSendMsgBuff, 0, sizeof(mSendMsgBuff));
 	memset(&mRecvMsgBuff, 0, sizeof(mRecvMsgBuff));
 }
@@ -53,24 +53,13 @@ void wTcpTask::CloseTcpTask(int eReason)
 
 int wTcpTask::Heartbeat()
 {
-	wCommand cmd;
+	wCommand* pCmd;
 	int iLen = 0;
-	char pBuffer = EncodeCmd(&cmd, &iLen);
+	char *pBuffer = pCmd->Serialize(iLen);
 	int iSendLen = SyncSend(pBuffer,iLen);
-	SAFE_DELETE(pBuffer);
 	
-	//接受心跳返回
-	if(iSendLen > 0)
-	{
-		char vRecv[32];
-		int iRecvLen = mSocket->RecvBytes(vRecv, sizeof(vRecv));
-		if(iRecvLen > 0)
-		{
-			mHeartbeatTimes = 0;
-			mSocket->Stamp() = time(NULL);
-			return 0;
-		}
-	}
+	SAFE_DELETE(pBuffer);
+
 	mHeartbeatTimes++;
 	return -1;
 }
