@@ -22,16 +22,6 @@ void AgentConfig::ParseBaseConfig()
 		exit(1);
 	}
 
-	/*
-		--debug start
-
-		TiXmlPrinter stPrinter;//提供的工具类,目的是将xml的数据按格式输出
-		stDoc.Accept(&stPrinter);
-		cout<<stPrinter.CStr()<<endl;//输出
-
-		--debug end
-	*/
-
 	TiXmlElement *pRoot = stDoc.FirstChildElement();
 	if (NULL == pRoot)
 	{

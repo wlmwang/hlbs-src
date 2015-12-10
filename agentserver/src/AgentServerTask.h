@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 
 #include "wType.h"
-#include "wHeadCmd.h"
+#include "wCommand.h"
 #include "wTcpTask.h"
 #include "wLog.h"
 
@@ -23,7 +23,7 @@ class AgentServerTask : public wTcpTask
 		
 		virtual int HandleRecvMessage(char * pBuffer, int nLen);
 		
-		int ParseRecvMessage(struct wHeadCmd* pHeadCmd ,char *pBuffer,int iLen);
+		int ParseRecvMessage(struct wCommand* pCommand ,char *pBuffer,int iLen);
 };
 
 #endif

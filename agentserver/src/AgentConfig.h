@@ -10,16 +10,15 @@
 #include <string.h>
 #include <vector>
 
+#include "wConfig.h"
 #include "wType.h"
 #include "wLog.h"
 #include "wSingleton.h"
 
-//#include "Rtbl.h"
-
 /**
  * 配置文件读取的数据结构
  */
-class AgentConfig: public wSingleton<AgentConfig>
+class AgentConfig: public wConfig<AgentConfig>
 {
 	public:
 		char mIPAddr[MAX_IP_LEN];

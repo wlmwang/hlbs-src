@@ -25,11 +25,27 @@ int AgentServerTask::HandleRecvMessage(char * pBuffer, int nLen)
 {
 	W_ASSERT(pBuffer != NULL, return -1);
 	//解析消息
-	struct wHeadCmd *pHeadCmd = (struct wHeadCmd*) pBuffer;
-	return ParseRecvMessage(pHeadCmd , pBuffer - sizeof(struct wHeadCmd), nLen - sizeof(struct wHeadCmd));
+	struct wCommand *pCommand = (struct wCommand*) pBuffer;
+	return ParseRecvMessage(pCommand , pBuffer, nLen);
 }
 
-int AgentServerTask::ParseRecvMessage(struct wHeadCmd *pHeadCmd, char *pBuffer, int iLen)
+int AgentServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen)
 {
+	switch(pCommand->GetCmd())
+	{
+		case CMD_NULL:
+		{
+			//空消息(心跳返回)
+			mHeartbeatTimes = 0;
+			mSocket->Stamp() = time(NULL);
+			break;
+		}
+		default:
+		{
+			//LOG_DEBUG("default", "client fd(%d) send a invalid msg id(%u), close it", vClientFD, stHeadCmd.mCmd);
+			//DisconnectClient(vClientFD);
+			break;
+		}
+	}
 	return 0;
 }

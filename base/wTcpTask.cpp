@@ -76,7 +76,7 @@ int wTcpTask::ListeningRecv()
 	int iRecvLen = mSocket->RecvBytes(mRecvMsgBuff + iOffset, sizeof(mRecvMsgBuff) - iOffset);
 	if(iRecvLen <= 0)
 	{
-		LOG_NOTICE("default", "client %s socket fd(%d) close from connect port %d, return %d", mSocket->IPAddr().c_str(), mSocket->SocketFD(), mSocket->Port(), iRecvLen);
+		LOG_ERROR("default", "client %s socket fd(%d) close from connect port %d, return %d", mSocket->IPAddr().c_str(), mSocket->SocketFD(), mSocket->Port(), iRecvLen);
 		CloseTcpTask(1);
 		return -1;
 	}

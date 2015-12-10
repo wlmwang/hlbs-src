@@ -63,10 +63,6 @@ void AgentServer::Run()
 {
 	//检查服务器时间
 	CheckTimer();
-	
-	//--------------------------------------------------
-	// mConnectCtrl.ReceiveAndProcessMessage(ProcessMessage);
-	//-------------------------------------------------- 
 }
 
 //检查服务器时间
@@ -81,14 +77,6 @@ void AgentServer::CheckTimer()
 
 	//加上间隔时间
 	mLastTicker += iInterval;
-
-	//--------------------------------------------------
-	//检查连接状态，并试图重连
-	// if(mServerReconnectTimer.CheckTimer(iInterval)) 
-	// {
-	// 	mConnectCtrl.CheckConnectStatus();
-	// }
-	//-------------------------------------------------- 
 	
 	//检测客户端超时
 	if(mClientCheckTimer.CheckTimer(iInterval))
@@ -105,28 +93,41 @@ void AgentServer::CheckTimeout()
 	int iNowTime = time(NULL);
 	int iIntervalTime;
 	
-	if(!mTcpTaskPool.empty())
+	if(mTcpTaskPool.size() > 0)
 	{
 		vector<wTcpTask*>::iterator iter;
 		for(iter = mTcpTaskPool.begin(); iter != mTcpTaskPool.end(); iter++)
 		{
-			if((*iter)->Socket()->SocketFlag() == 0)
-			{
-				continue;
-			}
 			if ((*iter)->Socket()->SocketType() != CONNECT_SOCKET)
 			{
 				continue;
 			}
 			iIntervalTime = iNowTime - (*iter)->Socket()->Stamp();
-			if(iIntervalTime >= SOCKET_SEND_TIMEOUT)
+			//心跳检测
+			if(iIntervalTime >= KEEPALIVE_TIME)	//1s
 			{
-				LOG_ERROR("default", "client ip(%s) fd(%d) do not send msg and timeout, close it", (*iter)->Socket()->IPAddr(), (*iter)->Socket()->SocketFD());
-				if(RemoveEpoll(*iter))
+				if((*iter)->Heartbeat() < 0 && (*iter)->HeartbeatOutTimes())
 				{
-					RemoveTaskPool(*iter);
+					LOG_ERROR("default", "client ip(%s) fd(%d) heartbeat pass limit (3) times, close it", (*iter)->Socket()->IPAddr().c_str(), (*iter)->Socket()->SocketFD());
+					if(RemoveEpoll(*iter) >= 0)
+					{
+						iter = RemoveTaskPool(*iter);
+						iter--;
+					}
 				}
 			}
+			//超时检测
+			/*
+			if(iIntervalTime >= CHECK_CLIENT_TIME)	//3s
+			{
+				LOG_ERROR("default", "client ip(%s) fd(%d) do not send msg and timeout, close it", (*iter)->Socket()->IPAddr().c_str(), (*iter)->Socket()->SocketFD());
+				if(RemoveEpoll(*iter) >= 0)
+				{
+					iter = RemoveTaskPool(*iter);
+					iter--;
+				}
+			}
+			*/
 		}
 	}
 }
