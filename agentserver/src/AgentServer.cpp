@@ -63,6 +63,7 @@ void AgentServer::PrepareRun()
 
 void AgentServer::Run()
 {
+	mRouterConn.PrepareStart();
 	mRouterConn.Start();
 	mRouterConn.CheckTimer();
 

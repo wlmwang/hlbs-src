@@ -151,7 +151,7 @@ int wTcpClient<T>::ReConnectToServer()
 	{
 		if (mSocket->SocketFD < 0)
 		{
-			return ConnectToServer(mSocket->IPAddr(), mSocket->Port());
+			return ConnectToServer(mSocket->IPAddr().c_str(), mSocket->Port());
 		}
 		return 0;
 	}

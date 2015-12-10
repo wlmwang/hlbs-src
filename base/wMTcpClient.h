@@ -25,6 +25,7 @@
 #include <arpa/inet.h>
 
 #include "wType.h"
+#include "wTimer.h"
 #include "wMisc.h"
 #include "wLog.h"
 #include "wSingleton.h"
@@ -45,7 +46,7 @@ class wMTcpClient: public wSingleton<T>
 		
 		bool GenerateClient(int iType, string sClientName, char *vIPAddress, unsigned short vPort);
 		
-		//void PrepareStart();
+		void PrepareStart();
 		void Start();
 		
 		virtual void Run();
@@ -78,8 +79,8 @@ class wMTcpClient: public wSingleton<T>
 		
 		//定时记录器
 		unsigned long long mLastTicker;	//服务器当前时间
-		//服务器重连计时器
-		wTimer mServerReconnectTimer;
+		//重连计时器
+		wTimer mReconnectTimer;
 		int mReconnectTimes;
 
         std::map<int, vector<wTcpClient<TASK>*> > mTcpClient;	//每种类型客户端，可挂载多个连接
@@ -101,7 +102,7 @@ wMTcpClient<T,TASK>::~wMTcpClient()
 template <typename T,typename TASK>
 void wMTcpClient<T,TASK>::Initialize()
 {
-	mServerReconnectTimer = wTimer(RECONNECT_TIME);
+	mReconnectTimer = wTimer(RECONNECT_TIME);
 	mLastTicker = GetTickCount();
 	mReconnectTimes = 0;
 }
@@ -126,6 +127,7 @@ wTcpClient<TASK>* wMTcpClient<T,TASK>::CreateClient(string sClientName, char *vI
 	{
 		return pTcpClient;
 	}
+	SAFE_DELETE(pTcpClient);
 	return NULL;
 }
 
@@ -154,13 +156,18 @@ bool wMTcpClient<T,TASK>::CleanTcpClient(int iType, wTcpClient<TASK> *pTcpClient
 	typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClient.find(iType);
 	if(mt != mTcpClient.end())
 	{
+		vector<wTcpClient<TASK>*> vTcpClient = mt->second;
 		if(pTcpClient == NULL)
 		{
+			typename vector<wTcpClient<TASK>*>::iterator it = vTcpClient.begin();
+			for(it; it != vTcpClient.end(); it++)
+			{
+				SAFE_DELETE(*it);
+			}
 			return mTcpClient.erase(mt) == 1;
 		}
 		else
 		{
-			vector<wTcpClient<TASK>*> vTcpClient = mt->second;
 			typename vector<wTcpClient<TASK>*>::iterator it = find(vTcpClient.begin(), vTcpClient.end(), pTcpClient);
 			if(it != vTcpClient.end())
 			{
@@ -190,6 +197,12 @@ void wMTcpClient<T,TASK>::Start()
 }
 
 template <typename T,typename TASK>
+void wMTcpClient<T,TASK>::PrepareStart()
+{
+	//...
+}
+
+template <typename T,typename TASK>
 void wMTcpClient<T,TASK>::Recv()
 {
     typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClient.begin();
@@ -198,16 +211,9 @@ void wMTcpClient<T,TASK>::Recv()
 		vector<wTcpClient<TASK>* > vTcpClient = mt->second;
         
         typename vector<wTcpClient<TASK>*>::iterator vIt = vTcpClient.begin();
-		for(vIt ; vIt != vTcpClient.end() ;vIt++)
+		for(vIt ; vIt != vTcpClient.end() ; vIt++)
 		{
-			if(*vIt == NULL)
-			{
-				SAFE_DELETE(*vIt);
-			}
-			else
-			{
-				(*vIt)->Recv();
-			}
+			(*vIt)->Recv();
 		}
 	}
 }
@@ -219,7 +225,7 @@ void wMTcpClient<T,TASK>::CheckReconnect()
 	int iIntervalTime;
 
     typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClient.begin();
-	for(mt; mt != mTcpClient.end(); mt++)
+	for(mt; mt != mTcpClient.end() ; mt++)
 	{
 		vector<wTcpClient<TASK>* > vTcpClient = mt->second;
         
@@ -228,10 +234,6 @@ void wMTcpClient<T,TASK>::CheckReconnect()
 		{
 			//task
 			wTcpTask *pTcpTask = (*vIt)->TcpTask();
-			if (pTcpTask == NULL)
-			{
-				continue;
-			}
 			if (pTcpTask->Socket()->SocketType() != CONNECT_SOCKET)
 			{
 				continue;
@@ -239,15 +241,27 @@ void wMTcpClient<T,TASK>::CheckReconnect()
 			iIntervalTime = iNowTime - pTcpTask->Socket()->Stamp();
 			if (iIntervalTime >= KEEPALIVE_TIME)
 			{
-				if(pTcpTask->Socket()->SocketFD() < 0 && mReconnectTimes < 5)
+				if(pTcpTask->Socket()->SocketFD() < 0)
 				{
-					if((*vIt)->ReConnectToServer() == 0)
+					
+					if(mReconnectTimes >= 5)
 					{
-						mReconnectTimes = 0;
-						continue;
+						SAFE_DELETE(*vIt);
+						vIt = vTcpClient.erase(vIt);
+						vIt--;
+					}
+					else
+					{
+						if((*vIt)->ReConnectToServer() >= 0)
+						{
+							mReconnectTimes = 0;
+						}
+						else
+						{
+							mReconnectTimes++;
+						}
 					}
 				}
-				mReconnectTimes++;
 			}
 		}
 	}
@@ -267,7 +281,7 @@ void wMTcpClient<T,TASK>::CheckTimer()
 	mLastTicker += iInterval;
 	
 	//检测客户端超时
-	if(mServerReconnectTimer.CheckTimer(iInterval))
+	if(mReconnectTimer.CheckTimer(iInterval))
 	{
 		CheckReconnect();
 	}
