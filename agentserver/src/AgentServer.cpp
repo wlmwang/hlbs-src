@@ -35,7 +35,7 @@ AgentServer::~AgentServer()
 void AgentServer::Initialize()
 {
 	//初始化定时器
-	mServerReconnectTimer = wTimer(RECONNECT_TIME);
+	//mServerReconnectTimer = wTimer(RECONNECT_TIME);
 	mClientCheckTimer = wTimer(CHECK_CLIENT_TIME);
 	
 	//连接Router服务
@@ -46,6 +46,7 @@ void AgentServer::ConnectRouter()
 {
 	//mRouterConn
 	mRouterConn.GenerateClient(1, "RouterFromAgent", AgentConfig::Instance()->mRouterIPAddr, AgentConfig::Instance()->mRouterPort);
+	//cout << mRouterConn.OneTcpClient(1)->GetClientName();
 }
 
 wTcpTask* AgentServer::NewTcpTask(wSocket *pSocket)
@@ -57,10 +58,14 @@ wTcpTask* AgentServer::NewTcpTask(wSocket *pSocket)
 //准备工作
 void AgentServer::PrepareRun()
 {
+	mRouterConn.SetStatus(CLIENT_STATUS_RUNNING);
 }
 
 void AgentServer::Run()
 {
+	mRouterConn.Start();
+	mRouterConn.CheckTimer();
+
 	//检查服务器时间
 	CheckTimer();
 }

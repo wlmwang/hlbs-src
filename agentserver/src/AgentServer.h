@@ -36,6 +36,7 @@ class AgentServer: public wTcpServer<AgentServer>
 		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
 	    
 		void ConnectRouter();
+
 		void CheckTimer();
 		void CheckTimeout();
 		
@@ -43,7 +44,7 @@ class AgentServer: public wTcpServer<AgentServer>
 		wMTcpClient<AgentServer,AgentServerTask> mRouterConn;	//连接router
 		
 		//服务器重连计时器
-		wTimer mServerReconnectTimer;
+		//wTimer mServerReconnectTimer;
 
 		//客户端检测计时器
 		wTimer mClientCheckTimer;

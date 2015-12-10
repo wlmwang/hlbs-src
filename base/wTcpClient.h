@@ -62,6 +62,8 @@ class wTcpClient
 		
 		int ConnectToServer(char *vIPAddress, unsigned short vPort);
 		
+		int ReConnectToServer();
+
 		bool IsRunning()
 		{
 			return CLIENT_STATUS_INIT == mStatus;
@@ -99,6 +101,8 @@ class wTcpClient
 		//定时记录器
 		unsigned long long mLastTicker;	//服务器当前时间
 		
+		wTcpTask* TcpTask() { return mTcpTask; }
+		wSocket* Socket() { return mSocket; }
 	protected:
 		string mClientName;
 		wSocket* mSocket;	//Connect Socket(主服务socket对象)
@@ -138,6 +142,20 @@ void wTcpClient<T>::Final()
 {
 	SAFE_DELETE(mSocket);
 	SAFE_DELETE(mTcpTask);
+}
+
+template <typename T>
+int wTcpClient<T>::ReConnectToServer()
+{
+	if (mSocket != NULL)
+	{
+		if (mSocket->SocketFD < 0)
+		{
+			return ConnectToServer(mSocket->IPAddr(), mSocket->Port());
+		}
+		return 0;
+	}
+	return -1;
 }
 
 template <typename T>
