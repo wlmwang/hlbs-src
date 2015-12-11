@@ -62,7 +62,6 @@ void AgentServer::PrepareRun()
 void AgentServer::Run()
 {
 	mRouterConn.Start();
-	mRouterConn.CheckTimer();
 
 	//检查服务器时间
 	CheckTimer();

@@ -35,7 +35,6 @@ RouterServer::~RouterServer()
 void RouterServer::Initialize()
 {
 	//初始化定时器
-	mServerReconnectTimer = wTimer(RECONNECT_TIME);
 	mClientCheckTimer = wTimer(CHECK_CLIENT_TIME);
 }
 

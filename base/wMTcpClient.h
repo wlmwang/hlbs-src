@@ -67,9 +67,6 @@ class wMTcpClient: public wSingleton<T>
 		{
 			return mStatus;
 		}
-		
-		void CheckTimer();
-		void CheckReconnect();
 
 		vector<wTcpClient<TASK>*> TcpClients(int iType);
 		wTcpClient<TASK>* OneTcpClient(int iType);
@@ -79,9 +76,6 @@ class wMTcpClient: public wSingleton<T>
 		
 		//定时记录器
 		unsigned long long mLastTicker;	//服务器当前时间
-		//重连计时器
-		wTimer mReconnectTimer;
-		int mReconnectTimes;
 
         std::map<int, vector<wTcpClient<TASK>*> > mTcpClient;	//每种类型客户端，可挂载多个连接
 };
@@ -102,9 +96,7 @@ wMTcpClient<T,TASK>::~wMTcpClient()
 template <typename T,typename TASK>
 void wMTcpClient<T,TASK>::Initialize()
 {
-	mReconnectTimer = wTimer(RECONNECT_TIME);
 	mLastTicker = GetTickCount();
-	mReconnectTimes = 0;
 }
 
 template <typename T,typename TASK>
@@ -115,6 +107,7 @@ bool wMTcpClient<T,TASK>::GenerateClient(int iType, string sClientName, char *vI
 	{
 	    return AddTcpClient(iType, pTcpClient);
 	}
+	LOG_DEBUG("default", "connect to (%s)server faild!",sClientName.c_str());
 	return false;
 }
 
@@ -125,7 +118,7 @@ wTcpClient<TASK>* wMTcpClient<T,TASK>::CreateClient(string sClientName, char *vI
 	int iRet = pTcpClient->ConnectToServer(vIPAddress, vPort);
 	if(iRet >= 0)
 	{
-		pTcpClient->PrepareRun();
+		pTcpClient->PrepareStart();
 		return pTcpClient;
 	}
 	SAFE_DELETE(pTcpClient);
@@ -165,7 +158,8 @@ bool wMTcpClient<T,TASK>::CleanTcpClient(int iType, wTcpClient<TASK> *pTcpClient
 			{
 				SAFE_DELETE(*it);
 			}
-			return mTcpClient.erase(mt) == 1;
+			mTcpClient.erase(mt);
+			return true;
 		}
 		else
 		{
@@ -188,7 +182,6 @@ template <typename T,typename TASK>
 void wMTcpClient<T,TASK>::Start()
 {
 	//进入服务主服务
-	//while(IsRunning())
 	if(IsRunning())
 	{
 		Recv();
@@ -210,81 +203,23 @@ void wMTcpClient<T,TASK>::Recv()
 	for(mt; mt != mTcpClient.end(); mt++)
 	{
 		vector<wTcpClient<TASK>* > vTcpClient = mt->second;
-        
+        int iType = mt->first;
         typename vector<wTcpClient<TASK>*>::iterator vIt = vTcpClient.begin();
 		for(vIt ; vIt != vTcpClient.end() ; vIt++)
 		{
-			(*vIt)->Run();
-		}
-	}
-}
-
-template <typename T,typename TASK>
-void wMTcpClient<T,TASK>::CheckReconnect()
-{
-	int iNowTime = time(NULL);
-	int iIntervalTime;
-
-    typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClient.begin();
-	for(mt; mt != mTcpClient.end() ; mt++)
-	{
-		vector<wTcpClient<TASK>* > vTcpClient = mt->second;
-        
-        typename vector<wTcpClient<TASK>*>::iterator vIt = vTcpClient.begin();
-		for(vIt ; vIt != vTcpClient.end() ;vIt++)
-		{
-			//task
-			wTcpTask *pTcpTask = (*vIt)->TcpTask();
-			if (pTcpTask->Socket()->SocketType() != CONNECT_SOCKET)
+			if((*vIt)->IsRunning())
 			{
-				continue;
+				(*vIt)->Start();
 			}
-			iIntervalTime = iNowTime - pTcpTask->Socket()->Stamp();
-			if (iIntervalTime >= KEEPALIVE_TIME)
+			else
 			{
-				if(pTcpTask->Socket()->SocketFD() < 0)
+				LOG_DEBUG("default", "Reconnect out of limit times");
+				if(CleanTcpClient(iType ,*vIt))
 				{
-					
-					if(mReconnectTimes >= 5)
-					{
-						SAFE_DELETE(*vIt);
-						vIt = vTcpClient.erase(vIt);
-						vIt--;
-					}
-					else
-					{
-						if((*vIt)->ReConnectToServer() >= 0)
-						{
-							mReconnectTimes = 0;
-						}
-						else
-						{
-							mReconnectTimes++;
-						}
-					}
+					vIt = vTcpClient.begin();
 				}
 			}
 		}
-	}
-}
-
-template <typename T,typename TASK>
-void wMTcpClient<T,TASK>::CheckTimer()
-{
-	int iInterval = (int)(GetTickCount() - mLastTicker);
-
-	if(iInterval < 100) 	//100ms
-	{
-		return;
-	}
-
-	//加上间隔时间
-	mLastTicker += iInterval;
-	
-	//检测客户端超时
-	if(mReconnectTimer.CheckTimer(iInterval))
-	{
-		CheckReconnect();
 	}
 }
 

@@ -34,9 +34,6 @@ class RouterServer: public wTcpServer<RouterServer>
 		void CheckTimeout();
 		
 	private:
-		//服务器重连计时器
-		wTimer mServerReconnectTimer;
-
 		//客户端检测计时器
 		wTimer mClientCheckTimer;
 };

@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
+#include <string.h>
 
 #include "wCommand.h"
 #include "wType.h"
@@ -53,5 +54,20 @@ int InitDaemon(const char *filename);
 
 //linux没有这个函数,不好说什么时候就用到了
 void itoa(unsigned long val, char *buf, unsigned radix);
+
+template<typename T> char* Serialize(T& vCmd,int& pLen)
+{
+	int iSize = sizeof(T);
+	pLen = iSize + sizeof(int);
+	char* pBuffer = new char[pLen];
+	*(int*)pBuffer = iSize;
+	strncpy(pBuffer + sizeof(int), (char*)&vCmd, iSize);
+	return pBuffer;
+}
+
+template<typename T> char* Parse(int& pLen)
+{
+	//
+}
 
 #endif

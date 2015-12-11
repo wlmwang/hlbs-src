@@ -4,6 +4,7 @@
  * Copyright (C) Disvr, Inc.
  */
 
+#include <iostream>
 #include <unistd.h>
 #include <sys/time.h>
 #include <arpa/inet.h>
@@ -13,6 +14,7 @@
 #include "wLog.h"
 #include "wTcpTask.h"
 #include "wCommand.h"
+#include "wMisc.h"
 
 wTcpTask::wTcpTask(wSocket *pSocket)
 {
@@ -53,9 +55,9 @@ void wTcpTask::CloseTcpTask(int eReason)
 
 int wTcpTask::Heartbeat()
 {
-	wCommand* pCmd;
+	wCommand vCmd;
 	int iLen = 0;
-	char *pBuffer = pCmd->Serialize(iLen);
+	char *pBuffer = Serialize(vCmd, iLen);
 	int iSendLen = SyncSend(pBuffer,iLen);
 	
 	SAFE_DELETE(pBuffer);
@@ -81,6 +83,8 @@ int wTcpTask::ListeningRecv()
 		return -1;
 	}
 	
+	//cout<<"data:"<<mRecvMsgBuff<<"|"<<iRecvLen<<endl;
+
 	mRecvBytes = mRecvBytes + iRecvLen;	//已接受消息总字节数
 
 	char *pBuffer = mRecvMsgBuff;
