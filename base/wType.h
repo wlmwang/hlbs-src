@@ -50,7 +50,7 @@ typedef signed long SQWORD;
 #define MAX_CLIENT_MSG_LEN MAX_PACKAGE_LEN
 
 //客户端消息的最短长度
-#define MIN_CLIENT_MSG_LEN 4
+#define MIN_CLIENT_MSG_LEN 1
 
 //心跳包间隔时间
 #define KEEPALIVE_TIME 1000 /* 1 * 1000 */

@@ -79,7 +79,6 @@ int wTcpTask::ListeningRecv()
 	if(iRecvLen <= 0)
 	{
 		LOG_ERROR("default", "client %s socket fd(%d) close from connect port %d, return %d", mSocket->IPAddr().c_str(), mSocket->SocketFD(), mSocket->Port(), iRecvLen);
-		CloseTcpTask(1);
 		return -1;
 	}
 	

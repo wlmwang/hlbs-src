@@ -7,6 +7,7 @@
 #ifndef _W_TCP_CLIENT_H_
 #define _W_TCP_CLIENT_H_
 
+//#include <iostream>
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
@@ -156,7 +157,7 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 
 	if(mTcpTask != NULL)
 	{
-		SAFE_DELETE(mTcpTask);
+		mTcpTask.Socket().Close();
 	}
 	
 	int iSocketFD = socket(AF_INET, SOCK_STREAM, 0);
@@ -210,8 +211,6 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 			LOG_ERROR("default", "set non block failed: %d, close it", iSocketFD);
 			return -1;
 		}
-
-		//send(iSocketFD,"hello server",sizeof("hello server"),0);
 
 		return 0;
 	}
@@ -268,20 +267,14 @@ void wTcpClient<T>::CheckReconnect()
 	{
 		if(mTcpTask->Socket()->SocketFD() < 0)
 		{
-			if(mReconnectTimes >= 5)
+			if(mTcpTask->Heartbeat() < 0 && mTcpTask->HeartbeatOutTimes())
 			{
 				SetStatus();
+				LOG_INFO("default", "disconnect server : out of heartbeat times");
 			}
 			else
 			{
-				if(ReConnectToServer() >= 0)
-				{
-					mReconnectTimes = 0;
-				}
-				else
-				{
-					mReconnectTimes++;
-				}
+				ReConnectToServer();
 			}
 		}
 	}
