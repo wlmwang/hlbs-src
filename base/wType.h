@@ -70,25 +70,5 @@ typedef signed long SQWORD;
 
 #define MAX_RECV_BUFFER_LEN 100 * 1024
 
-
-
-//消息队列的长度
-#ifdef _DEBUG_
-#define MSG_QUEUE_LEN 4194304 /* 1024 * 1024 * 4 */
-#else
-#define MSG_QUEUE_LEN 16777216 /* 1024 * 1024 * 16 */
-#endif
-
-//断连客户端时所需要的缓冲区长度
-#define DISCONNECT_MSG_LEN 30
-
-//网关服务器对客户端的缓冲区大小
-#define MAX_CLIENT_MSG_BUFFER_LEN 153600 /* 150 * 1024 */
-
-//服务器之间如果断连，下一次检测重连的时间
-#define RECONNECT_TIME 60000 /* 60 * 1000 */
-
-//向服务器注册，下一次检测重连的时间
-#define REGISTER_TIME 3000 /* 3 * 1000 */
 using namespace std;
 #endif

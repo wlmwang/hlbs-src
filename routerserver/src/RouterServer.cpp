@@ -35,7 +35,7 @@ RouterServer::~RouterServer()
 void RouterServer::Initialize()
 {
 	//初始化定时器
-	mClientCheckTimer = wTimer(CHECK_CLIENT_TIME);
+	mClientCheckTimer = wTimer(KEEPALIVE_TIME);
 }
 
 wTcpTask* RouterServer::NewTcpTask(wSocket *pSocket)

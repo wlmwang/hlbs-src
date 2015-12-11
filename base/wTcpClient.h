@@ -120,7 +120,7 @@ template <typename T>
 void wTcpClient<T>::Initialize()
 {
 	mLastTicker = GetTickCount();
-	mReconnectTimer = wTimer(RECONNECT_TIME);
+	mReconnectTimer = wTimer(KEEPALIVE_TIME);
 	mReconnectTimes = 0;
 	mClientName = "";
 	mTcpTask = NULL;
@@ -265,17 +265,14 @@ void wTcpClient<T>::CheckReconnect()
 	iIntervalTime = iNowTime - mTcpTask->Socket()->Stamp();
 	if (iIntervalTime >= KEEPALIVE_TIME)
 	{
-		if(mTcpTask->Socket()->SocketFD() < 0)
+		if(mTcpTask->Heartbeat() < 0 && mTcpTask->HeartbeatOutTimes())
 		{
-			if(mTcpTask->Heartbeat() < 0 && mTcpTask->HeartbeatOutTimes())
-			{
-				SetStatus();
-				LOG_INFO("default", "disconnect server : out of heartbeat times");
-			}
-			else
-			{
-				ReConnectToServer();
-			}
+			SetStatus();
+			LOG_INFO("default", "disconnect server : out of heartbeat times");
+		}
+		else
+		{
+			ReConnectToServer();
 		}
 	}
 }
