@@ -41,8 +41,16 @@ template <typename T>
 class wTcpClient
 {
 	public:
-		void Recv();
-		void Send();
+		virtual ~wTcpClient();
+		
+        wTcpClient(int iType, string sClientName, int vInitFlag = true);
+	    	
+		wTcpClient(const wTcpClient&);
+		
+		void Initialize();
+		
+		int ListeningRecv();
+		int Send();
 		
 		int ConnectToServer(const char *vIPAddress, unsigned short vPort);
 		
@@ -68,17 +76,14 @@ class wTcpClient
 			return mClientName;
 		}
 		
+		int GetType()
+		{
+			return mType;
+		}
+		
 		void Final();
 		
-		wTcpTask* NewTcpTask(wSocket *pSocket);
-		
-		virtual ~wTcpClient();
-		
-        wTcpClient(string sClientName, int vInitFlag = true);
-	    	
-		wTcpClient(const wTcpClient&);
-		
-        void Initialize();
+		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
 
 		virtual void PrepareStart();
 		virtual void Start();
@@ -91,6 +96,7 @@ class wTcpClient
 		wTcpTask* TcpTask() { return mTcpTask; }
 		
 	protected:
+		int mType;
 		string mClientName;		
 		wTcpTask* mTcpTask;
 
@@ -100,20 +106,15 @@ class wTcpClient
 };
 
 template <typename T>
-wTcpClient<T>::wTcpClient(string sClientName, int vInitFlag)
+wTcpClient<T>::wTcpClient(int iType, string sClientName, int vInitFlag)
 {
 	if(vInitFlag)
 	{
 		mStatus = CLIENT_STATUS_INIT;
 		Initialize();
 	}
+	mType = iType;
 	mClientName = sClientName;
-}
-
-template <typename T>
-wTcpClient<T>::~wTcpClient()
-{
-	Final();
 }
 
 template <typename T>
@@ -123,7 +124,14 @@ void wTcpClient<T>::Initialize()
 	mReconnectTimer = wTimer(KEEPALIVE_TIME);
 	mReconnectTimes = 0;
 	mClientName = "";
+	mType = 0;
 	mTcpTask = NULL;
+}
+
+template <typename T>
+wTcpClient<T>::~wTcpClient()
+{
+	Final();
 }
 
 template <typename T>
@@ -157,7 +165,7 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 
 	if(mTcpTask != NULL)
 	{
-		mTcpTask.Socket().Close();
+		SAFE_DELETE(mTcpTask);
 	}
 	
 	int iSocketFD = socket(AF_INET, SOCK_STREAM, 0);
@@ -278,18 +286,23 @@ void wTcpClient<T>::CheckReconnect()
 }
 
 template <typename T>
-void wTcpClient<T>::Recv()
+int wTcpClient<T>::ListeningRecv()
 {
 	if (mTcpTask != NULL && IsRunning())
 	{
-		mTcpTask->ListeningRecv();
+		return mTcpTask->ListeningRecv();
 	}
+	return -1;
 }
 
 template <typename T>
-void wTcpClient<T>::Send()
+int wTcpClient<T>::ListeningSend()
 {
-	//...
+	if (mTcpTask != NULL && IsRunning())
+	{
+		return mTcpTask->ListeningSend();
+	}
+	return -1;
 }
 
 template <typename T>

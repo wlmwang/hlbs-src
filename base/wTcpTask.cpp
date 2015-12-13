@@ -68,8 +68,9 @@ int wTcpTask::Heartbeat()
 
 /**
  *  处理接受到数据
- *  每条消息大小不能超过100k
+ *  每条消息大小[1b,100k)
  *  核心逻辑：接受整条消息，然后进入用户定义的业务函数HandleRecvMessage
+ *  return ：<0 对端发生错误|消息超长 =0 对端关闭(FIN_WAIT1) >0 接受字符
  */
 int wTcpTask::ListeningRecv()
 {
@@ -79,7 +80,7 @@ int wTcpTask::ListeningRecv()
 	if(iRecvLen <= 0)
 	{
 		LOG_ERROR("default", "client %s socket fd(%d) close from connect port %d, return %d", mSocket->IPAddr().c_str(), mSocket->SocketFD(), mSocket->Port(), iRecvLen);
-		return -1;
+		return iRecvLen;	
 	}
 	
 	//cout<<"data:"<<mRecvMsgBuff<<"|"<<iRecvLen<<endl;
@@ -106,7 +107,6 @@ int wTcpTask::ListeningRecv()
 		if(iMsgLen <= MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN )
 		{
 			LOG_ERROR("default", "get invalid len %d from %s fd(%d)", iMsgLen, mSocket->IPAddr().c_str(), mSocket->SocketFD());
-			CloseTcpTask(0);
 			return -1;
 		}
 
@@ -151,12 +151,7 @@ int wTcpTask::ListeningRecv()
 		memmove(mRecvMsgBuff, pBuffer, iBuffMsgLen);	//清除已处理消息
 	}
 	
-	return 0;
-}
-
-int wTcpTask::SyncSend(char *vArray, int vLen)
-{
-	return mSocket->SendBytes(vArray, vLen);
+	return iRecvLen;
 }
 
 /**
@@ -164,35 +159,88 @@ int wTcpTask::SyncSend(char *vArray, int vLen)
  *  加锁
  */
 int wTcpTask::ListeningSend()
-{
-	return 0;
-}
-
-/**
- *  异步发送客户端消息
- *  TODO.
- *  加锁
- */
-int wTcpTask::AsyncSend(char *vArray, int vLen)
-{
-	int iMsgLen = *(int *)vArray;	//消息总长度。
-	//判断消息长度
-	if(iMsgLen <= MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN )
+{	
+	//循环发送缓冲区中数据
+	while(1)
 	{
-		LOG_ERROR("default", "message invalid len %d from %s fd(%d)", iMsgLen, mSocket->IPAddr().c_str(), mSocket->SocketFD());
-		return -1;
+		int iMsgLen = mSendWrite - mSendBytes;
+		
+		if(iMsgLen <= 0)
+		{
+			return 0;
+		}
+		
+		int iSendLen = mSocket->SendBytes(mSendMsgBuff + mSendBytes, iMsgLen);
+		
+		if(iSendLen < 0)
+		{
+			return iSendLen;
+		}
+		
+		if(iSendLen < iMsgLen)
+		{
+			mSendBytes += iSendLen;
+			continue;
+		}
+#ifdef _DEBUG_
+		LOG_DEBUG("default", "get %d bytes msg from %s client fd(%d) to main server", iMsgLen, mSocket->IPAddr().c_str(), mSocket->SocketFD());
+#endif
 	}
 	
-	if(sizeof(mSendMsgBuff) - mSendWrite + mSendBytes < iMsgLen + sizeof(int)) //剩余空间不足
-	{
-		return -1;
-	}
-	else if(sizeof(mSendMsgBuff) - mSendWrite < iMsgLen + sizeof(int)) //写入空间不足
+	int iSendLen = mSendBytes;
+	if(mSendBytes > 0)
 	{
 		memmove(mSendMsgBuff, mSendMsgBuff + mSendBytes, mSendWrite - mSendBytes);	//清除已处理消息
 		mSendWrite -= mSendBytes;
 		mSendBytes = 0;
 	}
-	strncpy(mSendMsgBuff + mSendWrite, vArray, vLen);
+	return iSendLen;
+}
+
+/**
+ *  异步发送客户端消息
+ *  加锁 TODO.
+ *  return 
+ *  -1 ：消息长度不合法
+ *  -2 ：发送缓冲剩余空间不足，请稍后重试
+ *   0 : 发送成功
+ */
+int wTcpTask::AsyncSend(const char *pCmd, int iLen)
+{	
+	//判断消息长度
+	if(iLen <= MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN )
+	{
+		LOG_ERROR("default", "message invalid len %d from %s fd(%d)", iLen, mSocket->IPAddr().c_str(), mSocket->SocketFD());
+		return -1;
+	}
+	
+	//lock
+	int iMsgLen = iLen + sizeof(int);
+	if(sizeof(mSendMsgBuff) - mSendWrite + mSendBytes < iMsgLen) //剩余空间不足
+	{
+		return -2;
+	}
+	else if(sizeof(mSendMsgBuff) - mSendWrite < iMsgLen) //写入空间不足
+	{
+		memmove(mSendMsgBuff, mSendMsgBuff + mSendBytes, mSendWrite - mSendBytes);	//清除已处理消息
+		mSendWrite -= mSendBytes;
+		mSendBytes = 0;
+	}
+	strncpy(mSendMsgBuff + mSendWrite, (int *)&iLen, sizeof(int));
+	strncpy(mSendMsgBuff + mSendWrite + sizeof(int), pCmd, iLen);
 	return 0;
+}
+
+int wTcpTask::SyncSend(const char *pCmd, int iLen)
+{
+	//判断消息长度
+	if(iLen <= MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN )
+	{
+		LOG_ERROR("default", "message invalid len %d from %s fd(%d)", iLen, mSocket->IPAddr().c_str(), mSocket->SocketFD());
+		return -1;
+	}
+	strncpy(mTmpSendMsgBuff, (int *)&iLen, sizeof(int));
+	strncpy(mTmpSendMsgBuff + sizeof(int), pCmd, iLen);
+	
+	return mSocket->SendBytes(mTmpSendMsgBuff, iMsgLen);
 }

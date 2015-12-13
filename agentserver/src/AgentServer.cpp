@@ -26,7 +26,7 @@ AgentServer::AgentServer():wTcpServer<AgentServer>("路由服务器")
 
 AgentServer::~AgentServer() 
 {
-	//...
+	SAFE_DELETE(mRouterConn);
 }
 
 /**
@@ -35,16 +35,8 @@ AgentServer::~AgentServer()
 void AgentServer::Initialize()
 {
 	//初始化定时器
-	mClientCheckTimer = wTimer(CHECK_CLIENT_TIME);
-	
-	//连接Router服务
-	ConnectRouter();
-}
-
-void AgentServer::ConnectRouter()
-{
-	//mRouterConn
-	mRouterConn.GenerateClient(1, "RouterFromAgent", AgentConfig::Instance()->mRouterIPAddr, AgentConfig::Instance()->mRouterPort);
+	mClientCheckTimer = wTimer(KEEPALIVE_TIME);
+	mRouterConn = wMTcpClient<AgentServer,AgentServerTask>::Instance();
 }
 
 wTcpTask* AgentServer::NewTcpTask(wSocket *pSocket)
@@ -53,15 +45,25 @@ wTcpTask* AgentServer::NewTcpTask(wSocket *pSocket)
 	return pTcpTask;
 }
 
+void AgentServer::ConnectRouter()
+{
+	//mRouterConn
+	mRouterConn->GenerateClient(1, "RouterFromAgent", AgentConfig::Instance()->mRouterIPAddr, AgentConfig::Instance()->mRouterPort);
+}
+
+
 //准备工作
 void AgentServer::PrepareRun()
 {
-	mRouterConn.PrepareStart();
+	mRouterConn->PrepareStart();
+	
+	//连接Router服务
+	ConnectRouter();
 }
 
 void AgentServer::Run()
 {
-	mRouterConn.Start();
+	mRouterConn->Start(false);
 
 	//检查服务器时间
 	CheckTimer();

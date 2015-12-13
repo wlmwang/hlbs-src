@@ -95,7 +95,7 @@ void RouterServer::CheckTimeout()
 			{
 				continue;
 			}
-			iIntervalTime = iNowTime - (*iter)->Socket()->Stamp();
+			iIntervalTime = iNowTime - (*iter)->Socket()->Stamp();	//未接受到消息时间间隔
 			//心跳检测
 			if(iIntervalTime >= KEEPALIVE_TIME)	//1s
 			{

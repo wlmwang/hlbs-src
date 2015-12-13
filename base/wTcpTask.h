@@ -40,10 +40,10 @@ class wTcpTask
 		/**
 		 *  异步发送客户端消息
 		 */
-		int AsyncSend(char *vArray, int vLen);
-		int SyncSend(char *vArray, int vLen);
+		int AsyncSend(const char *pCmd, int iLen);
+		int SyncSend(const char *pCmd, int iLen);
 		
-		virtual int HandleRecvMessage(char * pBuffer, int nLen) {}; //业务逻辑入口函数
+		virtual int HandleRecvMessage(char * pBuffer, int nLen) {} //业务逻辑入口函数
 		
 		wSocket * Socket() { return mSocket; }
 		
@@ -51,7 +51,7 @@ class wTcpTask
 		
 		int HeartbeatOutTimes()
 		{
-			return mHeartbeatTimes > 3;
+			return mHeartbeatTimes > 5;
 		}
 		
 	protected:
@@ -66,7 +66,8 @@ class wTcpTask
 		int mSendBytes;						//已发送字节数（发送线程更新）
 		int mSendWrite;						//发送缓冲被写入字节数（写入线程更新）
 		char mSendMsgBuff[MAX_SEND_BUFFER_LEN];
-
+		
+		char mTmpSendMsgBuff[MAX_CLIENT_MSG_LEN + 4 /*sizeof(int)*/];	//同步发送，临时缓冲区
 };
 
 #endif

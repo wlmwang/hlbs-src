@@ -63,7 +63,7 @@ int main(int argc, const char *argv[])
 	AgentConfig *pConfig = AgentConfig::Instance();
 	if(pConfig == NULL) 
 	{
-		LOG_ERROR("default", "Get RouterConfig instance failed");
+		LOG_ERROR("default", "Get AgentConfig instance failed");
 		exit(1);
 	}
 	pConfig->ParseLineConfig(argc, argv);

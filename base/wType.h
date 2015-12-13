@@ -52,23 +52,17 @@ typedef signed long SQWORD;
 //客户端消息的最短长度
 #define MIN_CLIENT_MSG_LEN 1
 
-//心跳包间隔时间
-#define KEEPALIVE_TIME 1000 /* 1 * 1000 */
-
-#define CHECK_CLIENT_TIME 3000
-
-//客户端未发送消息的间隔超时时间
-#define SOCKET_TIMEOUT 300
-
-//客户端从来未发送消息的超时时间
-#define SOCKET_SEND_TIMEOUT 300
-
 //每一个服务器之间的发送接收缓冲区的大小
-#define MAX_TCP_BUFFER_LEN 10485760 /* 10 * 1024 * 1024 */
+//#define MAX_TCP_BUFFER_LEN 10485760 /* 10 * 1024 * 1024 */
 
 #define MAX_SEND_BUFFER_LEN 1048576 /* 1024 * 1024 */
 
 #define MAX_RECV_BUFFER_LEN 100 * 1024
+
+//心跳包间隔时间
+#define KEEPALIVE_TIME 1000 /* 1 * 1000 */
+
+#define CHECK_CLIENT_TIME 3000
 
 using namespace std;
 #endif

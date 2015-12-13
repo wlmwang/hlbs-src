@@ -29,6 +29,7 @@ int wSocket::SetNonBlock()
 
 /**
  *  从客户端接收原始数据
+ *  return ：<0 对端发生错误|消息超长 =0 对端关闭(FIN_WAIT1)  >0 接受字符
  */
 int wSocket::RecvBytes(char *vArray, int vLen)
 {
@@ -42,9 +43,15 @@ int wSocket::RecvBytes(char *vArray, int vLen)
 		}
 		else
 		{
-			if(iRecvLen < 0 && errno == EINTR)
+			if(iRecvLen < 0 && errno == EINTR)	//中断
 			{
 				continue;
+			}
+			if(iRecvLen < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))	//缓冲区满
+			{
+				//waitread
+				//continue;
+				//在外层做可读事件准备(tcptask)
 			}
 			return iRecvLen;
 		}
@@ -53,6 +60,7 @@ int wSocket::RecvBytes(char *vArray, int vLen)
 
 /**
  *  原始发送客户端数据
+ *  return ：<0 对端发生错误 >=0 发送字符
  */
 int wSocket::SendBytes(char *vArray, int vLen)
 {
@@ -74,11 +82,16 @@ int wSocket::SendBytes(char *vArray, int vLen)
 		}
 		else
 		{
-			if(errno == EINTR)
+			if(errno == EINTR) //中断
 			{
 				continue;
 			}
-
+			if(iRecvLen < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))	//缓冲区满
+			{
+				//waitwrite
+				//continue;
+				//在外层做可写事件准备(tcptask)
+			}
 			LOG_ERROR("default", "SendToClient fd(%d) error: %s", mSocketFD, strerror(errno));
 			return iSendLen;
 		}
