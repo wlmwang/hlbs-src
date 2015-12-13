@@ -31,7 +31,7 @@ void RouterConfig::ParseBaseConfig()
 	
 	TiXmlElement *pElement = NULL;
 	TiXmlElement *pChildElm = NULL;
-	pElement = pRoot->FirstChildElement("ROUTER_SERVER");
+	pElement = pRoot->FirstChildElement("SERVER");
 	if(NULL != pElement)
 	{
 		for(pChildElm = pElement->FirstChildElement(); pChildElm != NULL ; pChildElm = pChildElm->NextSiblingElement())
@@ -98,16 +98,17 @@ void RouterConfig::ParseRtblConfig()
 			const char *szDisabled = pChildElm->Attribute("DISABLED");
 			const char *szWeight = pChildElm->Attribute("WEIGHT");
 			
-			Rtbl_t vRtbl;
-			vRtbl.mId = atoi(szId);
-			vRtbl.mGid = atoi(szGid);
-			vRtbl.mXid = atoi(szXid);
-			vRtbl.mPort = atoi(szPort);
-			vRtbl.mWeight = atoi(szWeight);
-			vRtbl.mDisabled = atoi(szDisabled);
-			memcpy(vRtbl.mName, szName, MAX_NAME_LEN);
-			memcpy(vRtbl.mIp, szIPAddr, MAX_IP_LEN);
-			mRtbl.push_back(vRtbl);
+			Rtbl_t pRtbl = new Rtbl_t();
+			pRtbl->mId = atoi(szId);
+			pRtbl->mGid = atoi(szGid);
+			pRtbl->mXid = atoi(szXid);
+			pRtbl->mPort = atoi(szPort);
+			pRtbl->mWeight = atoi(szWeight);
+			pRtbl->mDisabled = atoi(szDisabled);
+			memcpy(pRtbl->mName, szName, MAX_NAME_LEN);
+			memcpy(pRtbl->mIp, szIPAddr, MAX_IP_LEN);
+			
+			mRtbl.push_back(pRtbl);
 		}
 	}
 	else
@@ -115,4 +116,117 @@ void RouterConfig::ParseRtblConfig()
 		printf("Get extranet connect ip and port from config file failed\n");
 		exit(1);
 	}
+	
+	FixRtbl();
+}
+
+//整理容器
+void RouterConfig::FixRtbl()
+{
+	string sId, sName, sGid, sXid, sGXid;
+	vector<Rtbl_t*> vRtbl;
+	for(vector<Rtbl_t*>::iterator it = mRtbl.begin(); it != mRtbl.end(); it++)
+	{
+		sId = (*it)->mId; sName = (*it)->mName; sGid = (*it)->mGid; sXid = (*it)->mXid;
+		sGXid = sGid + "-" + sXid;
+		
+		//mRtblById
+		mRtblById.insert(pair<int, Rtbl_t*>((*it)->mId ,*it));
+		
+		//mRtblByGid
+		map<int, vector<Rtbl_t*> >::iterator mg = mRtblByGid.find((*it)->mGid);
+		if(mg != mRtblByGid.end())
+		{
+			vRtbl = it->second;
+			mRtblByGid.erase(mg);
+		}
+		vRtbl.push_back(*it);
+		mRtblByGid.insert(pair<int, vector<Rtbl_t*> >((*it)->mGid, vRtbl));
+		
+		//mRtblByName
+		map<string, vector<Rtbl_t*> >::iterator mn = mRtblByName.find(sName);
+		if(mn != mRtblByName.end())
+		{
+			vRtbl = it->second;
+			mRtblByName.erase(mn);
+		}
+		vRtbl.push_back(*it);
+		mRtblByName.insert(pair<string, vector<Rtbl_t*> >(sName, vRtbl));
+		
+		//mRtblByGXid
+		map<string, vector<Rtbl_t*> >::iterator mgx = mRtblByGXid.find(sGXid);
+		if(mgx != mRtblByGXid.end())
+		{
+			vRtbl = it->second;
+			mRtblByGXid.erase(mgx);
+		}
+		vRtbl.push_back(*it);
+		mRtblByGXid.insert(pair<string, vector<Rtbl_t*> >(sGXid, vRtbl));		
+	}
+}
+
+Rtbl_t RouterConfig::GetRtblById(int iId)
+{
+	Rtbl_t vRtbl;
+	map<int, Rtbl_t*>::iterator it = mRtblById.find(iId);
+	if(it != mRtblById.end())
+	{
+		vRtbl = *(it->second);
+	}
+	return vRtbl;
+}
+
+Rtbl_t* RouterConfig::GetRtblByGid(int iGid, int iNum)
+{
+	vector<Rtbl_t*> vRtbl;
+	Rtbl_t *pRtbl = NULL;
+	map<string, vector<Rtbl_t*> >::iterator mn = mRtblByGid.find(iGid);
+	if(mn != mRtblByGid.end())
+	{
+		vRtbl = mn->second;
+		pRtbl = new Rtbl_t[iNum];
+		for(int i = 0, vector<Rtbl_t*>::iterator it = vRtbl.begin(); i < iNum && it != vRtbl.end(); i++, it++)
+		{
+			*(pRtbl+i) = *it;
+		}
+	}
+	return pRtbl;
+}
+
+Rtbl_t* RouterConfig::GetRtblByName(string sName, int iNum)
+{
+	vector<Rtbl_t*> vRtbl;
+	Rtbl_t *pRtbl = NULL;
+	map<string, vector<Rtbl_t*> >::iterator mn = mRtblByName.find(sName);
+	if(mn != mRtblByName.end())
+	{
+		vRtbl = mn->second;
+		pRtbl = new Rtbl_t[iNum];
+		for(int i = 0, vector<Rtbl_t*>::iterator it = vRtbl.begin(); i < iNum && it != vRtbl.end(); i++, it++)
+		{
+			*(pRtbl+i) = *it;
+		}
+	}
+	return pRtbl;
+}
+
+Rtbl_t* RouterConfig::GetRtblByGXid(int iGid, int iXid, int iNum)
+{
+	string sGid = iGid;
+	string sXid = iXid;
+	sGXid = sGid + "-" + sXid;
+	
+	vector<Rtbl_t*> vRtbl;
+	Rtbl_t *pRtbl = NULL;
+	map<string, vector<Rtbl_t*> >::iterator mn = mRtblByGXid.find(sGXid);
+	if(mn != mRtblByGXid.end())
+	{
+		vRtbl = mn->second;
+		pRtbl = new Rtbl_t[iNum];
+		for(int i = 0, vector<Rtbl_t*>::iterator it = vRtbl.begin(); i < iNum && it != vRtbl.end(); i++, it++)
+		{
+			*(pRtbl+i) = *it;
+		}
+	}
+	return pRtbl;
 }

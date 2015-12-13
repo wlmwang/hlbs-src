@@ -31,7 +31,7 @@ void AgentConfig::ParseBaseConfig()
 	
 	TiXmlElement *pElement = NULL;
 	TiXmlElement *pChildElm = NULL;
-	pElement = pRoot->FirstChildElement("AGENT_SERVER");
+	pElement = pRoot->FirstChildElement("SERVER");
 	if(NULL != pElement)
 	{
 		for(pChildElm = pElement->FirstChildElement(); pChildElm != NULL ; pChildElm = pChildElm->NextSiblingElement())

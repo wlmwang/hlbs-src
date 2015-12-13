@@ -1,7 +1,8 @@
 <ROOT>
-	<ROUTER_SERVER>
+	<SERVER>
 		<WORKER IPADDRESS="192.168.8.13" PORT="10006" BACKLOG="1024"/>
-	</ROUTER_SERVER>
+	</SERVER>
+	
 	<LOG>
 		<LOG_INFO KEY="default"	FILE="../log/router_server.log" LEVEL="700" MAX_FILE_SIZE="10M"/>
 	</LOG>

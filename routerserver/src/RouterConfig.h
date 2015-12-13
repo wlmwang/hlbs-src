@@ -8,6 +8,8 @@
 #define _ROUTER_CONFIG_H_
 
 #include <string.h>
+#include <string>
+#include <map>
 #include <vector>
 
 #include "wType.h"
@@ -50,8 +52,19 @@ class RouterConfig: public wConfig<RouterConfig>
 		 */
 		void ParseRtblConfig();
 		
+		Rtbl_t GetRtblById(int iId);
+		Rtbl_t* GetRtblByName(string sName, int iNum = 1);
+		Rtbl_t* GetRtblByGid(int iGid, int iNum = 1);
+		Rtbl_t* GetRtblByGXid(int iGid, int iXid, int iNum = 1);
+		
 	protected:
-		vector<Rtbl_t> mRtbl;
+		void FixRtbl();	//整理容器
+	
+		vector<Rtbl_t*> mRtbl;
+		map<int, Rtbl_t*> mRtblById;
+		map<int, vector<Rtbl_t*> > mRtblByGid;
+		map<string, vector<Rtbl_t*> > mRtblByName;
+		map<string, vector<Rtbl_t*> > mRtblByGXid;
 };
 
 #endif

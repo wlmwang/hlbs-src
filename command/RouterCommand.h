@@ -18,6 +18,7 @@ enum SERVER_TYPE
 	SERVER_AGENT,
 };
 
+/*
 //Agent->Router的消息体
 const BYTE CMD_LOGIN          = 1;  //登录、连接指令
 struct LoginCmd_s : public wCommand
@@ -38,6 +39,25 @@ struct LoginFromS_t : LoginCmd_s
 	WORD wdServerID;
 	WORD wdServerType;
 };
+*/
+
+const BYTE CMD_RTBL          = 10;
+struct RtblCmd_s : public wCommand
+{
+	RtblCmd_s(BYTE para)
+	{
+		mCommand.mCmd = CMD_RTBL;
+		mCommand.mPara = para;
+	}
+};
+
+const BYTE CMD_RTBL_BY_ID = 1;
+struct RtblById_t : RtblCmd_s 
+{
+	RtblById_t() : RtblCmd_s(CMD_RTBL_BY_ID), mId(0) {}
+	
+	WORD mId;
+}
 
 #pragma pack()
 
