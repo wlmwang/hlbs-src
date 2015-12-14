@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 
 #include "wLog.h"
+#include "wMisc.h"
 #include "wSocket.h"
 
 int wSocket::SetNonBlock()
@@ -33,6 +34,7 @@ int wSocket::SetNonBlock()
  */
 int wSocket::RecvBytes(char *vArray, int vLen)
 {
+	mRecvTime = GetTickCount();
 	int iRecvLen;
 	while(1)
 	{
@@ -64,6 +66,7 @@ int wSocket::RecvBytes(char *vArray, int vLen)
  */
 int wSocket::SendBytes(char *vArray, int vLen)
 {
+	mSendTime = GetTickCount();
 	int iSendLen;
 	int iLeftLen = vLen;
 	int iHaveSendLen = 0;

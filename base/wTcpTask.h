@@ -51,7 +51,7 @@ class wTcpTask
 		
 		int HeartbeatOutTimes()
 		{
-			return mHeartbeatTimes > 5;
+			return mHeartbeatTimes > 30;
 		}
 		
 	protected:
@@ -67,7 +67,7 @@ class wTcpTask
 		int mSendWrite;						//发送缓冲被写入字节数（写入线程更新）
 		char mSendMsgBuff[MAX_SEND_BUFFER_LEN];
 		
-		char mTmpSendMsgBuff[MAX_CLIENT_MSG_LEN + 4 /*sizeof(int)*/];	//同步发送，临时缓冲区
+		char mTmpSendMsgBuff[MAX_CLIENT_MSG_LEN + sizeof(int)];	//同步发送，临时缓冲区
 };
 
 #endif

@@ -72,7 +72,7 @@ void AgentServer::Run()
 //检查服务器时间
 void AgentServer::CheckTimer()
 {
-	int iInterval = (int)(GetTickCount() - mLastTicker);
+	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mLastTicker);
 
 	if(iInterval < 100) 	//100ms
 	{
@@ -94,8 +94,8 @@ void AgentServer::CheckTimer()
  */
 void AgentServer::CheckTimeout()
 {
-	int iNowTime = time(NULL);
-	int iIntervalTime;
+	unsigned long long iNowTime = GetTickCount();
+	unsigned long long iIntervalTime;
 	
 	if(mTcpTaskPool.size() > 0)
 	{
@@ -106,9 +106,9 @@ void AgentServer::CheckTimeout()
 			{
 				continue;
 			}
-			iIntervalTime = iNowTime - (*iter)->Socket()->Stamp();
+			iIntervalTime = iNowTime - (*iter)->Socket()->SendTime();
 			//心跳检测
-			if(iIntervalTime >= KEEPALIVE_TIME)	//1s
+			if(iIntervalTime >= CHECK_CLIENT_TIME)	//3s
 			{
 				if((*iter)->Heartbeat() < 0 && (*iter)->HeartbeatOutTimes())
 				{

@@ -58,7 +58,8 @@ class wSocket
 			mSocketType = CONNECT_SOCKET;
 			mSocketFlag = RECV_DATA;
 			mCreateTime = time(NULL);
-			mStamp = 0;
+			mRecvTime = 0;
+			mSendTime = 0;
 		}
 
 		bool IsConnected()
@@ -90,17 +91,19 @@ class wSocket
 		
 		int & SocketFlag() { return mSocketFlag; }
 		
-		time_t & Stamp() { return mStamp; }
+		unsigned long long & RecvTime() { return mRecvTime; }
+		
+		unsigned long long & SendTime() { return mSendTime; }
 		
 	protected:
 		int mSocketFD;				//网络套接字描述符
 		string mIPAddr;				//需要连接或者需要绑定的IP地址
 		unsigned short mPort;		//需要连接或者需要绑定的端口
-		
 		int mSocketType;			//socket类型：监听socket、连接socket
 		int mSocketFlag;			//socket标志：是否收包
-		time_t mStamp;				//接收到数据包的时间戳		
-		time_t  mCreateTime;		//socket的创建时间
+		unsigned long long mRecvTime;			//接收到数据包的时间戳
+		unsigned long long mSendTime;			//最后一次发送数据包时间戳（主要用户心跳检测）
+		unsigned long long mCreateTime;			//socket的创建时间
 };
 
 #endif

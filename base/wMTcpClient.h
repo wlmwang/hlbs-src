@@ -29,11 +29,10 @@
 #include "wMisc.h"
 #include "wLog.h"
 #include "wNoncopyable.h"
-//#include "wSingleton.h"
 #include "wTcpClient.h"
 
 template <typename TASK>
-class wMTcpClient : public wNoncopyable  /*, public wSingleton<T>*/
+class wMTcpClient : public wNoncopyable
 {
 	public:
 		wMTcpClient();
@@ -297,6 +296,7 @@ void wMTcpClient<TASK>::Start(bool bDaemon)
 		Run();
 		
 		CheckTimer();
+		
 	} while(IsRunning() && bDaemon);
 }
 

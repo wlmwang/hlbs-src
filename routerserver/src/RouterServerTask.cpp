@@ -41,7 +41,6 @@ int RouterServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer,
 		{
 			//空消息(心跳返回)
 			mHeartbeatTimes = 0;
-			mSocket->Stamp() = time(NULL);
 			break;
 		}
 		case CMD_RTBL: //CMD_RTBL_BY_ID:

@@ -86,7 +86,7 @@ class wTcpClient
 		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
 
 		virtual void PrepareStart();
-		virtual void Start();
+		virtual void Start(bool bDaemon = true);
 		
 		void CheckTimer();
 		void CheckReconnect();
@@ -232,20 +232,21 @@ void wTcpClient<T>::PrepareStart()
 }
 
 template <typename T>
-void wTcpClient<T>::Start()
+void wTcpClient<T>::Start(bool bDaemon)
 {
-	if(IsRunning())
+	do
 	{
 		ListeningRecv();
 
 		CheckTimer();
-	}
+
+	} while(IsRunning() && bDaemon);
 }
 
 template <typename T>
 void wTcpClient<T>::CheckTimer()
 {
-	int iInterval = (int)(GetTickCount() - mLastTicker);
+	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mLastTicker);
 
 	if(iInterval < 100) 	//100ms
 	{
@@ -263,14 +264,14 @@ void wTcpClient<T>::CheckTimer()
 template <typename T>
 void wTcpClient<T>::CheckReconnect()
 {
-	int iNowTime = time(NULL);
-	int iIntervalTime;
+	unsigned long long iNowTime = GetTickCount();
+	unsigned long long iIntervalTime;
 
 	if (mTcpTask == NULL || mTcpTask->Socket()->SocketType() != CONNECT_SOCKET)
 	{
 		return;
 	}
-	iIntervalTime = iNowTime - mTcpTask->Socket()->Stamp();
+	iIntervalTime = iNowTime - mTcpTask->Socket()->SendTime();
 	if (iIntervalTime >= KEEPALIVE_TIME)
 	{
 		if(mTcpTask->Heartbeat() < 0 && mTcpTask->HeartbeatOutTimes())
@@ -278,7 +279,7 @@ void wTcpClient<T>::CheckReconnect()
 			SetStatus();
 			LOG_INFO("default", "disconnect server : out of heartbeat times");
 		}
-		else
+		else if(mTcpTask->Socket() != NULL && mTcpTask->Socket()->SocketFD() < 0)
 		{
 			ReConnectToServer();
 		}

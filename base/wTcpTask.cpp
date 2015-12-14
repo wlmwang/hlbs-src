@@ -56,11 +56,7 @@ void wTcpTask::CloseTcpTask(int eReason)
 int wTcpTask::Heartbeat()
 {
 	wCommand vCmd;
-	int iLen = 0;
-	char *pBuffer = Serialize(vCmd, iLen);
-	int iSendLen = SyncSend(pBuffer,iLen);
-	
-	SAFE_DELETE(pBuffer);
+	SyncSend((char*)&vCmd, sizeof(vCmd));
 
 	mHeartbeatTimes++;
 	return -1;
@@ -89,8 +85,6 @@ int wTcpTask::ListeningRecv()
 
 	char *pBuffer = mRecvMsgBuff;
 	int iBuffMsgLen = mRecvBytes;
-	
-	mSocket->Stamp() = time(NULL);
 	
 	int iMsgLen;
 	//循环处理缓冲区中数据
@@ -226,12 +220,9 @@ int wTcpTask::AsyncSend(const char *pCmd, int iLen)
 		mSendWrite -= mSendBytes;
 		mSendBytes = 0;
 	}
-
-	char sBinaryLen[sizeof(int)];
-	itoa(iLen, sBinaryLen, 2);
-
-	strncpy(mSendMsgBuff + mSendWrite, sBinaryLen, sizeof(int));
-	strncpy(mSendMsgBuff + mSendWrite + sizeof(int), pCmd, iLen);
+	
+	*(int *)(mSendMsgBuff + mSendWrite)= iLen;
+	memcpy(mSendMsgBuff + mSendWrite + sizeof(int), pCmd, iLen);
 	return 0;
 }
 
@@ -244,11 +235,7 @@ int wTcpTask::SyncSend(const char *pCmd, int iLen)
 		return -1;
 	}
 
-	char sBinaryLen[sizeof(int)];
-	itoa(iLen, sBinaryLen, 2);
-
-	strncpy(mTmpSendMsgBuff, sBinaryLen, sizeof(int));
-	strncpy(mTmpSendMsgBuff + sizeof(int), pCmd, iLen);
-	
+	*(int *)mTmpSendMsgBuff = iLen;
+	memcpy(mTmpSendMsgBuff + sizeof(int), pCmd, iLen);
 	return mSocket->SendBytes(mTmpSendMsgBuff, iLen + sizeof(int));
 }
