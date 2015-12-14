@@ -41,7 +41,7 @@ class AgentServer: public wTcpServer<AgentServer>
 		void CheckTimeout();
 		
 	private:
-		wMTcpClient<AgentServer,AgentServerTask> *mRouterConn;	//连接router
+		wMTcpClient<AgentServerTask> *mRouterConn;	//连接router
 		
 		//客户端检测计时器
 		wTimer mClientCheckTimer;

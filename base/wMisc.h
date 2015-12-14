@@ -7,6 +7,8 @@
 #ifndef _W_MISC_H_
 #define _W_MISC_H_
 
+#include <sstream>
+#include <string>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
@@ -54,6 +56,14 @@ int InitDaemon(const char *filename);
 
 //linux没有这个函数,不好说什么时候就用到了
 void itoa(unsigned long val, char *buf, unsigned radix);
+
+inline string Itos(const int &i)
+{
+	string sTmp;
+	stringstream sRet(sTmp);
+	sRet << i;
+	return sRet.str();
+}
 
 template<typename T> char* Serialize(T& vCmd,int& pLen)
 {

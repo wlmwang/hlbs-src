@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include "wType.h"
+#include "wMisc.h"
 #include "tinyxml.h"	//lib tinyxml
 #include "RouterConfig.h"
 
@@ -98,7 +99,7 @@ void RouterConfig::ParseRtblConfig()
 			const char *szDisabled = pChildElm->Attribute("DISABLED");
 			const char *szWeight = pChildElm->Attribute("WEIGHT");
 			
-			Rtbl_t pRtbl = new Rtbl_t();
+			Rtbl_t *pRtbl = new Rtbl_t();
 			pRtbl->mId = atoi(szId);
 			pRtbl->mGid = atoi(szGid);
 			pRtbl->mXid = atoi(szXid);
@@ -127,7 +128,7 @@ void RouterConfig::FixRtbl()
 	vector<Rtbl_t*> vRtbl;
 	for(vector<Rtbl_t*>::iterator it = mRtbl.begin(); it != mRtbl.end(); it++)
 	{
-		sId = (*it)->mId; sName = (*it)->mName; sGid = (*it)->mGid; sXid = (*it)->mXid;
+		sId = Itos((*it)->mId); sName = (*it)->mName; sGid = Itos((*it)->mGid); sXid = Itos((*it)->mXid);
 		sGXid = sGid + "-" + sXid;
 		
 		//mRtblById
@@ -137,7 +138,7 @@ void RouterConfig::FixRtbl()
 		map<int, vector<Rtbl_t*> >::iterator mg = mRtblByGid.find((*it)->mGid);
 		if(mg != mRtblByGid.end())
 		{
-			vRtbl = it->second;
+			vRtbl = mg->second;
 			mRtblByGid.erase(mg);
 		}
 		vRtbl.push_back(*it);
@@ -147,7 +148,7 @@ void RouterConfig::FixRtbl()
 		map<string, vector<Rtbl_t*> >::iterator mn = mRtblByName.find(sName);
 		if(mn != mRtblByName.end())
 		{
-			vRtbl = it->second;
+			vRtbl = mn->second;
 			mRtblByName.erase(mn);
 		}
 		vRtbl.push_back(*it);
@@ -157,7 +158,7 @@ void RouterConfig::FixRtbl()
 		map<string, vector<Rtbl_t*> >::iterator mgx = mRtblByGXid.find(sGXid);
 		if(mgx != mRtblByGXid.end())
 		{
-			vRtbl = it->second;
+			vRtbl = mgx->second;
 			mRtblByGXid.erase(mgx);
 		}
 		vRtbl.push_back(*it);
@@ -180,14 +181,16 @@ Rtbl_t* RouterConfig::GetRtblByGid(int iGid, int iNum)
 {
 	vector<Rtbl_t*> vRtbl;
 	Rtbl_t *pRtbl = NULL;
-	map<string, vector<Rtbl_t*> >::iterator mn = mRtblByGid.find(iGid);
+	map<int, vector<Rtbl_t*> >::iterator mn = mRtblByGid.find(iGid);
 	if(mn != mRtblByGid.end())
 	{
 		vRtbl = mn->second;
 		pRtbl = new Rtbl_t[iNum];
-		for(int i = 0, vector<Rtbl_t*>::iterator it = vRtbl.begin(); i < iNum && it != vRtbl.end(); i++, it++)
+
+		vector<Rtbl_t*>::iterator it = vRtbl.begin();
+		for(int i = 0; i < iNum && it != vRtbl.end(); i++, it++)
 		{
-			*(pRtbl+i) = *it;
+			*(pRtbl+i) = **it;
 		}
 	}
 	return pRtbl;
@@ -202,9 +205,11 @@ Rtbl_t* RouterConfig::GetRtblByName(string sName, int iNum)
 	{
 		vRtbl = mn->second;
 		pRtbl = new Rtbl_t[iNum];
-		for(int i = 0, vector<Rtbl_t*>::iterator it = vRtbl.begin(); i < iNum && it != vRtbl.end(); i++, it++)
+		
+		vector<Rtbl_t*>::iterator it = vRtbl.begin();
+		for(int i = 0; i < iNum && it != vRtbl.end(); i++, it++)
 		{
-			*(pRtbl+i) = *it;
+			*(pRtbl+i) = **it;
 		}
 	}
 	return pRtbl;
@@ -212,9 +217,9 @@ Rtbl_t* RouterConfig::GetRtblByName(string sName, int iNum)
 
 Rtbl_t* RouterConfig::GetRtblByGXid(int iGid, int iXid, int iNum)
 {
-	string sGid = iGid;
-	string sXid = iXid;
-	sGXid = sGid + "-" + sXid;
+	string sGid = Itos(iGid);
+	string sXid = Itos(iXid);
+	string sGXid = sGid + "-" + sXid;
 	
 	vector<Rtbl_t*> vRtbl;
 	Rtbl_t *pRtbl = NULL;
@@ -223,9 +228,11 @@ Rtbl_t* RouterConfig::GetRtblByGXid(int iGid, int iXid, int iNum)
 	{
 		vRtbl = mn->second;
 		pRtbl = new Rtbl_t[iNum];
-		for(int i = 0, vector<Rtbl_t*>::iterator it = vRtbl.begin(); i < iNum && it != vRtbl.end(); i++, it++)
+
+		vector<Rtbl_t*>::iterator it = vRtbl.begin();
+		for(int i = 0; i < iNum && it != vRtbl.end(); i++, it++)
 		{
-			*(pRtbl+i) = *it;
+			*(pRtbl+i) = **it;
 		}
 	}
 	return pRtbl;

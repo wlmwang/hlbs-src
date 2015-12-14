@@ -21,6 +21,13 @@ enum REQUEST_TYPE
 	CLIENT,
 };
 
+//服务器ID
+enum SERVER_TYPE
+{
+	SERVER_ROUTER = 1,
+	SERVER_AGENT,
+};
+
 const BYTE CMD_NULL = 0;		/** 空的指令 */
 const BYTE PARA_NULL = 0;		/** 空的指令参数 */
 

@@ -28,11 +28,12 @@
 #include "wTimer.h"
 #include "wMisc.h"
 #include "wLog.h"
-#include "wSingleton.h"
+#include "wNoncopyable.h"
+//#include "wSingleton.h"
 #include "wTcpClient.h"
 
-template <typename T,typename TASK>
-class wMTcpClient: public wSingleton<T>
+template <typename TASK>
+class wMTcpClient : public wNoncopyable  /*, public wSingleton<T>*/
 {
 	public:
 		wMTcpClient();
@@ -49,7 +50,7 @@ class wMTcpClient: public wSingleton<T>
 		int ResetTcpClientCount();
 		
 		/**
-		 * epoll|socketÏà¹Ø
+		 * epoll|socketç›¸å…³
 		 */
 		int InitEpoll();
 		void CleanEpoll();
@@ -62,6 +63,7 @@ class wMTcpClient: public wSingleton<T>
 		virtual void Run();
 		virtual void PrepareRun();
 		
+		void CheckTimer();
 		void Recv();
 		void Send();
 		
@@ -87,7 +89,7 @@ class wMTcpClient: public wSingleton<T>
 		wTcpClient<TASK>* CreateClient(int iType, string sClientName, char *vIPAddress, unsigned short vPort);
 		bool AddTcpClientPool(int iType, wTcpClient<TASK> *pTcpClient);
 		
-		CLIENT_STATUS mStatus;	//·şÎñÆ÷µ±Ç°×´Ì¬
+		CLIENT_STATUS mStatus;	//æœåŠ¡å™¨å½“å‰çŠ¶æ€
 
 		//epoll
 		int mEpollFD;
@@ -95,49 +97,49 @@ class wMTcpClient: public wSingleton<T>
 		
 		//epoll_event
 		struct epoll_event mEpollEvent;
-		vector<struct epoll_event> mEpollEventPool; //epoll_eventÒÑ·¢ÉúÊÂ¼ş³Ø£¨epoll_wait£©
+		vector<struct epoll_event> mEpollEventPool; //epoll_eventå·²å‘ç”Ÿäº‹ä»¶æ± ï¼ˆepoll_waitï¼‰
 		
 		int mTcpClientCount;
 		
-		//¶¨Ê±¼ÇÂ¼Æ÷
-		unsigned long long mLastTicker;	//·şÎñÆ÷µ±Ç°Ê±¼ä
+		//å®šæ—¶è®°å½•å™¨
+		unsigned long long mLastTicker;	//æœåŠ¡å™¨å½“å‰æ—¶é—´
 
-        std::map<int, vector<wTcpClient<TASK>*> > mTcpClientPool;	//Ã¿ÖÖÀàĞÍ¿Í»§¶Ë£¬¿É¹ÒÔØ¶à¸öÁ¬½Ó
+        std::map<int, vector<wTcpClient<TASK>*> > mTcpClientPool;	//æ¯ç§ç±»å‹å®¢æˆ·ç«¯ï¼Œå¯æŒ‚è½½å¤šä¸ªè¿æ¥
 };
 
-template <typename T,typename TASK>
-wMTcpClient<T,TASK>::wMTcpClient()
+template <typename TASK>
+wMTcpClient<TASK>::wMTcpClient()
 {
 	mStatus = CLIENT_STATUS_INIT;
 	Initialize();
 }
 
-template <typename T,typename TASK>
-void wMTcpClient<T,TASK>::Initialize()
+template <typename TASK>
+void wMTcpClient<TASK>::Initialize()
 {
 	mLastTicker = GetTickCount();
-	mClientCount = 0;
+	mTcpClientCount = 0;
 	mTimeout = 10;
 	mEpollFD = -1;
 	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
-	mEpollEventPool.reserve(512);	//ÈİÁ¿
+	mEpollEventPool.reserve(512);	//å®¹é‡
 }
 
-template <typename T,typename TASK>
-wMTcpClient<T,TASK>::~wMTcpClient()
+template <typename TASK>
+wMTcpClient<TASK>::~wMTcpClient()
 {
     Final();
 }
 
-template <typename T,typename TASK>
-void wMTcpClient<T,TASK>::Final()
+template <typename TASK>
+void wMTcpClient<TASK>::Final()
 {
 	CleanEpoll();
 	CleanTcpClientPool();
 }
 
-template <typename T,typename TASK>
-void wMTcpClient<T,TASK>::CleanEpoll()
+template <typename TASK>
+void wMTcpClient<TASK>::CleanEpoll()
 {
 	if(mEpollFD != -1)
 	{
@@ -148,8 +150,8 @@ void wMTcpClient<T,TASK>::CleanEpoll()
 	mEpollEventPool.clear();
 }
 
-template <typename T,typename TASK>
-void wMTcpClient<T,TASK>::CleanTcpClientPool()
+template <typename TASK>
+void wMTcpClient<TASK>::CleanTcpClientPool()
 {
     typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClientPool.begin();
 	for(mt; mt != mTcpClientPool.end(); mt++)
@@ -165,8 +167,8 @@ void wMTcpClient<T,TASK>::CleanTcpClientPool()
 	mTcpClientCount = 0;
 }
 
-template <typename T,typename TASK>
-void wMTcpClient<T,TASK>::PrepareStart()
+template <typename TASK>
+void wMTcpClient<TASK>::PrepareStart()
 {
 	SetStatus(CLIENT_STATUS_RUNNING);
 	if(InitEpoll() < 0)
@@ -176,14 +178,14 @@ void wMTcpClient<T,TASK>::PrepareStart()
 	PrepareRun();
 }
 
-template <typename T,typename TASK>
-void wMTcpClient<T,TASK>::PrepareRun()
+template <typename TASK>
+void wMTcpClient<TASK>::PrepareRun()
 {
 	//...
 }
 
-template <typename T,typename TASK>
-int wMTcpClient<T,TASK>::InitEpoll()
+template <typename TASK>
+int wMTcpClient<TASK>::InitEpoll()
 {
 	mEpollFD = epoll_create(512); //512
 	if(mEpollFD < 0)
@@ -194,8 +196,8 @@ int wMTcpClient<T,TASK>::InitEpoll()
 	return mEpollFD;
 }
 
-template <typename T,typename TASK>
-bool wMTcpClient<T,TASK>::GenerateClient(int iType, string sClientName, char *vIPAddress, unsigned short vPort)
+template <typename TASK>
+bool wMTcpClient<TASK>::GenerateClient(int iType, string sClientName, char *vIPAddress, unsigned short vPort)
 {
 	wTcpClient<TASK>* pTcpClient = CreateClient(iType, sClientName, vIPAddress , vPort);
 	if(pTcpClient != NULL)
@@ -209,8 +211,8 @@ bool wMTcpClient<T,TASK>::GenerateClient(int iType, string sClientName, char *vI
 	return false;
 }
 
-template <typename T,typename TASK>
-wTcpClient<TASK>* wMTcpClient<T,TASK>::CreateClient(int iType, string sClientName, char *vIPAddress, unsigned short vPort)
+template <typename TASK>
+wTcpClient<TASK>* wMTcpClient<TASK>::CreateClient(int iType, string sClientName, char *vIPAddress, unsigned short vPort)
 {
 	wTcpClient<TASK>* pTcpClient = new wTcpClient<TASK>(iType, sClientName);
 	int iRet = pTcpClient->ConnectToServer(vIPAddress, vPort);
@@ -224,8 +226,8 @@ wTcpClient<TASK>* wMTcpClient<T,TASK>::CreateClient(int iType, string sClientNam
 	return NULL;
 }
 
-template <typename T,typename TASK>
-bool wMTcpClient<T,TASK>::AddTcpClientPool(int iType, wTcpClient<TASK> *pTcpClient)
+template <typename TASK>
+bool wMTcpClient<TASK>::AddTcpClientPool(int iType, wTcpClient<TASK> *pTcpClient)
 {
 	if(pTcpClient == NULL)
 	{
@@ -245,8 +247,8 @@ bool wMTcpClient<T,TASK>::AddTcpClientPool(int iType, wTcpClient<TASK> *pTcpClie
 	return true;
 }
 
-template <typename T,typename TASK>
-int wMTcpClient<T,TASK>::ResetTcpClientCount()
+template <typename TASK>
+int wMTcpClient<TASK>::ResetTcpClientCount()
 {
 	mTcpClientCount = 0;
     typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClientPool.begin();
@@ -268,11 +270,11 @@ int wMTcpClient<T,TASK>::ResetTcpClientCount()
 	return mTcpClientCount;
 }
 
-template <typename T,typename TASK>
-int wMTcpClient<T,TASK>::AddToEpoll(wTcpClient<TASK> *pTcpClient)
+template <typename TASK>
+int wMTcpClient<TASK>::AddToEpoll(wTcpClient<TASK> *pTcpClient)
 {
 	int iSocketFD = pTcpClient->TcpTask()->Socket()->SocketFD();
-	mEpollEvent.events = EPOLLIN | EPOLLERR | EPOLLHUP;	//¿Í»§¶ËÊÂ¼ş
+	mEpollEvent.events = EPOLLIN | EPOLLERR | EPOLLHUP;	//å®¢æˆ·ç«¯äº‹ä»¶
 	mEpollEvent.data.fd = iSocketFD;
 	mEpollEvent.data.ptr = pTcpClient;
 	int iRet = epoll_ctl(mEpollFD, EPOLL_CTL_ADD, iSocketFD, &mEpollEvent);
@@ -284,10 +286,10 @@ int wMTcpClient<T,TASK>::AddToEpoll(wTcpClient<TASK> *pTcpClient)
 	return 0;
 }
 
-template <typename T,typename TASK>
-void wMTcpClient<T,TASK>::Start(bool bDaemon)
+template <typename TASK>
+void wMTcpClient<TASK>::Start(bool bDaemon)
 {
-	//½øÈë·şÎñÖ÷·şÎñ
+	//è¿›å…¥æœåŠ¡ä¸»æœåŠ¡
 	do
 	{
 		Recv();
@@ -298,8 +300,8 @@ void wMTcpClient<T,TASK>::Start(bool bDaemon)
 	} while(IsRunning() && bDaemon);
 }
 
-template <typename T,typename TASK>
-void wMTcpClient<T,TASK>::CheckTimer()
+template <typename TASK>
+void wMTcpClient<TASK>::CheckTimer()
 {
     typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClientPool.begin();
 	for(mt; mt != mTcpClientPool.end(); mt++)
@@ -325,8 +327,8 @@ void wMTcpClient<T,TASK>::CheckTimer()
 	}
 }
 
-template <typename T,typename TASK>
-void wMTcpClient<T,TASK>::Recv()
+template <typename TASK>
+void wMTcpClient<TASK>::Recv()
 {
 	int iRet = epoll_wait(mEpollFD, &mEpollEventPool[0], mTcpClientCount, mTimeout /*10ms*/);
 	if(iRet < 0)
@@ -363,7 +365,7 @@ void wMTcpClient<T,TASK>::Recv()
 		{
 			if (mEpollEventPool[i].events & EPOLLIN)
 			{
-				//Ì×½Ó¿Ú×¼±¸ºÃÁË¶ÁÈ¡²Ù×÷
+				//å¥—æ¥å£å‡†å¤‡å¥½äº†è¯»å–æ“ä½œ
 				if (pTask->ListeningRecv() <= 0)
 				{
 					LOG_ERROR("default", "EPOLLIN(read) failed or server-socket closed: %s", strerror(errno));
@@ -375,7 +377,7 @@ void wMTcpClient<T,TASK>::Recv()
 			}
 			else if (mEpollEventPool[i].events & EPOLLOUT)
 			{
-				//Ì×½Ó¿Ú×¼±¸ºÃÁËĞ´Èë²Ù×÷
+				//å¥—æ¥å£å‡†å¤‡å¥½äº†å†™å…¥æ“ä½œ
 				if (pTask->ListeningSend() < 0)
 				{
 					LOG_ERROR("default", "EPOLLOUT(write) failed: %s", strerror(errno));
@@ -389,8 +391,8 @@ void wMTcpClient<T,TASK>::Recv()
 	}
 }
 
-template <typename T>
-int wMTcpClient<T,TASK>::RemoveEpoll(wTcpClient<TASK> *pTcpClient)
+template <typename TASK>
+int wMTcpClient<TASK>::RemoveEpoll(wTcpClient<TASK> *pTcpClient)
 {
 	int iSocketFD = pTcpClient->TcpTask()->Socket()->SocketFD();
 	mEpollEvent.data.fd = iSocketFD;
@@ -402,8 +404,8 @@ int wMTcpClient<T,TASK>::RemoveEpoll(wTcpClient<TASK> *pTcpClient)
 	return 0;
 }
 
-template <typename T,typename TASK>
-bool wMTcpClient<T,TASK>::RemoveTcpClientPool(int iType, wTcpClient<TASK> *pTcpClient)
+template <typename TASK>
+bool wMTcpClient<TASK>::RemoveTcpClientPool(int iType, wTcpClient<TASK> *pTcpClient)
 {
 	typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClientPool.find(iType);
 	if(mt != mTcpClientPool.end())
@@ -436,14 +438,14 @@ bool wMTcpClient<T,TASK>::RemoveTcpClientPool(int iType, wTcpClient<TASK> *pTcpC
 	return false;
 }
 
-template <typename T,typename TASK>
-void wMTcpClient<T,TASK>::Run()
+template <typename TASK>
+void wMTcpClient<TASK>::Run()
 {
 	//...
 }
 
-template <typename T,typename TASK>
-vector<wTcpClient<TASK>*> wMTcpClient<T,TASK>::TcpClients(int iType)
+template <typename TASK>
+vector<wTcpClient<TASK>*> wMTcpClient<TASK>::TcpClients(int iType)
 {
 	vector<wTcpClient<TASK>*> vTcpClient;
     typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClientPool.find(iType);
@@ -454,8 +456,8 @@ vector<wTcpClient<TASK>*> wMTcpClient<T,TASK>::TcpClients(int iType)
 	return vTcpClient;
 }
 
-template <typename T,typename TASK>
-wTcpClient<TASK>* wMTcpClient<T,TASK>::OneTcpClient(int iType)
+template <typename TASK>
+wTcpClient<TASK>* wMTcpClient<TASK>::OneTcpClient(int iType)
 {
 	vector<wTcpClient<TASK>*> vTcpClient;
     typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClientPool.find(iType);

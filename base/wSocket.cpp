@@ -86,7 +86,7 @@ int wSocket::SendBytes(char *vArray, int vLen)
 			{
 				continue;
 			}
-			if(iRecvLen < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))	//缓冲区满
+			if(iSendLen < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))	//缓冲区满
 			{
 				//waitwrite
 				//continue;

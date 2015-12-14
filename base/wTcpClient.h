@@ -50,7 +50,7 @@ class wTcpClient
 		void Initialize();
 		
 		int ListeningRecv();
-		int Send();
+		int ListeningSend();
 		
 		int ConnectToServer(const char *vIPAddress, unsigned short vPort);
 		
@@ -236,7 +236,7 @@ void wTcpClient<T>::Start()
 {
 	if(IsRunning())
 	{
-		Recv();
+		ListeningRecv();
 
 		CheckTimer();
 	}

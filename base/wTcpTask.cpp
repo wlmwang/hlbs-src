@@ -226,7 +226,11 @@ int wTcpTask::AsyncSend(const char *pCmd, int iLen)
 		mSendWrite -= mSendBytes;
 		mSendBytes = 0;
 	}
-	strncpy(mSendMsgBuff + mSendWrite, (int *)&iLen, sizeof(int));
+
+	char sBinaryLen[sizeof(int)];
+	itoa(iLen, sBinaryLen, 2);
+
+	strncpy(mSendMsgBuff + mSendWrite, sBinaryLen, sizeof(int));
 	strncpy(mSendMsgBuff + mSendWrite + sizeof(int), pCmd, iLen);
 	return 0;
 }
@@ -239,8 +243,12 @@ int wTcpTask::SyncSend(const char *pCmd, int iLen)
 		LOG_ERROR("default", "message invalid len %d from %s fd(%d)", iLen, mSocket->IPAddr().c_str(), mSocket->SocketFD());
 		return -1;
 	}
-	strncpy(mTmpSendMsgBuff, (int *)&iLen, sizeof(int));
+
+	char sBinaryLen[sizeof(int)];
+	itoa(iLen, sBinaryLen, 2);
+
+	strncpy(mTmpSendMsgBuff, sBinaryLen, sizeof(int));
 	strncpy(mTmpSendMsgBuff + sizeof(int), pCmd, iLen);
 	
-	return mSocket->SendBytes(mTmpSendMsgBuff, iMsgLen);
+	return mSocket->SendBytes(mTmpSendMsgBuff, iLen + sizeof(int));
 }

@@ -34,9 +34,9 @@ int RouterServerTask::HandleRecvMessage(char * pBuffer, int nLen)
 
 int RouterServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen)
 {
+	RouterConfig *pConfig = RouterConfig::Instance();
 	switch(pCommand->GetCmd())
 	{
-		RouterConfig *pConfig = RouterConfig::Instance();
 		case CMD_NULL:
 		{
 			//空消息(心跳返回)
@@ -46,8 +46,8 @@ int RouterServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer,
 		}
 		case CMD_RTBL: //CMD_RTBL_BY_ID:
 		{
-			RtblById_t *pCmd (RtblById_t* )pBuffer;
-			Rtbl_t vRtbl = pConfig->GetRtblById(pBuffer->mId);
+			RtblById_t *pCmd = (RtblById_t* )pBuffer;
+			Rtbl_t vRtbl = pConfig->GetRtblById(pCmd->mId);
 			AsyncSend((char *)&vRtbl, sizeof(vRtbl));
 		}
 		default:

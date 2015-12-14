@@ -386,7 +386,7 @@ void wTcpServer<T>::Start(bool bDaemon)
 		Recv();
 		
 		Run();
-	} while(IsRunning() && bDaemon)
+	} while(IsRunning() && bDaemon);
 }
 
 template <typename T>

@@ -36,7 +36,7 @@ void AgentServer::Initialize()
 {
 	//初始化定时器
 	mClientCheckTimer = wTimer(KEEPALIVE_TIME);
-	mRouterConn = wMTcpClient<AgentServer,AgentServerTask>::Instance();
+	mRouterConn = new wMTcpClient<AgentServerTask>();
 }
 
 wTcpTask* AgentServer::NewTcpTask(wSocket *pSocket)
