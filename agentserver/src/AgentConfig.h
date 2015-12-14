@@ -14,6 +14,9 @@
 #include "wType.h"
 #include "wLog.h"
 #include "wSingleton.h"
+#include "AgentServer.h"
+
+#include "Rtbl.h"
 
 /**
  * 配置文件读取的数据结构
@@ -50,6 +53,22 @@ class AgentConfig: public wConfig<AgentConfig>
 		 * 解析配置
 		 */		
 		void ParseBaseConfig();
+		
+		int RequestGetAllRtbl();
+		int ResponseGetAllRtbl();
+		//Rtbl_t  GetRtblById(int iId);
+		//Rtbl_t* GetRtblByName(string sName, int iNum = 1);
+		//Rtbl_t* GetRtblByGid(int iGid, int iNum = 1);
+		//Rtbl_t* GetRtblByGXid(int iGid, int iXid, int iNum = 1);
+		
+	protected:
+		//void FixRtbl();	//整理容器
+	
+		vector<Rtbl_t*> mRtbl;
+		//map<int, Rtbl_t*> mRtblById;
+		//map<int, vector<Rtbl_t*> > mRtblByGid;
+		//map<string, vector<Rtbl_t*> > mRtblByName;
+		//map<string, vector<Rtbl_t*> > mRtblByGXid;
 };
 
 #endif

@@ -177,63 +177,83 @@ Rtbl_t RouterConfig::GetRtblById(int iId)
 	return vRtbl;
 }
 
-Rtbl_t* RouterConfig::GetRtblByGid(int iGid, int iNum)
+int RouterConfig::GetRtblAll(Rtbl_t* pBuffer, int iNum)
+{
+	vector<Rtbl_t*>::iterator it = mRtbl.begin();
+	if(iNum == 0) iNum = mRtbl.size();
+	for(int i = 0; i < iNum && it != mRtbl.end(); i++, it++)
+	{
+		*(pBuffer+i) = **it;
+	}
+	return iNum;
+}
+
+int RouterConfig::GetRtblByGid(Rtbl_t* pBuffer, int iGid, int iNum)
 {
 	vector<Rtbl_t*> vRtbl;
-	Rtbl_t *pRtbl = NULL;
 	map<int, vector<Rtbl_t*> >::iterator mn = mRtblByGid.find(iGid);
 	if(mn != mRtblByGid.end())
 	{
 		vRtbl = mn->second;
-		pRtbl = new Rtbl_t[iNum];
-
+		
+		if(iNum == 0) iNum = vRtbl.size();
 		vector<Rtbl_t*>::iterator it = vRtbl.begin();
 		for(int i = 0; i < iNum && it != vRtbl.end(); i++, it++)
 		{
-			*(pRtbl+i) = **it;
+			*(pBuffer+i) = **it;
 		}
 	}
-	return pRtbl;
+	else
+	{
+		iNum = 0;
+	}
+	return iNum;
 }
 
-Rtbl_t* RouterConfig::GetRtblByName(string sName, int iNum)
+int RouterConfig::GetRtblByName(Rtbl_t* pBuffer, string sName, int iNum)
 {
 	vector<Rtbl_t*> vRtbl;
-	Rtbl_t *pRtbl = NULL;
 	map<string, vector<Rtbl_t*> >::iterator mn = mRtblByName.find(sName);
 	if(mn != mRtblByName.end())
 	{
 		vRtbl = mn->second;
-		pRtbl = new Rtbl_t[iNum];
+		if(iNum == 0) iNum = vRtbl.size();
 		
 		vector<Rtbl_t*>::iterator it = vRtbl.begin();
 		for(int i = 0; i < iNum && it != vRtbl.end(); i++, it++)
 		{
-			*(pRtbl+i) = **it;
+			*(pBuffer+i) = **it;
 		}
 	}
-	return pRtbl;
+	else
+	{
+		iNum = 0;
+	}
+	return iNum;
 }
 
-Rtbl_t* RouterConfig::GetRtblByGXid(int iGid, int iXid, int iNum)
+int RouterConfig::GetRtblByGXid(Rtbl_t* pBuffer, int iGid, int iXid, int iNum)
 {
 	string sGid = Itos(iGid);
 	string sXid = Itos(iXid);
 	string sGXid = sGid + "-" + sXid;
 	
 	vector<Rtbl_t*> vRtbl;
-	Rtbl_t *pRtbl = NULL;
 	map<string, vector<Rtbl_t*> >::iterator mn = mRtblByGXid.find(sGXid);
 	if(mn != mRtblByGXid.end())
 	{
 		vRtbl = mn->second;
-		pRtbl = new Rtbl_t[iNum];
+		if(iNum == 0) iNum = vRtbl.size();
 
 		vector<Rtbl_t*>::iterator it = vRtbl.begin();
 		for(int i = 0; i < iNum && it != vRtbl.end(); i++, it++)
 		{
-			*(pRtbl+i) = **it;
+			*(pBuffer+i) = **it;
 		}
 	}
-	return pRtbl;
+	else
+	{
+		iNum = 0;
+	}
+	return iNum;
 }

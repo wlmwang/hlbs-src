@@ -8,6 +8,7 @@
 #include "RouterConfig.h"
 
 #include "RouterCommand.h"
+#include "AgentCommand.h"
 
 #include "wAssert.h"
 
@@ -35,19 +36,59 @@ int RouterServerTask::HandleRecvMessage(char * pBuffer, int nLen)
 int RouterServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen)
 {
 	RouterConfig *pConfig = RouterConfig::Instance();
-	switch(pCommand->GetCmd())
+	switch(pCommand->GetCmd()<<8 | pCommand->GetPara())
 	{
-		case CMD_NULL:
+		case CMD_NULL<<8 | PARA_NULL:
 		{
 			//空消息(心跳返回)
 			mHeartbeatTimes = 0;
 			break;
 		}
-		case CMD_RTBL: //CMD_RTBL_BY_ID:
+		case CMD_RTBL<<8 | CMD_RTBL_ALL:
+		{
+			RtblAll_t *pCmd = (RtblAll_t* )pBuffer;
+			RtblResponse_t vRRt;
+			vRRt.mNum = pConfig->GetRtblAll(vRRt.mRtbl, 0);
+			
+			AsyncSend((char *)&vRRt, sizeof(vRRt));
+			break;
+		}
+		case CMD_RTBL<<8 | CMD_RTBL_BY_ID:
 		{
 			RtblById_t *pCmd = (RtblById_t* )pBuffer;
+			RtblResponse_t vRRt;
+			vRRt.mNum = 1;
 			Rtbl_t vRtbl = pConfig->GetRtblById(pCmd->mId);
-			AsyncSend((char *)&vRtbl, sizeof(vRtbl));
+			memcpy(vRRt.mRtbl, (char* )&vRtbl , sizeof(vRtbl));
+			AsyncSend((char *)&vRRt, sizeof(vRRt));
+			break;
+		}
+		case CMD_RTBL<<8 | CMD_RTBL_BY_GID:
+		{
+			RtblByGid_t *pCmd = (RtblByGid_t* )pBuffer;
+			
+			RtblResponse_t vRRt;
+			vRRt.mNum = pConfig->GetRtblByGid(vRRt.mRtbl, pCmd->mGid, 1);
+			if(vRRt.mNum) AsyncSend((char *)vRRt, sizeof(vRRt));
+			break;
+		}
+		case CMD_RTBL<<8 | CMD_RTBL_BY_NAME:
+		{
+			RtblByName_t *pCmd = (RtblByName_t* )pBuffer;
+			
+			RtblResponse_t vRRt;
+			vRRt.mNum = pConfig->GetRtblByName(vRRt.mRtbl, pCmd->mName, 1);
+			if(vRRt.mNum > 0) AsyncSend((char *)vRRt, sizeof(vRRt));
+			break;
+		}
+		case CMD_RTBL<<8 | CMD_RTBL_BY_GXID:
+		{
+			RtblByGXid_t *pCmd = (RtblByGXid_t* )pBuffer;
+			
+			RtblResponse_t vRRt;
+			vRRt.mNum = pConfig->GetRtblByGid(vRRt.mRtbl, pCmd->mGid, pCmd->mXid, 1);
+			if(vRRt.mNum > 0) AsyncSend((char *)vRRt, sizeof(vRRt));
+			break;
 		}
 		default:
 		{

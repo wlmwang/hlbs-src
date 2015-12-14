@@ -9,6 +9,8 @@
 #include "tinyxml.h"	//lib tinyxml
 #include "AgentConfig.h"
 
+#include "RouterCommand.h"
+
 /**
  * 解析配置
  */
@@ -91,4 +93,26 @@ void AgentConfig::ParseBaseConfig()
 		printf("Get log configure from config file failed\n");
 		exit(1);
 	}
+}
+
+int AgentConfig::RequestGetAllRtbl()
+{
+	AgentServer *pServer = AgentServer::Instance();
+	wMTcpClient<AgentServerTask>* pRouterConn = pServer->RouterConn();
+	if(pRouterConn == NULL)
+	{
+		return -1;
+	}
+	wTcpClient<AgentServerTask>* pTask = pRouterConn->OneTcpClient(ROUTER_SERVER_TYPE);
+	if(pTask != NULL)
+	{
+		RtblAll_t vRlt;
+		return pTask->SyncSend((char *)&vRlt, sizeof(RtblAll_t));
+	}
+	return -1;
+}
+
+int AgentConfig::ResponseGetAllRtbl()
+{
+	//
 }

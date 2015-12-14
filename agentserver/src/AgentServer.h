@@ -21,6 +21,8 @@
 #include "wMTcpClient.h"
 #include "wTcpClient.h"
 
+#define ROUTER_SERVER_TYPE 1
+
 class AgentServer: public wTcpServer<AgentServer>
 {
 	public:
@@ -40,6 +42,10 @@ class AgentServer: public wTcpServer<AgentServer>
 		void CheckTimer();
 		void CheckTimeout();
 		
+		wMTcpClient<AgentServerTask>* RouterConn()
+		{
+			return mRouterConn;
+		}
 	private:
 		wMTcpClient<AgentServerTask> *mRouterConn;	//连接router
 		

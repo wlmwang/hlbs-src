@@ -47,8 +47,13 @@ wTcpTask* AgentServer::NewTcpTask(wSocket *pSocket)
 
 void AgentServer::ConnectRouter()
 {
+	AgentConfig *pConfig = AgentConfig::Instance();
+	
 	//mRouterConn
-	mRouterConn->GenerateClient(1, "RouterFromAgent", AgentConfig::Instance()->mRouterIPAddr, AgentConfig::Instance()->mRouterPort);
+	mRouterConn->GenerateClient(ROUTER_SERVER_TYPE, "RouterFromAgent", pConfig->mRouterIPAddr, pConfig->mRouterPort);
+	
+	//发送获取所有rtbl配置请求
+	pConfig->RequestGetAllRtbl();
 }
 
 

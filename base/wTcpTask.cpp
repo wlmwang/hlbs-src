@@ -239,3 +239,25 @@ int wTcpTask::SyncSend(const char *pCmd, int iLen)
 	memcpy(mTmpSendMsgBuff + sizeof(int), pCmd, iLen);
 	return mSocket->SendBytes(mTmpSendMsgBuff, iLen + sizeof(int));
 }
+
+/**
+ *  确保pCmd有足够长的空间接受自此同步消息
+ */
+int wTcpTask::SyncRecv(char *pCmd, int iLen)
+{
+	int iRecvLen = mSocket->RecvBytes(pCmd, iLen);
+	if(iRecvLen <= 0)
+	{
+		LOG_ERROR("default", "client %s socket fd(%d) close from connect port %d, return %d", mSocket->IPAddr().c_str(), mSocket->SocketFD(), mSocket->Port(), iRecvLen);
+		return iRecvLen;	
+	}
+	int iMsgLen = *(int *)pCmd;	//消息总长度。不包括自身int:4字节
+
+	//判断消息长度
+	if(iMsgLen <= MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN )
+	{
+		LOG_ERROR("default", "get invalid len %d from %s fd(%d)", iMsgLen, mSocket->IPAddr().c_str(), mSocket->SocketFD());
+		return -1;
+	}
+	return iRecvLen;
+}

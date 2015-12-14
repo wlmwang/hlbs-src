@@ -52,10 +52,12 @@ class RouterConfig: public wConfig<RouterConfig>
 		 */
 		void ParseRtblConfig();
 		
-		Rtbl_t GetRtblById(int iId);
-		Rtbl_t* GetRtblByName(string sName, int iNum = 1);
-		Rtbl_t* GetRtblByGid(int iGid, int iNum = 1);
-		Rtbl_t* GetRtblByGXid(int iGid, int iXid, int iNum = 1);
+		Rtbl_t  GetRtblById(int iId);
+		
+		int GetRtblAll(Rtbl_t* pBuffer, int iNum = 1);
+		int GetRtblByName(Rtbl_t* pBuffer, string sName, int iNum = 1);
+		int GetRtblByGid(Rtbl_t* pBuffer, int iGid, int iNum = 1);
+		int GetRtblByGXid(Rtbl_t* pBuffer,int iGid, int iXid, int iNum = 1);
 		
 	protected:
 		void FixRtbl();	//整理容器

@@ -41,7 +41,9 @@ class wTcpTask
 		 *  异步发送客户端消息
 		 */
 		int AsyncSend(const char *pCmd, int iLen);
+		
 		int SyncSend(const char *pCmd, int iLen);
+		int SyncRecv(char *pCmd, int iLen);
 		
 		virtual int HandleRecvMessage(char * pBuffer, int nLen) {} //业务逻辑入口函数
 		
