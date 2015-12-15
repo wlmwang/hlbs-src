@@ -103,11 +103,11 @@ int AgentConfig::RequestGetAllRtbl()
 	{
 		return -1;
 	}
-	wTcpClient<AgentServerTask>* pTask = pRouterConn->OneTcpClient(ROUTER_SERVER_TYPE);
-	if(pTask != NULL)
+	wTcpClient<AgentServerTask>* pClient = pRouterConn->OneTcpClient(ROUTER_SERVER_TYPE);
+	if(pClient != NULL && pClient->TcpTask())
 	{
 		RtblAll_t vRlt;
-		return pTask->SyncSend((char *)&vRlt, sizeof(RtblAll_t));
+		return pClient->TcpTask()->SyncSend((char *)&vRlt, sizeof(RtblAll_t));
 	}
 	return -1;
 }

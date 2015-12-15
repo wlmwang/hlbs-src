@@ -7,7 +7,10 @@
 #include "AgentServerTask.h"
 
 #include "wAssert.h"
+#include "AgentConfig.h"
+
 #include "AgentCommand.h"
+#include "RouterCommand.h"
 
 AgentServerTask::AgentServerTask(wSocket *pSocket):wTcpTask(pSocket)
 {
@@ -44,6 +47,10 @@ int AgentServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, 
 		case CMD_RTBL_RESPONSE<<8 | CMD_RTBL_R:
 		{
 			RtblResponse_t *pCmd = (RtblResponse_t* )pBuffer;
+
+			//cout <<"gid:"<< (int)pCmd->mRtbl[0].mGid<< pCmd->mRtbl[0].mName<<endl;
+			//cout <<"gid:"<< (int)pCmd->mRtbl[1].mGid<< pCmd->mRtbl[1].mName<<endl;
+			
 			//pConfig->ResponseRtbl(pCmd, iLen);
 		}
 		default:

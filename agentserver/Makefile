@@ -13,12 +13,14 @@ BASEPATH=../base
 
 LIBPATH=../lib
 
+COMMANDPATH=../command
+
 CXX=g++
 
 CXXFLAGS=-g -DUSE_LOG4CPP -DLINUX #--extra-libs=-lgcc #-D_DEBUG_
 
 LIBS=-L./$(LIBPATH)/log4cpp/lib -llog4cpp -L./$(LIBPATH)/tinyxml -ltinyxml -lpthread -static
-INCPATH=-I./$(BASEPATH) -I./$(LIBPATH)/log4cpp/include -I./$(LIBPATH)/tinyxml
+INCPATH=-I./$(BASEPATH) -I./$(LIBPATH)/log4cpp/include -I./$(LIBPATH)/tinyxml -I./$(COMMANDPATH)
 
 TARGET=./bin/agentsvrd
 OBJECTS=./debug/AgentMain.o ./debug/AgentConfig.o  ./debug/AgentServer.o  ./debug/AgentServerTask.o  ./debug/wLog.o ./debug/wMisc.o  ./debug/wTcpTask.o  ./debug/wSocket.o

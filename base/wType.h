@@ -8,6 +8,7 @@
 #define _W_TYPE_H_
 
 #include <cctype>
+#include <stdint.h>
 
 #define SAFE_DELETE(x) { if (x) { delete(x); (x) = NULL; } }
 #define SAFE_DELETE_VEC(x) { if (x) { delete [] (x); (x) = NULL; } }
@@ -17,25 +18,25 @@
 #define CAST_CMD(x,y,t)	const t* x = (const t*)y;
 
 //单字节无符号整数
-typedef unsigned char BYTE;
+typedef uint8_t BYTE;
 
 //双字节无符号整数
-typedef unsigned short WORD;
+typedef uint16_t WORD;
 
 //双字节符号整数
-typedef signed short SWORD;
+typedef int16_t SWORD;
 
 //四字节无符号整数
-typedef unsigned int DWORD;
+typedef uint32_t DWORD;
 
 //四字节符号整数
-typedef signed int SDWORD;
+typedef int32_t SDWORD;
 
 //八字节无符号整数
-typedef unsigned long QWORD;
+typedef uint64_t QWORD;
 
 //八字节符号整数
-typedef signed long SQWORD;
+typedef uint64_t SQWORD;
 
 //名字的最大长度
 #define MAX_NAME_LEN 32

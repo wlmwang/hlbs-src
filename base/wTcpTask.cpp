@@ -73,13 +73,14 @@ int wTcpTask::ListeningRecv()
 	int iOffset = mRecvBytes;
 
 	int iRecvLen = mSocket->RecvBytes(mRecvMsgBuff + iOffset, sizeof(mRecvMsgBuff) - iOffset);
+	
+	//cout<<"data:"<<mRecvMsgBuff<<"|"<<iRecvLen<<endl;
+	
 	if(iRecvLen <= 0)
 	{
 		LOG_ERROR("default", "client %s socket fd(%d) close from connect port %d, return %d", mSocket->IPAddr().c_str(), mSocket->SocketFD(), mSocket->Port(), iRecvLen);
 		return iRecvLen;	
 	}
-	
-	//cout<<"data:"<<mRecvMsgBuff<<"|"<<iRecvLen<<endl;
 
 	mRecvBytes = mRecvBytes + iRecvLen;	//已接受消息总字节数
 

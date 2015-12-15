@@ -44,50 +44,50 @@ int RouterServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer,
 			mHeartbeatTimes = 0;
 			break;
 		}
-		case CMD_RTBL<<8 | CMD_RTBL_ALL:
+		case CMD_RTBL_REQUEST<<8 | CMD_RTBL_ALL:
 		{
 			RtblAll_t *pCmd = (RtblAll_t* )pBuffer;
 			RtblResponse_t vRRt;
 			vRRt.mNum = pConfig->GetRtblAll(vRRt.mRtbl, 0);
 			
-			AsyncSend((char *)&vRRt, sizeof(vRRt));
+			SyncSend((char *)&vRRt, sizeof(vRRt));
 			break;
 		}
-		case CMD_RTBL<<8 | CMD_RTBL_BY_ID:
+		case CMD_RTBL_REQUEST<<8 | CMD_RTBL_BY_ID:
 		{
 			RtblById_t *pCmd = (RtblById_t* )pBuffer;
 			RtblResponse_t vRRt;
 			vRRt.mNum = 1;
 			Rtbl_t vRtbl = pConfig->GetRtblById(pCmd->mId);
 			memcpy(vRRt.mRtbl, (char* )&vRtbl , sizeof(vRtbl));
-			AsyncSend((char *)&vRRt, sizeof(vRRt));
+			SyncSend((char *)&vRRt, sizeof(vRRt));
 			break;
 		}
-		case CMD_RTBL<<8 | CMD_RTBL_BY_GID:
+		case CMD_RTBL_REQUEST<<8 | CMD_RTBL_BY_GID:
 		{
 			RtblByGid_t *pCmd = (RtblByGid_t* )pBuffer;
 			
 			RtblResponse_t vRRt;
 			vRRt.mNum = pConfig->GetRtblByGid(vRRt.mRtbl, pCmd->mGid, 1);
-			if(vRRt.mNum) AsyncSend((char *)vRRt, sizeof(vRRt));
+			if(vRRt.mNum) SyncSend((char *)&vRRt, sizeof(vRRt));
 			break;
 		}
-		case CMD_RTBL<<8 | CMD_RTBL_BY_NAME:
+		case CMD_RTBL_REQUEST<<8 | CMD_RTBL_BY_NAME:
 		{
 			RtblByName_t *pCmd = (RtblByName_t* )pBuffer;
 			
 			RtblResponse_t vRRt;
 			vRRt.mNum = pConfig->GetRtblByName(vRRt.mRtbl, pCmd->mName, 1);
-			if(vRRt.mNum > 0) AsyncSend((char *)vRRt, sizeof(vRRt));
+			if(vRRt.mNum > 0) SyncSend((char *)&vRRt, sizeof(vRRt));
 			break;
 		}
-		case CMD_RTBL<<8 | CMD_RTBL_BY_GXID:
+		case CMD_RTBL_REQUEST<<8 | CMD_RTBL_BY_GXID:
 		{
 			RtblByGXid_t *pCmd = (RtblByGXid_t* )pBuffer;
 			
 			RtblResponse_t vRRt;
-			vRRt.mNum = pConfig->GetRtblByGid(vRRt.mRtbl, pCmd->mGid, pCmd->mXid, 1);
-			if(vRRt.mNum > 0) AsyncSend((char *)vRRt, sizeof(vRRt));
+			vRRt.mNum = pConfig->GetRtblByGXid(vRRt.mRtbl, pCmd->mGid, pCmd->mXid, 1);
+			if(vRRt.mNum > 0) SyncSend((char *)&vRRt, sizeof(vRRt));
 			break;
 		}
 		default:

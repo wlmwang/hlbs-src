@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include "wCommand.h"
+#include "Rtbl.h"
 
 #pragma pack(1)
 
