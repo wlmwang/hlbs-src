@@ -50,7 +50,7 @@ struct Rtbl_t
 		memset(this->mIp, 0, MAX_IP_LEN);
 	}
 
-	Rtbl_t & operator= (const Rtbl_t &rtbl)
+	Rtbl_t & operator=(const Rtbl_t &rtbl)
 	{
 		this->mId = rtbl.mId;
 		this->mGid = rtbl.mGid;
@@ -63,11 +63,32 @@ struct Rtbl_t
 		return *this;
 	}
 	
-	bool operator== (const Rtbl_t &rtbl) const
+	bool operator>(const Rtbl_t& rtbl)  const	//½µÐò
+	{
+		return mWeight > rtbl.mWeight; 
+	}
+	
+	bool operator<(const Rtbl_t& rtbl)  const	//ÉýÐò
+	{
+		return mWeight < rtbl.mWeight;
+	}
+	
+	bool operator==(const Rtbl_t &rtbl) const
 	{
 		return this->mId == rtbl.mId;
 	}
+	
 };
+
+inline bool GreaterRtbl(const Rtbl_t* pR1, const Rtbl_t* pR2)
+{
+	return   pR1->mWeight > pR2.mWeight;
+}
+
+inline bool LessRtbl(const Rtbl_t* pR1, const Rtbl_t* pR2)
+{
+	return   pR1->mWeight < pR2.mWeight;
+}
 
 #pragma pack()
 

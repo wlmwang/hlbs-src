@@ -54,7 +54,7 @@ int AgentServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, 
 
 			RtblResData_t vRRt;
 			vRRt.mNum = pConfig->GetRtblAll(vRRt.mRtbl, 0);
-			if(vRRt.mNum > 0) SyncSend((char *)&vRRt, sizeof(vRRt));
+			SyncSend((char *)&vRRt, sizeof(vRRt));
 			break;
 		}
 		case ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_ID):	//id方式获取rtbl
@@ -63,7 +63,7 @@ int AgentServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, 
 
 			RtblResData_t vRRt;
 			vRRt.mNum = pConfig->GetRtblById(vRRt.mRtbl, pCmd->mId);
-			if(vRRt.mNum > 0) SyncSend((char *)&vRRt, sizeof(vRRt));
+			SyncSend((char *)&vRRt, sizeof(vRRt));
 			break;
 		}
 		case ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_GID):	//id方式获取rtbl
@@ -72,7 +72,7 @@ int AgentServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, 
 			
 			RtblResData_t vRRt;
 			vRRt.mNum = pConfig->GetRtblByGid(vRRt.mRtbl, pCmd->mGid, 1);
-			if(vRRt.mNum > 0) SyncSend((char *)&vRRt, sizeof(vRRt));
+			SyncSend((char *)&vRRt, sizeof(vRRt));
 			break;
 		}
 		case ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_NAME):	//id方式获取rtbl
@@ -81,7 +81,7 @@ int AgentServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, 
 			
 			RtblResData_t vRRt;
 			vRRt.mNum = pConfig->GetRtblByName(vRRt.mRtbl, pCmd->mName, 1);
-			if(vRRt.mNum > 0) SyncSend((char *)&vRRt, sizeof(vRRt));
+			SyncSend((char *)&vRRt, sizeof(vRRt));
 			break;
 		}
 		case ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_GXID):
@@ -90,7 +90,17 @@ int AgentServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, 
 			
 			RtblResData_t vRRt;
 			vRRt.mNum = pConfig->GetRtblByGXid(vRRt.mRtbl, pCmd->mGid, pCmd->mXid, 1);
-			if(vRRt.mNum > 0) SyncSend((char *)&vRRt, sizeof(vRRt));
+			SyncSend((char *)&vRRt, sizeof(vRRt));
+			break;
+		}
+		//
+		case ASSERT_CMD(CMD_RTBL_SET_REQ, RTBL_SET_REQ_ID):
+		{
+			RtblSetReqId_t *pCmd = (struct RtblSetReqId_t* )pBuffer;
+			
+			RtblSetResData_t vRRt;
+			vRRt.mRes = pConfig->SetRtblAttr(pCmd->mId, pCmd->mDisabled, pCmd->mWeight, pCmd->mTimeline, pCmd->mConnTime, pCmd->mTasks,  pCmd->mSuggest);
+			SyncSend((char *)&vRRt, sizeof(vRRt));
 			break;
 		}
 		default:

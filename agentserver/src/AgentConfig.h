@@ -55,15 +55,19 @@ class AgentConfig: public wConfig<AgentConfig>
 		void ParseBaseConfig();
 		
 		int GetAllRtblReq();
-		void FixRtbl(Rtbl_t pRtbl[] , int iLen);	//整理容器
+		void FixRtbl(Rtbl_t pRtbl[] = NULL, int iLen = 0); //整理容器
 		
 		int GetRtblById(Rtbl_t* pBuffer, int iId);
 		int GetRtblAll(Rtbl_t* pBuffer, int iNum = 1);
 		int GetRtblByName(Rtbl_t* pBuffer, string sName, int iNum = 1);
 		int GetRtblByGid(Rtbl_t* pBuffer, int iGid, int iNum = 1);
 		int GetRtblByGXid(Rtbl_t* pBuffer, int iGid, int iXid, int iNum = 1);
-	
+		
+		BYTE SetRtblAttr(WORD iId, BYTE iDisabled, WORD iWeight, WORD iTimeline, WORD iConnTime, WORD iTasks, WORD iSuggest);
 	protected:
+		BYTE DisabledRtbl(WORD iId);
+		BYTE SetRtblWeight(WORD iId, WORD iWeight);
+		
 		vector<Rtbl_t*> mRtbl;
 		map<int, Rtbl_t*> mRtblById;
 		map<int, vector<Rtbl_t*> > mRtblByGid;

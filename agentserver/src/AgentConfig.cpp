@@ -5,6 +5,9 @@
  */
 
 #include <iostream>
+#include <algorithm>
+//#include <functional> 
+
 #include "wType.h"
 #include "tinyxml.h"	//lib tinyxml
 #include "AgentConfig.h"
@@ -113,7 +116,7 @@ int AgentConfig::GetAllRtblReq()
 //整理容器
 void AgentConfig::FixRtbl(Rtbl_t pRtbl[] , int iLen)
 {
-	if (iLen <= 0)
+	if (iLen < 0)
 	{
 		return;
 	}
@@ -121,6 +124,9 @@ void AgentConfig::FixRtbl(Rtbl_t pRtbl[] , int iLen)
 	{
 		mRtbl.push_back(&pRtbl[i]);
 	}
+	
+	sort(mRtbl.begin(), mRtbl.end(), GreaterRtbl);//降序排序
+	
 	string sId, sName, sGid, sXid, sGXid;
 	vector<Rtbl_t*> vRtbl;
 	for(vector<Rtbl_t*>::iterator it = mRtbl.begin(); it != mRtbl.end(); it++)
@@ -163,12 +169,11 @@ void AgentConfig::FixRtbl(Rtbl_t pRtbl[] , int iLen)
 	}
 }
 
-
 int AgentConfig::GetRtblById(Rtbl_t* pBuffer, int iId)
 {
 	int iNum = 0;
 	map<int, Rtbl_t*>::iterator it = mRtblById.find(iId);
-	if(it != mRtblById.end())
+	if(it != mRtblById.end() && (*it)->mDisabled == 0)
 	{
 		iNum = 1;
 		*pBuffer = *(it->second);
@@ -180,7 +185,7 @@ int AgentConfig::GetRtblAll(Rtbl_t* pBuffer, int iNum)
 {
 	vector<Rtbl_t*>::iterator it = mRtbl.begin();
 	if(iNum == 0) iNum = mRtbl.size();
-	for(int i = 0; i < iNum && it != mRtbl.end(); i++, it++)
+	for(int i = 0; i < iNum && it != mRtbl.end() && (*it)->mDisabled == 0; i++, it++)
 	{
 		*(pBuffer+i) = **it;
 	}
@@ -197,7 +202,7 @@ int AgentConfig::GetRtblByGid(Rtbl_t* pBuffer, int iGid, int iNum)
 		
 		if(iNum == 0) iNum = vRtbl.size();
 		vector<Rtbl_t*>::iterator it = vRtbl.begin();
-		for(int i = 0; i < iNum && it != vRtbl.end(); i++, it++)
+		for(int i = 0; i < iNum && it != vRtbl.end() && (*it)->mDisabled == 0; i++, it++)
 		{
 			*(pBuffer+i) = **it;
 		}
@@ -219,7 +224,7 @@ int AgentConfig::GetRtblByName(Rtbl_t* pBuffer, string sName, int iNum)
 		if(iNum == 0) iNum = vRtbl.size();
 		
 		vector<Rtbl_t*>::iterator it = vRtbl.begin();
-		for(int i = 0; i < iNum && it != vRtbl.end(); i++, it++)
+		for(int i = 0; i < iNum && it != vRtbl.end() && (*it)->mDisabled == 0; i++, it++)
 		{
 			*(pBuffer+i) = **it;
 		}
@@ -245,7 +250,7 @@ int AgentConfig::GetRtblByGXid(Rtbl_t* pBuffer, int iGid, int iXid, int iNum)
 		if(iNum == 0) iNum = vRtbl.size();
 
 		vector<Rtbl_t*>::iterator it = vRtbl.begin();
-		for(int i = 0; i < iNum && it != vRtbl.end(); i++, it++)
+		for(int i = 0; i < iNum && it != vRtbl.end() && (*it)->mDisabled == 0; i++, it++)
 		{
 			*(pBuffer+i) = **it;
 		}
@@ -255,4 +260,65 @@ int AgentConfig::GetRtblByGXid(Rtbl_t* pBuffer, int iGid, int iXid, int iNum)
 		iNum = 0;
 	}
 	return iNum;
+}
+
+BYTE AgentConfig::SetRtblAttr(WORD iId, BYTE iDisabled, WORD iWeight, WORD iTimeline, WORD iConnTime, WORD iTasks, WORD iSuggest)
+{
+	const int SuggestRate = 45;
+	const int TimelineRate = 25;
+	const int ConnTimeRate = 15;
+	const int TasksRate = 5;
+	
+	map<int, Rtbl_t*>::iterator it = mRtblById.find(iId);
+	if(it == mRtblById.end())
+	{
+		return -1;
+	}
+	
+	if(iDisabled == 1)
+	{
+		return DisabledRtbl(iId);
+	}
+	
+	int iWt = 0;
+	if(iWeight > 0)
+	{
+		iWt = iWeight;
+	}
+	else
+	{
+		iWt = (SuggestRate*iSuggest*0.01)+ (TimelineRate*iTimeline*0.01)+ (ConnTimeRate*iConnTime*0.01)+ (TasksRate*iTasks*0.01);
+		iWt = iWt >= 100 ? 100 : iWt;
+	}
+	return SetRtblWeight(iId, iWt);
+}
+
+BYTE AgentConfig::DisabledRtbl(WORD iId)
+{
+	vector<Rtbl_t*>::iterator it = mRtbl.begin();
+	for(it; it != mRtbl.end(); it++)
+	{
+		if(iId == (*it)->mId)
+		{
+			(*it)->mDisabled = 1;
+			FixRtbl();
+			break;
+		}
+	}
+	return 0;
+}
+
+BYTE AgentConfig::SetRtblWeight(WORD iId, WORD iWeight)
+{
+	vector<Rtbl_t*>::iterator it = mRtbl.begin();
+	for(it; it != mRtbl.end(); it++)
+	{
+		if(iId == (*it)->mId)
+		{
+			(*it)->mWeight = iWeight;
+			FixRtbl();
+			break;
+		}
+	}
+	return 0;
 }

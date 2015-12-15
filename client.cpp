@@ -1,4 +1,8 @@
 
+/**
+ * Copyright (C) Anny.
+ * Copyright (C) Disvr, Inc.
+ */
 
 /*
 #include <unistd.h>
@@ -13,7 +17,7 @@
 #include "RouterCommand.h"
 
 #define DEST_IP   "192.168.8.13"
-#define DEST_PORT 10006
+#define DEST_PORT 10007
 
 
 int main()
@@ -57,8 +61,6 @@ int main()
 }
 */
 
-
-
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -70,14 +72,14 @@ int main()
 const int MAXLINE = 8196;
 int main()
 {
-    char buff[MAXLINE];
+    char vBuff[MAXLINE];
     pid_t pid;
     int status;
 
     printf("%% ");
-    while(fgets(buff, MAXLINE,stdin) != NULL)   //ctrl-D
+    while(fgets(vBuff, MAXLINE,stdin) != NULL)   //ctrl-D
     {
-        buff[MAXLINE - 1] = 0;
+        vBuff[MAXLINE - 1] = 0;
 
         if((pid = fork()) < 0)
         {
@@ -86,8 +88,8 @@ int main()
         }
         else if(pid == 0)
         {
-            //execlp(buff,buff,(char*) 0);
-            printf("buff: %s\n", buff);
+            //execlp(vBuff,vBuff,(char*) 0);
+            //printf("buff: %s\n", vBuff);
             exit(127);
         }
         
@@ -99,6 +101,5 @@ int main()
         }
         printf("%% ");
     }
-
     return 0;
 }
