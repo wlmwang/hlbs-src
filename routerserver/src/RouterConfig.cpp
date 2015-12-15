@@ -166,15 +166,16 @@ void RouterConfig::FixRtbl()
 	}
 }
 
-Rtbl_t RouterConfig::GetRtblById(int iId)
+int RouterConfig::GetRtblById(Rtbl_t* pBuffer, int iId)
 {
-	Rtbl_t vRtbl;
+	int iNum = 0;
 	map<int, Rtbl_t*>::iterator it = mRtblById.find(iId);
 	if(it != mRtblById.end())
 	{
-		vRtbl = *(it->second);
+		iNum = 1;
+		*pBuffer = *(it->second);
 	}
-	return vRtbl;
+	return iNum;
 }
 
 int RouterConfig::GetRtblAll(Rtbl_t* pBuffer, int iNum)

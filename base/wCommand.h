@@ -13,6 +13,8 @@
 #include <string.h>
 #include "wType.h"
 
+#define ASSERT_CMD(cmd, para) ((para)<<8 | (cmd))
+
 #pragma pack(1)
 
 enum REQUEST_TYPE
@@ -28,18 +30,27 @@ enum SERVER_TYPE
 	SERVER_AGENT,
 };
 
-const BYTE CMD_NULL = 0;		/** 空的指令 */
-const BYTE PARA_NULL = 0;		/** 空的指令参数 */
+const BYTE CMD_NULL = 0;
+const BYTE PARA_NULL = 0;
 
-struct wCommand
+struct _Null_t
 {
-	BYTE mCmd;					/** 指令代码 */
-	BYTE mPara;					/** 指令代码子编号 */
+	_Null_t(const BYTE cmd, const BYTE para) : mCmd(cmd), mPara(para) {};
 
+	union
+	{
+		WORD mId;
+		struct {BYTE mCmd; BYTE mPara;};
+	};
+
+	WORD GetId() const { return mId; }
 	BYTE GetCmd() const { return mCmd; }
 	BYTE GetPara() const { return mPara; }
-	
-	wCommand(const BYTE cmd = CMD_NULL, const BYTE para = PARA_NULL) : mCmd(cmd), mPara(para) {};
+};
+
+struct wCommand : public _Null_t
+{
+	wCommand(const BYTE cmd = CMD_NULL, const BYTE para = PARA_NULL) : _Null_t(cmd, para) {};
 };
 
 #pragma pack()

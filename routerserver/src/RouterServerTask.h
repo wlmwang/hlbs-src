@@ -10,9 +10,9 @@
 #include <arpa/inet.h>
 
 #include "wType.h"
-#include "wCommand.h"
 #include "wTcpTask.h"
 #include "wLog.h"
+#include "RtblCommand.h"
 
 class RouterServerTask : public wTcpTask
 {

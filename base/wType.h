@@ -32,11 +32,23 @@ typedef uint32_t DWORD;
 //四字节符号整数
 typedef int32_t SDWORD;
 
-//八字节无符号整数
+//八|十六字节无符号整数
 typedef uint64_t QWORD;
 
+//八|十六字节符号整数
+typedef int64_t SQWORD;
+
+//八字节无符号整数
+typedef unsigned long int LWORD;
+
 //八字节符号整数
-typedef uint64_t SQWORD;
+typedef signed long int SLWORD;
+
+//十六节无符号整数
+typedef unsigned long long int LLWORD;
+
+//十六字节符号整数
+typedef signed long long int SLLWORD;
 
 //名字的最大长度
 #define MAX_NAME_LEN 32

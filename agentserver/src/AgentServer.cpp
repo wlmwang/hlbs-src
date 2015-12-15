@@ -12,7 +12,6 @@
 
 #include "wLog.h"
 #include "wMisc.h"
-
 #include "AgentServer.h"
 #include "AgentConfig.h"
 
@@ -53,7 +52,7 @@ void AgentServer::ConnectRouter()
 	mRouterConn->GenerateClient(ROUTER_SERVER_TYPE, "RouterFromAgent", pConfig->mRouterIPAddr, pConfig->mRouterPort);
 	
 	//发送获取所有rtbl配置请求
-	pConfig->RequestGetAllRtbl();
+	pConfig->GetAllRtblReq();
 }
 
 

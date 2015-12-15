@@ -52,8 +52,7 @@ class RouterConfig: public wConfig<RouterConfig>
 		 */
 		void ParseRtblConfig();
 		
-		Rtbl_t  GetRtblById(int iId);
-		
+		int GetRtblById(Rtbl_t* pBuffer, int iId);
 		int GetRtblAll(Rtbl_t* pBuffer, int iNum = 1);
 		int GetRtblByName(Rtbl_t* pBuffer, string sName, int iNum = 1);
 		int GetRtblByGid(Rtbl_t* pBuffer, int iGid, int iNum = 1);

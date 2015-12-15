@@ -16,7 +16,7 @@
 #include "wSingleton.h"
 #include "AgentServer.h"
 
-#include "Rtbl.h"
+#include "RtblCommand.h"
 
 /**
  * 配置文件读取的数据结构
@@ -54,21 +54,21 @@ class AgentConfig: public wConfig<AgentConfig>
 		 */		
 		void ParseBaseConfig();
 		
-		int RequestGetAllRtbl();
-		int ResponseGetAllRtbl();
-		//Rtbl_t  GetRtblById(int iId);
-		//Rtbl_t* GetRtblByName(string sName, int iNum = 1);
-		//Rtbl_t* GetRtblByGid(int iGid, int iNum = 1);
-		//Rtbl_t* GetRtblByGXid(int iGid, int iXid, int iNum = 1);
+		int GetAllRtblReq();
+		void FixRtbl(Rtbl_t pRtbl[] , int iLen);	//整理容器
 		
-	protected:
-		//void FixRtbl();	//整理容器
+		int GetRtblById(Rtbl_t* pBuffer, int iId);
+		int GetRtblAll(Rtbl_t* pBuffer, int iNum = 1);
+		int GetRtblByName(Rtbl_t* pBuffer, string sName, int iNum = 1);
+		int GetRtblByGid(Rtbl_t* pBuffer, int iGid, int iNum = 1);
+		int GetRtblByGXid(Rtbl_t* pBuffer, int iGid, int iXid, int iNum = 1);
 	
+	protected:
 		vector<Rtbl_t*> mRtbl;
-		//map<int, Rtbl_t*> mRtblById;
-		//map<int, vector<Rtbl_t*> > mRtblByGid;
-		//map<string, vector<Rtbl_t*> > mRtblByName;
-		//map<string, vector<Rtbl_t*> > mRtblByGXid;
+		map<int, Rtbl_t*> mRtblById;
+		map<int, vector<Rtbl_t*> > mRtblByGid;
+		map<string, vector<Rtbl_t*> > mRtblByName;
+		map<string, vector<Rtbl_t*> > mRtblByGXid;
 };
 
 #endif

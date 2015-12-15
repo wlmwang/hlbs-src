@@ -7,9 +7,6 @@
 #include "RouterServerTask.h"
 #include "RouterConfig.h"
 
-#include "RouterCommand.h"
-#include "AgentCommand.h"
-
 #include "wAssert.h"
 
 RouterServerTask::RouterServerTask(wSocket *pSocket) : wTcpTask(pSocket)
@@ -36,64 +33,62 @@ int RouterServerTask::HandleRecvMessage(char * pBuffer, int nLen)
 int RouterServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen)
 {
 	RouterConfig *pConfig = RouterConfig::Instance();
-	switch(pCommand->GetCmd()<<8 | pCommand->GetPara())
+	switch(pCommand->GetId())
 	{
-		case CMD_NULL<<8 | PARA_NULL:
+		case ASSERT_CMD(CMD_NULL, PARA_NULL):
 		{
 			//空消息(心跳返回)
 			mHeartbeatTimes = 0;
 			break;
 		}
-		case CMD_RTBL_REQUEST<<8 | CMD_RTBL_ALL:
+		case ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_ALL):	//获取所有rtbl
 		{
-			RtblAll_t *pCmd = (RtblAll_t* )pBuffer;
-			RtblResponse_t vRRt;
+			RtblReqAll_t *pCmd = (struct RtblReqAll_t* )pBuffer;
+
+			RtblResData_t vRRt;
 			vRRt.mNum = pConfig->GetRtblAll(vRRt.mRtbl, 0);
-			
-			SyncSend((char *)&vRRt, sizeof(vRRt));
+			if(vRRt.mNum > 0) SyncSend((char *)&vRRt, sizeof(vRRt));
 			break;
 		}
-		case CMD_RTBL_REQUEST<<8 | CMD_RTBL_BY_ID:
+		case ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_ID):	//id方式获取rtbl
 		{
-			RtblById_t *pCmd = (RtblById_t* )pBuffer;
-			RtblResponse_t vRRt;
-			vRRt.mNum = 1;
-			Rtbl_t vRtbl = pConfig->GetRtblById(pCmd->mId);
-			memcpy(vRRt.mRtbl, (char* )&vRtbl , sizeof(vRtbl));
-			SyncSend((char *)&vRRt, sizeof(vRRt));
+			RtblReqId_t *pCmd = (struct RtblReqId_t* )pBuffer;
+
+			RtblResData_t vRRt;
+			vRRt.mNum = pConfig->GetRtblById(vRRt.mRtbl, pCmd->mId);
+			if(vRRt.mNum > 0) SyncSend((char *)&vRRt, sizeof(vRRt));
 			break;
 		}
-		case CMD_RTBL_REQUEST<<8 | CMD_RTBL_BY_GID:
+		case ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_GID):	//id方式获取rtbl
 		{
-			RtblByGid_t *pCmd = (RtblByGid_t* )pBuffer;
+			RtblReqGid_t *pCmd = (struct RtblReqGid_t* )pBuffer;
 			
-			RtblResponse_t vRRt;
+			RtblResData_t vRRt;
 			vRRt.mNum = pConfig->GetRtblByGid(vRRt.mRtbl, pCmd->mGid, 1);
-			if(vRRt.mNum) SyncSend((char *)&vRRt, sizeof(vRRt));
+			if(vRRt.mNum > 0) SyncSend((char *)&vRRt, sizeof(vRRt));
 			break;
 		}
-		case CMD_RTBL_REQUEST<<8 | CMD_RTBL_BY_NAME:
+		case ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_NAME):	//id方式获取rtbl
 		{
-			RtblByName_t *pCmd = (RtblByName_t* )pBuffer;
+			RtblReqName_t *pCmd = (struct RtblReqName_t* )pBuffer;
 			
-			RtblResponse_t vRRt;
+			RtblResData_t vRRt;
 			vRRt.mNum = pConfig->GetRtblByName(vRRt.mRtbl, pCmd->mName, 1);
 			if(vRRt.mNum > 0) SyncSend((char *)&vRRt, sizeof(vRRt));
 			break;
 		}
-		case CMD_RTBL_REQUEST<<8 | CMD_RTBL_BY_GXID:
+		case ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_GXID):
 		{
-			RtblByGXid_t *pCmd = (RtblByGXid_t* )pBuffer;
+			RtblReqGXid_t *pCmd = (struct RtblReqGXid_t* )pBuffer;
 			
-			RtblResponse_t vRRt;
+			RtblResData_t vRRt;
 			vRRt.mNum = pConfig->GetRtblByGXid(vRRt.mRtbl, pCmd->mGid, pCmd->mXid, 1);
 			if(vRRt.mNum > 0) SyncSend((char *)&vRRt, sizeof(vRRt));
 			break;
 		}
 		default:
 		{
-			//LOG_DEBUG("default", "client fd(%d) send a invalid msg id(%u), close it", vClientFD, stHeadCmd.mCmd);
-			//DisconnectClient(vClientFD);
+			LOG_DEBUG("default", "client fd(%d) send a invalid msg id(%u)", mSocket->SocketFD(), pCommand->GetId());
 			break;
 		}
 	}

@@ -9,8 +9,6 @@
 #include "tinyxml.h"	//lib tinyxml
 #include "AgentConfig.h"
 
-#include "RouterCommand.h"
-
 /**
  * 解析配置
  */
@@ -95,7 +93,7 @@ void AgentConfig::ParseBaseConfig()
 	}
 }
 
-int AgentConfig::RequestGetAllRtbl()
+int AgentConfig::GetAllRtblReq()
 {
 	AgentServer *pServer = AgentServer::Instance();
 	wMTcpClient<AgentServerTask>* pRouterConn = pServer->RouterConn();
@@ -106,13 +104,155 @@ int AgentConfig::RequestGetAllRtbl()
 	wTcpClient<AgentServerTask>* pClient = pRouterConn->OneTcpClient(ROUTER_SERVER_TYPE);
 	if(pClient != NULL && pClient->TcpTask())
 	{
-		RtblAll_t vRlt;
-		return pClient->TcpTask()->SyncSend((char *)&vRlt, sizeof(RtblAll_t));
+		RtblReqAll_t vRtl;
+		return pClient->TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	return -1;
 }
 
-int AgentConfig::ResponseGetAllRtbl()
+//整理容器
+void AgentConfig::FixRtbl(Rtbl_t pRtbl[] , int iLen)
 {
-	//
+	if (iLen <= 0)
+	{
+		return;
+	}
+	for(int i = 0; i < iLen ; i++)
+	{
+		mRtbl.push_back(&pRtbl[i]);
+	}
+	string sId, sName, sGid, sXid, sGXid;
+	vector<Rtbl_t*> vRtbl;
+	for(vector<Rtbl_t*>::iterator it = mRtbl.begin(); it != mRtbl.end(); it++)
+	{
+		sId = Itos((*it)->mId); sName = (*it)->mName; sGid = Itos((*it)->mGid); sXid = Itos((*it)->mXid);
+		sGXid = sGid + "-" + sXid;
+		
+		//mRtblById
+		mRtblById.insert(pair<int, Rtbl_t*>((*it)->mId ,*it));
+		
+		//mRtblByGid
+		map<int, vector<Rtbl_t*> >::iterator mg = mRtblByGid.find((*it)->mGid);
+		if(mg != mRtblByGid.end())
+		{
+			vRtbl = mg->second;
+			mRtblByGid.erase(mg);
+		}
+		vRtbl.push_back(*it);
+		mRtblByGid.insert(pair<int, vector<Rtbl_t*> >((*it)->mGid, vRtbl));
+		
+		//mRtblByName
+		map<string, vector<Rtbl_t*> >::iterator mn = mRtblByName.find(sName);
+		if(mn != mRtblByName.end())
+		{
+			vRtbl = mn->second;
+			mRtblByName.erase(mn);
+		}
+		vRtbl.push_back(*it);
+		mRtblByName.insert(pair<string, vector<Rtbl_t*> >(sName, vRtbl));
+		
+		//mRtblByGXid
+		map<string, vector<Rtbl_t*> >::iterator mgx = mRtblByGXid.find(sGXid);
+		if(mgx != mRtblByGXid.end())
+		{
+			vRtbl = mgx->second;
+			mRtblByGXid.erase(mgx);
+		}
+		vRtbl.push_back(*it);
+		mRtblByGXid.insert(pair<string, vector<Rtbl_t*> >(sGXid, vRtbl));		
+	}
+}
+
+
+int AgentConfig::GetRtblById(Rtbl_t* pBuffer, int iId)
+{
+	int iNum = 0;
+	map<int, Rtbl_t*>::iterator it = mRtblById.find(iId);
+	if(it != mRtblById.end())
+	{
+		iNum = 1;
+		*pBuffer = *(it->second);
+	}
+	return iNum;
+}
+
+int AgentConfig::GetRtblAll(Rtbl_t* pBuffer, int iNum)
+{
+	vector<Rtbl_t*>::iterator it = mRtbl.begin();
+	if(iNum == 0) iNum = mRtbl.size();
+	for(int i = 0; i < iNum && it != mRtbl.end(); i++, it++)
+	{
+		*(pBuffer+i) = **it;
+	}
+	return iNum;
+}
+
+int AgentConfig::GetRtblByGid(Rtbl_t* pBuffer, int iGid, int iNum)
+{
+	vector<Rtbl_t*> vRtbl;
+	map<int, vector<Rtbl_t*> >::iterator mn = mRtblByGid.find(iGid);
+	if(mn != mRtblByGid.end())
+	{
+		vRtbl = mn->second;
+		
+		if(iNum == 0) iNum = vRtbl.size();
+		vector<Rtbl_t*>::iterator it = vRtbl.begin();
+		for(int i = 0; i < iNum && it != vRtbl.end(); i++, it++)
+		{
+			*(pBuffer+i) = **it;
+		}
+	}
+	else
+	{
+		iNum = 0;
+	}
+	return iNum;
+}
+
+int AgentConfig::GetRtblByName(Rtbl_t* pBuffer, string sName, int iNum)
+{
+	vector<Rtbl_t*> vRtbl;
+	map<string, vector<Rtbl_t*> >::iterator mn = mRtblByName.find(sName);
+	if(mn != mRtblByName.end())
+	{
+		vRtbl = mn->second;
+		if(iNum == 0) iNum = vRtbl.size();
+		
+		vector<Rtbl_t*>::iterator it = vRtbl.begin();
+		for(int i = 0; i < iNum && it != vRtbl.end(); i++, it++)
+		{
+			*(pBuffer+i) = **it;
+		}
+	}
+	else
+	{
+		iNum = 0;
+	}
+	return iNum;
+}
+
+int AgentConfig::GetRtblByGXid(Rtbl_t* pBuffer, int iGid, int iXid, int iNum)
+{
+	string sGid = Itos(iGid);
+	string sXid = Itos(iXid);
+	string sGXid = sGid + "-" + sXid;
+	
+	vector<Rtbl_t*> vRtbl;
+	map<string, vector<Rtbl_t*> >::iterator mn = mRtblByGXid.find(sGXid);
+	if(mn != mRtblByGXid.end())
+	{
+		vRtbl = mn->second;
+		if(iNum == 0) iNum = vRtbl.size();
+
+		vector<Rtbl_t*>::iterator it = vRtbl.begin();
+		for(int i = 0; i < iNum && it != vRtbl.end(); i++, it++)
+		{
+			*(pBuffer+i) = **it;
+		}
+	}
+	else
+	{
+		iNum = 0;
+	}
+	return iNum;
 }
