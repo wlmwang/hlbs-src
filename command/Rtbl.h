@@ -82,12 +82,12 @@ struct Rtbl_t
 
 inline bool GreaterRtbl(const Rtbl_t* pR1, const Rtbl_t* pR2)
 {
-	return   pR1->mWeight > pR2.mWeight;
+	return   pR1->mWeight > pR2->mWeight;
 }
 
 inline bool LessRtbl(const Rtbl_t* pR1, const Rtbl_t* pR2)
 {
-	return   pR1->mWeight < pR2.mWeight;
+	return   pR1->mWeight < pR2->mWeight;
 }
 
 #pragma pack()

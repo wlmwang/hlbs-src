@@ -173,7 +173,7 @@ int AgentConfig::GetRtblById(Rtbl_t* pBuffer, int iId)
 {
 	int iNum = 0;
 	map<int, Rtbl_t*>::iterator it = mRtblById.find(iId);
-	if(it != mRtblById.end() && (*it)->mDisabled == 0)
+	if(it != mRtblById.end() && (it->second)->mDisabled == 0)
 	{
 		iNum = 1;
 		*pBuffer = *(it->second);
