@@ -13,37 +13,104 @@
 #include "tinyxml.h"	//lib tinyxml
 #include "wType.h"
 #include "wLog.h"
+#include "wMisc.h"
 #include "wSingleton.h"
 
 template <typename T>
 class wConfig : public wSingleton<T>
 {
 	public:
+		int mShowVersionFlag;
 		int mDaemonFlag;	//是否启动为守护进程
 		int mInitFlag;		//这个参数用于以后服务器在崩溃后被拉起
 		
+		char* mHost;
+		int mPort;
+		
 		wConfig()
 		{
+			mShowVersionFlag = 0;
 			mDaemonFlag = 0;
 			mInitFlag = 0;
+			mHost = 0;
+			mPort = 0;
 		}
 
-		virtual void ParseLineConfig(int argc, const char *argv[])
+		virtual int ParseLineConfig(int argc, char *const *argv)
 		{
-			//启动参数 -d -r
-			for (int i = 1; i < argc; i++) 
+			char *p;
+			int  i;
+
+			for (i = 1; i < argc; i++) 
 			{
-				if (strcasecmp((const char *)argv[i], "-D") == 0) 
+				p = (char *) argv[i];
+				if (*p++ != '-') 
 				{
-					mDaemonFlag = 1;
+					LOG_ERROR("default", "invalid option: \"%s\"", argv[i]);
+					return -1;
 				}
 
-				if (strcasecmp((const char *)argv[i], "-R") == 0)
+				while (*p) 
 				{
-					mInitFlag = 0;
+					switch (*p++) 
+					{
+					case '?':
+					case 'v':
+						mShowVersionFlag = 1;
+						break;
+
+					case 'd':
+						mDaemonFlag = 1;
+						break;
+						
+					case 'r':
+						mInitFlag = 1;
+						break;
+						
+					case 'h':
+						if (*p) 
+						{
+							mHost = p;
+							goto next;
+						}
+
+						if (argv[++i]) 
+						{
+							mHost = (char *) argv[i];
+							goto next;
+						}
+						
+						LOG_ERROR("default", "option \"-h\" requires ip address");
+						return -1;
+						
+					case 'p':
+						if (*p) 
+						{
+							mPort = atoi(p);
+							goto next;
+						}
+
+						if (argv[++i]) 
+						{
+							mPort = atoi(argv[i]);
+							goto next;
+						}
+						
+						LOG_ERROR("default", "option \"-h\" requires port number");
+						return -1;
+						
+					default:
+						LOG_ERROR("default", "invalid option: \"%c\"", *(p - 1));
+						return -1;
+					}
 				}
+
+			next:
+				continue;
 			}
+			return 0;
 		}
+
 };
 
 #endif

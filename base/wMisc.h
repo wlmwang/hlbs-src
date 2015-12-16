@@ -9,6 +9,7 @@
 
 #include <sstream>
 #include <string>
+#include <vector>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/time.h>
@@ -18,7 +19,7 @@
 #include "wType.h"
 
 //计算数组中个体的个数
-#define countOf(entry_v) (sizeof(entry_v) / sizeof((entry_v)[0]))
+#define CountV(entry_v) (sizeof(entry_v) / sizeof((entry_v)[0]))
 
 inline const char* IP2Text(DWORD ip)
 {
@@ -41,6 +42,27 @@ inline unsigned int HashString(const char* s)
 		hash += (hash << 5) + (*s ++);
 	}
 	return hash & 0x7FFFFFFF;
+}
+
+inline vector<string> Split(string sStr, string sPattern, bool bRepeat = true)  
+{  
+    string::size_type iPos;
+    vector<string> vResult;
+    sStr += sPattern;  
+    int iSize = sStr.size();  
+  
+    for(int i = 0; i < iSize; i++)  
+    {  
+        iPos = sStr.find(sPattern, i);
+		while(bRepeat && (sStr[++i] == sPattern)); if(bRepeat) i--;
+        if(iPos < iSize)
+        {
+            string s = sStr.substr(i, iPos - i);
+            vResult.push_back(s);
+            i = iPos + sPattern.size() - 1;
+        }
+    }
+    return vResult;  
 }
 
 //获取毫秒级时间

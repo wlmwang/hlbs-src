@@ -16,7 +16,6 @@
 
 #define AGENT_SERVER_TYPE 1
 
-
 class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>
 {
 	public:
@@ -28,7 +27,13 @@ class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>
 
 		virtual void Run();
 		virtual void PrepareRun();
-	
+		
+		int parseCmd(char *pStr, int iLen);
+		
+		int GetCmd(vector<string> vCmd, vector<string> vParam);
+		int SetCmd(vector<string> vCmd, vector<string> vParam);
+		int ReloadCmd(vector<string> vCmd, vector<string> vParam);
+		int RestartCmd(vector<string> vCmd, vector<string> vParam);
 	protected:
 		wTimer mClientCheckTimer;
 		string mAgentIp;
