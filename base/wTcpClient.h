@@ -88,6 +88,9 @@ class wTcpClient
 		virtual void PrepareStart();
 		virtual void Start(bool bDaemon = true);
 		
+		virtual void PrepareRun();
+		virtual void Run();
+
 		void CheckTimer();
 		void CheckReconnect();
 
@@ -229,6 +232,7 @@ template <typename T>
 void wTcpClient<T>::PrepareStart()
 {
 	SetStatus(CLIENT_STATUS_RUNNING);
+	PrepareRun();
 }
 
 template <typename T>
@@ -237,10 +241,24 @@ void wTcpClient<T>::Start(bool bDaemon)
 	do
 	{
 		ListeningRecv();
-
+		
+		Run();
+		
 		CheckTimer();
 
 	} while(IsRunning() && bDaemon);
+}
+
+template <typename T>
+void wTcpClient<T>::PrepareRun()
+{
+	//...
+}
+
+template <typename T>
+void wTcpClient<T>::Run()
+{
+	//...
 }
 
 template <typename T>
