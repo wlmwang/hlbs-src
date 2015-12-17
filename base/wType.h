@@ -12,6 +12,7 @@
 
 #define SAFE_DELETE(x) { if (x) { delete(x); (x) = NULL; } }
 #define SAFE_DELETE_VEC(x) { if (x) { delete [] (x); (x) = NULL; } }
+#define SAFE_FREE(x) { if (x) { free(x); (x) = NULL; } }
 
 #define SAFE_SUB(x, y) ((x) > (y) ? (x)-(y) : 0)
 

@@ -20,7 +20,68 @@
 #include "AgentCmd.h"
 #include "AgentCmdConfig.h"
 #include "RtblCommand.h"
-	
+
+typedef int (*CmdProcFunc)(void);
+typedef struct{
+	char         *pszCmd;
+	CmdProcFunc  fpCmd;
+} CMD_PROC;
+		
+//命令处理函数定义
+#define MOCK_FUNC(funcName) \
+	int funcName(string sCmd, vector<string> vParam);
+
+#define CMD_ENTRY(cmdStr, func)     {cmdStr, func}
+#define CMD_ENTRY_END               {NULL,   NULL}
+
+extern CMD_PROC gCmdMap[] = {
+	CMD_ENTRY("GetCmd", GetCmd),
+	CMD_ENTRY("SetCmd", SetCmd),
+	CMD_ENTRY("ReloadCmd", ReloadCmd),
+	CMD_ENTRY("TestEndian", RestartCmd),
+
+	CMD_ENTRY_END
+};
+
+#define CMD_MAP_NUM  (sizeof(gCmdMap)/sizeof(CMD_PROC)) - 1
+
+//MOCK_FUNC(GetCmd);
+//MOCK_FUNC(GetCmd);
+//MOCK_FUNC(GetCmd);
+//MOCK_FUNC(GetCmd);
+
+//返回gCmdMap中的CmdStr列(必须为只读字符串)，以供CmdGenerator使用
+extern char *GetCmdByIndex(unsigned int dwCmdIndex)
+{
+	if(dwCmdIndex >=  CMD_MAP_NUM)
+	{
+		return NULL;
+	}
+	return gCmdMap[dwCmdIndex].pszCmd;
+}
+
+//执行命令
+extern int ExecCmd(char *pszCmdLine)
+{
+	if(NULL == pszCmdLine)
+	{
+		return -1;
+	}
+	unsigned int dwCmdIndex = 0;
+	for(; dwCmdIndex < CMD_MAP_NUM; dwCmdIndex++)
+	{
+		if(!strcmp(pszCmdLine, gCmdMap[dwCmdIndex].pszCmd))
+		break;
+	}
+	if(CMD_MAP_NUM == dwCmdIndex)
+	{
+		return -1;
+	}
+	gCmdMap[dwCmdIndex].fpCmd(); //调用相应的函数
+
+	return 0;
+}
+		
 AgentCmd::AgentCmd() : wTcpClient<AgentCmdTask>(AGENT_SERVER_TYPE, "AgentServer", true)
 {
 	Initialize();
@@ -46,6 +107,8 @@ void AgentCmd::Initialize()
 	
 	//初始化定时器
 	mClientCheckTimer = wTimer(KEEPALIVE_TIME);
+	
+	sprintf(mPrompt, "%s %d>", mAgentIp.c_str(), mPort);
 }
 
 
@@ -56,23 +119,18 @@ void AgentCmd::PrepareRun()
 }
 
 void AgentCmd::Run()
-{
-	const int MAXLINE = 8196;
-
-    char vBuff[MAXLINE];
-
-    printf("%s %d>", mAgentIp.c_str(), mPort);
-
-    while(fgets(vBuff, MAXLINE,stdin) != NULL)   //ctrl-D
-    {
-        vBuff[MAXLINE - 1] = 0;
-		
-		parseCmd(vBuff, strlen(vBuff));
-		
-        printf("%s %d>", mAgentIp.c_str(), mPort);
-    }
-
-    AgentCmd::Instance()->SetStatus();
+{	
+	char *mCmdLine = ReadCmdLine();
+	
+	if(IsUserQuitCmd(mCmdLine))
+	{
+		cout << "thanks for used! see you later~" << endl;
+		exit(0);
+		return -1;
+	}
+	ExecCmd(mCmdLine);
+	
+	return;
 }
 
 /**
