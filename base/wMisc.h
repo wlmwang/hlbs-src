@@ -46,20 +46,29 @@ inline unsigned int HashString(const char* s)
 
 inline vector<string> Split(string sStr, string sPattern, bool bRepeat = true)  
 {  
-    string::size_type iPos;
+    string::size_type iPos, iNextPos;
     vector<string> vResult;
     sStr += sPattern;  
-    int iSize = sStr.size();  
+    int iSize = sStr.size();
   
     for(int i = 0; i < iSize; i++)  
     {  
-        iPos = sStr.find(sPattern, i);
-		while(bRepeat && (sStr[++i] == sPattern)); if(bRepeat) i--;
+        iPos = iNextPos = sStr.find(sPattern, i);
+        while(bRepeat)
+        {
+        	i = iNextPos + sPattern.size() /*- 1*/;
+        	iNextPos = sStr.find(sPattern, i);
+        	if(iNextPos != i)
+        	{
+        		i -= sPattern.size();
+        		break;
+        	}
+        }
         if(iPos < iSize)
         {
             string s = sStr.substr(i, iPos - i);
             vResult.push_back(s);
-            i = iPos + sPattern.size() - 1;
+            i = iPos + sPattern.size() /*- 1*/;
         }
     }
     return vResult;  

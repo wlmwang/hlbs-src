@@ -36,7 +36,7 @@ class wConfig : public wSingleton<T>
 			mPort = 0;
 		}
 
-		virtual int ParseLineConfig(int argc, char *const *argv)
+		virtual int ParseLineConfig(int argc, const char *argv[])
 		{
 			char *p;
 			int  i;
