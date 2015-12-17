@@ -54,21 +54,23 @@ inline vector<string> Split(string sStr, string sPattern, bool bRepeat = true)
     for(int i = 0; i < iSize; i++)  
     {  
         iPos = iNextPos = sStr.find(sPattern, i);
+        /*
         while(bRepeat)
         {
-        	i = iNextPos + sPattern.size() /*- 1*/;
+        	i = iNextPos + sPattern.size() - 1;
         	iNextPos = sStr.find(sPattern, i);
-        	if(iNextPos != i)
+        	if(iNextPos + 1 != i)
         	{
-        		i -= sPattern.size();
+        		i -= iNextPos + sPattern.size() - 1;
         		break;
         	}
         }
+        */
         if(iPos < iSize)
         {
             string s = sStr.substr(i, iPos - i);
             vResult.push_back(s);
-            i = iPos + sPattern.size() /*- 1*/;
+            i = iPos + sPattern.size() - 1;
         }
     }
     return vResult;  

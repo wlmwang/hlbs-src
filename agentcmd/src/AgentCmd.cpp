@@ -37,8 +37,9 @@ void AgentCmd::Initialize()
 	mAgentIp = pConfig->mIPAddr;
 	mPort = pConfig->mPort;
 
-	if (ConnectToServer(mAgentIp, mPort) < 0)
+	if (ConnectToServer(mAgentIp.c_str(), mPort) < 0)
 	{
+		cout << "Connect to AgentServer failed! Please start it" <<endl;
 		LOG_ERROR("default", "Connect to AgentServer failed");
 		exit(1);
 	}
@@ -62,7 +63,7 @@ void AgentCmd::Run()
 
     printf("%s %d>", mAgentIp.c_str(), mPort);
 
-    while(fgets(vBuff, MAXLINE,std::cin) != NULL)   //ctrl-D
+    while(fgets(vBuff, MAXLINE,stdin) != NULL)   //ctrl-D
     {
         vBuff[MAXLINE - 1] = 0;
 		
@@ -111,17 +112,17 @@ int AgentCmd::parseCmd(char *pStr, int iLen)
 	return -1;
 }
 
-int AgentCmd::GetCmd(vector<string> vCmd, vector<string> vParam)
+int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 {
 	int a = 0, i = 0, g = 0 , x = 0;
 	string n = "";
 	for(size_t i = 1; i < vParam.size(); i++)
 	{
 		if(vParam[i] == "-a") {a = 1; continue;}
-		if(vParam[i] == "-i") {i = vParam[i++]; continue;}
+		if(vParam[i] == "-i") {i = atoi(vParam[i++].c_str()); continue;}
+		if(vParam[i] == "-g") {g = atoi(vParam[i++].c_str()); continue;}
+		if(vParam[i] == "-x") {x = atoi(vParam[i++].c_str()); continue;}
 		if(vParam[i] == "-n") {n = vParam[i++]; continue;}
-		if(vParam[i] == "-g") {g = vParam[i++]; continue;}
-		if(vParam[i] == "-x") {x = vParam[i++]; continue;}
 	}
 	
 	if(a == 1)
@@ -157,17 +158,17 @@ int AgentCmd::GetCmd(vector<string> vCmd, vector<string> vParam)
 	return -1;
 }
 
-int AgentCmd::SetCmd(vector<string> vCmd, vector<string> vParam)
+int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 {
 	//
 }
 
-int AgentCmd::ReloadCmd(vector<string> vCmd, vector<string> vParam)
+int AgentCmd::ReloadCmd(string sCmd, vector<string> vParam)
 {
 	//
 }
 
-int AgentCmd::RestartCmd(vector<string> vCmd, vector<string> vParam)
+int AgentCmd::RestartCmd(string sCmd, vector<string> vParam)
 {
 	//
 }

@@ -30,10 +30,10 @@ class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>
 		
 		int parseCmd(char *pStr, int iLen);
 		
-		int GetCmd(vector<string> vCmd, vector<string> vParam);
-		int SetCmd(vector<string> vCmd, vector<string> vParam);
-		int ReloadCmd(vector<string> vCmd, vector<string> vParam);
-		int RestartCmd(vector<string> vCmd, vector<string> vParam);
+		int GetCmd(string sCmd, vector<string> vParam);
+		int SetCmd(string sCmd, vector<string> vParam);
+		int ReloadCmd(string sCmd, vector<string> vParam);
+		int RestartCmd(string sCmd, vector<string> vParam);
 	protected:
 		wTimer mClientCheckTimer;
 		string mAgentIp;
