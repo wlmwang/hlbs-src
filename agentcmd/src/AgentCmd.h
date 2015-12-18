@@ -24,7 +24,6 @@
 #define CMD_ENTRY(cmdStr, func) {cmdStr, std::bind(func, this, std::placeholders::_1)}
 #define CMD_ENTRY_END  {NULL, NULL}
 
-//命令处理函数定义
 #define CMD_FUNC(funcName) \
 	int funcName(string sCmd)
 
