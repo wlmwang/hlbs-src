@@ -21,26 +21,6 @@
 #include "AgentCmdConfig.h"
 #include "RtblCommand.h"
 
-static CMD_PROC evCmdMap[] = {
-	CMD_ENTRY("GetCmd", GetCmd),
-	//CMD_ENTRY("SetCmd", SetCmd),
-	//CMD_ENTRY("ReloadCmd", ReloadCmd),
-	//CMD_ENTRY("TestEndian", RestartCmd),
-
-	CMD_ENTRY_END
-};
-
-static int eiCmdMapNum = (sizeof(evCmdMap)/sizeof(CMD_PROC)) - 1;
-
-const char *GetCmdByIndex(unsigned int dwCmdIndex)
-{
-	if(dwCmdIndex >=  eiCmdMapNum)
-	{
-		return NULL;
-	}
-	return evCmdMap[dwCmdIndex].pszCmd;
-}
-
 char* CmdGenerator(const char *pText, int iState)
 {
 	static int iListIdx = 0, iTextLen = 0;
@@ -51,10 +31,9 @@ char* CmdGenerator(const char *pText, int iState)
 	}
 
 	const char *pName = NULL;
-	while((pName = GetCmdByIndex(iListIdx)))
+	while((pName = AgentCmd::Instance()->GetCmdByIndex(iListIdx)))
 	{
 		iListIdx++;
-
 		if(!strncmp (pName, pText, iTextLen))
 		{
 			return strdup(pName);
@@ -75,49 +54,40 @@ char** CmdCompletion(const char *pText, int iStart, int iEnd)
 	return pMatches;
 }
 
-//执行命令
-int ExecCmd(char *pszCmdLine)
+const char *AgentCmd::GetCmdByIndex(unsigned int iCmdIndex)
 {
-	if(NULL == pszCmdLine)
-	{
-		return -1;
-	}
-	unsigned int dwCmdIndex = 0;
-	for(; dwCmdIndex < eiCmdMapNum; dwCmdIndex++)
-	{
-		if(!strcmp(pszCmdLine, evCmdMap[dwCmdIndex].pszCmd))
-		break;
-	}
-	if(eiCmdMapNum == dwCmdIndex)
-	{
-		return -1;
-	}
-	//evCmdMap[dwCmdIndex].fpCmd(); //调用相应的函数
-
-	return 0;
-}
-
-MOCK_FUNC(GetCmd)
-{
-	cout <<"scmd:" << sCmd << endl;
-}
-
-/*
-//MOCK_FUNC(GetCmd);
-//MOCK_FUNC(GetCmd);
-//MOCK_FUNC(GetCmd);
-
-//返回gCmdMap中的CmdStr列(必须为只读字符串)，以供CmdGenerator使用
-extern char *GetCmdByIndex(unsigned int dwCmdIndex)
-{
-	if(dwCmdIndex >=  CMD_MAP_NUM)
+	if(iCmdIndex >= mCmdMapNum)
 	{
 		return NULL;
 	}
-	return CmdMap[dwCmdIndex].pszCmd;
+	return mCmdMap[iCmdIndex].pStrCmd;
 }
 
-*/
+//执行命令
+int AgentCmd::Exec(char *pCmdLine)
+{
+	if(NULL == pCmdLine)
+	{
+		return -1;
+	}
+
+	unsigned int iCmdIndex = 0;
+	for(; iCmdIndex < mCmdMapNum; iCmdIndex++)
+	{
+		if(!strcmp(pCmdLine, mCmdMap[iCmdIndex].pStrCmd))
+		{
+			break;
+		}
+	}
+	if(mCmdMapNum == iCmdIndex)
+	{
+		return -1;
+	}
+
+	mCmdMap[iCmdIndex].vFuncCmd(pCmdLine); //调用相应的函数
+
+	return 0;
+}
 
 AgentCmd::AgentCmd() : wTcpClient<AgentCmdTask>(AGENT_SERVER_TYPE, "AgentServer", true)
 {
@@ -145,11 +115,25 @@ void AgentCmd::Initialize()
 	//初始化定时器
 	mClientCheckTimer = wTimer(KEEPALIVE_TIME);
 	
-	sprintf(mPrompt, "%s %d>", mAgentIp.c_str(), mPort);
+	//注册函数回调函数
+	mCmdMap.push_back(CMD_ENTRY("GetCmd", &AgentCmd::GetCmd));
+	//mCmdMap.push_back(CMD_ENTRY("SetCmd", &AgentCmd::SetCmd));
+	//mCmdMap.push_back(CMD_ENTRY("ReloadCmd", &AgentCmd::ReloadCmd));
+	//mCmdMap.push_back(CMD_ENTRY("TestEndian", &AgentCmd::TestEndian));
 	
+	mCmdMap.push_back(CMD_ENTRY_END);
+	mCmdMapNum = mCmdMap.size() - 1;
+
+	sprintf(mPrompt, "%s %d>", mAgentIp.c_str(), mPort);
 	SetCompletionFunc(CmdCompletion);
 }
 
+int AgentCmd::GetCmd(string sCmd)
+{
+	cout << "mAgentIp" << mAgentIp.c_str() << endl;
+
+	return 0;
+}
 
 //准备工作
 void AgentCmd::PrepareRun()
@@ -166,7 +150,7 @@ void AgentCmd::Run()
 		cout << "thanks for used! see you later~" << endl;
 		exit(0);
 	}
-	ExecCmd(mCmdLine);
+	Exec(mCmdLine);
 	
 	return;
 }

@@ -9,6 +9,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 #include "wType.h"
 #include "wTimer.h"
@@ -20,27 +21,15 @@
 
 #define AGENT_SERVER_TYPE 1
 
-typedef int (*CmdProcFunc)(string sCmd, vector<string> vParam);
-typedef struct{
-	const char   *pszCmd;
-	CmdProcFunc  fpCmd;
-} CMD_PROC;
-
-
-#define CMD_ENTRY(cmdStr, func) {cmdStr, func}
+#define CMD_ENTRY(cmdStr, func) {cmdStr, std::bind(func, this, std::placeholders::_1)}
 #define CMD_ENTRY_END  {NULL, NULL}
 
 //命令处理函数定义
-#define MOCK_FUNC(funcName) \
-	int funcName(string sCmd, vector<string> vParam)
+#define CMD_FUNC(funcName) \
+	int funcName(string sCmd)
 
 char* CmdGenerator(const char *pText, int iState);
 char** CmdCompletion(const char *pText, int iStart, int iEnd);
-
-const char *GetCmdByIndex(unsigned int dwCmdIndex);
-int ExecCmd(char *pszCmdLine);
-
-MOCK_FUNC(GetCmd);
 
 class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>, public wReadline
 {
@@ -56,12 +45,23 @@ class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>, pu
 		
 		int parseCmd(char *pStr, int iLen);
 		
-		//int GetCmd(string sCmd, vector<string> vParam);
-		//int SetCmd(string sCmd, vector<string> vParam);
-		//int ReloadCmd(string sCmd, vector<string> vParam);
-		//int RestartCmd(string sCmd, vector<string> vParam);
-	
+		CMD_FUNC(GetCmd);
+		
+		const char *GetCmdByIndex(unsigned int iCmdIndex);
+		int Exec(char *pszCmdLine);
+
 	protected:
+
+		typedef struct
+		{
+			const char  *pStrCmd;
+			function<int(string)> vFuncCmd;
+		} CmdProc_t;
+
+
+		vector<CmdProc_t> mCmdMap;
+		int mCmdMapNum;
+
 		wTimer mClientCheckTimer;
 		string mAgentIp;
 		unsigned short mPort;

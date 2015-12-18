@@ -22,7 +22,7 @@ LIBPATH=../lib
 
 COMMANDPATH=../command
 
-CXX=g++
+CXX=g++ -std=c++11
 
 CXXFLAGS=-g -DUSE_LOG4CPP -DLINUX -D__READLINE_DEBUG#--extra-libs=-lgcc #-D_DEBUG_
 

@@ -16,7 +16,7 @@ wReadline::wReadline()
 
 wReadline::~wReadline()
 {
-	//
+	SAFE_FREE(mLineRead);
 }
 
 void wReadline::Initialize()
@@ -27,7 +27,7 @@ void wReadline::Initialize()
 	mFunc = NULL;
 }
 
-bool wReadline::SetCompletionFunc(CmdCompletionFunc pFunc)
+bool wReadline::SetCompletionFunc(CmdCompletionFunc_t pFunc)
 {
 	if (pFunc != NULL)
 	{
