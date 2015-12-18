@@ -21,31 +21,88 @@
 #include "AgentCmdConfig.h"
 #include "RtblCommand.h"
 
-typedef int (*CmdProcFunc)(void);
-typedef struct{
-	char         *pszCmd;
-	CmdProcFunc  fpCmd;
-} CMD_PROC;
-		
-//命令处理函数定义
-#define MOCK_FUNC(funcName) \
-	int funcName(string sCmd, vector<string> vParam);
-
-#define CMD_ENTRY(cmdStr, func)     {cmdStr, func}
-#define CMD_ENTRY_END               {NULL,   NULL}
-
-extern CMD_PROC gCmdMap[] = {
+static CMD_PROC evCmdMap[] = {
 	CMD_ENTRY("GetCmd", GetCmd),
-	CMD_ENTRY("SetCmd", SetCmd),
-	CMD_ENTRY("ReloadCmd", ReloadCmd),
-	CMD_ENTRY("TestEndian", RestartCmd),
+	//CMD_ENTRY("SetCmd", SetCmd),
+	//CMD_ENTRY("ReloadCmd", ReloadCmd),
+	//CMD_ENTRY("TestEndian", RestartCmd),
 
 	CMD_ENTRY_END
 };
 
-#define CMD_MAP_NUM  (sizeof(gCmdMap)/sizeof(CMD_PROC)) - 1
+static int eiCmdMapNum = (sizeof(evCmdMap)/sizeof(CMD_PROC)) - 1;
 
-//MOCK_FUNC(GetCmd);
+const char *GetCmdByIndex(unsigned int dwCmdIndex)
+{
+	if(dwCmdIndex >=  eiCmdMapNum)
+	{
+		return NULL;
+	}
+	return evCmdMap[dwCmdIndex].pszCmd;
+}
+
+char* CmdGenerator(const char *pText, int iState)
+{
+	static int iListIdx = 0, iTextLen = 0;
+	if(!iState)
+	{
+		iListIdx = 0;
+		iTextLen = strlen(pText);
+	}
+
+	const char *pName = NULL;
+	while((pName = GetCmdByIndex(iListIdx)))
+	{
+		iListIdx++;
+
+		if(!strncmp (pName, pText, iTextLen))
+		{
+			return strdup(pName);
+		}
+	}
+	return NULL;
+}
+
+char** CmdCompletion(const char *pText, int iStart, int iEnd)
+{
+	//rl_attempted_completion_over = 1;
+	char **pMatches = NULL;
+	if(0 == iStart)
+	{
+		pMatches = rl_completion_matches(pText, CmdGenerator);
+	}
+
+	return pMatches;
+}
+
+//执行命令
+int ExecCmd(char *pszCmdLine)
+{
+	if(NULL == pszCmdLine)
+	{
+		return -1;
+	}
+	unsigned int dwCmdIndex = 0;
+	for(; dwCmdIndex < eiCmdMapNum; dwCmdIndex++)
+	{
+		if(!strcmp(pszCmdLine, evCmdMap[dwCmdIndex].pszCmd))
+		break;
+	}
+	if(eiCmdMapNum == dwCmdIndex)
+	{
+		return -1;
+	}
+	//evCmdMap[dwCmdIndex].fpCmd(); //调用相应的函数
+
+	return 0;
+}
+
+MOCK_FUNC(GetCmd)
+{
+	cout <<"scmd:" << sCmd << endl;
+}
+
+/*
 //MOCK_FUNC(GetCmd);
 //MOCK_FUNC(GetCmd);
 //MOCK_FUNC(GetCmd);
@@ -57,31 +114,11 @@ extern char *GetCmdByIndex(unsigned int dwCmdIndex)
 	{
 		return NULL;
 	}
-	return gCmdMap[dwCmdIndex].pszCmd;
+	return CmdMap[dwCmdIndex].pszCmd;
 }
 
-//执行命令
-extern int ExecCmd(char *pszCmdLine)
-{
-	if(NULL == pszCmdLine)
-	{
-		return -1;
-	}
-	unsigned int dwCmdIndex = 0;
-	for(; dwCmdIndex < CMD_MAP_NUM; dwCmdIndex++)
-	{
-		if(!strcmp(pszCmdLine, gCmdMap[dwCmdIndex].pszCmd))
-		break;
-	}
-	if(CMD_MAP_NUM == dwCmdIndex)
-	{
-		return -1;
-	}
-	gCmdMap[dwCmdIndex].fpCmd(); //调用相应的函数
+*/
 
-	return 0;
-}
-		
 AgentCmd::AgentCmd() : wTcpClient<AgentCmdTask>(AGENT_SERVER_TYPE, "AgentServer", true)
 {
 	Initialize();
@@ -109,6 +146,8 @@ void AgentCmd::Initialize()
 	mClientCheckTimer = wTimer(KEEPALIVE_TIME);
 	
 	sprintf(mPrompt, "%s %d>", mAgentIp.c_str(), mPort);
+	
+	SetCompletionFunc(CmdCompletion);
 }
 
 
@@ -126,7 +165,6 @@ void AgentCmd::Run()
 	{
 		cout << "thanks for used! see you later~" << endl;
 		exit(0);
-		return -1;
 	}
 	ExecCmd(mCmdLine);
 	
@@ -152,24 +190,25 @@ int AgentCmd::parseCmd(char *pStr, int iLen)
 	
 	if(DefineCmd[0] == vCmd[0])
 	{
-		GetCmd(vCmd[0], vCmd);
+		//GetCmd(vCmd[0], vCmd);
 	}
 	else if(DefineCmd[1] == vCmd[0])
 	{
-		SetCmd(vCmd[0], vCmd);
+		//SetCmd(vCmd[0], vCmd);
 	}
 	else if(DefineCmd[2] == vCmd[0])
 	{
-		ReloadCmd(vCmd[0], vCmd);
+		//ReloadCmd(vCmd[0], vCmd);
 	}
 	else if(DefineCmd[3] == vCmd[0])
 	{
-		RestartCmd(vCmd[0], vCmd);
+		//RestartCmd(vCmd[0], vCmd);
 	}
 	
 	return -1;
 }
 
+/*
 int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 {
 	int a = 0, i = 0, g = 0 , x = 0;
@@ -230,3 +269,4 @@ int AgentCmd::RestartCmd(string sCmd, vector<string> vParam)
 {
 	//
 }
+*/

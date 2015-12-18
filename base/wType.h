@@ -9,6 +9,7 @@
 
 #include <cctype>
 #include <stdint.h>
+#include <stdlib.h>
 
 #define SAFE_DELETE(x) { if (x) { delete(x); (x) = NULL; } }
 #define SAFE_DELETE_VEC(x) { if (x) { delete [] (x); (x) = NULL; } }

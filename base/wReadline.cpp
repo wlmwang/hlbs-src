@@ -6,8 +6,8 @@
 
 #include "wReadline.h"
 
-static const char *wReadline::mQuitCmd[] = {"Quit", "Exit", "End", "Bye"};
-static const unsigned char wReadline::mQuitCmdNum = sizeof(wReadline::mQuitCmd) / sizeof(wReadline::mQuitCmd[0]);
+const char *wReadline::mQuitCmd[] = {"Quit", "Exit", "End", "Bye"};
+const unsigned char wReadline::mQuitCmdNum = sizeof(wReadline::mQuitCmd) / sizeof(wReadline::mQuitCmd[0]);
 
 wReadline::wReadline()
 {
@@ -22,20 +22,31 @@ wReadline::~wReadline()
 void wReadline::Initialize()
 {
 	memset(mPrompt,0,32);
-	*mCmdLine = 0;
-	*mLineRead = 0;
-	*mStripLine = 0;
-	
-	rl_attempted_completion_function = CmdCompletion;
+	mLineRead = 0;
+	mStripLine = 0;
+	mFunc = NULL;
 }
 
+bool wReadline::SetCompletionFunc(CmdCompletionFunc pFunc)
+{
+	if (pFunc != NULL)
+	{
+		rl_attempted_completion_function = pFunc;
+		return true;
+	}
+	else if(mFunc != NULL)
+	{
+		rl_attempted_completion_function = mFunc;
+		return true;
+	}
+	return false;
+}
 
 char *wReadline::ReadCmdLine()
 {
 	SAFE_FREE(mLineRead);
 	mLineRead = readline(mPrompt);
 
-	//剔除命令行首尾的空白字符。若剔除后的命令不为空，则存入历史列表
 	mStripLine = StripWhite(mLineRead);
 	if(mStripLine && *mStripLine)
 	{
@@ -45,7 +56,6 @@ char *wReadline::ReadCmdLine()
 	return mStripLine;
 }
 
-//剔除字符串首尾的空白字符(含空格)
 char *wReadline::StripWhite(char *pOrig)
 {
 	if(NULL == pOrig)
