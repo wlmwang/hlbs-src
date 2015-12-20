@@ -80,7 +80,11 @@ int main(int argc, const char *argv[])
 		LOG_ERROR("default", "Get AgentCmd instance failed");
 		exit(1);
 	}
-
+	
+	//注册到路由中
+	//pServer->mDispatch->RegisterCtl("AgentCmd",pServer);
+	//pServer->mDispatch->RegAct();
+	
 	//准备工作
 	pServer->PrepareStart();
 

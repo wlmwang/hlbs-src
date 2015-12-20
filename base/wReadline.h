@@ -25,15 +25,14 @@ class wReadline
 		void Initialize();
 		
 		char *ReadCmdLine();
-		char *StripWhite(char *pOrig);
-		bool IsUserQuitCmd(char *pCmd);
+		virtual char *StripWhite(char *pOrig);
+		virtual bool IsUserQuitCmd(char *pCmd);
 	
 		bool SetCompletionFunc(CmdCompletionFunc_t pFunc);
 	protected:
 		char mPrompt[32];
 		char *mLineRead;
 		char *mStripLine;
-
 		
 		CmdCompletionFunc_t mFunc;
 

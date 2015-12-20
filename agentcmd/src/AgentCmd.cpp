@@ -21,6 +21,7 @@
 #include "AgentCmdConfig.h"
 #include "RtblCommand.h"
 
+
 char* CmdGenerator(const char *pText, int iState)
 {
 	static int iListIdx = 0, iTextLen = 0;
@@ -83,7 +84,10 @@ int AgentCmd::Exec(char *pCmdLine)
 	{
 		return -1;
 	}
-
+	
+	//Func_t* pF= mDispatch->GetFuncT(pCmdLine,pCmdLine);
+	//pF->mArg1 = pCmdLine;
+	//mDispatch.Dispatch(pCmdLine,pCmdLine,pCmdLine);
 	mCmdMap[iCmdIndex].vFuncCmd(pCmdLine); //调用相应的函数
 
 	return 0;
@@ -97,6 +101,12 @@ AgentCmd::AgentCmd() : wTcpClient<AgentCmdTask>(AGENT_SERVER_TYPE, "AgentServer"
 AgentCmd::~AgentCmd() 
 {
 	//
+}
+
+void AgentCmd::RegAct()
+{
+	mDispatch.RegisterAct("AgentCmd", "GetCmd", REG("GetCmd",&AgentCmd::GetCmd));
+	mDispatch.RegisterAct("AgentCmd", "GetCmd", REG("SetCmd",&AgentCmd::SetCmd));
 }
 
 void AgentCmd::Initialize()

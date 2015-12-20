@@ -18,14 +18,17 @@
 #include "AgentCmdTask.h"
 #include "wTcpClient.h"
 #include "wReadline.h"
+#include "wDispatch.h"
 
 #define AGENT_SERVER_TYPE 1
 
 #define CMD_ENTRY(cmdStr, func) {cmdStr, std::bind(func, this, std::placeholders::_1)}
 #define CMD_ENTRY_END  {NULL, NULL}
 
-#define CMD_FUNC(funcName) \
-	int funcName(string sCmd)
+#define REG(ActName, vFunc) Func_t<function<int(string)>, string>{ActName, std::bind(vFunc, this, std::placeholders::_1), 1}
+
+
+#define CMD_FUNC(funcName) int funcName(string sCmd)
 
 char* CmdGenerator(const char *pText, int iState);
 char** CmdCompletion(const char *pText, int iStart, int iEnd);
@@ -48,7 +51,8 @@ class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>, pu
 		
 		const char *GetCmdByIndex(unsigned int iCmdIndex);
 		int Exec(char *pszCmdLine);
-
+		
+		void RegAct();
 	protected:
 
 		typedef struct
@@ -57,7 +61,8 @@ class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>, pu
 			function<int(string)> vFuncCmd;
 		} CmdProc_t;
 
-
+		wDispatch mDispatch;
+		
 		vector<CmdProc_t> mCmdMap;
 		int mCmdMapNum;
 

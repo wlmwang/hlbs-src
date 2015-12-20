@@ -21,7 +21,7 @@ wReadline::~wReadline()
 
 void wReadline::Initialize()
 {
-	memset(mPrompt,0,32);
+	memcpy(mPrompt,"cmd>",4);
 	mLineRead = 0;
 	mStripLine = 0;
 	mFunc = NULL;
