@@ -21,13 +21,13 @@ wReadline::~wReadline()
 
 void wReadline::Initialize()
 {
-	memcpy(mPrompt,"cmd>",4);
+	memcpy(mPrompt, "Anny>", 5);
 	mLineRead = 0;
 	mStripLine = 0;
 	mFunc = NULL;
 }
 
-bool wReadline::SetCompletionFunc(CmdCompletionFunc_t pFunc)
+bool wReadline::SetCompletion(CompletionFunc_t pFunc)
 {
 	if (pFunc != NULL)
 	{

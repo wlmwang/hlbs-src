@@ -21,81 +21,6 @@
 #include "AgentCmdConfig.h"
 #include "RtblCommand.h"
 
-/*
-char* CmdGenerator(const char *pText, int iState)
-{
-	static int iListIdx = 0, iTextLen = 0;
-	if(!iState)
-	{
-		iListIdx = 0;
-		iTextLen = strlen(pText);
-	}
-
-	const char *pName = NULL;
-	while((pName = AgentCmd::Instance()->GetCmdByIndex(iListIdx)))
-	{
-		iListIdx++;
-		if(!strncmp (pName, pText, iTextLen))
-		{
-			return strdup(pName);
-		}
-	}
-	return NULL;
-}
-
-char** CmdCompletion(const char *pText, int iStart, int iEnd)
-{
-	//rl_attempted_completion_over = 1;
-	char **pMatches = NULL;
-	if(0 == iStart)
-	{
-		pMatches = rl_completion_matches(pText, CmdGenerator);
-	}
-
-	return pMatches;
-}
-*/
-
-/*
-const char *AgentCmd::GetCmdByIndex(unsigned int iCmdIndex)
-{
-	if(iCmdIndex >= mCmdMapNum)
-	{
-		return NULL;
-	}
-	return mCmdMap[iCmdIndex].pStrCmd;
-}
-
-//执行命令
-int AgentCmd::Exec(char *pCmdLine)
-{
-	if(NULL == pCmdLine)
-	{
-		return -1;
-	}
-
-	unsigned int iCmdIndex = 0;
-	for(; iCmdIndex < mCmdMapNum; iCmdIndex++)
-	{
-		if(!strcmp(pCmdLine, mCmdMap[iCmdIndex].pStrCmd))
-		{
-			break;
-		}
-	}
-	if(mCmdMapNum == iCmdIndex)
-	{
-		return -1;
-	}
-	
-	//Func_t* pF= mDispatch->GetFuncT(pCmdLine,pCmdLine);
-	//pF->mArg1 = pCmdLine;
-	//mDispatch.Dispatch(pCmdLine,pCmdLine,pCmdLine);
-	mCmdMap[iCmdIndex].vFuncCmd(pCmdLine); //调用相应的函数
-
-	return 0;
-}
-*/
-
 AgentCmd::AgentCmd() : wTcpClient<AgentCmdTask>(AGENT_SERVER_TYPE, "AgentServer", true)
 {
 	Initialize();
@@ -108,8 +33,10 @@ AgentCmd::~AgentCmd()
 
 void AgentCmd::RegAct()
 {
-	RegisterAct("AgentCmd", "GetCmd", REG_FUNC("GetCmd",&AgentCmd::GetCmd));
-	//mDispatch.RegisterAct("AgentCmd", "SetCmd", REG_FUNC("SetCmd",&AgentCmd::SetCmd));
+	mDispatch.RegisterAct("AgentCmd", "GetCmd", REG_FUNC("GetCmd",&AgentCmd::GetCmd));
+	mDispatch.RegisterAct("AgentCmd", "SetCmd", REG_FUNC("SetCmd",&AgentCmd::SetCmd));
+	mDispatch.RegisterAct("AgentCmd", "ReloadCmd", REG_FUNC("ReloadCmd",&AgentCmd::ReloadCmd));
+	mDispatch.RegisterAct("AgentCmd", "RestartCmd", REG_FUNC("RestartCmd",&AgentCmd::RestartCmd));
 }
 
 void AgentCmd::Initialize()
@@ -128,15 +55,46 @@ void AgentCmd::Initialize()
 	//初始化定时器
 	mClientCheckTimer = wTimer(KEEPALIVE_TIME);
 	
-	/*
-	//注册函数回调函数
-	mCmdMap.push_back(CMD_ENTRY("GetCmd", &AgentCmd::GetCmd));
-	mCmdMap.push_back(CMD_ENTRY_END);
-	mCmdMapNum = mCmdMap.size() - 1;
-	*/
+	char cStr[32];
+	sprintf(cStr, "%s %d>", mAgentIp.c_str(), mPort);
+	mReadline.SetPrompt(cStr, strlen(cStr));
+	
+	mReadline.SetCompletionFunc(&AgentCmd::Completion);
+}
 
-	sprintf(mPrompt, "%s %d>", mAgentIp.c_str(), mPort);
-	//SetCompletionFunc(CmdCompletion);
+char* AgentCmd::Generator(const char *pText, int iState)
+{
+	static int iListIdx = 0, iTextLen = 0;
+	if(!iState)
+	{
+		iListIdx = 0;
+		iTextLen = strlen(pText);
+	}
+	
+	const char *pName = NULL;
+	/*
+	while((pName = AgentCmd::Instance()->GetCmdByIndex(iListIdx)))
+	{
+		iListIdx++;
+		if(!strncmp (pName, pText, iTextLen))
+		{
+			return strdup(pName);
+		}
+	}
+	*/
+	
+	return NULL;
+}
+
+char** AgentCmd::Completion(const char *pText, int iStart, int iEnd)
+{
+	//rl_attempted_completion_over = 1;
+	char **pMatches = NULL;
+	if(0 == iStart)
+	{
+		pMatches = rl_completion_matches(pText, &AgentCmd::Generator);
+	}
+	return pMatches;
 }
 
 //准备工作
@@ -147,9 +105,9 @@ void AgentCmd::PrepareRun()
 
 void AgentCmd::Run()
 {	
-	char *pCmdLine = ReadCmdLine();
+	char *pCmdLine = mReadline.ReadCmdLine();
 	
-	if(IsUserQuitCmd(pCmdLine))
+	if(mReadline.IsUserQuitCmd(pCmdLine))
 	{
 		cout << "thanks for used! see you later~" << endl;
 		exit(0);
@@ -181,21 +139,13 @@ int AgentCmd::ParseCmd(char *pCmdLine, int iLen)
 
 		if (pF != NULL)
 		{
-			pF->mFunc("asdfasdf");
+			pF->mFunc(vToken[1],vToken);
 		}
 	}
 	
 	return -1;
 }
 
-int AgentCmd::GetCmd(string sCmd)
-{
-	cout << "mAgentIp" << mAgentIp.c_str() << "|" <<sCmd.c_str() <<endl;
-
-	return 0;
-}
-
-/*
 int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 {
 	int a = 0, i = 0, g = 0 , x = 0;
@@ -256,4 +206,3 @@ int AgentCmd::RestartCmd(string sCmd, vector<string> vParam)
 {
 	//
 }
-*/

@@ -22,19 +22,11 @@
 
 #define AGENT_SERVER_TYPE 1
 
-#define REG_FUNC(ActName, vFunc) wDispatch<function<int(string)>>::Func_t {ActName, std::bind(vFunc, this, std::placeholders::_1)}
+#define REG_FUNC(ActName, vFunc) wDispatch<function<int(string, vector<string>)> >::Func_t {ActName, std::bind(vFunc, this, std::placeholders::_1, std::placeholders::_2)}
 
-//#define DEC_DISPATCH(mDispatch) wDispatch<function<int(string)>> mDispatch
+#define DEC_FUNC(funcName) int funcName(string sCmd, vector<string>)
 
-#define DEC_FUNC(funcName) int funcName(string sCmd)
-
-
-/*
-char* CmdGenerator(const char *pText, int iState);
-char** CmdCompletion(const char *pText, int iStart, int iEnd);
-*/
-
-class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>, public wReadline , public wDispatch<function<int(string)>>
+class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>, public wDispatch<function<int(string, vector<string>)> >
 {
 	public:
 		AgentCmd();
@@ -47,16 +39,20 @@ class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>, pu
 		virtual void PrepareRun();
 		
 		int ParseCmd(char *pStr, int iLen);
-		
-		//const char *GetCmdByIndex(unsigned int iCmdIndex);
-		//int Exec(char *pszCmdLine);
-		
+
 		void RegAct();
 		
 		DEC_FUNC(GetCmd);
-		
-	protected:
+		DEC_FUNC(SetCmd);
+		DEC_FUNC(ReloadCmd);
+		DEC_FUNC(RestartCmd);
 
+		static char* Generator(const char *pText, int iState);
+		static char** Completion(const char *pText, int iStart, int iEnd);
+	
+	protected:
+	
+		wReadline mReadline;
 		wTimer mClientCheckTimer;
 		string mAgentIp;
 		unsigned short mPort;

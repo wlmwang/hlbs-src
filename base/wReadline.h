@@ -18,7 +18,7 @@
 class wReadline
 {
 	public:
-		typedef char** (*CmdCompletionFunc_t)(const char *pText, int iStart, int iEnd);	//Tab键能补齐的函数类型
+		typedef char** (*CompletionFunc_t)(const char *pText, int iStart, int iEnd);	//Tab键能补齐的函数类型
 
 		wReadline();
 		~wReadline();
@@ -28,13 +28,18 @@ class wReadline
 		virtual char *StripWhite(char *pOrig);
 		virtual bool IsUserQuitCmd(char *pCmd);
 	
-		bool SetCompletionFunc(CmdCompletionFunc_t pFunc);
+		bool SetCompletion(CompletionFunc_t pFunc);
+		
+		void SetPrompt(char* cStr, int iLen)
+		{
+			memcpy(mPrompt, cStr, iLen);
+		}
 	protected:
 		char mPrompt[32];
 		char *mLineRead;
 		char *mStripLine;
 		
-		CmdCompletionFunc_t mFunc;
+		CompletionFunc_t mFunc;
 
 		static const char *mQuitCmd[];
 		static const unsigned char mQuitCmdNum;
