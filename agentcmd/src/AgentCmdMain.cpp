@@ -82,8 +82,8 @@ int main(int argc, const char *argv[])
 	}
 	
 	//注册到路由中
-	//pServer->mDispatch->RegisterCtl("AgentCmd",pServer);
-	//pServer->mDispatch->RegAct();
+	pServer->RegisterCtl("AgentCmd",pServer);
+	pServer->RegAct();
 	
 	//准备工作
 	pServer->PrepareStart();

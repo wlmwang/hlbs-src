@@ -21,7 +21,7 @@
 #include "AgentCmdConfig.h"
 #include "RtblCommand.h"
 
-
+/*
 char* CmdGenerator(const char *pText, int iState)
 {
 	static int iListIdx = 0, iTextLen = 0;
@@ -54,7 +54,9 @@ char** CmdCompletion(const char *pText, int iStart, int iEnd)
 
 	return pMatches;
 }
+*/
 
+/*
 const char *AgentCmd::GetCmdByIndex(unsigned int iCmdIndex)
 {
 	if(iCmdIndex >= mCmdMapNum)
@@ -92,6 +94,7 @@ int AgentCmd::Exec(char *pCmdLine)
 
 	return 0;
 }
+*/
 
 AgentCmd::AgentCmd() : wTcpClient<AgentCmdTask>(AGENT_SERVER_TYPE, "AgentServer", true)
 {
@@ -105,8 +108,8 @@ AgentCmd::~AgentCmd()
 
 void AgentCmd::RegAct()
 {
-	mDispatch.RegisterAct("AgentCmd", "GetCmd", REG("GetCmd",&AgentCmd::GetCmd));
-	mDispatch.RegisterAct("AgentCmd", "GetCmd", REG("SetCmd",&AgentCmd::SetCmd));
+	RegisterAct("AgentCmd", "GetCmd", REG_FUNC("GetCmd",&AgentCmd::GetCmd));
+	//mDispatch.RegisterAct("AgentCmd", "SetCmd", REG_FUNC("SetCmd",&AgentCmd::SetCmd));
 }
 
 void AgentCmd::Initialize()
@@ -125,24 +128,15 @@ void AgentCmd::Initialize()
 	//初始化定时器
 	mClientCheckTimer = wTimer(KEEPALIVE_TIME);
 	
+	/*
 	//注册函数回调函数
 	mCmdMap.push_back(CMD_ENTRY("GetCmd", &AgentCmd::GetCmd));
-	//mCmdMap.push_back(CMD_ENTRY("SetCmd", &AgentCmd::SetCmd));
-	//mCmdMap.push_back(CMD_ENTRY("ReloadCmd", &AgentCmd::ReloadCmd));
-	//mCmdMap.push_back(CMD_ENTRY("TestEndian", &AgentCmd::TestEndian));
-	
 	mCmdMap.push_back(CMD_ENTRY_END);
 	mCmdMapNum = mCmdMap.size() - 1;
+	*/
 
 	sprintf(mPrompt, "%s %d>", mAgentIp.c_str(), mPort);
-	SetCompletionFunc(CmdCompletion);
-}
-
-int AgentCmd::GetCmd(string sCmd)
-{
-	cout << "mAgentIp" << mAgentIp.c_str() << endl;
-
-	return 0;
+	//SetCompletionFunc(CmdCompletion);
 }
 
 //准备工作
@@ -153,14 +147,15 @@ void AgentCmd::PrepareRun()
 
 void AgentCmd::Run()
 {	
-	char *mCmdLine = ReadCmdLine();
+	char *pCmdLine = ReadCmdLine();
 	
-	if(IsUserQuitCmd(mCmdLine))
+	if(IsUserQuitCmd(pCmdLine))
 	{
 		cout << "thanks for used! see you later~" << endl;
 		exit(0);
 	}
-	Exec(mCmdLine);
+
+	ParseCmd(pCmdLine, strlen(pCmdLine));
 	
 	return;
 }
@@ -171,35 +166,33 @@ void AgentCmd::Run()
  *  reload agent/router
  *  restart agent/router
  */
-int AgentCmd::parseCmd(char *pStr, int iLen)
+int AgentCmd::ParseCmd(char *pCmdLine, int iLen)
 {
-	if(iLen <= 0)
+	if(0 == iLen)
 	{
 		return -1;
 	}
 	
-	const string DefineCmd[] = {"get", "set", "reload", "restart"};
+	vector<string> vToken = Split(pCmdLine, " ");
 	
-	vector<string> vCmd = Split(pStr," ");
-	
-	if(DefineCmd[0] == vCmd[0])
+	if (vToken.size() > 0 && vToken[0] != "" && vToken[1] != "")
 	{
-		//GetCmd(vCmd[0], vCmd);
-	}
-	else if(DefineCmd[1] == vCmd[0])
-	{
-		//SetCmd(vCmd[0], vCmd);
-	}
-	else if(DefineCmd[2] == vCmd[0])
-	{
-		//ReloadCmd(vCmd[0], vCmd);
-	}
-	else if(DefineCmd[3] == vCmd[0])
-	{
-		//RestartCmd(vCmd[0], vCmd);
+		struct Func_t * pF = GetFuncT("AgentCmd", vToken[0]);
+
+		if (pF != NULL)
+		{
+			pF->mFunc("asdfasdf");
+		}
 	}
 	
 	return -1;
+}
+
+int AgentCmd::GetCmd(string sCmd)
+{
+	cout << "mAgentIp" << mAgentIp.c_str() << "|" <<sCmd.c_str() <<endl;
+
+	return 0;
 }
 
 /*
