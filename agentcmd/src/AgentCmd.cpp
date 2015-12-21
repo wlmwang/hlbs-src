@@ -31,14 +31,6 @@ AgentCmd::~AgentCmd()
 	//
 }
 
-void AgentCmd::RegAct()
-{
-	mDispatch.RegisterAct("AgentCmd", "GetCmd", REG_FUNC("GetCmd",&AgentCmd::GetCmd));
-	mDispatch.RegisterAct("AgentCmd", "SetCmd", REG_FUNC("SetCmd",&AgentCmd::SetCmd));
-	mDispatch.RegisterAct("AgentCmd", "ReloadCmd", REG_FUNC("ReloadCmd",&AgentCmd::ReloadCmd));
-	mDispatch.RegisterAct("AgentCmd", "RestartCmd", REG_FUNC("RestartCmd",&AgentCmd::RestartCmd));
-}
-
 void AgentCmd::Initialize()
 {
 	AgentCmdConfig *pConfig = AgentCmdConfig::Instance();
@@ -60,6 +52,11 @@ void AgentCmd::Initialize()
 	mReadline.SetPrompt(cStr, strlen(cStr));
 	
 	mReadline.SetCompletionFunc(&AgentCmd::Completion);
+	
+	mDispatch.Register("AgentCmd", "GetCmd", REG_FUNC("GetCmd",&AgentCmd::GetCmd));
+	mDispatch.Register("AgentCmd", "SetCmd", REG_FUNC("SetCmd",&AgentCmd::SetCmd));
+	mDispatch.Register("AgentCmd", "ReloadCmd", REG_FUNC("ReloadCmd",&AgentCmd::ReloadCmd));
+	mDispatch.Register("AgentCmd", "RestartCmd", REG_FUNC("RestartCmd",&AgentCmd::RestartCmd));
 }
 
 char* AgentCmd::Generator(const char *pText, int iState)
@@ -82,7 +79,6 @@ char* AgentCmd::Generator(const char *pText, int iState)
 		}
 	}
 	*/
-	
 	return NULL;
 }
 
@@ -135,7 +131,7 @@ int AgentCmd::ParseCmd(char *pCmdLine, int iLen)
 	
 	if (vToken.size() > 0 && vToken[0] != "" && vToken[1] != "")
 	{
-		struct Func_t * pF = GetFuncT("AgentCmd", vToken[0]);
+		struct Func_t * pF = mDispatch.GetFuncT("AgentCmd", vToken[0]);
 
 		if (pF != NULL)
 		{

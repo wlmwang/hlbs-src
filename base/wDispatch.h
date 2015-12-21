@@ -18,13 +18,13 @@
 #include <functional>
 #include "wType.h"
 
-template<typename T>
+template<typename T,typename IDX>
 class wDispatch
 {
 	public:
 		struct Func_t
 		{
-			string mActName;
+			IDX mActIdx;
 			/**
 			 * T为function类型，例：function<void(void)>
 			 * mFunc用类似std::bind函数绑定，例：bind(&wTcpTask::Get, this, std::placeholders::_1)
@@ -32,11 +32,11 @@ class wDispatch
 			T mFunc;
 			Func_t()
 			{
-				mActName = "";
+				mActIdx = "";
 			}
-			Func_t(string ActName, T Func)
+			Func_t(IDX ActIdx, T Func)
 			{
-				mActName = ActName;
+				mActIdx = ActIdx;
 				mFunc = Func;
 			}
 		};
@@ -44,12 +44,10 @@ class wDispatch
 		wDispatch();
 		virtual ~wDispatch();
 		void Initialize();
-		void RegAct();
+		
+		bool Register(string className, IDX ActIdx, struct Func_t vFunc);
 
-		bool RegisterCtl(string className, wDispatch *pDispatch);
-		bool RegisterAct(string className, string actionName, struct Func_t vFunc);
-
-		inline struct Func_t * GetFuncT(string className, string actionName)
+		inline struct Func_t * GetFuncT(string className, IDX ActIdx)
 		{
 			typename map<string, vector<struct Func_t> >::iterator mp = mProc.find(className);
 			if(mp != mProc.end())
@@ -57,7 +55,7 @@ class wDispatch
 				typename vector<struct Func_t>::iterator itvf = mp->second.begin();
 				for(; itvf != mp->second.end() ; itvf++)
 				{
-					if(itvf->mActName == actionName)
+					if(itvf->mActIdx == ActIdx)
 					{
 						return &*itvf;
 					}
@@ -67,61 +65,31 @@ class wDispatch
 		}
 
 	protected:
-		map<string, wDispatch*> mDispatch;	//路由对象
-		
 		map<string, vector<struct Func_t> > mProc;	//注册回调方法
 		int mProcNum;
 };
 
-template<typename T>
-wDispatch<T>::wDispatch()
+template<typename T,typename IDX>
+wDispatch<T,IDX>::wDispatch()
 {
 	Initialize();
 }
 
-template<typename T>
-void wDispatch<T>::Initialize()
+template<typename T,typename IDX>
+void wDispatch<T,IDX>::Initialize()
 {
 	mProcNum = 0;
 }
 
-template<typename T>
-wDispatch<T>::~wDispatch()
+template<typename T,typename IDX>
+wDispatch<T,IDX>::~wDispatch()
 {
 	//
 }
 
-template<typename T>
-void wDispatch<T>::RegAct()
+template<typename T,typename IDX>
+bool wDispatch<T,IDX>::Register(string className, IDX ActIdx, struct Func_t vFunc)
 {
-	typename map<string, wDispatch*>::iterator it = mDispatch.begin();
-	for(; it != mDispatch.end(); it++)
-	{
-		it->second()->RegAct();
-	}
-}
-
-template<typename T>
-bool wDispatch<T>::RegisterCtl(string className, wDispatch *pDispatch)
-{
-	//pair<map<string, wDispatch*>::iterator, bool> itRet;
-	//itRet = 
-	mDispatch.insert(pair<string, wDispatch*>(className, pDispatch));
-	return true;
-	//return itRet.second;
-}
-
-template<typename T>
-bool wDispatch<T>::RegisterAct(string className, string actionName, struct Func_t vFunc)
-{
-	wDispatch *pDispatch = NULL;
-	typename map<string, wDispatch*>::iterator md = mDispatch.find(className);
-	if(md == mDispatch.end())
-	{
-		return false;
-	}
-	pDispatch = md->second;	//路由对象
-
 	vector<struct Func_t> vf;
 	typename map<string, vector<struct Func_t> >::iterator mp = mProc.find(className);
 	if(mp != mProc.end())
@@ -132,18 +100,18 @@ bool wDispatch<T>::RegisterAct(string className, string actionName, struct Func_
 		typename vector<struct Func_t>::iterator itvf = vf.begin();
 		for(; itvf != vf.end() ; itvf++)
 		{
-			if(itvf->mActName == actionName)
+			if(itvf->mActIdx == ActIdx)
 			{
 				itvf = vf.erase(itvf);
 				itvf--;
 			}
 		}
 	}
-	mProcNum++;
 	vf.push_back(vFunc);
 	//pair<map<string, vector<struct Func_t> >::iterator, bool> itRet;
 	//itRet = 
 	mProc.insert(pair<string, vector<struct Func_t> >(className, vf));
+	mProcNum++;
 	return true;
 	//return itRet.second;
 }

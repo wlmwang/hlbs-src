@@ -22,11 +22,11 @@
 
 #define AGENT_SERVER_TYPE 1
 
-#define REG_FUNC(ActName, vFunc) wDispatch<function<int(string, vector<string>)> >::Func_t {ActName, std::bind(vFunc, this, std::placeholders::_1, std::placeholders::_2)}
+#define REG_FUNC(ActName, vFunc) wDispatch<function<int(string, vector<string>)>, string>::Func_t {ActName, std::bind(vFunc, this, std::placeholders::_1, std::placeholders::_2)}
+#define DEC_DISP(dispatch) wDispatch<function<int(string, vector<string>)>, string> dispatch
+#define DEC_FUNC(func) int func(string sCmd, vector<string>)
 
-#define DEC_FUNC(funcName) int funcName(string sCmd, vector<string>)
-
-class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>, public wDispatch<function<int(string, vector<string>)> >
+class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>
 {
 	public:
 		AgentCmd();
@@ -39,8 +39,6 @@ class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>, pu
 		virtual void PrepareRun();
 		
 		int ParseCmd(char *pStr, int iLen);
-
-		void RegAct();
 		
 		DEC_FUNC(GetCmd);
 		DEC_FUNC(SetCmd);
@@ -51,7 +49,8 @@ class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>, pu
 		static char** Completion(const char *pText, int iStart, int iEnd);
 	
 	protected:
-	
+		
+		DEC_DISP(mDispatch);
 		wReadline mReadline;
 		wTimer mClientCheckTimer;
 		string mAgentIp;
