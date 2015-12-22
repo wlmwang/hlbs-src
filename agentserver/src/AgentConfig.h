@@ -30,8 +30,6 @@ class AgentConfig: public wConfig<AgentConfig>
 		
 		char mRouterIPAddr[MAX_IP_LEN];
 		unsigned int mRouterPort;
-		
-		~AgentConfig() {}
 
 		//初始化
 		void Initialize()
@@ -48,6 +46,12 @@ class AgentConfig: public wConfig<AgentConfig>
 		{
             Initialize();
 		}
+		~AgentConfig() 
+		{
+			CleanRtbl();
+		}
+		
+		void CleanRtbl();
 		
 		/**
 		 * 解析配置

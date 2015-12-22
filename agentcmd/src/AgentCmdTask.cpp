@@ -3,20 +3,42 @@
  * Copyright (C) Anny.
  * Copyright (C) Disvr, Inc.
  */
- 
+
+#include <iostream>
 #include "AgentCmdTask.h"
 #include "AgentCmdConfig.h"
 
 #include "wAssert.h"
+#include "BaseCommand.h"
+
+AgentCmdTask::AgentCmdTask()
+{
+    Initialize();
+}
 
 AgentCmdTask::AgentCmdTask(wSocket *pSocket):wTcpTask(pSocket)
 {
-    //...
+    Initialize();
 }
 
 AgentCmdTask::~AgentCmdTask()
 {
     //...
+}
+
+void AgentCmdTask::Initialize()
+{
+	mDispatch.Register("AgentCmdTask", ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_DATA), REG_FUNC(ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_DATA), &AgentCmdTask::RtblResData));
+	mDispatch.Register("AgentCmdTask", ASSERT_CMD(CMD_RTBL_SET_RES, RTBL_SET_RES_DATA), REG_FUNC(ASSERT_CMD(CMD_RTBL_SET_RES, RTBL_SET_RES_DATA), &AgentCmdTask::RtblSetResData));
+}
+
+int AgentCmdTask::Verify()
+{
+	//验证登录
+	LoginReqToken_t stLoginRes;
+	memcpy(stLoginRes.mToken, "Anny", 4);
+	SyncSend((char*)&stLoginRes, sizeof(stLoginRes));
+	return 0;
 }
 
 /**
@@ -32,20 +54,65 @@ int AgentCmdTask::HandleRecvMessage(char * pBuffer, int nLen)
 
 int AgentCmdTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen)
 {
-	AgentCmdConfig *pConfig = AgentCmdConfig::Instance();
-	switch(pCommand->GetId())
+	//AgentCmdConfig *pConfig = AgentCmdConfig::Instance();
+
+	if (pCommand->GetId() == ASSERT_CMD(CMD_NULL, PARA_NULL))
 	{
-		case ASSERT_CMD(CMD_NULL, PARA_NULL):
+		//空消息(心跳返回)
+		mHeartbeatTimes = 0;
+	}
+	else
+	{
+		auto pF = mDispatch.GetFuncT("AgentCmdTask", pCommand->GetId());
+
+		if (pF != NULL)
 		{
-			//空消息(心跳返回)
-			mHeartbeatTimes = 0;
-			break;
+			pF->mFunc(pBuffer, iLen);
 		}
-		default:
+		else
 		{
 			LOG_DEBUG("default", "client fd(%d) send a invalid msg id(%u)", mSocket->SocketFD(), pCommand->GetId());
-			break;
 		}
+	}
+	return 0;
+}
+
+int AgentCmdTask::RtblResData(char *pBuffer, int iLen)
+{
+	RtblResData_t *pCmd = (struct RtblResData_t* )pBuffer;
+	if(pCmd->mNum > 0)
+	{
+		for(int i = 0; i < pCmd->mNum; i++)
+		{
+			cout << i << ")";
+			cout << " id:" << pCmd->mRtbl[i].mId;
+			cout << " gid:" << pCmd->mRtbl[i].mGid;
+			cout << " xid:" << pCmd->mRtbl[i].mXid;
+			cout << " name:" << pCmd->mRtbl[i].mName;
+			cout << " ip:" << pCmd->mRtbl[i].mIp;
+			cout << " port:" << pCmd->mRtbl[i].mPort;
+			cout << " weight:" << pCmd->mRtbl[i].mWeight;
+			cout << " disabled:" << pCmd->mRtbl[i].mDisabled;
+			cout << endl;
+		}
+	}
+	else
+	{
+		cout << "empty table." << endl;
+	}
+	return 0;
+}
+
+int AgentCmdTask::RtblSetResData(char *pBuffer, int iLen)
+{
+	RtblSetResData_t *pCmd = (struct RtblSetResData_t* )pBuffer;
+	if(pCmd->mRes >= 0)
+	{
+		cout << "set router table id(" << pCmd->mId <<") success!"
+	}
+	else
+	{
+		cout << "faild!" << endl;
 	}
 	return 0;
 }

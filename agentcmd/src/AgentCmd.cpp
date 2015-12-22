@@ -114,12 +114,6 @@ void AgentCmd::Run()
 	return;
 }
 
-/**
- *  get -a -i 100 -n redis -g 122 -x 122
- *  set -i 100 -d -w 10 -t 122 -c 1222 -s 200
- *  reload agent/router
- *  restart agent/router
- */
 int AgentCmd::ParseCmd(char *pCmdLine, int iLen)
 {
 	if(0 == iLen)
@@ -142,6 +136,7 @@ int AgentCmd::ParseCmd(char *pCmdLine, int iLen)
 	return -1;
 }
 
+//get -a -i 100 -n redis -g 122 -x 122
 int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 {
 	int a = 0, i = 0, g = 0 , x = 0;
@@ -188,17 +183,49 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 	return -1;
 }
 
+//set -i 100 -d -w 10 -t 122 -c 1222 -s 200 -k 500
 int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 {
-	//
+	RtblSetReqId_t stSetRtbl;
+	for(size_t i = 1; i < vParam.size(); i++)
+	{
+		if(vParam[i] == "-d") {stSetRtbl.mDisabled = 1; continue;}
+		if(vParam[i] == "-i") {stSetRtbl.mId = atoi(vParam[i++].c_str()); continue;}
+		if(vParam[i] == "-w") {stSetRtbl.mWeight = atoi(vParam[i++].c_str()); continue;}
+		if(vParam[i] == "-k") {stSetRtbl.mTasks = atoi(vParam[i++].c_str()); continue;}
+		if(vParam[i] == "-t") {stSetRtbl.mTimeline = atoi(vParam[i++].c_str()); continue;}
+		if(vParam[i] == "-c") {stSetRtbl.mConnTime = atoi(vParam[i++].c_str()); continue;}
+		if(vParam[i] == "-s") {stSetRtbl.mSuggest = atoi(vParam[i++].c_str()); continue;}
+	}
+	if(stSetRtbl.mId == 0)
+	{
+		cout << "need -i param" << endl;
+	}
+	else
+	{
+		return mTcpTask->SyncSend((char *)&stSetRtbl, sizeof(stSetRtbl));
+	}
+	return -1;
 }
 
+//reload agent/router
 int AgentCmd::ReloadCmd(string sCmd, vector<string> vParam)
 {
-	//
+	if(vParam[1] == "agent")
+	{
+		RtblReqAll_t vRtl;
+		return mTcpTask->SyncSend((char *)&vRtl, sizeof(vRtl));
+	}
+	else if(vParam[1] == "router")
+	{
+		//
+	}
+	return -1;
 }
 
+//restart agent/router
 int AgentCmd::RestartCmd(string sCmd, vector<string> vParam)
 {
 	//
+	return -1;
 }

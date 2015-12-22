@@ -113,6 +113,19 @@ int AgentConfig::GetAllRtblReq()
 	return -1;
 }
 
+void AgentConfig::CleanRtbl()
+{
+	mRtblById.clear();
+	mRtblByGid.clear();
+	mRtblByName.clear();
+	mRtblByGXid.clear();
+	for(vector<Rtbl_t*>::iterator it = mRtbl.begin(); it != mRtbl.end(); it++)
+	{
+		SAFE_DELETE(*it);
+	}
+	mRtbl.clear();
+}
+
 //整理容器
 void AgentConfig::FixRtbl(Rtbl_t pRtbl[] , int iLen)
 {
@@ -120,6 +133,8 @@ void AgentConfig::FixRtbl(Rtbl_t pRtbl[] , int iLen)
 	{
 		return;
 	}
+	
+	CleanRtbl();
 	for(int i = 0; i < iLen ; i++)
 	{
 		mRtbl.push_back(&pRtbl[i]);
