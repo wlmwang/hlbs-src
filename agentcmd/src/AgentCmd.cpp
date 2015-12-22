@@ -51,7 +51,7 @@ void AgentCmd::Initialize()
 	sprintf(cStr, "%s %d>", mAgentIp.c_str(), mPort);
 	mReadline.SetPrompt(cStr, strlen(cStr));
 	
-	mReadline.SetCompletionFunc(&AgentCmd::Completion);
+	mReadline.SetCompletion(&AgentCmd::Completion);
 	
 	mDispatch.Register("AgentCmd", "GetCmd", REG_FUNC("GetCmd",&AgentCmd::GetCmd));
 	mDispatch.Register("AgentCmd", "SetCmd", REG_FUNC("SetCmd",&AgentCmd::SetCmd));
@@ -131,7 +131,7 @@ int AgentCmd::ParseCmd(char *pCmdLine, int iLen)
 	
 	if (vToken.size() > 0 && vToken[0] != "" && vToken[1] != "")
 	{
-		struct Func_t * pF = mDispatch.GetFuncT("AgentCmd", vToken[0]);
+		auto pF = mDispatch.GetFuncT("AgentCmd", vToken[0]);
 
 		if (pF != NULL)
 		{
