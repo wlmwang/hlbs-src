@@ -21,6 +21,9 @@ class AgentServerTask : public wTcpTask
 		~AgentServerTask();
 		AgentServerTask(wSocket *pSocket);
 		
+		virtual int VerifyConn();
+		virtual int Verify();
+
 		virtual int HandleRecvMessage(char * pBuffer, int nLen);
 		
 		int ParseRecvMessage(struct wCommand* pCommand ,char *pBuffer,int iLen);

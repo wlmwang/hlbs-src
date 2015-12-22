@@ -9,6 +9,8 @@
 
 #include "wAssert.h"
 
+#include "BaseCommand.h"
+
 RouterServerTask::RouterServerTask(wSocket *pSocket) : wTcpTask(pSocket)
 {
     //...
@@ -17,6 +19,22 @@ RouterServerTask::RouterServerTask(wSocket *pSocket) : wTcpTask(pSocket)
 RouterServerTask::~RouterServerTask()
 {
     //...
+}
+
+int RouterServerTask::VerifyConn()
+{
+	//验证登录消息
+	char pBuffer[ sizeof(LoginReqToken_t) ];
+	int iLen = SyncRecv(pBuffer, sizeof(LoginReqToken_t));
+	if (iLen > 0)
+	{
+		LoginReqToken_t *pLoginRes = (LoginReqToken_t*) pBuffer;
+		if (strcmp(pLoginRes->mToken, "Anny") == 0)
+		{
+			return 0;
+		}
+	}
+	return -1;
 }
 
 /**

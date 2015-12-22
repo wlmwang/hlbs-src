@@ -76,7 +76,11 @@ class wSocket
 			mSocketFD = -1;
 		}
 		
-		int SetNonBlock();
+		int SetNonBlock(bool bNonblock = true);
+
+		int SetTimeout(int iTimeout = 30);	//30s
+		int SetSendTimeout(int iTimeout = 30);
+		int SetRecvTimeout(int iTimeout = 30);
 
 		int RecvBytes(char *vArray, int vLen);
 		int SendBytes(char *vArray, int vLen);

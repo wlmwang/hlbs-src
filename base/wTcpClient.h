@@ -53,7 +53,7 @@ class wTcpClient
 		int ListeningSend();
 		
 		int ConnectToServer(const char *vIPAddress, unsigned short vPort);
-		
+
 		int ReConnectToServer();
 
 		bool IsRunning()
@@ -217,12 +217,18 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 	mTcpTask = NewTcpTask(pSocket);
 	if(NULL != mTcpTask)
 	{
+		if (mTcpTask->Verify() < 0)
+		{
+			LOG_ERROR("default", "connect illegal or verify timeout: %d, close it", iSocketFD);
+			SAFE_DELETE(mTcpTask);
+			return -1;
+		}
+		
 		if(mTcpTask->Socket()->SetNonBlock() < 0) 
 		{
 			LOG_ERROR("default", "set non block failed: %d, close it", iSocketFD);
 			return -1;
 		}
-
 		return 0;
 	}
 	return -1;

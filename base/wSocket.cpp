@@ -13,7 +13,7 @@
 #include "wMisc.h"
 #include "wSocket.h"
 
-int wSocket::SetNonBlock()
+int wSocket::SetNonBlock(bool bNonblock)
 {
 	if(mSocketFD < 0) 
 	{
@@ -25,7 +25,57 @@ int wSocket::SetNonBlock()
 	{
 		return -1;
 	}
-	return fcntl(mSocketFD, F_SETFL, iFlags|O_NONBLOCK);
+
+	return fcntl(mSocketFD, F_SETFL, iFlags|(bNonblock==true ? O_NONBLOCK : ~O_NONBLOCK));
+}
+
+int wSocket::SetTimeout(int iTimeout)
+{
+	if(SetSendTimeout(iTimeout) < 0)
+	{
+		return -1;
+	}
+	if(SetRecvTimeout(iTimeout) < 0)
+	{
+		return -1;
+	}
+	return 0;
+}
+
+int wSocket::SetSendTimeout(int iTimeout)
+{
+	if(mSocketFD < 0) 
+	{
+		return -1;
+	}
+
+	struct timeval stSendTimeval;
+	stSendTimeval.tv_sec = iTimeout<0 ? 0 : iTimeout;
+	stSendTimeval.tv_usec = 0;
+	
+	if(setsockopt(mSocketFD, SOL_SOCKET, SO_SNDTIMEO, &stSendTimeval, sizeof(stSendTimeval)) == -1)  
+    {
+        return -1;  
+    }
+    return 0;
+}
+
+int wSocket::SetRecvTimeout(int iTimeout)
+{
+	if(mSocketFD < 0) 
+	{
+		return -1;
+	}
+
+	struct timeval stRecvTimeval;
+	stRecvTimeval.tv_sec = iTimeout<0 ? 0 : iTimeout;
+	stRecvTimeval.tv_usec = 0;
+	
+	if(setsockopt(mSocketFD, SOL_SOCKET, SO_RCVTIMEO, &stRecvTimeval, sizeof(stRecvTimeval)) == -1)  
+    {
+        return -1;  
+    }
+    return 0;
 }
 
 /**
@@ -49,11 +99,12 @@ int wSocket::RecvBytes(char *vArray, int vLen)
 			{
 				continue;
 			}
-			if(iRecvLen < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))	//缓冲区满
+			if(iRecvLen < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))	//缓冲区满|超时
 			{
+				//可读事件准备(tcptask)
 				//waitread
-				//continue;
-				//在外层做可读事件准备(tcptask)
+				usleep(100);
+				continue;
 			}
 			return iRecvLen;
 		}
@@ -89,11 +140,12 @@ int wSocket::SendBytes(char *vArray, int vLen)
 			{
 				continue;
 			}
-			if(iSendLen < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))	//缓冲区满
+			if(iSendLen < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))	//缓冲区满|超时
 			{
+				//可写事件准备(tcptask)
 				//waitwrite
-				//continue;
-				//在外层做可写事件准备(tcptask)
+				usleep(100);
+				continue;
 			}
 			LOG_ERROR("default", "SendToClient fd(%d) error: %s", mSocketFD, strerror(errno));
 			return iSendLen;

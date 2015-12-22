@@ -497,6 +497,12 @@ int wTcpServer<T>::AcceptConn(int iSocketFD)
 	mTcpTask = NewTcpTask(pSocket);
 	if(NULL != mTcpTask)
 	{
+		if (mTcpTask->VerifyConn() < 0)
+		{
+			LOG_ERROR("default", "connect illegal or verify timeout: %d, close it", iNewSocketFD);
+			SAFE_DELETE(mTcpTask);
+			return -1;
+		}
 		if(mTcpTask->Socket()->SetNonBlock() < 0) 
 		{
 			LOG_ERROR("default", "set non block failed: %d, close it", iNewSocketFD);

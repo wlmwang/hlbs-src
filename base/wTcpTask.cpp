@@ -62,6 +62,16 @@ int wTcpTask::Heartbeat()
 	return -1;
 }
 
+int wTcpTask::VerifyConn()
+{
+	return 0;
+}
+
+int wTcpTask::Verify()
+{
+	return 0;
+}
+
 /**
  *  处理接受到数据
  *  每条消息大小[1b,100k)
@@ -74,7 +84,7 @@ int wTcpTask::ListeningRecv()
 
 	int iRecvLen = mSocket->RecvBytes(mRecvMsgBuff + iOffset, sizeof(mRecvMsgBuff) - iOffset);
 	
-	//cout<<"data:"<<mRecvMsgBuff<<"|"<<iRecvLen<<endl;
+	//cout<< "data:" <<mRecvMsgBuff<< "|" <<iRecvLen<<endl;
 	
 	if(iRecvLen <= 0)
 	{
@@ -200,7 +210,7 @@ int wTcpTask::ListeningSend()
  *  -2 ：发送缓冲剩余空间不足，请稍后重试
  *   0 : 发送成功
  */
-int wTcpTask::AsyncSend(const char *pCmd, int iLen)
+int wTcpTask::WriteToSendBuf(const char *pCmd, int iLen)
 {	
 	//判断消息长度
 	if(iLen <= MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN )
@@ -229,6 +239,7 @@ int wTcpTask::AsyncSend(const char *pCmd, int iLen)
 
 int wTcpTask::SyncSend(const char *pCmd, int iLen)
 {
+	memset(mTmpSendMsgBuff, 0, sizeof(mTmpSendMsgBuff));
 	//判断消息长度
 	if(iLen <= MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN )
 	{
@@ -242,23 +253,38 @@ int wTcpTask::SyncSend(const char *pCmd, int iLen)
 }
 
 /**
+ *  最好在设置为阻塞模式下启用该函数，毕竟只有超时了(30s)或者接受不完整消息才出错
  *  确保pCmd有足够长的空间接受自此同步消息
  */
 int wTcpTask::SyncRecv(char *pCmd, int iLen)
 {
-	int iRecvLen = mSocket->RecvBytes(pCmd, iLen);
+	memset(mTmpRecvMsgBuff, 0, sizeof(mTmpRecvMsgBuff));
+	int iRecvLen = mSocket->RecvBytes(mTmpRecvMsgBuff, iLen + sizeof(int));
 	if(iRecvLen <= 0)
 	{
 		LOG_ERROR("default", "client %s socket fd(%d) close from connect port %d, return %d", mSocket->IPAddr().c_str(), mSocket->SocketFD(), mSocket->Port(), iRecvLen);
 		return iRecvLen;	
 	}
-	int iMsgLen = *(int *)pCmd;	//消息总长度。不包括自身int:4字节
+	int iMsgLen = *(int *)mTmpRecvMsgBuff;	//消息总长度。不包括自身int:4字节
 
 	//判断消息长度
-	if(iMsgLen <= MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN )
+	if(iMsgLen <= MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN)
 	{
 		LOG_ERROR("default", "get invalid len %d from %s fd(%d)", iMsgLen, mSocket->IPAddr().c_str(), mSocket->SocketFD());
 		return -1;
 	}
-	return iRecvLen;
+
+	if (iMsgLen > iRecvLen)	//消息不完整
+	{
+		LOG_DEBUG("default", "fd(%d) recv a part of client msg: real len = %d, now len = %d", mSocket->SocketFD(), iMsgLen, iRecvLen);
+		return -1;
+	}
+
+	if (iMsgLen > iLen)
+	{
+		LOG_DEBUG("default", "error buffer len, it\'s to short!");
+		return -1;
+	}
+	memcpy(pCmd, mTmpRecvMsgBuff + sizeof(int), iLen);
+	return iRecvLen - sizeof(int);
 }

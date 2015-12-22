@@ -36,7 +36,7 @@ class AgentServer: public wTcpServer<AgentServer>
 		virtual void Run();
 		
 		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
-	    
+
 		void ConnectRouter();
 
 		void CheckTimer();

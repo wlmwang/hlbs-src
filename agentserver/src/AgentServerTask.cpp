@@ -9,6 +9,8 @@
 
 #include "wAssert.h"
 
+#include "BaseCommand.h"
+
 AgentServerTask::AgentServerTask(wSocket *pSocket):wTcpTask(pSocket)
 {
     //...
@@ -17,6 +19,31 @@ AgentServerTask::AgentServerTask(wSocket *pSocket):wTcpTask(pSocket)
 AgentServerTask::~AgentServerTask()
 {
     //...
+}
+
+int AgentServerTask::VerifyConn()
+{
+	//验证登录消息
+	char pBuffer[ sizeof(LoginReqToken_t) ];
+	int iLen = SyncRecv(pBuffer, sizeof(LoginReqToken_t));
+	if (iLen > 0)
+	{
+		LoginReqToken_t *pLoginRes = (LoginReqToken_t*) pBuffer;
+		if (strcmp(pLoginRes->mToken, "Anny") == 0)
+		{
+			return 0;
+		}
+	}
+	return -1;
+}
+
+int AgentServerTask::Verify()
+{
+	//验证登录
+	LoginReqToken_t stLoginRes;
+	memcpy(stLoginRes.mToken, "Anny", 4);
+	SyncSend((char*)&stLoginRes, sizeof(stLoginRes));
+	return 0;
 }
 
 /**

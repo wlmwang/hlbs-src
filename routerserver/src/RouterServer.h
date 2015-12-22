@@ -29,7 +29,7 @@ class RouterServer: public wTcpServer<RouterServer>
 		virtual void Run();
 		
 		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
-	    		
+
 		void CheckTimer();
 		void CheckTimeout();
 		

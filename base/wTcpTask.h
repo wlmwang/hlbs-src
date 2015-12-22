@@ -19,7 +19,10 @@ class wTcpTask
 		wTcpTask();
 		wTcpTask(wSocket *pSocket);
 		virtual ~wTcpTask();
-			
+
+		virtual int VerifyConn();	//验证接收到连接
+		virtual int Verify();		//发送连接验证请求
+		
 		/**
 		 * 初始化
 		 */
@@ -36,11 +39,7 @@ class wTcpTask
 		 *  基于事件发送消息
 		 */
 		int ListeningSend();
-		
-		/**
-		 *  异步发送客户端消息
-		 */
-		int AsyncSend(const char *pCmd, int iLen);
+		int WriteToSendBuf(const char *pCmd, int iLen);
 		
 		int SyncSend(const char *pCmd, int iLen);
 		int SyncRecv(char *pCmd, int iLen);
@@ -70,6 +69,7 @@ class wTcpTask
 		char mSendMsgBuff[MAX_SEND_BUFFER_LEN];
 		
 		char mTmpSendMsgBuff[MAX_CLIENT_MSG_LEN + sizeof(int)];	//同步发送，临时缓冲区
+		char mTmpRecvMsgBuff[MAX_CLIENT_MSG_LEN + sizeof(int)];	//同步接受，临时缓冲区
 };
 
 #endif
