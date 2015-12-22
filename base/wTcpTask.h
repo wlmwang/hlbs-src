@@ -23,10 +23,7 @@ class wTcpTask
 		virtual int VerifyConn();	//验证接收到连接
 		virtual int Verify();		//发送连接验证请求
 		
-		/**
-		 * 初始化
-		 */
-		virtual void Initialize();
+		void Initialize();
 		
 		virtual void CloseTcpTask(int eReason);
 		
