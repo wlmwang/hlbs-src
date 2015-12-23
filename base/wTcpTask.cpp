@@ -36,6 +36,9 @@ void wTcpTask::Initialize()
 {
 	mSocket = NULL;
 	mHeartbeatTimes = 0;
+	mRecvBytes = 0;
+	mSendBytes = 0;
+	mSendWrite = 0;
 	memset(&mSendMsgBuff, 0, sizeof(mSendMsgBuff));
 	memset(&mRecvMsgBuff, 0, sizeof(mRecvMsgBuff));
 }
