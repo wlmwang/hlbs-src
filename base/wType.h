@@ -79,5 +79,7 @@ typedef signed long long int SLLWORD;
 
 #define CHECK_CLIENT_TIME 3000
 
+#define WAITRES_TIME 30000 /*30s*/
+
 using namespace std;
 #endif

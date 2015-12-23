@@ -7,6 +7,7 @@
 #include <iostream>
 #include "AgentCmdTask.h"
 #include "AgentCmdConfig.h"
+#include "AgentCmd.h"
 
 #include "wAssert.h"
 #include "BaseCommand.h"
@@ -28,8 +29,8 @@ AgentCmdTask::~AgentCmdTask()
 
 void AgentCmdTask::Initialize()
 {
-	mDispatch.Register("AgentCmdTask", ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_DATA), REG_FUNC(ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_DATA), &AgentCmdTask::RtblResData));
-	mDispatch.Register("AgentCmdTask", ASSERT_CMD(CMD_RTBL_SET_RES, RTBL_SET_RES_DATA), REG_FUNC(ASSERT_CMD(CMD_RTBL_SET_RES, RTBL_SET_RES_DATA), &AgentCmdTask::RtblSetResData));
+	mDispatch.Register("AgentCmdTask", ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_DATA), REG_FUNC_a(ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_DATA), &AgentCmdTask::RtblResData));
+	mDispatch.Register("AgentCmdTask", ASSERT_CMD(CMD_RTBL_SET_RES, RTBL_SET_RES_DATA), REG_FUNC_a(ASSERT_CMD(CMD_RTBL_SET_RES, RTBL_SET_RES_DATA), &AgentCmdTask::RtblSetResData));
 }
 
 int AgentCmdTask::Verify()
@@ -54,8 +55,6 @@ int AgentCmdTask::HandleRecvMessage(char * pBuffer, int nLen)
 
 int AgentCmdTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen)
 {
-	//AgentCmdConfig *pConfig = AgentCmdConfig::Instance();
-
 	if (pCommand->GetId() == ASSERT_CMD(CMD_NULL, PARA_NULL))
 	{
 		//空消息(心跳返回)
@@ -100,6 +99,7 @@ int AgentCmdTask::RtblResData(char *pBuffer, int iLen)
 	{
 		cout << "empty table." << endl;
 	}
+	AgentCmd::Instance()->SetWaitResStatus(false);
 	return 0;
 }
 
@@ -108,11 +108,12 @@ int AgentCmdTask::RtblSetResData(char *pBuffer, int iLen)
 	RtblSetResData_t *pCmd = (struct RtblSetResData_t* )pBuffer;
 	if(pCmd->mRes >= 0)
 	{
-		cout << "set router table id(" << pCmd->mId <<") success!"
+		cout << "set router table id(" << pCmd->mId <<") success!";
 	}
 	else
 	{
 		cout << "faild!" << endl;
 	}
+	AgentCmd::Instance()->SetWaitResStatus(false);
 	return 0;
 }

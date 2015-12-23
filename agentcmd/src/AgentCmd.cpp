@@ -46,7 +46,7 @@ void AgentCmd::Initialize()
 	
 	//初始化定时器
 	mClientCheckTimer = wTimer(KEEPALIVE_TIME);
-	
+
 	char cStr[32];
 	sprintf(cStr, "%s %d>", mAgentIp.c_str(), mPort);
 	mReadline.SetPrompt(cStr, strlen(cStr));
@@ -57,6 +57,8 @@ void AgentCmd::Initialize()
 	mDispatch.Register("AgentCmd", "SetCmd", REG_FUNC("SetCmd",&AgentCmd::SetCmd));
 	mDispatch.Register("AgentCmd", "ReloadCmd", REG_FUNC("ReloadCmd",&AgentCmd::ReloadCmd));
 	mDispatch.Register("AgentCmd", "RestartCmd", REG_FUNC("RestartCmd",&AgentCmd::RestartCmd));
+
+	mWaitResTimer = wTimer(WAITRES_TIME);
 }
 
 char* AgentCmd::Generator(const char *pText, int iState)
@@ -100,9 +102,30 @@ void AgentCmd::PrepareRun()
 }
 
 void AgentCmd::Run()
-{	
-	char *pCmdLine = mReadline.ReadCmdLine();
+{
+	ReadCmdLine();
+	return;
+}
+
+void AgentCmd::ReadCmdLine()
+{
+	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mLastTicker);
+	if(iInterval < 100) 	//100ms
+	{
+		return;
+	}
+
+	if(IsWaitResStatus() && mWaitResTimer.CheckTimer(iInterval))
+	{
+		cout << "command executed timeout" << endl;
+	}
+	else if(IsWaitResStatus() && !mWaitResTimer.CheckTimer(iInterval))
+	{
+		return;
+	}
 	
+	//read cmd
+	char *pCmdLine = mReadline.ReadCmdLine();
 	if(mReadline.IsUserQuitCmd(pCmdLine))
 	{
 		cout << "thanks for used! see you later~" << endl;
@@ -110,8 +133,6 @@ void AgentCmd::Run()
 	}
 
 	ParseCmd(pCmdLine, strlen(pCmdLine));
-	
-	return;
 }
 
 int AgentCmd::ParseCmd(char *pCmdLine, int iLen)
@@ -149,7 +170,8 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 		if(vParam[i] == "-x") {x = atoi(vParam[i++].c_str()); continue;}
 		if(vParam[i] == "-n") {n = vParam[i++]; continue;}
 	}
-	
+
+	SetWaitResStatus();
 	if(a == 1)
 	{
 		RtblReqAll_t vRtl;
@@ -180,6 +202,7 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 		vRtl.mXid = x;
 		return mTcpTask->SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
+	SetWaitResStatus(false);
 	return -1;
 }
 
@@ -203,6 +226,7 @@ int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 	}
 	else
 	{
+		SetWaitResStatus();
 		return mTcpTask->SyncSend((char *)&stSetRtbl, sizeof(stSetRtbl));
 	}
 	return -1;
@@ -211,6 +235,7 @@ int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 //reload agent/router
 int AgentCmd::ReloadCmd(string sCmd, vector<string> vParam)
 {
+	SetWaitResStatus();
 	if(vParam[1] == "agent")
 	{
 		RtblReqAll_t vRtl;
@@ -220,6 +245,7 @@ int AgentCmd::ReloadCmd(string sCmd, vector<string> vParam)
 	{
 		//
 	}
+	SetWaitResStatus(false);
 	return -1;
 }
 

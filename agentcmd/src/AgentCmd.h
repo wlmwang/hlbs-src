@@ -38,6 +38,7 @@ class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>
 		virtual void Run();
 		virtual void PrepareRun();
 		
+		void ReadCmdLine();
 		int ParseCmd(char *pStr, int iLen);
 		
 		DEC_FUNC(GetCmd);
@@ -47,7 +48,17 @@ class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>
 
 		static char* Generator(const char *pText, int iState);
 		static char** Completion(const char *pText, int iStart, int iEnd);
-	
+		
+		void SetWaitResStatus(bool bStatus = true)
+		{
+			mWaitResStatus = bStatus;
+		}
+		
+		bool IsWaitResStatus()
+		{
+			return mWaitResStatus == true;
+		}
+
 	protected:
 		
 		DEC_DISP(mDispatch);
@@ -55,6 +66,9 @@ class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>
 		wTimer mClientCheckTimer;
 		string mAgentIp;
 		unsigned short mPort;
+
+		wTimer mWaitResTimer;
+		bool mWaitResStatus;
 };
 
 #endif
