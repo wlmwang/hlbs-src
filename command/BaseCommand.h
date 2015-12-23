@@ -14,7 +14,7 @@
 //连接类型（对应command中）
 enum
 {
-	CLIENT_USER = 1,
+	CLIENT_USER = 2,
 	SERVER_ROUTER,
 	SERVER_AGENT,
 	SERVER_CMD,

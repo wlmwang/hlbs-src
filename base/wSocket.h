@@ -95,6 +95,8 @@ class wSocket
 		
 		int & SocketFlag() { return mSocketFlag; }
 		
+		int & ConnType() { return mConnType; }
+		
 		unsigned long long & RecvTime() { return mRecvTime; }
 		
 		unsigned long long & SendTime() { return mSendTime; }
@@ -105,6 +107,7 @@ class wSocket
 		unsigned short mPort;		//需要连接或者需要绑定的端口
 		int mSocketType;			//socket类型：监听socket、连接socket
 		int mSocketFlag;			//socket标志：是否收包
+		int mConnType;
 		unsigned long long mRecvTime;			//接收到数据包的时间戳
 		unsigned long long mSendTime;			//最后一次发送数据包时间戳（主要用户心跳检测）
 		unsigned long long mCreateTime;			//socket的创建时间

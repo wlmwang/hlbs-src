@@ -15,6 +15,7 @@
 #include "wMisc.h"
 #include "AgentServer.h"
 #include "AgentConfig.h"
+#include "BaseCommand.h"
 
 AgentServer::AgentServer():wTcpServer<AgentServer>("路由服务器")
 {
@@ -108,6 +109,10 @@ void AgentServer::CheckTimeout()
 		for(iter = mTcpTaskPool.begin(); iter != mTcpTaskPool.end(); iter++)
 		{
 			if ((*iter)->Socket()->SocketType() != CONNECT_SOCKET)
+			{
+				continue;
+			}
+			if((*iter)->Socket()->ConnType() == SERVER_CMD)	//信任客户端，不需要心跳
 			{
 				continue;
 			}

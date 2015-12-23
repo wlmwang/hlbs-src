@@ -75,9 +75,9 @@ typedef signed long long int SLLWORD;
 #define MAX_RECV_BUFFER_LEN 100 * 1024
 
 //心跳包间隔时间
-#define KEEPALIVE_TIME 1000 /* 1 * 1000 */
+#define KEEPALIVE_TIME 3000 /* 3 * 1000 */
 
-#define CHECK_CLIENT_TIME 3000
+#define CHECK_CLIENT_TIME 5000
 
 #define WAITRES_TIME 30000 /*30s*/
 

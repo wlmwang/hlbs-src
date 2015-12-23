@@ -497,6 +497,7 @@ int wTcpServer<T>::AcceptConn(int iSocketFD)
 	mTcpTask = NewTcpTask(pSocket);
 	if(NULL != mTcpTask)
 	{
+		mTcpTask->Socket()->ConnType() = mTcpTask->ConnType();
 		if (mTcpTask->VerifyConn() < 0)
 		{
 			LOG_ERROR("default", "connect illegal or verify timeout: %d, close it", iNewSocketFD);
