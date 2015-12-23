@@ -58,6 +58,7 @@ void AgentCmd::Initialize()
 	mDispatch.Register("AgentCmd", "ReloadCmd", REG_FUNC("ReloadCmd",&AgentCmd::ReloadCmd));
 	mDispatch.Register("AgentCmd", "RestartCmd", REG_FUNC("RestartCmd",&AgentCmd::RestartCmd));
 
+	mLastTicker = GetTickCount();
 	mWaitResTimer = wTimer(WAITRES_TIME);
 }
 
@@ -104,6 +105,9 @@ void AgentCmd::PrepareRun()
 void AgentCmd::Run()
 {
 	ReadCmdLine();
+
+	//CheckTimer();
+	
 	return;
 }
 

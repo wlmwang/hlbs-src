@@ -250,7 +250,7 @@ void wTcpClient<T>::Start(bool bDaemon)
 		
 		Run();
 		
-		CheckTimer();
+		//CheckTimer();
 
 	} while(IsRunning() && bDaemon);
 }

@@ -67,6 +67,7 @@ class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>
 		string mAgentIp;
 		unsigned short mPort;
 
+		unsigned long long mLastTicker;
 		wTimer mWaitResTimer;
 		bool mWaitResStatus;
 };
