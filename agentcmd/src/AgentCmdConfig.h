@@ -16,8 +16,6 @@
 #include "wSingleton.h"
 #include "AgentCmd.h"
 
-//#include "RtblCommand.h"
-
 /**
  * 配置文件读取的数据结构
  */

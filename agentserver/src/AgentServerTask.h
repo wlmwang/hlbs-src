@@ -11,11 +11,10 @@
 #include <functional>
 
 #include "wType.h"
-#include "wTcpTask.h"
 #include "wLog.h"
-#include "RtblCommand.h"
-
+#include "wTcpTask.h"
 #include "wDispatch.h"
+#include "RtblCommand.h"
 
 #define REG_FUNC(ActIdx, vFunc) wDispatch<function<int(char*, int)>, int>::Func_t {ActIdx, std::bind(vFunc, this, std::placeholders::_1, std::placeholders::_2)}
 #define DEC_DISP(dispatch) wDispatch<function<int(char*, int)>, int> dispatch
@@ -32,6 +31,11 @@ class AgentServerTask : public wTcpTask
 		
 		virtual int VerifyConn();
 		virtual int Verify();
+		
+		virtual int ConnType()
+		{
+			return SERVER_AGENT;
+		}
 
 		virtual int HandleRecvMessage(char * pBuffer, int nLen);
 		

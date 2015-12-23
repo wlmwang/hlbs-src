@@ -13,13 +13,11 @@
 #include "wType.h"
 #include "wTimer.h"
 #include "wSingleton.h"
-
 #include "wTcpServer.h"
 #include "wTcpTask.h"
-
-#include "AgentServerTask.h"
 #include "wMTcpClient.h"
 #include "wTcpClient.h"
+#include "AgentServerTask.h"
 
 #define ROUTER_SERVER_TYPE 1
 

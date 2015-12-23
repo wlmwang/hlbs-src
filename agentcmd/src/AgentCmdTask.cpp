@@ -5,12 +5,11 @@
  */
 
 #include <iostream>
+#include "wAssert.h"
+#include "AgentCmd.h"
 #include "AgentCmdTask.h"
 #include "AgentCmdConfig.h"
-#include "AgentCmd.h"
-
-#include "wAssert.h"
-#include "BaseCommand.h"
+#include "LoginCommand.h"
 
 AgentCmdTask::AgentCmdTask()
 {

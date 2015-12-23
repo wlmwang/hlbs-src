@@ -11,9 +11,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "wMisc.h"
 #include "wLog.h"
 #include "RouterServer.h"
-#include "wMisc.h"
 
 #include "RouterServerTask.h"
 

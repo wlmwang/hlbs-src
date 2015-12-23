@@ -6,7 +6,6 @@
 
 #include <iostream>
 #include <algorithm>
-//#include <functional> 
 
 #include "wType.h"
 #include "tinyxml.h"	//lib tinyxml

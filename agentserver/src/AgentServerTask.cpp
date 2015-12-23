@@ -8,7 +8,7 @@
 #include "AgentConfig.h"
 
 #include "wAssert.h"
-#include "BaseCommand.h"
+#include "LoginCommand.h"
 
 AgentServerTask::AgentServerTask()
 {

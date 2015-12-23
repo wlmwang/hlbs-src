@@ -3,12 +3,11 @@
  * Copyright (C) Anny.
  * Copyright (C) Disvr, Inc.
  */
- 
-#include "RouterServerTask.h"
-#include "RouterConfig.h"
 
 #include "wAssert.h"
-#include "BaseCommand.h"
+#include "RouterServerTask.h"
+#include "RouterConfig.h"
+#include "LoginCommand.h"
 
 RouterServerTask::RouterServerTask()
 {

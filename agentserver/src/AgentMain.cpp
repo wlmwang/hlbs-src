@@ -20,7 +20,6 @@
 #include "wType.h"
 #include "wMisc.h"
 #include "wLog.h"
-
 #include "AgentServer.h"
 #include "AgentConfig.h"
 

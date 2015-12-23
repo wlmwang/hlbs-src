@@ -13,7 +13,6 @@
 
 #include "wLog.h"
 #include "wTcpTask.h"
-#include "wCommand.h"
 #include "wMisc.h"
 
 wTcpTask::wTcpTask(wSocket *pSocket)
@@ -59,6 +58,8 @@ void wTcpTask::CloseTcpTask(int eReason)
 int wTcpTask::Heartbeat()
 {
 	wCommand vCmd;
+	vCmd.mConnType = ConnType();
+
 	SyncSend((char*)&vCmd, sizeof(vCmd));
 
 	mHeartbeatTimes++;
@@ -235,11 +236,16 @@ int wTcpTask::WriteToSendBuf(const char *pCmd, int iLen)
 		mSendBytes = 0;
 	}
 	
+	//暂时方案，可用结构体off_t设置TODO
+	struct wCommand* pTmpCmd = (struct wCommand*) pCmd;
+	pTmpCmd->mConnType = ConnType();
+
 	*(int *)(mSendMsgBuff + mSendWrite)= iLen;
 	memcpy(mSendMsgBuff + mSendWrite + sizeof(int), pCmd, iLen);
 	return 0;
 }
 
+//TODO
 int wTcpTask::SyncSend(const char *pCmd, int iLen)
 {
 	memset(mTmpSendMsgBuff, 0, sizeof(mTmpSendMsgBuff));
@@ -249,6 +255,10 @@ int wTcpTask::SyncSend(const char *pCmd, int iLen)
 		LOG_ERROR("default", "message invalid len %d from %s fd(%d)", iLen, mSocket->IPAddr().c_str(), mSocket->SocketFD());
 		return -1;
 	}
+	
+	//暂时方案，可用结构体off_t设置TODO
+	struct wCommand* pTmpCmd = (struct wCommand*) pCmd;
+	pTmpCmd->mConnType = ConnType();
 
 	*(int *)mTmpSendMsgBuff = iLen;
 	memcpy(mTmpSendMsgBuff + sizeof(int), pCmd, iLen);

@@ -12,6 +12,7 @@
 
 #include "wType.h"
 #include "wSocket.h"
+#include "wCommand.h"
 
 class wTcpTask
 {
@@ -23,6 +24,18 @@ class wTcpTask
 		virtual int VerifyConn();	//验证接收到连接
 		virtual int Verify();		//发送连接验证请求
 		
+		virtual int ConnType()
+		{
+			return SERVER;
+		}
+		
+		virtual int Heartbeat();
+		
+		virtual int HeartbeatOutTimes()
+		{
+			return mHeartbeatTimes > 30;
+		}
+
 		void Initialize();
 		
 		virtual void CloseTcpTask(int eReason);
@@ -44,13 +57,6 @@ class wTcpTask
 		virtual int HandleRecvMessage(char * pBuffer, int nLen) {} //业务逻辑入口函数
 		
 		wSocket * Socket() { return mSocket; }
-		
-		int Heartbeat();
-		
-		int HeartbeatOutTimes()
-		{
-			return mHeartbeatTimes > 30;
-		}
 		
 	protected:
 		wSocket *mSocket;

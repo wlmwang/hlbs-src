@@ -8,7 +8,8 @@
 #define _W_ROUTER_COMMAND_H_
 
 #include <string.h>
-#include "wCommand.h"
+
+#include "BaseCommand.h"
 #include "Rtbl.h"
 
 #pragma pack(1)
