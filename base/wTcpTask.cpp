@@ -78,7 +78,7 @@ int wTcpTask::Verify()
 
 /**
  *  处理接受到数据
- *  每条消息大小[1b,100k)
+ *  每条消息大小[2b,128k)
  *  核心逻辑：接受整条消息，然后进入用户定义的业务函数HandleRecvMessage
  *  return ：<0 对端发生错误|消息超长 =0 对端关闭(FIN_WAIT1) >0 接受字符
  */
@@ -96,13 +96,13 @@ int wTcpTask::ListeningRecv()
 		return iRecvLen;	
 	}
 
-	mRecvBytes = mRecvBytes + iRecvLen;	//已接受消息总字节数
+	mRecvBytes = mRecvBytes + iRecvLen;	
 
-	char *pBuffer = mRecvMsgBuff;
-	int iBuffMsgLen = mRecvBytes;
+	char *pBuffer = mRecvMsgBuff;	//从头开始读取
+	int iBuffMsgLen = mRecvBytes;	//消息总字节数
 	
-	int iMsgLen;
-	//循环处理缓冲区中数据
+	int iMsgLen = 0;
+	
 	while(1)
 	{
 		if(iBuffMsgLen < sizeof(int))
@@ -110,17 +110,17 @@ int wTcpTask::ListeningRecv()
 			break;
 		}
 
-		iMsgLen = *(int *)pBuffer;	//消息总长度。不包括自身int:4字节
+		iMsgLen = *(int *)pBuffer;	//完整消息体长度
 
 		//判断消息长度
-		if(iMsgLen <= MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN )
+		if(iMsgLen < MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN )
 		{
 			LOG_ERROR("default", "get invalid len %d from %s fd(%d)", iMsgLen, mSocket->IPAddr().c_str(), mSocket->SocketFD());
 			return -1;
 		}
 
-		iBuffMsgLen -= iMsgLen + sizeof(int);	//buf中除去此条消息剩余数据长度
-		pBuffer += iMsgLen + sizeof(int);	//位移到本条消息结束位置地址
+		iBuffMsgLen -= iMsgLen + sizeof(int);	//buf中除去当前完整消息剩余数据长度
+		pBuffer += iMsgLen + sizeof(int);		//位移到本条消息结束位置地址
 		
 		//一条不完整消息
 		if(iBuffMsgLen < 0)
@@ -139,19 +139,19 @@ int wTcpTask::ListeningRecv()
 		LOG_DEBUG("default", "get %d bytes msg from %s client fd(%d) to main server", iMsgLen, mSocket->IPAddr().c_str(), mSocket->SocketFD());
 #endif
 		/*start 业务逻辑*/
-		//int iLen = iMsgLen + sizeof(int);
-		HandleRecvMessage(pBuffer - iMsgLen /*iLen*/, iMsgLen /*iLen*/);
+		HandleRecvMessage(pBuffer - iMsgLen, iMsgLen);	//去除4字节消息长度标识位
 		/*end 业务逻辑*/
 	}
 
-	if(iBuffMsgLen == 0)	//缓冲区无数据
+	if(iBuffMsgLen == 0) //缓冲区无数据
 	{
 		mRecvBytes = 0;
+		//memset(mRecvMsgBuff, 0, sizeof(mRecvMsgBuff));
 	}
 	else
 	{
 		//判断剩余的长度
-		if((iBuffMsgLen < 0) || (iBuffMsgLen) > MAX_CLIENT_MSG_LEN + sizeof(int))
+		if(iBuffMsgLen < 0)
 		{
 			LOG_ERROR("default", "the last msg len %d is impossible fd(%d)", iBuffMsgLen, mSocket->SocketFD());
 			return -1;
@@ -163,10 +163,6 @@ int wTcpTask::ListeningRecv()
 	return iRecvLen;
 }
 
-/**
- *  TODO.
- *  加锁
- */
 int wTcpTask::ListeningSend()
 {	
 	//循环发送缓冲区中数据
@@ -208,14 +204,13 @@ int wTcpTask::ListeningSend()
 
 /**
  *  异步发送客户端消息
- *  加锁 TODO.
  *  return 
  *  -1 ：消息长度不合法
  *  -2 ：发送缓冲剩余空间不足，请稍后重试
  *   0 : 发送成功
  */
 int wTcpTask::WriteToSendBuf(const char *pCmd, int iLen)
-{	
+{
 	//判断消息长度
 	if(iLen <= MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN )
 	{
@@ -245,12 +240,12 @@ int wTcpTask::WriteToSendBuf(const char *pCmd, int iLen)
 	return 0;
 }
 
-//TODO
+//同步发送确切长度消息
 int wTcpTask::SyncSend(const char *pCmd, int iLen)
 {
-	memset(mTmpSendMsgBuff, 0, sizeof(mTmpSendMsgBuff));
+	//memset(mTmpSendMsgBuff, 0, sizeof(mTmpSendMsgBuff));
 	//判断消息长度
-	if(iLen <= MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN )
+	if(iLen < MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN )
 	{
 		LOG_ERROR("default", "message invalid len %d from %s fd(%d)", iLen, mSocket->IPAddr().c_str(), mSocket->SocketFD());
 		return -1;
@@ -271,17 +266,28 @@ int wTcpTask::SyncSend(const char *pCmd, int iLen)
  */
 int wTcpTask::SyncRecv(char *pCmd, int iLen)
 {
+	int iRecvLen = 0, iMsgLen = 0;
+	struct wCommand* pTmpCmd = 0;
+	
 	memset(mTmpRecvMsgBuff, 0, sizeof(mTmpRecvMsgBuff));
-	int iRecvLen = mSocket->RecvBytes(mTmpRecvMsgBuff, iLen + sizeof(int));
-	if(iRecvLen <= 0)
+	do
 	{
-		LOG_ERROR("default", "client %s socket fd(%d) close from connect port %d, return %d", mSocket->IPAddr().c_str(), mSocket->SocketFD(), mSocket->Port(), iRecvLen);
-		return iRecvLen;	
-	}
-	int iMsgLen = *(int *)mTmpRecvMsgBuff;	//消息总长度。不包括自身int:4字节
-
-	//判断消息长度
-	if(iMsgLen <= MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN)
+		iRecvLen = mSocket->RecvBytes(mTmpRecvMsgBuff, iLen + sizeof(int));
+		if(iRecvLen <= 0)
+		{
+			LOG_ERROR("default", "client %s socket fd(%d) close from connect port %d, return %d", mSocket->IPAddr().c_str(), mSocket->SocketFD(), mSocket->Port(), iRecvLen);
+			return iRecvLen;	
+		}
+		//过滤掉心跳
+		pTmpCmd = (struct wCommand*) mTmpRecvMsgBuff;
+		if(pTmpCmd->GetCmd() != CMD_NULL && pTmpCmd->GetPara() != PARA_NULL)
+		{
+			break;
+		}
+	} while(true);
+	
+	iMsgLen = *(int *)mTmpRecvMsgBuff;
+	if(iMsgLen < MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN)
 	{
 		LOG_ERROR("default", "get invalid len %d from %s fd(%d)", iMsgLen, mSocket->IPAddr().c_str(), mSocket->SocketFD());
 		return -1;

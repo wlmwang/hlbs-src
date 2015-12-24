@@ -62,11 +62,11 @@ class wTcpTask
 		wSocket *mSocket;
 		
 		int mHeartbeatTimes;
-		//接收消息的缓冲区 100k
-		int mRecvBytes;						//接收的字节数
+		//接收消息的缓冲区 32M
+		int mRecvBytes;	//接收的字节数
 		char mRecvMsgBuff[MAX_RECV_BUFFER_LEN];	
 		
-		//发送消息时的临时缓冲区 1M
+		//发送消息时的临时缓冲区 32M
 		int mSendBytes;						//已发送字节数（发送线程更新）
 		int mSendWrite;						//发送缓冲被写入字节数（写入线程更新）
 		char mSendMsgBuff[MAX_SEND_BUFFER_LEN];

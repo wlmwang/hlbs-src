@@ -58,28 +58,28 @@ typedef signed long long int SLLWORD;
 //最长的IP地址字符串长度
 #define MAX_IP_LEN 16
 
-//消息缓冲区大小
-#define MAX_PACKAGE_LEN 100 * 1024
+//消息缓冲区大小(每条信息消息主体最大长度)
+#define MAX_PACKAGE_LEN 128 * 1024
 
 //客户端消息的最长长度
 #define MAX_CLIENT_MSG_LEN MAX_PACKAGE_LEN
 
-//客户端消息的最短长度
-#define MIN_CLIENT_MSG_LEN 1
+//客户端消息主体最短长度(一字节消息类型+一字节客户端类型)
+#define MIN_CLIENT_MSG_LEN 2
 
 //每一个服务器之间的发送接收缓冲区的大小
-//#define MAX_TCP_BUFFER_LEN 10485760 /* 10 * 1024 * 1024 */
+#define MAX_SEND_BUFFER_LEN 1048576 /* 1 * 1024 * 1024 */
 
-#define MAX_SEND_BUFFER_LEN 1048576 /* 1024 * 1024 */
-
-#define MAX_RECV_BUFFER_LEN 100 * 1024
+#define MAX_RECV_BUFFER_LEN 261120 /* 255 * 1024 */
 
 //心跳包间隔时间
 #define KEEPALIVE_TIME 3000 /* 3 * 1000 */
 
-#define CHECK_CLIENT_TIME 5000
+//服务器检测心跳时间
+#define CHECK_CLIENT_TIME 5000 /* 5 * 1000 */
 
-#define WAITRES_TIME 30000 /*30s*/
+//超时时间
+#define WAITRES_TIME 30000 /* 30 * 1000 */
 
 using namespace std;
 #endif
