@@ -67,6 +67,18 @@ struct RtblReqGXid_t : RtblReqCmd_s
 	WORD mXid;
 };
 
+const BYTE RTBL_REQ_INIT = 5;
+struct RtblReqInit_t : RtblReqCmd_s 
+{
+	RtblReqInit_t() : RtblReqCmd_s(RTBL_REQ_INIT) {}
+};
+
+const BYTE RTBL_REQ_RELOAD = 6;
+struct RtblReqReload_t : RtblReqCmd_s 
+{
+	RtblReqReload_t() : RtblReqCmd_s(RTBL_REQ_RELOAD) {}
+};
+
 //返回数据结构
 const BYTE CMD_RTBL_RES = 11;
 struct RtblResCmd_s : public wCommand
@@ -82,6 +94,32 @@ const BYTE RTBL_RES_DATA = 0;
 struct RtblResData_t : RtblResCmd_s 
 {
 	RtblResData_t() : RtblResCmd_s(RTBL_RES_DATA) 
+	{
+		mNum = 0;
+		memset(mRtbl, 0, 256);
+	}
+
+	Rtbl_t mRtbl[256];
+	int mNum;
+};
+
+const BYTE RTBL_RES_INIT = 1;
+struct RtblResInit_t : RtblResCmd_s 
+{
+	RtblResInit_t() : RtblResCmd_s(RTBL_RES_INIT) 
+	{
+		mNum = 0;
+		memset(mRtbl, 0, 256);
+	}
+
+	Rtbl_t mRtbl[256];
+	int mNum;
+};
+
+const BYTE RTBL_RES_RELOAD = 2;
+struct RtblResReload_t : RtblResCmd_s 
+{
+	RtblResReload_t() : RtblResCmd_s(RTBL_RES_RELOAD) 
 	{
 		mNum = 0;
 		memset(mRtbl, 0, 256);
@@ -127,26 +165,23 @@ struct RtblSetReqId_t : RtblSetReqCmd_s
 };
 
 //返回数据结构
-const BYTE CMD_RTBL_SET_RES = 13;
-struct RtblSetResCmd_s : public wCommand
+const BYTE CMD_RTBL_UPDATE_RES = 13;
+struct RtblUpdateResCmd_s : public wCommand
 {
-	RtblSetResCmd_s(BYTE para)
+	RtblUpdateResCmd_s(BYTE para)
 	{
-		mCmd = CMD_RTBL_SET_RES;
+		mCmd = CMD_RTBL_UPDATE_RES;
 		mPara = para;
 	}
 };
 
-const BYTE RTBL_SET_RES_DATA = 1;
-struct RtblSetResData_t : RtblSetResCmd_s 
+const BYTE RTBL_UPDATE_RES_DATA = 1;
+struct RtblUpdateResData_t : RtblUpdateResCmd_s 
 {
-	RtblSetResData_t() : RtblSetResCmd_s(RTBL_SET_REQ_ID)
+	RtblUpdateResData_t() : RtblUpdateResCmd_s(RTBL_UPDATE_RES_DATA)
 	{
-		mId = 0;
 		mRes = 0;
 	}
-	
-	WORD mId;
 	BYTE mRes;
 };
 

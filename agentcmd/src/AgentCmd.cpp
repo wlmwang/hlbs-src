@@ -169,10 +169,11 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 	for(size_t i = 1; i < vParam.size(); i++)
 	{
 		if(vParam[i] == "-a") {a = 1; continue;}
-		if(vParam[i] == "-i") {i = atoi(vParam[i++].c_str()); continue;}
-		if(vParam[i] == "-g") {g = atoi(vParam[i++].c_str()); continue;}
-		if(vParam[i] == "-x") {x = atoi(vParam[i++].c_str()); continue;}
-		if(vParam[i] == "-n") {n = vParam[i++]; continue;}
+		else if(vParam[i] == "-i") {i = atoi(vParam[++i].c_str()); continue;}
+		else if(vParam[i] == "-g") {g = atoi(vParam[++i].c_str()); continue;}
+		else if(vParam[i] == "-x") {x = atoi(vParam[++i].c_str()); continue;}
+		else if(vParam[i] == "-n") {n = vParam[++i]; continue;}
+		else { cout << "Unknow param.";}
 	}
 
 	SetWaitResStatus();
@@ -181,7 +182,7 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 		RtblReqAll_t vRtl;
 		return mTcpTask->SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
-	if(i != 0)
+	else if(i != 0)
 	{
 		RtblReqId_t vRtl;
 		vRtl.mId = i;
@@ -217,12 +218,13 @@ int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 	for(size_t i = 1; i < vParam.size(); i++)
 	{
 		if(vParam[i] == "-d") {stSetRtbl.mDisabled = 1; continue;}
-		if(vParam[i] == "-i") {stSetRtbl.mId = atoi(vParam[i++].c_str()); continue;}
-		if(vParam[i] == "-w") {stSetRtbl.mWeight = atoi(vParam[i++].c_str()); continue;}
-		if(vParam[i] == "-k") {stSetRtbl.mTasks = atoi(vParam[i++].c_str()); continue;}
-		if(vParam[i] == "-t") {stSetRtbl.mTimeline = atoi(vParam[i++].c_str()); continue;}
-		if(vParam[i] == "-c") {stSetRtbl.mConnTime = atoi(vParam[i++].c_str()); continue;}
-		if(vParam[i] == "-s") {stSetRtbl.mSuggest = atoi(vParam[i++].c_str()); continue;}
+		else if(vParam[i] == "-i") {stSetRtbl.mId = atoi(vParam[++i].c_str()); continue;}
+		else if(vParam[i] == "-w") {stSetRtbl.mWeight = atoi(vParam[++i].c_str()); continue;}
+		else if(vParam[i] == "-k") {stSetRtbl.mTasks = atoi(vParam[++i].c_str()); continue;}
+		else if(vParam[i] == "-t") {stSetRtbl.mTimeline = atoi(vParam[++i].c_str()); continue;}
+		else if(vParam[i] == "-c") {stSetRtbl.mConnTime = atoi(vParam[++i].c_str()); continue;}
+		else if(vParam[i] == "-s") {stSetRtbl.mSuggest = atoi(vParam[++i].c_str()); continue;}
+		else { cout << "Unknow param.";}
 	}
 	if(stSetRtbl.mId == 0)
 	{
@@ -236,21 +238,12 @@ int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 	return -1;
 }
 
-//reload agent/router
+//reload
 int AgentCmd::ReloadCmd(string sCmd, vector<string> vParam)
 {
 	SetWaitResStatus();
-	if(vParam[1] == "agent")
-	{
-		RtblReqAll_t vRtl;
-		return mTcpTask->SyncSend((char *)&vRtl, sizeof(vRtl));
-	}
-	else if(vParam[1] == "router")
-	{
-		//
-	}
-	SetWaitResStatus(false);
-	return -1;
+	RtblReqReload_t vRtl;
+	return mTcpTask->SyncSend((char *)&vRtl, sizeof(vRtl));
 }
 
 //restart agent/router

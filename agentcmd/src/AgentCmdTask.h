@@ -41,7 +41,7 @@ class AgentCmdTask : public wTcpTask
 		int ParseRecvMessage(struct wCommand* pCommand ,char *pBuffer,int iLen);
 		
 		DEC_FUNC_a(RtblResData);
-		DEC_FUNC_a(RtblSetResData);
+		DEC_FUNC_a(RtblUpdateResData);
 
 	protected:
 		DEC_DISP_a(mDispatch);

@@ -51,26 +51,27 @@ class AgentConfig: public wConfig<AgentConfig>
 			CleanRtbl();
 		}
 		
-		void CleanRtbl();
-		
 		/**
 		 * 解析配置
 		 */		
 		void ParseBaseConfig();
 		
-		int GetAllRtblReq();
-		void FixRtbl(Rtbl_t pRtbl[] = NULL, int iLen = 0); //整理容器
-		
+		int InitRtbl(Rtbl_t *pBuffer, int iLen = 0);
+		int ReloadRtbl(Rtbl_t *pBuffer, int iLen = 0);
+
+		int GetRtblAll(Rtbl_t* pBuffer, int iNum = 0);
+		int GetRtblByName(Rtbl_t* pBuffer, string sName, int iNum = 0);
+		int GetRtblByGid(Rtbl_t* pBuffer, int iGid, int iNum = 0);
+		int GetRtblByGXid(Rtbl_t* pBuffer, int iGid, int iXid, int iNum = 0);
 		int GetRtblById(Rtbl_t* pBuffer, int iId);
-		int GetRtblAll(Rtbl_t* pBuffer, int iNum = 1);
-		int GetRtblByName(Rtbl_t* pBuffer, string sName, int iNum = 1);
-		int GetRtblByGid(Rtbl_t* pBuffer, int iGid, int iNum = 1);
-		int GetRtblByGXid(Rtbl_t* pBuffer, int iGid, int iXid, int iNum = 1);
 		
 		BYTE SetRtblAttr(WORD iId, BYTE iDisabled, WORD iWeight, WORD iTimeline, WORD iConnTime, WORD iTasks, WORD iSuggest);
+	
 	protected:
 		BYTE DisabledRtbl(WORD iId);
 		BYTE SetRtblWeight(WORD iId, WORD iWeight);
+		void CleanRtbl();
+		void FixRtbl();
 		
 		vector<Rtbl_t*> mRtbl;
 		map<int, Rtbl_t*> mRtblById;

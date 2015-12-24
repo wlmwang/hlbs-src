@@ -3,7 +3,8 @@
  * Copyright (C) Anny.
  * Copyright (C) Disvr, Inc.
  */
- 
+
+#include "AgentServer.h" 
 #include "AgentServerTask.h"
 #include "AgentConfig.h"
 
@@ -27,12 +28,14 @@ AgentServerTask::~AgentServerTask()
 
 void AgentServerTask::Initialize()
 {
+	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_RELOAD), REG_FUNC(ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_RELOAD), &AgentServerTask::ReloadRtblReq));
 	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_ALL), REG_FUNC(ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_ALL), &AgentServerTask::GetRtblAll));
 	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_ID), REG_FUNC(ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_ID), &AgentServerTask::GetRtblById));
 	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_GID), REG_FUNC(ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_GID), &AgentServerTask::GetRtblByGid));
 	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_NAME), REG_FUNC(ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_NAME), &AgentServerTask::GetRtblByName));
 	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_GXID), REG_FUNC(ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_GXID), &AgentServerTask::GetRtblByGXid));
-	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_DATA), REG_FUNC(ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_DATA), &AgentServerTask::FixRtbl));
+	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_REQ, RTBL_RES_INIT), REG_FUNC(ASSERT_CMD(CMD_RTBL_REQ, RTBL_RES_INIT), &AgentServerTask::InitRtblRes));
+	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_REQ, RTBL_RES_RELOAD), REG_FUNC(ASSERT_CMD(CMD_RTBL_REQ, RTBL_RES_RELOAD), &AgentServerTask::ReloadRtblRes));
 	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_SET_REQ, RTBL_SET_REQ_ID), REG_FUNC(ASSERT_CMD(CMD_RTBL_SET_REQ, RTBL_SET_REQ_ID), &AgentServerTask::SetRtblAttr));
 }
 
@@ -95,34 +98,52 @@ int AgentServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, 
 	return 0;
 }
 
-int AgentServerTask::FixRtbl(char *pBuffer, int iLen)
+//router发来相响应
+int AgentServerTask::InitRtblRes(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	RtblResData_t *pCmd = (struct RtblResData_t* )pBuffer;
+	RtblResInit_t *pCmd = (struct RtblResInit_t* )pBuffer;
 
-	if (pCmd->mNum > 0) pConfig->FixRtbl(pCmd->mRtbl, pCmd->mNum);
+	if (pCmd->mNum > 0) pConfig->InitRtbl(pCmd->mRtbl, pCmd->mNum);
 	return 0;
 }
 
+//router发来响应
+int AgentServerTask::ReloadRtblRes(char *pBuffer, int iLen)
+{
+	AgentConfig *pConfig = AgentConfig::Instance();
+	RtblResReload_t *pCmd = (struct RtblResReload_t* )pBuffer;
+
+	if (pCmd->mNum > 0) pConfig->ReloadRtbl(pCmd->mRtbl, pCmd->mNum);
+	return 0;
+}
+
+//agentcmd发来请求  。需同步reload router
+int AgentServerTask::ReloadRtblReq(char *pBuffer, int iLen)
+{
+	AgentConfig *pConfig = AgentConfig::Instance();
+	RtblResReload_t *pCmd = (struct RtblResReload_t* )pBuffer;
+	AgentServer *pServer = AgentServer::Instance();
+	
+	RtblUpdateResData_t vRRt;
+	vRRt.mRes = pServer->ReloadRtblReq();
+	SyncSend((char *)&vRRt, sizeof(vRRt));
+	return 0;
+}
+
+//agentcmd发来请求
 int AgentServerTask::SetRtblAttr(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
 	RtblSetReqId_t *pCmd = (struct RtblSetReqId_t* )pBuffer;
 	
-	RtblSetResData_t vRRt;
-	vRRt.mId = pCmd->mId;
-	if(vRRt.mId <= 0)
-	{
-		vRRt.mRes = pConfig->SetRtblAttr(pCmd->mId, pCmd->mDisabled, pCmd->mWeight, pCmd->mTimeline, pCmd->mConnTime, pCmd->mTasks,  pCmd->mSuggest);
-	}
-	else
-	{
-		vRRt.mRes = -1;
-	}
+	RtblUpdateResData_t vRRt;
+	vRRt.mRes = pConfig->SetRtblAttr(pCmd->mId, pCmd->mDisabled, pCmd->mWeight, pCmd->mTimeline, pCmd->mConnTime, pCmd->mTasks,  pCmd->mSuggest);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
 
+//agentcmd发来请求
 int AgentServerTask::GetRtblAll(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
@@ -134,6 +155,7 @@ int AgentServerTask::GetRtblAll(char *pBuffer, int iLen)
 	return 0;
 }
 
+//agentcmd发来请求
 int AgentServerTask::GetRtblById(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
@@ -145,6 +167,7 @@ int AgentServerTask::GetRtblById(char *pBuffer, int iLen)
 	return 0;
 }
 
+//agentcmd发来请求
 int AgentServerTask::GetRtblByGid(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
@@ -156,6 +179,7 @@ int AgentServerTask::GetRtblByGid(char *pBuffer, int iLen)
 	return 0;
 }
 
+//agentcmd发来请求
 int AgentServerTask::GetRtblByName(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
@@ -167,6 +191,7 @@ int AgentServerTask::GetRtblByName(char *pBuffer, int iLen)
 	return 0;
 }
 
+//agentcmd发来请求
 int AgentServerTask::GetRtblByGXid(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();

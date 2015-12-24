@@ -52,15 +52,16 @@ class RouterConfig: public wConfig<RouterConfig>
 		 */
 		void ParseRtblConfig();
 		
+		int ReloadRtbl(Rtbl_t* pBuffer, int iNum = 0);
+		int GetRtblAll(Rtbl_t* pBuffer, int iNum = 0);
+		int GetRtblByName(Rtbl_t* pBuffer, string sName, int iNum = 0);
+		int GetRtblByGid(Rtbl_t* pBuffer, int iGid, int iNum = 0);
+		int GetRtblByGXid(Rtbl_t* pBuffer, int iGid, int iXid, int iNum = 0);
 		int GetRtblById(Rtbl_t* pBuffer, int iId);
-		int GetRtblAll(Rtbl_t* pBuffer, int iNum = 1);
-		int GetRtblByName(Rtbl_t* pBuffer, string sName, int iNum = 1);
-		int GetRtblByGid(Rtbl_t* pBuffer, int iGid, int iNum = 1);
-		int GetRtblByGXid(Rtbl_t* pBuffer, int iGid, int iXid, int iNum = 1);
-		
 	protected:
-		void FixRtbl();	//整理容器
-	
+		void FixRtbl();
+		void CleanRtbl();
+		
 		vector<Rtbl_t*> mRtbl;
 		map<int, Rtbl_t*> mRtblById;
 		map<int, vector<Rtbl_t*> > mRtblByGid;

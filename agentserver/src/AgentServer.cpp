@@ -53,10 +53,41 @@ void AgentServer::ConnectRouter()
 	//mRouterConn
 	mRouterConn->GenerateClient(ROUTER_SERVER_TYPE, "RouterFromAgent", pConfig->mRouterIPAddr, pConfig->mRouterPort);
 	
-	//发送获取所有rtbl配置请求
-	pConfig->GetAllRtblReq();
+	//发送初始化rtbl配置请求
+	InitRtblReq();
 }
 
+int AgentServer::InitRtblReq()
+{
+	wMTcpClient<AgentServerTask>* pRouterConn = RouterConn();
+	if(pRouterConn == NULL)
+	{
+		return -1;
+	}
+	wTcpClient<AgentServerTask>* pClient = pRouterConn->OneTcpClient(ROUTER_SERVER_TYPE);
+	if(pClient != NULL && pClient->TcpTask())
+	{
+		RtblReqInit_t vRtl;
+		return pClient->TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
+	}
+	return -1;
+}
+
+int AgentServer::ReloadRtblReq()
+{
+	wMTcpClient<AgentServerTask>* pRouterConn = RouterConn();
+	if(pRouterConn == NULL)
+	{
+		return -1;
+	}
+	wTcpClient<AgentServerTask>* pClient = pRouterConn->OneTcpClient(ROUTER_SERVER_TYPE);
+	if(pClient != NULL && pClient->TcpTask())
+	{
+		RtblReqReload_t vRtl;
+		return pClient->TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
+	}
+	return -1;
+}
 
 //准备工作
 void AgentServer::PrepareRun()

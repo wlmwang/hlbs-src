@@ -36,6 +36,8 @@ class AgentServer: public wTcpServer<AgentServer>
 		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
 
 		void ConnectRouter();
+		int InitRtblReq();
+		int ReloadRtblReq();
 
 		void CheckTimer();
 		void CheckTimeout();

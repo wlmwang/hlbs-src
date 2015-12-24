@@ -29,7 +29,7 @@ AgentCmdTask::~AgentCmdTask()
 void AgentCmdTask::Initialize()
 {
 	mDispatch.Register("AgentCmdTask", ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_DATA), REG_FUNC_a(ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_DATA), &AgentCmdTask::RtblResData));
-	mDispatch.Register("AgentCmdTask", ASSERT_CMD(CMD_RTBL_SET_RES, RTBL_SET_RES_DATA), REG_FUNC_a(ASSERT_CMD(CMD_RTBL_SET_RES, RTBL_SET_RES_DATA), &AgentCmdTask::RtblSetResData));
+	mDispatch.Register("AgentCmdTask", ASSERT_CMD(CMD_RTBL_UPDATE_RES, RTBL_UPDATE_RES_DATA), REG_FUNC_a(ASSERT_CMD(CMD_RTBL_UPDATE_RES, RTBL_UPDATE_RES_DATA), &AgentCmdTask::RtblUpdateResData));
 }
 
 int AgentCmdTask::Verify()
@@ -102,12 +102,12 @@ int AgentCmdTask::RtblResData(char *pBuffer, int iLen)
 	return 0;
 }
 
-int AgentCmdTask::RtblSetResData(char *pBuffer, int iLen)
+int AgentCmdTask::RtblUpdateResData(char *pBuffer, int iLen)
 {
-	RtblSetResData_t *pCmd = (struct RtblSetResData_t* )pBuffer;
+	RtblUpdateResData_t *pCmd = (struct RtblUpdateResData_t* )pBuffer;
 	if(pCmd->mRes >= 0)
 	{
-		cout << "set router table id(" << pCmd->mId <<") success!";
+		cout << "send success!";
 	}
 	else
 	{

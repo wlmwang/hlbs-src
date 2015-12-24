@@ -41,12 +41,14 @@ class AgentServerTask : public wTcpTask
 		
 		int ParseRecvMessage(struct wCommand* pCommand ,char *pBuffer,int iLen);
 		
+		DEC_FUNC(InitRtblRes);
+		DEC_FUNC(ReloadRtblRes);
+		DEC_FUNC(ReloadRtblReq);
 		DEC_FUNC(GetRtblAll);
 		DEC_FUNC(GetRtblById);
 		DEC_FUNC(GetRtblByGid);
 		DEC_FUNC(GetRtblByName);
 		DEC_FUNC(GetRtblByGXid);
-		DEC_FUNC(FixRtbl);
 		DEC_FUNC(SetRtblAttr);
 		
 	protected:
