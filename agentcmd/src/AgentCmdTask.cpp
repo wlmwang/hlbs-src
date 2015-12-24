@@ -107,7 +107,7 @@ int AgentCmdTask::RtblUpdateResData(char *pBuffer, int iLen)
 	RtblUpdateResData_t *pCmd = (struct RtblUpdateResData_t* )pBuffer;
 	if(pCmd->mRes >= 0)
 	{
-		cout << "send success!";
+		cout << "send success!" << endl;
 	}
 	else
 	{

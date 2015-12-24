@@ -129,7 +129,12 @@ void AgentCmd::ReadCmdLine()
 	}
 	
 	//read cmd
-	char *pCmdLine = mReadline.ReadCmdLine();
+	char *pCmdLine = 0;
+	do
+	{
+		pCmdLine = mReadline.ReadCmdLine();
+	}while(strlen(pCmdLine) == 0);
+	
 	if(mReadline.IsUserQuitCmd(pCmdLine))
 	{
 		cout << "thanks for used! see you later~" << endl;
@@ -177,7 +182,7 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 		else if(vParam[j] == "-g") {g = atoi(vParam[++j].c_str()); continue;}
 		else if(vParam[j] == "-x") {x = atoi(vParam[++j].c_str()); continue;}
 		else if(vParam[j] == "-n") {n = vParam[++j]; continue;}
-		else { cout << "Unknow param.";}
+		else { cout << "Unknow param." << endl;}
 	}
 
 	SetWaitResStatus();
@@ -228,7 +233,7 @@ int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 		else if(vParam[j] == "-t") {stSetRtbl.mTimeline = atoi(vParam[++j].c_str()); continue;}
 		else if(vParam[j] == "-c") {stSetRtbl.mConnTime = atoi(vParam[++j].c_str()); continue;}
 		else if(vParam[j] == "-s") {stSetRtbl.mSuggest = atoi(vParam[++j].c_str()); continue;}
-		else { cout << "Unknow param.";}
+		else { cout << "Unknow param." << endl;}
 	}
 	if(stSetRtbl.mId == 0)
 	{
