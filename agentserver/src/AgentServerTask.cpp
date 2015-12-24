@@ -34,8 +34,8 @@ void AgentServerTask::Initialize()
 	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_GID), REG_FUNC(ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_GID), &AgentServerTask::GetRtblByGid));
 	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_NAME), REG_FUNC(ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_NAME), &AgentServerTask::GetRtblByName));
 	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_GXID), REG_FUNC(ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_GXID), &AgentServerTask::GetRtblByGXid));
-	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_REQ, RTBL_RES_INIT), REG_FUNC(ASSERT_CMD(CMD_RTBL_REQ, RTBL_RES_INIT), &AgentServerTask::InitRtblRes));
-	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_REQ, RTBL_RES_RELOAD), REG_FUNC(ASSERT_CMD(CMD_RTBL_REQ, RTBL_RES_RELOAD), &AgentServerTask::ReloadRtblRes));
+	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_INIT), REG_FUNC(ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_INIT), &AgentServerTask::InitRtblRes));
+	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_RELOAD), REG_FUNC(ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_RELOAD), &AgentServerTask::ReloadRtblRes));
 	mDispatch.Register("AgentServerTask", ASSERT_CMD(CMD_RTBL_SET_REQ, RTBL_SET_REQ_ID), REG_FUNC(ASSERT_CMD(CMD_RTBL_SET_REQ, RTBL_SET_REQ_ID), &AgentServerTask::SetRtblAttr));
 }
 

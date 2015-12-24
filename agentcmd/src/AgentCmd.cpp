@@ -166,13 +166,13 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 {
 	int a = 0, i = 0, g = 0 , x = 0;
 	string n = "";
-	for(size_t i = 1; i < vParam.size(); i++)
+	for(size_t j = 1; j < vParam.size(); j++)
 	{
-		if(vParam[i] == "-a") {a = 1; continue;}
-		else if(vParam[i] == "-i") {i = atoi(vParam[++i].c_str()); continue;}
-		else if(vParam[i] == "-g") {g = atoi(vParam[++i].c_str()); continue;}
-		else if(vParam[i] == "-x") {x = atoi(vParam[++i].c_str()); continue;}
-		else if(vParam[i] == "-n") {n = vParam[++i]; continue;}
+		if(vParam[j] == "-a") {a = 1; continue;}
+		else if(vParam[j] == "-i") {i = atoi(vParam[++j].c_str()); continue;}
+		else if(vParam[j] == "-g") {g = atoi(vParam[++j].c_str()); continue;}
+		else if(vParam[j] == "-x") {x = atoi(vParam[++j].c_str()); continue;}
+		else if(vParam[j] == "-n") {n = vParam[++j]; continue;}
 		else { cout << "Unknow param.";}
 	}
 
@@ -215,15 +215,15 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 {
 	RtblSetReqId_t stSetRtbl;
-	for(size_t i = 1; i < vParam.size(); i++)
+	for(size_t j = 1; j < vParam.size(); j++)
 	{
-		if(vParam[i] == "-d") {stSetRtbl.mDisabled = 1; continue;}
-		else if(vParam[i] == "-i") {stSetRtbl.mId = atoi(vParam[++i].c_str()); continue;}
-		else if(vParam[i] == "-w") {stSetRtbl.mWeight = atoi(vParam[++i].c_str()); continue;}
-		else if(vParam[i] == "-k") {stSetRtbl.mTasks = atoi(vParam[++i].c_str()); continue;}
-		else if(vParam[i] == "-t") {stSetRtbl.mTimeline = atoi(vParam[++i].c_str()); continue;}
-		else if(vParam[i] == "-c") {stSetRtbl.mConnTime = atoi(vParam[++i].c_str()); continue;}
-		else if(vParam[i] == "-s") {stSetRtbl.mSuggest = atoi(vParam[++i].c_str()); continue;}
+		if(vParam[j] == "-d") {stSetRtbl.mDisabled = 1; continue;}
+		else if(vParam[j] == "-i") {stSetRtbl.mId = atoi(vParam[++j].c_str()); continue;}
+		else if(vParam[j] == "-w") {stSetRtbl.mWeight = atoi(vParam[++j].c_str()); continue;}
+		else if(vParam[j] == "-k") {stSetRtbl.mTasks = atoi(vParam[++j].c_str()); continue;}
+		else if(vParam[j] == "-t") {stSetRtbl.mTimeline = atoi(vParam[++j].c_str()); continue;}
+		else if(vParam[j] == "-c") {stSetRtbl.mConnTime = atoi(vParam[++j].c_str()); continue;}
+		else if(vParam[j] == "-s") {stSetRtbl.mSuggest = atoi(vParam[++j].c_str()); continue;}
 		else { cout << "Unknow param.";}
 	}
 	if(stSetRtbl.mId == 0)
