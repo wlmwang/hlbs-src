@@ -53,10 +53,10 @@ void AgentCmd::Initialize()
 	
 	mReadline.SetCompletion(&AgentCmd::Completion);
 	
-	mDispatch.Register("AgentCmd", "GetCmd", REG_FUNC("GetCmd",&AgentCmd::GetCmd));
-	mDispatch.Register("AgentCmd", "SetCmd", REG_FUNC("SetCmd",&AgentCmd::SetCmd));
-	mDispatch.Register("AgentCmd", "ReloadCmd", REG_FUNC("ReloadCmd",&AgentCmd::ReloadCmd));
-	mDispatch.Register("AgentCmd", "RestartCmd", REG_FUNC("RestartCmd",&AgentCmd::RestartCmd));
+	mDispatch.Register("AgentCmd", "get", REG_FUNC("get",&AgentCmd::GetCmd));
+	mDispatch.Register("AgentCmd", "set", REG_FUNC("set",&AgentCmd::SetCmd));
+	mDispatch.Register("AgentCmd", "reload", REG_FUNC("reload",&AgentCmd::ReloadCmd));
+	mDispatch.Register("AgentCmd", "restart", REG_FUNC("restart",&AgentCmd::RestartCmd));
 
 	mLastTicker = GetTickCount();
 	mWaitResTimer = wTimer(WAITRES_TIME);
@@ -148,12 +148,16 @@ int AgentCmd::ParseCmd(char *pCmdLine, int iLen)
 	
 	vector<string> vToken = Split(pCmdLine, " ");
 	
-	if (vToken.size() > 0 && vToken[0] != "" && vToken[1] != "")
+	if (vToken.size() > 0 && vToken[0] != "")
 	{
 		auto pF = mDispatch.GetFuncT("AgentCmd", vToken[0]);
 
 		if (pF != NULL)
 		{
+			if (vToken.size() == 1)
+			{
+				vToken.push_back("");
+			}
 			pF->mFunc(vToken[1],vToken);
 		}
 	}

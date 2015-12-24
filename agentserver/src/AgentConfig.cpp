@@ -326,9 +326,5 @@ void AgentConfig::CleanRtbl()
 	mRtblByGid.clear();
 	mRtblByName.clear();
 	mRtblByGXid.clear();
-	for(vector<Rtbl_t*>::iterator it = mRtbl.begin(); it != mRtbl.end(); it++)
-	{
-		SAFE_DELETE(*it);
-	}
 	mRtbl.clear();
 }
