@@ -16,9 +16,11 @@
 #include "wDispatch.h"
 #include "RtblCommand.h"
 
-#define REG_FUNC_a(ActIdx, vFunc) wDispatch<function<int(char*, int)>, int>::Func_t {ActIdx, std::bind(vFunc, this, std::placeholders::_1, std::placeholders::_2)}
-#define DEC_DISP_a(dispatch) wDispatch<function<int(char*, int)>, int> dispatch
-#define DEC_FUNC_a(func) int func(char *pBuffer, int iLen)
+#define REG_FUNC(ActIdx, vFunc) wDispatch<function<int(char*, int)>, int>::Func_t {ActIdx, std::bind(vFunc, this, std::placeholders::_1, std::placeholders::_2)}
+#define DEC_DISP(dispatch) wDispatch<function<int(char*, int)>, int> dispatch
+#define DEC_FUNC(func) int func(char *pBuffer, int iLen)
+
+#define CMD_REG_DISP(cmdid, paraid, func) mDispatch.Register("AgentCmdTask", ASSERT_CMD(cmdid, paraid), REG_FUNC(ASSERT_CMD(cmdid, paraid), func));
 
 class AgentCmdTask : public wTcpTask
 {
@@ -41,11 +43,11 @@ class AgentCmdTask : public wTcpTask
 		
 		int ParseRecvMessage(struct wCommand* pCommand ,char *pBuffer,int iLen);
 		
-		DEC_FUNC_a(RtblResData);
-		DEC_FUNC_a(RtblUpdateResData);
+		DEC_FUNC(RtblResData);
+		DEC_FUNC(RtblUpdateResData);
 
 	protected:
-		DEC_DISP_a(mDispatch);
+		DEC_DISP(mDispatch);
 };
 
 #endif

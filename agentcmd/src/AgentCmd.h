@@ -22,9 +22,11 @@
 
 #define AGENT_SERVER_TYPE 1
 
-#define REG_FUNC(ActName, vFunc) wDispatch<function<int(string, vector<string>)>, string>::Func_t {ActName, std::bind(vFunc, this, std::placeholders::_1, std::placeholders::_2)}
-#define DEC_DISP(dispatch) wDispatch<function<int(string, vector<string>)>, string> dispatch
-#define DEC_FUNC(func) int func(string sCmd, vector<string>)
+#define REG_FUNC_S(name, vFunc) wDispatch<function<int(string, vector<string>)>, string>::Func_t {name, std::bind(vFunc, this, std::placeholders::_1, std::placeholders::_2)}
+#define DEC_DISP_S(dispatch) wDispatch<function<int(string, vector<string>)>, string> dispatch
+#define DEC_FUNC_S(func) int func(string sCmd, vector<string>)
+
+#define CMD_REG_DISP_S(name, func) mDispatch.Register("AgentCmd", name, REG_FUNC_S(name, func));
 
 class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>
 {
@@ -41,10 +43,10 @@ class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>
 		void ReadCmdLine();
 		int ParseCmd(char *pStr, int iLen);
 		
-		DEC_FUNC(GetCmd);
-		DEC_FUNC(SetCmd);
-		DEC_FUNC(ReloadCmd);
-		DEC_FUNC(RestartCmd);
+		DEC_FUNC_S(GetCmd);
+		DEC_FUNC_S(SetCmd);
+		DEC_FUNC_S(ReloadCmd);
+		DEC_FUNC_S(RestartCmd);
 
 		static char* Generator(const char *pText, int iState);
 		static char** Completion(const char *pText, int iStart, int iEnd);
@@ -61,7 +63,7 @@ class AgentCmd: public wSingleton<AgentCmd>, public wTcpClient<AgentCmdTask>
 
 	protected:
 		
-		DEC_DISP(mDispatch);
+		DEC_DISP_S(mDispatch);
 		wReadline mReadline;
 		string mAgentIp;
 		unsigned short mPort;

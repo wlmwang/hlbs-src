@@ -20,4 +20,4 @@ debug:
 	for d in $(SERVER); do sed -i 's/#-D_DEBUG_/-D_DEBUG_/' $$d/Makefile; done
 
 clean:
-	for d in $(SERVER); do echo; echo "clean $$d now"; echo; $(MAKE) dir clean -C $$d; done
+	for d in $(SERVER); do echo; echo "clean $$d now"; echo; $(MAKE) clean -C $$d; done

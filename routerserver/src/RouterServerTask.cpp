@@ -26,8 +26,8 @@ RouterServerTask::~RouterServerTask()
 
 void RouterServerTask::Initialize()
 {
-	mDispatch.Register("RouterServerTask", ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_RELOAD), REG_FUNC(ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_RELOAD), &RouterServerTask::ReloadRtblReq));
-	mDispatch.Register("RouterServerTask", ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_INIT), REG_FUNC(ASSERT_CMD(CMD_RTBL_REQ, RTBL_REQ_INIT), &RouterServerTask::InitRtblReq));
+	ROUTER_REG_DISP(CMD_RTBL_REQ, RTBL_REQ_RELOAD, &RouterServerTask::ReloadRtblReq);
+	ROUTER_REG_DISP(CMD_RTBL_REQ, RTBL_REQ_INIT, &RouterServerTask::InitRtblReq);
 }
 
 int RouterServerTask::VerifyConn()

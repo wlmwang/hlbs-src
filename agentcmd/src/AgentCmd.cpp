@@ -50,10 +50,10 @@ void AgentCmd::Initialize()
 	
 	mReadline.SetCompletion(&AgentCmd::Completion);
 	
-	mDispatch.Register("AgentCmd", "get", REG_FUNC("get",&AgentCmd::GetCmd));
-	mDispatch.Register("AgentCmd", "set", REG_FUNC("set",&AgentCmd::SetCmd));
-	mDispatch.Register("AgentCmd", "reload", REG_FUNC("reload",&AgentCmd::ReloadCmd));
-	mDispatch.Register("AgentCmd", "restart", REG_FUNC("restart",&AgentCmd::RestartCmd));
+	CMD_REG_DISP_S("get", &AgentCmd::GetCmd);
+	CMD_REG_DISP_S("set", &AgentCmd::SetCmd);
+	CMD_REG_DISP_S("reload", &AgentCmd::ReloadCmd);
+	CMD_REG_DISP_S("restart", &AgentCmd::RestartCmd);
 
 	mTicker = GetTickCount();
 	SetWaitResStatus(false);

@@ -20,6 +20,8 @@
 #define DEC_DISP(dispatch) wDispatch<function<int(char*, int)>, int> dispatch
 #define DEC_FUNC(func) int func(char *pBuffer, int iLen)
 
+#define AGENT_REG_DISP(cmdid, paraid, func) mDispatch.Register("AgentServerTask", ASSERT_CMD(cmdid, paraid), REG_FUNC(ASSERT_CMD(cmdid, paraid), func));
+
 class AgentServerTask : public wTcpTask
 {
 	public:

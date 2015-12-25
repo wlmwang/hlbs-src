@@ -20,6 +20,8 @@
 #define DEC_DISP(dispatch) wDispatch<function<int(char*, int)>, int> dispatch
 #define DEC_FUNC(func) int func(char *pBuffer, int iLen)
 
+#define ROUTER_REG_DISP(cmdid, paraid, func) mDispatch.Register("RouterServerTask", ASSERT_CMD(cmdid, paraid), REG_FUNC(ASSERT_CMD(cmdid, paraid), func));
+
 class RouterServerTask : public wTcpTask
 {
 	public:
@@ -43,12 +45,6 @@ class RouterServerTask : public wTcpTask
 
 		DEC_FUNC(ReloadRtblReq);
 		DEC_FUNC(InitRtblReq);
-		
-		//DEC_FUNC(GetRtblAll);
-		//DEC_FUNC(GetRtblById);
-		//DEC_FUNC(GetRtblByGid);
-		//DEC_FUNC(GetRtblByName);
-		//DEC_FUNC(GetRtblByGXid);
 
 	protected:
 		DEC_DISP(mDispatch);

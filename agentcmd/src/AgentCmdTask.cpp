@@ -28,8 +28,8 @@ AgentCmdTask::~AgentCmdTask()
 
 void AgentCmdTask::Initialize()
 {
-	mDispatch.Register("AgentCmdTask", ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_DATA), REG_FUNC_a(ASSERT_CMD(CMD_RTBL_RES, RTBL_RES_DATA), &AgentCmdTask::RtblResData));
-	mDispatch.Register("AgentCmdTask", ASSERT_CMD(CMD_RTBL_UPDATE_RES, RTBL_UPDATE_RES_DATA), REG_FUNC_a(ASSERT_CMD(CMD_RTBL_UPDATE_RES, RTBL_UPDATE_RES_DATA), &AgentCmdTask::RtblUpdateResData));
+	CMD_REG_DISP(CMD_RTBL_RES, RTBL_RES_DATA, &AgentCmdTask::RtblResData);
+	CMD_REG_DISP(CMD_RTBL_UPDATE_RES, RTBL_UPDATE_RES_DATA, &AgentCmdTask::RtblUpdateResData);
 }
 
 int AgentCmdTask::VerifyConn()
