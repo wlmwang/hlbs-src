@@ -208,6 +208,7 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 	}
 
 	SetWaitResStatus();
+	mTicker = GetTickCount();
 	if(a == 1)
 	{
 		RtblReqAll_t vRtl;
@@ -291,6 +292,7 @@ int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 	else
 	{
 		SetWaitResStatus();
+		mTicker = GetTickCount();
 		return mTcpTask->SyncSend((char *)&stSetRtbl, sizeof(stSetRtbl));
 	}
 	return -1;
@@ -300,6 +302,7 @@ int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 int AgentCmd::ReloadCmd(string sCmd, vector<string> vParam)
 {
 	SetWaitResStatus();
+	mTicker = GetTickCount();
 	RtblReqReload_t vRtl;
 	return mTcpTask->SyncSend((char *)&vRtl, sizeof(vRtl));
 }
@@ -307,6 +310,8 @@ int AgentCmd::ReloadCmd(string sCmd, vector<string> vParam)
 //restart agent/router
 int AgentCmd::RestartCmd(string sCmd, vector<string> vParam)
 {
+	SetWaitResStatus();
+	mTicker = GetTickCount();
 	//
 	return -1;
 }
