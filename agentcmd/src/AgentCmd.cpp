@@ -43,9 +43,6 @@ void AgentCmd::Initialize()
 		LOG_ERROR("default", "Connect to AgentServer failed");
 		exit(1);
 	}
-	
-	//初始化定时器
-	mClientCheckTimer = wTimer(KEEPALIVE_TIME);
 
 	char cStr[32];
 	sprintf(cStr, "%s %d>", mAgentIp.c_str(), mPort);
@@ -58,8 +55,8 @@ void AgentCmd::Initialize()
 	mDispatch.Register("AgentCmd", "reload", REG_FUNC("reload",&AgentCmd::ReloadCmd));
 	mDispatch.Register("AgentCmd", "restart", REG_FUNC("restart",&AgentCmd::RestartCmd));
 
-	mLastTicker = GetTickCount();
-	mWaitResTimer = wTimer(WAITRES_TIME);
+	mTicker = GetTickCount();
+	SetWaitResStatus(false);
 }
 
 char* AgentCmd::Generator(const char *pText, int iState)
@@ -113,27 +110,25 @@ void AgentCmd::Run()
 
 void AgentCmd::ReadCmdLine()
 {
-	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mLastTicker);
-	if(iInterval < 100) 	//100ms
-	{
-		return;
-	}
+	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mTicker);
 	
-	mLastTicker += iInterval;
-	
-	if(IsWaitResStatus() && mWaitResTimer.CheckTimer(iInterval))
+	if(IsWaitResStatus() && iInterval > WAITRES_TIME)
 	{
 		cout << "command executed timeout" << endl;
 	}
-	else if(IsWaitResStatus() && !mWaitResTimer.CheckTimer(iInterval))
+	else if(IsWaitResStatus() && iInterval <= WAITRES_TIME)
 	{
 		return;
 	}
 	
+	mTicker += iInterval;
+
 	//read cmd
+	int iRet = 0;
 	char *pCmdLine = 0;
-	do
-	{
+	
+	READLINE:
+	do{
 		pCmdLine = mReadline.ReadCmdLine();
 	}while(strlen(pCmdLine) == 0);
 	
@@ -143,7 +138,12 @@ void AgentCmd::ReadCmdLine()
 		exit(0);
 	}
 
-	ParseCmd(pCmdLine, strlen(pCmdLine));
+	iRet = ParseCmd(pCmdLine, strlen(pCmdLine));
+	
+	if (iRet < 0)
+	{
+		goto READLINE;
+	}
 }
 
 int AgentCmd::ParseCmd(char *pCmdLine, int iLen)
@@ -165,7 +165,7 @@ int AgentCmd::ParseCmd(char *pCmdLine, int iLen)
 			{
 				vToken.push_back("");
 			}
-			pF->mFunc(vToken[1],vToken);
+			return pF->mFunc(vToken[1],vToken);
 		}
 	}
 	
@@ -184,24 +184,24 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 		{
 			a = 1; continue;
 		}
-		else if(vParam[j] == "-i" && j + 1 <= iCnt) 
+		else if(vParam[j] == "-i" && j + 1 < iCnt) 
 		{
 			i = atoi(vParam[++j].c_str()); continue;
 		}
-		else if(vParam[j] == "-g" && j + 1 <= iCnt) 
+		else if(vParam[j] == "-g" && j + 1 < iCnt) 
 		{
 			g = atoi(vParam[++j].c_str()); continue;
 		}
-		else if(vParam[j] == "-x" && j + 1 <= iCnt) 
+		else if(vParam[j] == "-x" && j + 1 < iCnt) 
 		{
 			x = atoi(vParam[++j].c_str()); continue;
 		}
-		else if(vParam[j] == "-n" && j + 1 <= iCnt) 
+		else if(vParam[j] == "-n" && j + 1 < iCnt) 
 		{
 			n = vParam[++j]; continue;
 		}
 		else 
-		{ 
+		{
 			cout << "Unknow param." << endl;
 			return -1;
 		}
@@ -253,27 +253,27 @@ int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 		{
 			stSetRtbl.mDisabled = 1; continue;
 		}
-		else if(vParam[j] == "-i" && j + 1 <= iCnt) 
+		else if(vParam[j] == "-i" && j + 1 < iCnt) 
 		{
 			stSetRtbl.mId = atoi(vParam[++j].c_str()); continue;
 		}
-		else if(vParam[j] == "-w" && j + 1 <= iCnt) 
+		else if(vParam[j] == "-w" && j + 1 < iCnt) 
 		{
 			stSetRtbl.mWeight = atoi(vParam[++j].c_str()); continue;
 		}
-		else if(vParam[j] == "-k" && j + 1 <= iCnt) 
+		else if(vParam[j] == "-k" && j + 1 < iCnt) 
 		{
 			stSetRtbl.mTasks = atoi(vParam[++j].c_str()); continue;
 		}
-		else if(vParam[j] == "-t" && j + 1 <= iCnt) 
+		else if(vParam[j] == "-t" && j + 1 < iCnt) 
 		{
 			stSetRtbl.mTimeline = atoi(vParam[++j].c_str()); continue;
 		}
-		else if(vParam[j] == "-c" && j + 1 <= iCnt) 
+		else if(vParam[j] == "-c" && j + 1 < iCnt) 
 		{
 			stSetRtbl.mConnTime = atoi(vParam[++j].c_str()); continue;
 		}
-		else if(vParam[j] == "-s" && j + 1 <= iCnt) 
+		else if(vParam[j] == "-s" && j + 1 < iCnt) 
 		{
 			stSetRtbl.mSuggest = atoi(vParam[++j].c_str()); continue;
 		}

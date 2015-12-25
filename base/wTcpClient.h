@@ -246,9 +246,9 @@ void wTcpClient<T>::Start(bool bDaemon)
 {
 	do
 	{
-		ListeningRecv();
-		
 		Run();
+		
+		ListeningRecv();
 		
 		//CheckTimer();
 

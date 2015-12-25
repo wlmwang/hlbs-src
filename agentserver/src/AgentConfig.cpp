@@ -290,6 +290,7 @@ void AgentConfig::FixRtbl()
 		
 		//mRtblByGid
 		map<int, vector<Rtbl_t*> >::iterator mg = mRtblByGid.find((*it)->mGid);
+		vRtbl.clear();
 		if(mg != mRtblByGid.end())
 		{
 			vRtbl = mg->second;
@@ -300,6 +301,7 @@ void AgentConfig::FixRtbl()
 		
 		//mRtblByName
 		map<string, vector<Rtbl_t*> >::iterator mn = mRtblByName.find(sName);
+		vRtbl.clear();
 		if(mn != mRtblByName.end())
 		{
 			vRtbl = mn->second;
@@ -310,6 +312,7 @@ void AgentConfig::FixRtbl()
 		
 		//mRtblByGXid
 		map<string, vector<Rtbl_t*> >::iterator mgx = mRtblByGXid.find(sGXid);
+		vRtbl.clear();
 		if(mgx != mRtblByGXid.end())
 		{
 			vRtbl = mgx->second;
