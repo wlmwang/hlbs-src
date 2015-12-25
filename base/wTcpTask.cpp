@@ -58,8 +58,6 @@ void wTcpTask::CloseTcpTask(int eReason)
 int wTcpTask::Heartbeat()
 {
 	wCommand vCmd;
-	vCmd.mConnType = ConnType();
-
 	SyncSend((char*)&vCmd, sizeof(vCmd));
 
 	mHeartbeatTimes++;
@@ -89,6 +87,8 @@ int wTcpTask::ListeningRecv()
 	int iRecvLen = mSocket->RecvBytes(mRecvMsgBuff + iOffset, sizeof(mRecvMsgBuff) - iOffset);
 	
 	//cout<< "data:" <<mRecvMsgBuff<< "|" <<iRecvLen<<endl;
+	//struct wCommand* pTmpCmd = (struct wCommand*) (mRecvMsgBuff + 4);
+	//cout << "cmd:" << (int)pTmpCmd->GetCmd() << "|para:" << (int) pTmpCmd->GetPara() << endl;
 	
 	if(iRecvLen <= 0)
 	{
@@ -280,11 +280,7 @@ int wTcpTask::SyncRecv(char *pCmd, int iLen)
 		}
 		//过滤掉心跳
 		pTmpCmd = (struct wCommand*) mTmpRecvMsgBuff;
-		if(pTmpCmd->GetCmd() != CMD_NULL && pTmpCmd->GetPara() != PARA_NULL)
-		{
-			break;
-		}
-	} while(true);
+	} while(pTmpCmd != NULL && pTmpCmd->GetCmd() == CMD_NULL && pTmpCmd->GetPara() == PARA_NULL);
 	
 	iMsgLen = *(int *)mTmpRecvMsgBuff;
 	if(iMsgLen < MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN)

@@ -22,6 +22,7 @@ CXXFLAGS=-g -DUSE_LOG4CPP -DLINUX #--extra-libs=-lgcc #-D_DEBUG_
 LIBS=-L./$(LIBPATH)/log4cpp/lib -llog4cpp -L./$(LIBPATH)/tinyxml -ltinyxml -lpthread -static
 INCPATH=-I./$(BASEPATH) -I./$(LIBPATH)/log4cpp/include -I./$(LIBPATH)/tinyxml -I./$(COMMANDPATH)
 
+DIRS=./log ./bin ./debug
 TARGET=./bin/routersvrd
 OBJECTS=./debug/RouterMain.o ./debug/RouterConfig.o  ./debug/RouterServer.o  ./debug/RouterServerTask.o  ./debug/wLog.o ./debug/wMisc.o  ./debug/wTcpTask.o  ./debug/wSocket.o
 
@@ -57,3 +58,7 @@ all: $(TARGET)
 
 clean:
 	-rm -f $(TARGET) $(OBJECTS)
+
+dir:
+	-mkdir $(DIRS)
+	chmod 755 -R $(DIRS)

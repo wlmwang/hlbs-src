@@ -118,7 +118,9 @@ void AgentCmd::ReadCmdLine()
 	{
 		return;
 	}
-
+	
+	mLastTicker += iInterval;
+	
 	if(IsWaitResStatus() && mWaitResTimer.CheckTimer(iInterval))
 	{
 		cout << "command executed timeout" << endl;
@@ -175,14 +177,34 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 {
 	int a = 0, i = 0, g = 0 , x = 0;
 	string n = "";
+	int iCnt = vParam.size();
 	for(size_t j = 1; j < vParam.size(); j++)
 	{
-		if(vParam[j] == "-a") {a = 1; continue;}
-		else if(vParam[j] == "-i") {i = atoi(vParam[++j].c_str()); continue;}
-		else if(vParam[j] == "-g") {g = atoi(vParam[++j].c_str()); continue;}
-		else if(vParam[j] == "-x") {x = atoi(vParam[++j].c_str()); continue;}
-		else if(vParam[j] == "-n") {n = vParam[++j]; continue;}
-		else { cout << "Unknow param." << endl;}
+		if(vParam[j] == "-a") 
+		{
+			a = 1; continue;
+		}
+		else if(vParam[j] == "-i" && j + 1 <= iCnt) 
+		{
+			i = atoi(vParam[++j].c_str()); continue;
+		}
+		else if(vParam[j] == "-g" && j + 1 <= iCnt) 
+		{
+			g = atoi(vParam[++j].c_str()); continue;
+		}
+		else if(vParam[j] == "-x" && j + 1 <= iCnt) 
+		{
+			x = atoi(vParam[++j].c_str()); continue;
+		}
+		else if(vParam[j] == "-n" && j + 1 <= iCnt) 
+		{
+			n = vParam[++j]; continue;
+		}
+		else 
+		{ 
+			cout << "Unknow param." << endl;
+			return -1;
+		}
 	}
 
 	SetWaitResStatus();
@@ -224,17 +246,44 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 {
 	RtblSetReqId_t stSetRtbl;
+	int iCnt = vParam.size();
 	for(size_t j = 1; j < vParam.size(); j++)
 	{
-		if(vParam[j] == "-d") {stSetRtbl.mDisabled = 1; continue;}
-		else if(vParam[j] == "-i") {stSetRtbl.mId = atoi(vParam[++j].c_str()); continue;}
-		else if(vParam[j] == "-w") {stSetRtbl.mWeight = atoi(vParam[++j].c_str()); continue;}
-		else if(vParam[j] == "-k") {stSetRtbl.mTasks = atoi(vParam[++j].c_str()); continue;}
-		else if(vParam[j] == "-t") {stSetRtbl.mTimeline = atoi(vParam[++j].c_str()); continue;}
-		else if(vParam[j] == "-c") {stSetRtbl.mConnTime = atoi(vParam[++j].c_str()); continue;}
-		else if(vParam[j] == "-s") {stSetRtbl.mSuggest = atoi(vParam[++j].c_str()); continue;}
-		else { cout << "Unknow param." << endl;}
+		if(vParam[j] == "-d") 
+		{
+			stSetRtbl.mDisabled = 1; continue;
+		}
+		else if(vParam[j] == "-i" && j + 1 <= iCnt) 
+		{
+			stSetRtbl.mId = atoi(vParam[++j].c_str()); continue;
+		}
+		else if(vParam[j] == "-w" && j + 1 <= iCnt) 
+		{
+			stSetRtbl.mWeight = atoi(vParam[++j].c_str()); continue;
+		}
+		else if(vParam[j] == "-k" && j + 1 <= iCnt) 
+		{
+			stSetRtbl.mTasks = atoi(vParam[++j].c_str()); continue;
+		}
+		else if(vParam[j] == "-t" && j + 1 <= iCnt) 
+		{
+			stSetRtbl.mTimeline = atoi(vParam[++j].c_str()); continue;
+		}
+		else if(vParam[j] == "-c" && j + 1 <= iCnt) 
+		{
+			stSetRtbl.mConnTime = atoi(vParam[++j].c_str()); continue;
+		}
+		else if(vParam[j] == "-s" && j + 1 <= iCnt) 
+		{
+			stSetRtbl.mSuggest = atoi(vParam[++j].c_str()); continue;
+		}
+		else 
+		{ 
+			cout << "Unknow param." << endl;
+			return -1;
+		}
 	}
+
 	if(stSetRtbl.mId == 0)
 	{
 		cout << "need -i param" << endl;

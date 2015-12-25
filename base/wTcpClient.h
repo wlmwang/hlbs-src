@@ -217,7 +217,7 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 	mTcpTask = NewTcpTask(pSocket);
 	if(NULL != mTcpTask)
 	{
-		if (mTcpTask->Verify() < 0)
+		if (mTcpTask->Verify() < 0 || mTcpTask->VerifyConn() < 0)
 		{
 			LOG_ERROR("default", "connect illegal or verify timeout: %d, close it", iSocketFD);
 			SAFE_DELETE(mTcpTask);

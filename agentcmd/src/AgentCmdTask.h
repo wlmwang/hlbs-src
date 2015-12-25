@@ -30,6 +30,7 @@ class AgentCmdTask : public wTcpTask
 		void Initialize();
 		
 		virtual int Verify();
+		virtual int VerifyConn();
 		
 		virtual int ConnType()
 		{

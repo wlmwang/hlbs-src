@@ -32,6 +32,22 @@ void AgentCmdTask::Initialize()
 	mDispatch.Register("AgentCmdTask", ASSERT_CMD(CMD_RTBL_UPDATE_RES, RTBL_UPDATE_RES_DATA), REG_FUNC_a(ASSERT_CMD(CMD_RTBL_UPDATE_RES, RTBL_UPDATE_RES_DATA), &AgentCmdTask::RtblUpdateResData));
 }
 
+int AgentCmdTask::VerifyConn()
+{
+	//验证登录消息
+	char pBuffer[ sizeof(LoginReqToken_t) ];
+	int iLen = SyncRecv(pBuffer, sizeof(LoginReqToken_t));
+	if (iLen > 0)
+	{
+		LoginReqToken_t *pLoginRes = (LoginReqToken_t*) pBuffer;
+		if (strcmp(pLoginRes->mToken, "Anny") == 0)
+		{
+			return 0;
+		}
+	}
+	return -1;
+}
+
 int AgentCmdTask::Verify()
 {
 	//验证登录

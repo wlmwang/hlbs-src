@@ -30,6 +30,7 @@ class RouterServerTask : public wTcpTask
 		void Initialize();
 
 		virtual int VerifyConn();
+		virtual int Verify();
 		
 		virtual int ConnType()
 		{

@@ -29,6 +29,7 @@ CXXFLAGS=-g -DUSE_LOG4CPP -DLINUX -D__READLINE_DEBUG#--extra-libs=-lgcc #-D_DEBU
 LIBS=-L./$(LIBPATH)/log4cpp/lib -llog4cpp -L./$(LIBPATH)/tinyxml -ltinyxml -lpthread -lreadline -lncurses -static
 INCPATH=-I./$(BASEPATH) -I./$(LIBPATH)/log4cpp/include -I./$(LIBPATH)/tinyxml -I./$(COMMANDPATH)
 
+DIRS=./log ./bin ./debug
 TARGET=./bin/agentcmd
 OBJECTS=./debug/AgentCmdMain.o ./debug/AgentCmdConfig.o  ./debug/AgentCmd.o  ./debug/AgentCmdTask.o  ./debug/wLog.o ./debug/wMisc.o  ./debug/wTcpTask.o  ./debug/wSocket.o ./debug/wReadline.o
 
@@ -66,3 +67,7 @@ all: $(TARGET)
 
 clean:
 	-rm -f $(TARGET) $(OBJECTS)
+
+dir:
+	-mkdir $(DIRS)
+	chmod 755 -R $(DIRS)

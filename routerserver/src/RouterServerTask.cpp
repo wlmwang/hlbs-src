@@ -46,6 +46,15 @@ int RouterServerTask::VerifyConn()
 	return -1;
 }
 
+int RouterServerTask::Verify()
+{
+	//验证登录
+	LoginReqToken_t stLoginRes;
+	memcpy(stLoginRes.mToken, "Anny", 4);
+	SyncSend((char*)&stLoginRes, sizeof(stLoginRes));
+	return 0;
+}
+
 /**
  *  接受数据
  */
