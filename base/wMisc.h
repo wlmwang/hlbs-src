@@ -84,12 +84,6 @@ inline unsigned long long GetTickCount()
 	return (unsigned long long)tv.tv_sec * 1000 + (unsigned long long)tv.tv_usec / 1000;
 }
 
-//变为守护进程
-int InitDaemon(const char *filename);
-
-//linux没有这个函数,不好说什么时候就用到了
-void itoa(unsigned long val, char *buf, unsigned radix);
-
 inline string Itos(const int &i)
 {
 	string sTmp;
@@ -98,19 +92,10 @@ inline string Itos(const int &i)
 	return sRet.str();
 }
 
-template<typename T> char* Serialize(T& vCmd,int& pLen)
-{
-	int iSize = sizeof(T);
-	pLen = iSize + sizeof(int);
-	char* pBuffer = new char[pLen];
-	*(int*)pBuffer = iSize;
-	strncpy(pBuffer + sizeof(int), (char*)&vCmd, iSize);
-	return pBuffer;
-}
+//变为守护进程
+int InitDaemon(const char *filename);
 
-template<typename T> char* Parse(int& pLen)
-{
-	//
-}
+//linux没有这个函数,不好说什么时候就用到了
+void itoa(unsigned long val, char *buf, unsigned radix);
 
 #endif

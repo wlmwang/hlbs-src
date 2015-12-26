@@ -81,5 +81,12 @@ typedef signed long long int SLLWORD;
 //超时时间
 #define WAITRES_TIME 30000 /* 30 * 1000 */
 
+//消息队列的长度
+#ifdef _DEBUG_
+#define MSG_QUEUE_LEN 4194304 /* 1024 * 1024 * 4 */
+#else
+#define MSG_QUEUE_LEN 16777216 /* 1024 * 1024 * 16 */
+#endif
+
 using namespace std;
 #endif
