@@ -59,7 +59,7 @@ typedef signed long long int SLLWORD;
 #define MAX_IP_LEN 16
 
 //消息缓冲区大小(每条信息消息主体最大长度)
-#define MAX_PACKAGE_LEN 128 * 1024
+#define MAX_PACKAGE_LEN 131072	/* 128 * 1024 */
 
 //客户端消息的最长长度
 #define MAX_CLIENT_MSG_LEN MAX_PACKAGE_LEN
@@ -68,7 +68,7 @@ typedef signed long long int SLLWORD;
 #define MIN_CLIENT_MSG_LEN 2
 
 //每一个服务器之间的发送接收缓冲区的大小
-#define MAX_SEND_BUFFER_LEN 1048576 /* 1 * 1024 * 1024 */
+#define MAX_SEND_BUFFER_LEN 524288 /* 512 * 1024 */
 
 #define MAX_RECV_BUFFER_LEN 261120 /* 255 * 1024 */
 

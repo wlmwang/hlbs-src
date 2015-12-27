@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <string.h>
+#include <stddef.h>
 
 #include "wLog.h"
 #include "wTcpTask.h"
@@ -87,9 +88,7 @@ int wTcpTask::ListeningRecv()
 	int iRecvLen = mSocket->RecvBytes(mRecvMsgBuff + iOffset, sizeof(mRecvMsgBuff) - iOffset);
 	
 	//cout<< "data:" <<mRecvMsgBuff<< "|" <<iRecvLen<<endl;
-	//struct wCommand* pTmpCmd = (struct wCommand*) (mRecvMsgBuff + 4);
-	//cout << "cmd:" << (int)pTmpCmd->GetCmd() << "|para:" << (int) pTmpCmd->GetPara() << endl;
-	
+
 	if(iRecvLen <= 0)
 	{
 		LOG_ERROR("default", "client %s socket fd(%d) close from connect port %d, return %d", mSocket->IPAddr().c_str(), mSocket->SocketFD(), mSocket->Port(), iRecvLen);
@@ -139,6 +138,8 @@ int wTcpTask::ListeningRecv()
 		LOG_DEBUG("default", "get %d bytes msg from %s client fd(%d) to main server", iMsgLen, mSocket->IPAddr().c_str(), mSocket->SocketFD());
 #endif
 		/*start 业务逻辑*/
+		//struct wCommand* pTmpCmd = (struct wCommand*) (pBuffer - iMsgLen);
+		//cout << "cmd:" << (int)pTmpCmd->GetCmd() << "|para:" << (int) pTmpCmd->GetPara() << endl;
 		HandleRecvMessage(pBuffer - iMsgLen, iMsgLen);	//去除4字节消息长度标识位
 		/*end 业务逻辑*/
 	}
@@ -146,7 +147,6 @@ int wTcpTask::ListeningRecv()
 	if(iBuffMsgLen == 0) //缓冲区无数据
 	{
 		mRecvBytes = 0;
-		//memset(mRecvMsgBuff, 0, sizeof(mRecvMsgBuff));
 	}
 	else
 	{
@@ -231,10 +231,10 @@ int wTcpTask::WriteToSendBuf(const char *pCmd, int iLen)
 		mSendBytes = 0;
 	}
 	
-	//暂时方案，可用结构体off_t设置TODO
-	struct wCommand* pTmpCmd = (struct wCommand*) pCmd;
-	pTmpCmd->mConnType = ConnType();
-
+	//struct wCommand* pTmpCmd = (struct wCommand*) pCmd;
+	//pTmpCmd->mConnType = ConnType();
+	(BYTE)(pCmd + offsetof(struct wCommand, mConnType)) = ConnType();
+	
 	*(int *)(mSendMsgBuff + mSendWrite)= iLen;
 	memcpy(mSendMsgBuff + mSendWrite + sizeof(int), pCmd, iLen);
 	return 0;
@@ -243,7 +243,6 @@ int wTcpTask::WriteToSendBuf(const char *pCmd, int iLen)
 //同步发送确切长度消息
 int wTcpTask::SyncSend(const char *pCmd, int iLen)
 {
-	//memset(mTmpSendMsgBuff, 0, sizeof(mTmpSendMsgBuff));
 	//判断消息长度
 	if(iLen < MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN )
 	{
@@ -251,10 +250,10 @@ int wTcpTask::SyncSend(const char *pCmd, int iLen)
 		return -1;
 	}
 	
-	//暂时方案，可用结构体off_t设置TODO
-	struct wCommand* pTmpCmd = (struct wCommand*) pCmd;
-	pTmpCmd->mConnType = ConnType();
-
+	//struct wCommand* pTmpCmd = (struct wCommand*) pCmd;
+	//pTmpCmd->mConnType = ConnType();
+	(BYTE)(pCmd + offsetof(struct wCommand, mConnType)) = ConnType();
+	
 	*(int *)mTmpSendMsgBuff = iLen;
 	memcpy(mTmpSendMsgBuff + sizeof(int), pCmd, iLen);
 	return mSocket->SendBytes(mTmpSendMsgBuff, iLen + sizeof(int));
