@@ -7,6 +7,7 @@
 #ifndef _W_TCP_SERVER_H_
 #define _W_TCP_SERVER_H_
 
+#include <iostream>
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
@@ -14,7 +15,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <algorithm>
-#include <iostream>
 #include <string>
 #include <string.h>
 #include <vector>
@@ -120,17 +120,13 @@ class wTcpServer: public wSingleton<T>
 		
 	protected:
         wTcpServer(string ServerName, int vInitFlag = true);
-		//禁用复制函数
 		wTcpServer(const wTcpServer&);
 		
-		SERVER_STATUS mStatus;	//服务器当前状态
-		//定时记录器
-		unsigned long long mLastTicker;	//服务器当前时间
-		
-	protected:
 		string mServerName;
-		
 		wSocket *mSocket;	//Listen Socket(主服务socket对象)
+		
+		SERVER_STATUS mStatus;	//服务器当前状态
+		unsigned long long mLastTicker;	//服务器当前时间
 		
 		//epoll
 		int mEpollFD;
@@ -220,12 +216,14 @@ void wTcpServer<T>::PrepareStart(string sIpAddr ,unsigned int nPort)
 	//初始化epoll
 	if(InitEpoll() < 0)
 	{
+		cout << "InitEpoll failed." << endl;
 		exit(1);
 	}
 	
 	//初始化Listen Socket
 	if(InitListen(sIpAddr ,nPort) < 0)
 	{
+		cout << "InitListen failed." << endl;
 		exit(1);
 	}
 
@@ -381,10 +379,8 @@ void wTcpServer<T>::Start(bool bDaemon)
 	mStatus = SERVER_STATUS_RUNNING;
 	LOG_INFO("default", "Server start succeed");
 	//进入服务主循环
-	do
-	{
+	do{
 		Recv();
-		
 		Run();
 	} while(IsRunning() && bDaemon);
 }
