@@ -57,7 +57,8 @@ all: $(TARGET)
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 clean:
-	-rm -f $(TARGET) $(OBJECTS)
+	#-rm -f $(TARGET) $(OBJECTS)
+	-rm -f $(DIRS)
 
 dir:
 	-mkdir $(DIRS)

@@ -11,7 +11,7 @@
 SERVER := routerserver agentserver agentcmd
 
 all:
-	for d in $(SERVER); do echo; echo "compile $$d now"; echo; $(MAKE) dir clean all -C $$d; done
+	for d in $(SERVER); do echo; echo "compile $$d now"; echo; $(MAKE) clean dir all -C $$d; done
 
 release:
 	for d in $(SERVER); do sed -i 's/\s\+-D_DEBUG_/ #-D_DEBUG_/' $$d/Makefile; done
