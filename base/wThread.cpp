@@ -32,7 +32,7 @@ void* ThreadProc(void *pvArgs)
 wThread::wThread()
 {
 	mRunStatus = rt_init;
-	memset((void *)&m_stLogCfg, 0, sizeof(m_stLogCfg));
+	//memset((void *)&m_stLogCfg, 0, sizeof(m_stLogCfg));
 }
 
 wThread::~wThread() {}

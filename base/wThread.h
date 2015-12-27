@@ -12,6 +12,7 @@
  */
 
 #include <pthread.h>
+#include "wNoncopyable.h"
 
 enum eRunStatus
 {
@@ -33,7 +34,7 @@ typedef struct
 
 void* ThreadProc(void *pvArgs);
 
-class wThread
+class wThread : private wNoncopyable
 {
 	public:
 		wThread();
@@ -69,7 +70,7 @@ class wThread
 
 		//TLogCfg m_stLogCfg;
 
-	private:
+	//private:
 };
 
 #endif

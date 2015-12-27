@@ -16,10 +16,12 @@
 #include <map>
 #include <vector>
 #include <functional>
+
 #include "wType.h"
+#include "wNoncopyable.h"
 
 template<typename T,typename IDX>
-class wDispatch
+class wDispatch : private wNoncopyable
 {
 	public:
 		struct Func_t

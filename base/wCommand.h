@@ -28,23 +28,24 @@ enum
 
 struct _Null_t
 {
-	_Null_t(const BYTE cmd, const BYTE para) : mCmd(cmd), mPara(para) {};
-
+	_Null_t(const BYTE cmd, const BYTE para) : mCmd(cmd), mPara(para) {}
+	WORD GetId() const { return mId; }
+	BYTE GetCmd() const { return mCmd; }
+	BYTE GetPara() const { return mPara; }
+	
 	union
 	{
 		WORD mId;
 		struct {BYTE mCmd; BYTE mPara;};
 	};
-	WORD GetId() const { return mId; }
-	BYTE GetCmd() const { return mCmd; }
-	BYTE GetPara() const { return mPara; }
 };
 
 struct wCommand : public _Null_t
 {
-	BYTE mConnType;
 	wCommand(const BYTE cmd = CMD_NULL, const BYTE para = PARA_NULL , const BYTE ctype = SERVER) : _Null_t(cmd, para), mConnType(ctype) {}
 	BYTE GetConnType() const { return mConnType; }
+	
+	BYTE mConnType;
 };
 
 #pragma pack()

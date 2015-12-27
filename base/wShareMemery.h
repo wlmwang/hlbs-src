@@ -20,7 +20,7 @@
 #include "wLog.h"
 #include "wNoncopyable.h"
 
-class wShareMemery : public wNoncopyable
+class wShareMemery : private wNoncopyable
 {
 	public:
 		wShareMemery(const char *filename, int pipeid = 'i', size_t size = MSG_QUEUE_LEN);

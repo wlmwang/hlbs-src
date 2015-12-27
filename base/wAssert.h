@@ -4,10 +4,6 @@
  * Copyright (C) Disvr, Inc.
  */
 
-/**
- *  实现一个带日志输出以及程序跳转控制的assert方法
- */
-
 #ifndef _W_ASSERT_H_
 #define _W_ASSERT_H_
 
