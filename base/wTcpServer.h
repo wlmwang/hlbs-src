@@ -71,7 +71,7 @@ class wTcpServer: public wSingleton<T>
 		 * 接受|新建客户端
 		 */
 		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
-		int AcceptConn(int iSocketFD);
+		int AcceptConn();
 		int AddToTaskPool(wTcpTask* stTcpTask);
 		void CleanTaskPool();
 	    std::vector<wTcpTask*>::iterator RemoveTaskPool(wTcpTask* stTcpTask);
@@ -421,7 +421,7 @@ void wTcpServer<T>::Recv()
 
 		if(iSocketType == LISTEN_SOCKET)
 		{
-			AcceptConn(iSocketFD);	//accept connect
+			AcceptConn();	//accept connect
 		}
 		else if(iSocketType == CONNECT_SOCKET)	//connect event: read|write
 		{
@@ -457,11 +457,15 @@ void wTcpServer<T>::Recv()
  *  接受新连接
  */
 template <typename T>
-int wTcpServer<T>::AcceptConn(int iSocketFD)
+int wTcpServer<T>::AcceptConn()
 {
+	if(mSocket == NULL || mSocket->SocketFD() < 0)
+	{
+		return -1;
+	}
 	struct sockaddr_in stSockAddr;
 	socklen_t iSockAddrSize = sizeof(stSockAddr);
-	int iNewSocketFD = accept(iSocketFD, (struct sockaddr*)&stSockAddr, &iSockAddrSize);
+	int iNewSocketFD = accept(mSocket->SocketFD(), (struct sockaddr*)&stSockAddr, &iSockAddrSize);
 	if(iNewSocketFD < 0)
 	{
 		LOG_INFO("default", "client connect port and disconnected");
