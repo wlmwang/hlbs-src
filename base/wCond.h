@@ -21,7 +21,7 @@ class wCond : private wNoncopyable
 			pthread_cond_init(&mCond, NULL);
 		}
 		
-		~zCond()
+		~wCond()
 		{
 			pthread_cond_destroy(&mCond);
 		}
