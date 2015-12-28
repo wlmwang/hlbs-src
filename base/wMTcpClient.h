@@ -102,8 +102,9 @@ class wMTcpClient : public wNoncopyable
 		
 		//定时记录器
 		unsigned long long mLastTicker;	//服务器当前时间
-
-        std::map<int, vector<wTcpClient<TASK>*> > mTcpClientPool;	//每种类型客户端，可挂载多个连接
+		bool mIsCheckTimer;
+        
+		std::map<int, vector<wTcpClient<TASK>*> > mTcpClientPool;	//每种类型客户端，可挂载多个连接
 };
 
 template <typename TASK>
@@ -117,6 +118,7 @@ template <typename TASK>
 void wMTcpClient<TASK>::Initialize()
 {
 	mLastTicker = GetTickCount();
+	mIsCheckTimer = true;
 	mTcpClientCount = 0;
 	mTimeout = 10;
 	mEpollFD = -1;
@@ -289,14 +291,10 @@ template <typename TASK>
 void wMTcpClient<TASK>::Start(bool bDaemon)
 {
 	//进入服务主服务
-	do
-	{
+	do {
 		Recv();
-		
 		Run();
-		
-		CheckTimer();
-		
+		if(mIsCheckTimer) CheckTimer();
 	} while(IsRunning() && bDaemon);
 }
 

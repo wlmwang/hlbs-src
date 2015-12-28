@@ -31,6 +31,7 @@
 #include "wSingleton.h"
 #include "wSocket.h"
 #include "wTcpTask.h"
+#include "wTimer.h"
 
 enum SERVER_STATUS
 {
@@ -117,6 +118,8 @@ class wTcpServer: public wSingleton<T>
 		
 		virtual ~wTcpServer();
 		
+		void CheckTimer();
+		virtual void CheckTimeout();
 	protected:
         wTcpServer(string ServerName, int vInitFlag = true);
 		wTcpServer(const wTcpServer&);
@@ -126,6 +129,8 @@ class wTcpServer: public wSingleton<T>
 		
 		SERVER_STATUS mStatus;	//服务器当前状态
 		unsigned long long mLastTicker;	//服务器当前时间
+		wTimer mCheckTimer;
+		bool mIsCheckTimer;
 		
 		//epoll
 		int mEpollFD;
@@ -163,6 +168,9 @@ template <typename T>
 void wTcpServer<T>::Initialize()
 {
 	mLastTicker = GetTickCount();
+	mCheckTimer = wTimer(KEEPALIVE_TIME);
+	mIsCheckTimer = true;
+	
 	mServerName = "";
 	mSocket = NULL;
 	mTaskCount = 0;
@@ -382,6 +390,7 @@ void wTcpServer<T>::Start(bool bDaemon)
 	do {
 		Recv();
 		Run();
+		if(mIsCheckTimer) CheckTimer();
 	} while(IsRunning() && bDaemon);
 }
 
@@ -516,7 +525,6 @@ int wTcpServer<T>::AcceptConn()
 			return -1;
 		}
 		
-		mTcpTask->Socket()->ConnType() = mTcpTask->ConnType();
 		mTcpTask->SetStatus(SOCKET_STATUS_RUNNING);
 		if(mTcpTask->Socket()->SetNonBlock() < 0) 
 		{
@@ -563,6 +571,59 @@ template <typename T>
 void wTcpServer<T>::Run()
 {
 	//...
+}
+
+template <typename T>
+void wTcpServer<T>::CheckTimer()
+{
+	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mLastTicker);
+
+	if(iInterval < 100) 	//100ms
+	{
+		return;
+	}
+
+	//加上间隔时间
+	mLastTicker += iInterval;
+
+	//检测客户端超时
+	if(mCheckTimer.CheckTimer(iInterval))
+	{
+		CheckTimeout();
+	}
+}
+
+template <typename T>
+void wTcpServer<T>::CheckTimeout()
+{
+	unsigned long long iNowTime = GetTickCount();
+	unsigned long long iIntervalTime;
+	
+	if(mTcpTaskPool.size() > 0)
+	{
+		vector<wTcpTask*>::iterator iter;
+		for(iter = mTcpTaskPool.begin(); iter != mTcpTaskPool.end(); iter++)
+		{
+			if ((*iter)->Socket()->SocketType() != CONNECT_SOCKET)
+			{
+				continue;
+			}
+			iIntervalTime = iNowTime - (*iter)->Socket()->RecvTime();	//未接受到消息时间间隔
+			//心跳检测
+			if(iIntervalTime >= CHECK_CLIENT_TIME)	//3s
+			{
+				if((*iter)->Heartbeat() < 0 && (*iter)->HeartbeatOutTimes())
+				{
+					LOG_ERROR("default", "client ip(%s) fd(%d) heartbeat pass limit (3) times, close it", (*iter)->Socket()->IPAddr().c_str(), (*iter)->Socket()->SocketFD());
+					if(RemoveEpoll(*iter) >= 0)
+					{
+						iter = RemoveTaskPool(*iter);
+						iter--;
+					}
+				}
+			}
+		}
+	}
 }
 
 #endif

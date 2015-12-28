@@ -35,8 +35,6 @@ AgentServer::~AgentServer()
  */
 void AgentServer::Initialize()
 {
-	//初始化定时器
-	mClientCheckTimer = wTimer(KEEPALIVE_TIME);
 	mRouterConn = new wMTcpClient<AgentServerTask>();
 }
 
@@ -51,7 +49,13 @@ void AgentServer::ConnectRouter()
 	AgentConfig *pConfig = AgentConfig::Instance();
 	
 	//mRouterConn
-	mRouterConn->GenerateClient(ROUTER_SERVER_TYPE, "RouterFromAgent", pConfig->mRouterIPAddr, pConfig->mRouterPort);
+	bool bRet = mRouterConn->GenerateClient(ROUTER_SERVER_TYPE, "RouterFromAgent", pConfig->mRouterIPAddr, pConfig->mRouterPort);
+	if (!bRet)
+	{
+		cout << "Connect to RouterServer failed! Please start it" <<endl;
+		LOG_ERROR("default", "Connect to RouterServer failed");
+		exit(1);
+	}
 	
 	//发送初始化rtbl配置请求
 	InitRtblReq();
@@ -93,42 +97,14 @@ int AgentServer::ReloadRtblReq()
 void AgentServer::PrepareRun()
 {
 	mRouterConn->PrepareStart();
-	
-	//连接Router服务
-	ConnectRouter();
+	ConnectRouter(); //连接Router服务
 }
 
 void AgentServer::Run()
 {
 	mRouterConn->Start(false);
-
-	//检查服务器时间
-	CheckTimer();
 }
 
-//检查服务器时间
-void AgentServer::CheckTimer()
-{
-	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mLastTicker);
-
-	if(iInterval < 100) 	//100ms
-	{
-		return;
-	}
-
-	//加上间隔时间
-	mLastTicker += iInterval;
-	
-	//检测客户端超时
-	if(mClientCheckTimer.CheckTimer(iInterval))
-	{
-		CheckTimeout();
-	}
-}
-
-/**
- * 检测客户端超时
- */
 void AgentServer::CheckTimeout()
 {
 	unsigned long long iNowTime = GetTickCount();
@@ -147,7 +123,7 @@ void AgentServer::CheckTimeout()
 			{
 				continue;
 			}
-			iIntervalTime = iNowTime - (*iter)->Socket()->SendTime();
+			iIntervalTime = iNowTime - (*iter)->Socket()->RecvTime();
 			//心跳检测
 			if(iIntervalTime >= CHECK_CLIENT_TIME)	//3s
 			{
@@ -161,18 +137,6 @@ void AgentServer::CheckTimeout()
 					}
 				}
 			}
-			//超时检测
-			/*
-			if(iIntervalTime >= CHECK_CLIENT_TIME)	//3s
-			{
-				LOG_ERROR("default", "client ip(%s) fd(%d) do not send msg and timeout, close it", (*iter)->Socket()->IPAddr().c_str(), (*iter)->Socket()->SocketFD());
-				if(RemoveEpoll(*iter) >= 0)
-				{
-					iter = RemoveTaskPool(*iter);
-					iter--;
-				}
-			}
-			*/
 		}
 	}
 }

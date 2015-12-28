@@ -96,14 +96,12 @@ char** AgentCmd::Completion(const char *pText, int iStart, int iEnd)
 //准备工作
 void AgentCmd::PrepareRun()
 {
-	//
+	mIsCheckTimer = false;
 }
 
 void AgentCmd::Run()
 {
 	ReadCmdLine();
-
-	//CheckTimer();
 	
 	return;
 }
@@ -128,9 +126,9 @@ void AgentCmd::ReadCmdLine()
 	char *pCmdLine = 0;
 	
 	READLINE:
-	do{
+	do {
 		pCmdLine = mReadline.ReadCmdLine();
-	}while(strlen(pCmdLine) == 0);
+	} while(strlen(pCmdLine) == 0);
 	
 	if(mReadline.IsUserQuitCmd(pCmdLine))
 	{

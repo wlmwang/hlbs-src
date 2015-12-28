@@ -10,7 +10,6 @@
 #include <arpa/inet.h>
 
 #include "wType.h"
-#include "wTimer.h"
 #include "wSingleton.h"
 #include "wTcpServer.h"
 #include "wTcpTask.h"
@@ -28,13 +27,6 @@ class RouterServer: public wTcpServer<RouterServer>
 		virtual void Run();
 		
 		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
-
-		void CheckTimer();
-		void CheckTimeout();
-		
-	private:
-		//客户端检测计时器
-		wTimer mClientCheckTimer;
 };
 
 #endif

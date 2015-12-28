@@ -15,6 +15,7 @@
 #include <string>
 
 #include "wType.h"
+#include "wCommand.h"
 
 enum SOCKET_TYPE
 {
@@ -60,6 +61,7 @@ class wSocket
 			mCreateTime = time(NULL);
 			mRecvTime = 0;
 			mSendTime = 0;
+			mConnType = CLIENT;
 		}
 
 		bool IsConnected()

@@ -105,6 +105,7 @@ class wTcpClient
 		unsigned long long mLastTicker;
 		wTimer mReconnectTimer;
 		int mReconnectTimes;
+		bool mIsCheckTimer;
 };
 
 template <typename T>
@@ -124,6 +125,7 @@ void wTcpClient<T>::Initialize()
 {
 	mLastTicker = GetTickCount();
 	mReconnectTimer = wTimer(KEEPALIVE_TIME);
+	mIsCheckTimer = true;
 	mReconnectTimes = 0;
 	mClientName = "";
 	mType = 0;
@@ -243,14 +245,13 @@ void wTcpClient<T>::PrepareStart()
 template <typename T>
 void wTcpClient<T>::Start(bool bDaemon)
 {
-	do
-	{
+	do {
 		Run();
 		
-		ListeningRecv();
+		if(mIsCheckTimer) CheckTimer();
 		
-		//CheckTimer();	//在外层MTCPClient中检测
-
+		ListeningRecv();
+		//ListeningSend();
 	} while(IsRunning() && bDaemon);
 }
 

@@ -11,7 +11,6 @@
 #include <vector>
 
 #include "wType.h"
-#include "wTimer.h"
 #include "wSingleton.h"
 #include "wTcpServer.h"
 #include "wTcpTask.h"
@@ -38,19 +37,16 @@ class AgentServer: public wTcpServer<AgentServer>
 		void ConnectRouter();
 		int InitRtblReq();
 		int ReloadRtblReq();
-
-		void CheckTimer();
-		void CheckTimeout();
+		
+		virtual void CheckTimeout();
 		
 		wMTcpClient<AgentServerTask>* RouterConn()
 		{
 			return mRouterConn;
 		}
+		
 	private:
 		wMTcpClient<AgentServerTask> *mRouterConn;	//连接router
-		
-		//客户端检测计时器
-		wTimer mClientCheckTimer;
 };
 
 #endif

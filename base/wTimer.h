@@ -7,8 +7,6 @@
 #ifndef _W_TIMER_H_
 #define _W_TIMER_H_
 
-//#include "wServerCtrl.h"
-
 #define TIME_OF_KEEP_ALIVE 30000
 
 /**
