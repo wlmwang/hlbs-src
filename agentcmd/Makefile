@@ -22,9 +22,9 @@ LIBPATH=../lib
 
 COMMANDPATH=../command
 
-CXX=g++ -std=c++11
+CXX=g++
 
-CXXFLAGS=-g -DUSE_LOG4CPP -DLINUX -D__READLINE_DEBUG#--extra-libs=-lgcc #-D_DEBUG_
+CXXFLAGS=-g -std=c++11 -Wno-invalid-offsetof -DUSE_LOG4CPP -DLINUX -D__READLINE_DEBUG#--extra-libs=-lgcc #-D_DEBUG_
 
 LIBS=-L./$(LIBPATH)/log4cpp/lib -llog4cpp -L./$(LIBPATH)/tinyxml -ltinyxml -lpthread -lreadline -lncurses -static
 INCPATH=-I./$(BASEPATH) -I./$(LIBPATH)/log4cpp/include -I./$(LIBPATH)/tinyxml -I./$(COMMANDPATH)
@@ -67,7 +67,7 @@ all: $(TARGET)
 
 clean:
 	#-rm -f $(TARGET) $(OBJECTS)
-	-rm -f $(DIRS)
+	-rm -rf $(DIRS)
 	
 dir:
 	-mkdir $(DIRS)

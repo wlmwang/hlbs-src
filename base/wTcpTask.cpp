@@ -231,12 +231,12 @@ int wTcpTask::WriteToSendBuf(const char *pCmd, int iLen)
 		mSendBytes = 0;
 	}
 	
-	//struct wCommand* pTmpCmd = (struct wCommand*) pCmd;
-	//pTmpCmd->mConnType = ConnType();
-	(BYTE)(pCmd + offsetof(struct wCommand, mConnType)) = ConnType();
-	
 	*(int *)(mSendMsgBuff + mSendWrite)= iLen;
 	memcpy(mSendMsgBuff + mSendWrite + sizeof(int), pCmd, iLen);
+
+	//struct wCommand* pTmpCmd = (struct wCommand*) (mSendMsgBuff + mSendWrite + sizeof(int));
+	//pTmpCmd->mConnType = ConnType();
+	*(BYTE*)(mSendMsgBuff + mSendWrite + sizeof(int) + offsetof(struct wCommand, mConnType)) = ConnType();
 	return 0;
 }
 
@@ -250,12 +250,12 @@ int wTcpTask::SyncSend(const char *pCmd, int iLen)
 		return -1;
 	}
 	
-	//struct wCommand* pTmpCmd = (struct wCommand*) pCmd;
-	//pTmpCmd->mConnType = ConnType();
-	(BYTE)(pCmd + offsetof(struct wCommand, mConnType)) = ConnType();
-	
 	*(int *)mTmpSendMsgBuff = iLen;
 	memcpy(mTmpSendMsgBuff + sizeof(int), pCmd, iLen);
+
+	//struct wCommand* pTmpCmd = (struct wCommand*) (mTmpSendMsgBuff + sizeof(int));
+	//pTmpCmd->mConnType = ConnType();
+	*(BYTE*)(mTmpSendMsgBuff + sizeof(int) + offsetof(struct wCommand, mConnType)) = ConnType();
 	return mSocket->SendBytes(mTmpSendMsgBuff, iLen + sizeof(int));
 }
 
