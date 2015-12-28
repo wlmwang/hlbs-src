@@ -14,6 +14,13 @@
 #include "wSocket.h"
 #include "wCommand.h"
 
+enum SOCKET_STATUS
+{
+	SOCKET_STATUS_INIT,
+	SOCKET_STATUS_QUIT,	
+	SOCKET_STATUS_RUNNING
+};
+
 class wTcpTask
 {
 	public:
@@ -34,6 +41,21 @@ class wTcpTask
 		virtual int HeartbeatOutTimes()
 		{
 			return mHeartbeatTimes > 30;
+		}
+		
+		bool IsRunning()
+		{
+			return SOCKET_STATUS_RUNNING == mStatus;
+		}
+		
+		void SetStatus(SOCKET_STATUS eStatus = SOCKET_STATUS_QUIT)
+		{
+			mStatus = eStatus;
+		}
+		
+		SOCKET_STATUS GetStatus()
+		{
+			return mStatus;
 		}
 
 		void Initialize();
@@ -60,6 +82,7 @@ class wTcpTask
 		
 	protected:
 		wSocket *mSocket;
+		SOCKET_STATUS mStatus;
 		
 		int mHeartbeatTimes;
 		//接收消息的缓冲区 32M

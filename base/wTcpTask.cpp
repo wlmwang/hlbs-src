@@ -41,6 +41,7 @@ void wTcpTask::Initialize()
 	mSendWrite = 0;
 	memset(&mSendMsgBuff, 0, sizeof(mSendMsgBuff));
 	memset(&mRecvMsgBuff, 0, sizeof(mRecvMsgBuff));
+	SetStatus(SOCKET_STATUS_INIT);
 }
 
 /**
@@ -53,6 +54,7 @@ void wTcpTask::CloseTcpTask(int eReason)
 	{
 		//...
 	}
+	SetStatus();
 	mSocket->Close();
 }
 

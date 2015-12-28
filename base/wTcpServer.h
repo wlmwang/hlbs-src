@@ -44,7 +44,6 @@ class wTcpServer: public wSingleton<T>
 {
 	public:
 		void Recv();
-		void Send();
 		
 		/**
 		 * 初始化服务器
@@ -315,6 +314,7 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	mTcpTask = NewTcpTask(mSocket);
 	if(NULL != mTcpTask)
 	{
+		mTcpTask->SetStatus(SOCKET_STATUS_RUNNING);
 		if(mTcpTask->Socket()->SetNonBlock() < 0) 
 		{
 			LOG_ERROR("default", "set non block failed: %d, close it", iSocketFD);
@@ -379,7 +379,7 @@ void wTcpServer<T>::Start(bool bDaemon)
 	mStatus = SERVER_STATUS_RUNNING;
 	LOG_INFO("default", "Server start succeed");
 	//进入服务主循环
-	do{
+	do {
 		Recv();
 		Run();
 	} while(IsRunning() && bDaemon);
@@ -399,10 +399,19 @@ void wTcpServer<T>::Recv()
 		wTcpTask *pTask = (wTcpTask *)mEpollEventPool[i].data.ptr;
 		int iSocketFD = pTask->Socket()->SocketFD();
 		int iSocketType = pTask->Socket()->SocketType();
-		
+
 		if(iSocketFD < 0)
 		{
 			LOG_ERROR("default", "socketfd error fd(%d): %s, close it", iSocketFD, strerror(errno));
+			if (RemoveEpoll(pTask) >= 0)
+			{
+				RemoveTaskPool(pTask);
+			}
+			continue;
+		}
+		if (!pTask->IsRunning())
+		{
+			LOG_ERROR("default", "task status is quit. fd(%d): %s, close it", iSocketFD, strerror(errno));
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -421,7 +430,10 @@ void wTcpServer<T>::Recv()
 
 		if(iSocketType == LISTEN_SOCKET)
 		{
-			AcceptConn();	//accept connect
+			if (mEpollEventPool[i].events & EPOLLIN)
+			{
+				AcceptConn();	//accept connect
+			}
 		}
 		else if(iSocketType == CONNECT_SOCKET)	//connect event: read|write
 		{
@@ -505,6 +517,7 @@ int wTcpServer<T>::AcceptConn()
 		}
 		
 		mTcpTask->Socket()->ConnType() = mTcpTask->ConnType();
+		mTcpTask->SetStatus(SOCKET_STATUS_RUNNING);
 		if(mTcpTask->Socket()->SetNonBlock() < 0) 
 		{
 			LOG_ERROR("default", "set non block failed: %d, close it", iNewSocketFD);

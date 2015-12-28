@@ -93,8 +93,6 @@ class wTcpClient
 
 		void CheckTimer();
 		void CheckReconnect();
-
-		CLIENT_STATUS mStatus;
 		
 		wTcpTask* TcpTask() { return mTcpTask; }
 		
@@ -102,6 +100,7 @@ class wTcpClient
 		int mType;
 		string mClientName;		
 		wTcpTask* mTcpTask;
+		CLIENT_STATUS mStatus;
 
 		unsigned long long mLastTicker;
 		wTimer mReconnectTimer;
@@ -250,7 +249,7 @@ void wTcpClient<T>::Start(bool bDaemon)
 		
 		ListeningRecv();
 		
-		//CheckTimer();
+		//CheckTimer();	//在外层MTCPClient中检测
 
 	} while(IsRunning() && bDaemon);
 }
