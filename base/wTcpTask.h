@@ -31,6 +31,8 @@ class wTcpTask
 		virtual int VerifyConn();	//验证接收到连接
 		virtual int Verify();		//发送连接验证请求
 		
+		//与socket有本质区别
+		//socket一般表示客户端类型，这里的type一般表示服务类型
 		virtual int ConnType()
 		{
 			return SERVER;
