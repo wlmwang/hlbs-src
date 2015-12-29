@@ -42,10 +42,7 @@ struct _Null_t
 
 struct wCommand : public _Null_t
 {
-	wCommand(const BYTE cmd = CMD_NULL, const BYTE para = PARA_NULL , const BYTE ctype = SERVER) : _Null_t(cmd, para), mConnType(ctype) {}
-	BYTE GetConnType() const { return mConnType; }
-	
-	BYTE mConnType;
+	wCommand(const BYTE cmd = CMD_NULL, const BYTE para = PARA_NULL) : _Null_t(cmd, para) {}
 };
 
 #pragma pack()

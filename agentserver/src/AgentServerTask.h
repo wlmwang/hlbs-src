@@ -33,11 +33,6 @@ class AgentServerTask : public wTcpTask
 		
 		virtual int VerifyConn();
 		virtual int Verify();
-		
-		virtual int ConnType()
-		{
-			return SERVER_AGENT;
-		}
 
 		virtual int HandleRecvMessage(char * pBuffer, int nLen);
 		

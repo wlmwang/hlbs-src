@@ -295,8 +295,9 @@ void wTcpClient<T>::CheckReconnect()
 	{
 		return;
 	}
-	iIntervalTime = iNowTime - mTcpTask->Socket()->SendTime();
-	if (iIntervalTime >= KEEPALIVE_TIME)
+	//心跳检测
+	iIntervalTime = iNowTime - mTcpTask->Socket()->SendTime();	//上一次发送心跳时间间隔
+	if (iIntervalTime >= CHECK_CLIENT_TIME)
 	{
 		if(mTcpTask->Heartbeat() < 0 && mTcpTask->HeartbeatOutTimes())
 		{

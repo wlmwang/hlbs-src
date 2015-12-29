@@ -33,11 +33,6 @@ class RouterServerTask : public wTcpTask
 
 		virtual int VerifyConn();
 		virtual int Verify();
-		
-		virtual int ConnType()
-		{
-			return SERVER_ROUTER;
-		}
 
 		virtual int HandleRecvMessage(char * pBuffer, int nLen);
 		

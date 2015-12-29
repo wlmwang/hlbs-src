@@ -119,7 +119,7 @@ void AgentServer::CheckTimeout()
 			{
 				continue;
 			}
-			if((*iter)->Socket()->ConnType() == SERVER_CMD)	//信任客户端，不需要心跳
+			if((*iter)->ConnType() == SERVER_CMD)	//信任客户端，不需要心跳
 			{
 				continue;
 			}

@@ -30,14 +30,7 @@ class wTcpTask
 
 		virtual int VerifyConn();	//验证接收到连接
 		virtual int Verify();		//发送连接验证请求
-		
-		//与socket有本质区别
-		//socket一般表示客户端类型，这里的type一般表示服务类型
-		virtual int ConnType()
-		{
-			return SERVER;
-		}
-		
+
 		virtual int Heartbeat();
 		
 		virtual int HeartbeatOutTimes()
@@ -82,10 +75,12 @@ class wTcpTask
 		
 		wSocket * Socket() { return mSocket; }
 		
+		int ConnType() { return mConnType; }
 	protected:
 		wSocket *mSocket;
 		SOCKET_STATUS mStatus;
-		
+		int mConnType; //客户端类型
+
 		int mHeartbeatTimes;
 		//接收消息的缓冲区 32M
 		int mRecvBytes;	//接收的字节数

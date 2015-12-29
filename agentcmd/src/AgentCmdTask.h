@@ -34,11 +34,6 @@ class AgentCmdTask : public wTcpTask
 		virtual int Verify();
 		virtual int VerifyConn();
 		
-		virtual int ConnType()
-		{
-			return SERVER_CMD;
-		}
-		
 		virtual int HandleRecvMessage(char * pBuffer, int nLen);
 		
 		int ParseRecvMessage(struct wCommand* pCommand ,char *pBuffer,int iLen);

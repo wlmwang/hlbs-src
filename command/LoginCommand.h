@@ -30,7 +30,7 @@ struct LoginReqToken_t : LoginReqCmd_s
 	{
 		memset(mToken, 0, 32);
 	}
-	
+	BYTE mConnType;
 	char mToken[32];
 };
 

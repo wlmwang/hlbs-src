@@ -608,8 +608,8 @@ void wTcpServer<T>::CheckTimeout()
 			{
 				continue;
 			}
-			iIntervalTime = iNowTime - (*iter)->Socket()->RecvTime();	//未接受到消息时间间隔
 			//心跳检测
+			iIntervalTime = iNowTime - (*iter)->Socket()->SendTime();	//上一次发送心跳时间间隔
 			if(iIntervalTime >= CHECK_CLIENT_TIME)	//3s
 			{
 				if((*iter)->Heartbeat() < 0 && (*iter)->HeartbeatOutTimes())

@@ -15,7 +15,6 @@
 #include <string>
 
 #include "wType.h"
-#include "wCommand.h"
 
 enum SOCKET_TYPE
 {
@@ -61,7 +60,6 @@ class wSocket
 			mCreateTime = time(NULL);
 			mRecvTime = 0;
 			mSendTime = 0;
-			mConnType = CLIENT;
 		}
 
 		bool IsConnected()
@@ -97,8 +95,6 @@ class wSocket
 		
 		int & SocketFlag() { return mSocketFlag; }
 		
-		int & ConnType() { return mConnType; }
-		
 		unsigned long long & RecvTime() { return mRecvTime; }
 		
 		unsigned long long & SendTime() { return mSendTime; }
@@ -109,7 +105,7 @@ class wSocket
 		unsigned short mPort;		//需要连接或者需要绑定的端口
 		int mSocketType;			//socket类型：监听socket、连接socket
 		int mSocketFlag;			//socket标志：是否收包
-		int mConnType;				//客户端类型，每个数据包由一字节标识
+
 		unsigned long long mRecvTime;			//接收到数据包的时间戳
 		unsigned long long mSendTime;			//最后一次发送数据包时间戳（主要用户心跳检测）
 		unsigned long long mCreateTime;			//socket的创建时间

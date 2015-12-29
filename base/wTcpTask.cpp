@@ -35,13 +35,14 @@ wTcpTask::~wTcpTask()
 void wTcpTask::Initialize()
 {
 	mSocket = NULL;
+	mConnType = CLIENT;
 	mHeartbeatTimes = 0;
 	mRecvBytes = 0;
 	mSendBytes = 0;
 	mSendWrite = 0;
+	mStatus = SOCKET_STATUS_INIT;
 	memset(&mSendMsgBuff, 0, sizeof(mSendMsgBuff));
 	memset(&mRecvMsgBuff, 0, sizeof(mRecvMsgBuff));
-	SetStatus(SOCKET_STATUS_INIT);
 }
 
 /**
@@ -141,8 +142,7 @@ int wTcpTask::ListeningRecv()
 #endif
 		/*start 业务逻辑*/
 		//struct wCommand* pTmpCmd = (struct wCommand*) (pBuffer - iMsgLen);
-		//mSocket->ConnType() = pTmpCmd->mConnType;
-		mSocket->ConnType() = *(BYTE*)(pBuffer - iMsgLen + offsetof(struct wCommand, mConnType));
+		//mSocket->ConnType() = *(BYTE*)(pBuffer - iMsgLen + offsetof(struct wCommand, mConnType));
 		HandleRecvMessage(pBuffer - iMsgLen, iMsgLen);	//去除4字节消息长度标识位
 		/*end 业务逻辑*/
 	}
@@ -235,7 +235,6 @@ int wTcpTask::WriteToSendBuf(const char *pCmd, int iLen)
 	
 	*(int *)(mSendMsgBuff + mSendWrite)= iLen;
 	memcpy(mSendMsgBuff + mSendWrite + sizeof(int), pCmd, iLen);
-	*(BYTE*)(mSendMsgBuff + mSendWrite + sizeof(int) + offsetof(struct wCommand, mConnType)) = ConnType();
 	return 0;
 }
 
@@ -251,7 +250,6 @@ int wTcpTask::SyncSend(const char *pCmd, int iLen)
 	
 	*(int *)mTmpSendMsgBuff = iLen;
 	memcpy(mTmpSendMsgBuff + sizeof(int), pCmd, iLen);
-	*(BYTE*)(mTmpSendMsgBuff + sizeof(int) + offsetof(struct wCommand, mConnType)) = ConnType();
 	return mSocket->SendBytes(mTmpSendMsgBuff, iLen + sizeof(int));
 }
 
@@ -296,6 +294,5 @@ int wTcpTask::SyncRecv(char *pCmd, int iLen)
 		return -1;
 	}
 	memcpy(pCmd, mTmpRecvMsgBuff + sizeof(int), iLen);
-	mSocket->ConnType() = *(BYTE*)(pCmd + offsetof(struct wCommand, mConnType));
 	return iRecvLen - sizeof(int);
 }

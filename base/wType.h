@@ -64,8 +64,8 @@ typedef signed long long int SLLWORD;
 //客户端消息的最长长度
 #define MAX_CLIENT_MSG_LEN MAX_PACKAGE_LEN
 
-//客户端消息主体最短长度(一字节消息类型+一字节客户端类型)
-#define MIN_CLIENT_MSG_LEN 2
+//客户端消息主体最短长度(一字节消息类型)
+#define MIN_CLIENT_MSG_LEN 1
 
 //每一个服务器之间的发送接收缓冲区的大小
 #define MAX_SEND_BUFFER_LEN 524288 /* 512 * 1024 */

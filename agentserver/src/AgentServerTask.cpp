@@ -49,6 +49,7 @@ int AgentServerTask::VerifyConn()
 		LoginReqToken_t *pLoginRes = (LoginReqToken_t*) pBuffer;
 		if (strcmp(pLoginRes->mToken, "Anny") == 0)
 		{
+			mConnType = pLoginRes->mConnType;
 			return 0;
 		}
 	}
@@ -58,9 +59,10 @@ int AgentServerTask::VerifyConn()
 int AgentServerTask::Verify()
 {
 	//验证登录
-	LoginReqToken_t stLoginRes;
-	memcpy(stLoginRes.mToken, "Anny", 4);
-	SyncSend((char*)&stLoginRes, sizeof(stLoginRes));
+	LoginReqToken_t stLoginReq;
+	stLoginReq.mConnType = SERVER_AGENT;
+	memcpy(stLoginReq.mToken, "Anny", 4);
+	SyncSend((char*)&stLoginReq, sizeof(stLoginReq));
 	return 0;
 }
 
