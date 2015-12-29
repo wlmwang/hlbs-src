@@ -49,7 +49,7 @@ void AgentServer::ConnectRouter()
 	AgentConfig *pConfig = AgentConfig::Instance();
 	
 	//mRouterConn
-	bool bRet = mRouterConn->GenerateClient(ROUTER_SERVER_TYPE, "RouterFromAgent", pConfig->mRouterIPAddr, pConfig->mRouterPort);
+	bool bRet = mRouterConn->GenerateClient(SERVER_ROUTER, "RouterFromAgent", pConfig->mRouterIPAddr, pConfig->mRouterPort);
 	if (!bRet)
 	{
 		cout << "Connect to RouterServer failed! Please start it" <<endl;
@@ -68,7 +68,7 @@ int AgentServer::InitRtblReq()
 	{
 		return -1;
 	}
-	wTcpClient<AgentServerTask>* pClient = pRouterConn->OneTcpClient(ROUTER_SERVER_TYPE);
+	wTcpClient<AgentServerTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
 	if(pClient != NULL && pClient->TcpTask())
 	{
 		RtblReqInit_t vRtl;
@@ -84,7 +84,7 @@ int AgentServer::ReloadRtblReq()
 	{
 		return -1;
 	}
-	wTcpClient<AgentServerTask>* pClient = pRouterConn->OneTcpClient(ROUTER_SERVER_TYPE);
+	wTcpClient<AgentServerTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
 	if(pClient != NULL && pClient->TcpTask())
 	{
 		RtblReqReload_t vRtl;

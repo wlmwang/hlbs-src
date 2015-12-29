@@ -17,8 +17,7 @@
 #include "wMTcpClient.h"
 #include "wTcpClient.h"
 #include "AgentServerTask.h"
-
-#define ROUTER_SERVER_TYPE 1
+#include "BaseCommand.h"
 
 class AgentServer: public wTcpServer<AgentServer>
 {
