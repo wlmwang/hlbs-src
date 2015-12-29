@@ -38,8 +38,6 @@ class AgentServer: public wTcpServer<AgentServer>
 		int InitRtblReq();
 		int ReloadRtblReq();
 		
-		virtual void CheckTimeout();
-		
 		wMTcpClient<AgentServerTask>* RouterConn()
 		{
 			return mRouterConn;

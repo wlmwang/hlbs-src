@@ -162,32 +162,32 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 	if(a == 1)
 	{
 		RtblReqAll_t vRtl;
-		return TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
+		return SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	else if(i != 0)
 	{
 		RtblReqId_t vRtl;
 		vRtl.mId = i;
-		return TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
+		return SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	else if(n != "")
 	{
 		RtblReqName_t vRtl;
 		memcpy(vRtl.mName, n.c_str(), n.size());
-		return TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
+		return SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	else if(g != 0 && x == 0)
 	{
 		RtblReqGid_t vRtl;
 		vRtl.mGid = g;
-		return TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
+		return SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	else if(g != 0 && x != 0)
 	{
 		RtblReqGXid_t vRtl;
 		vRtl.mGid = g;
 		vRtl.mXid = x;
-		return TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
+		return SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	SetWaitResStatus(false);
 	return -1;
@@ -243,7 +243,7 @@ int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 	{
 		SetWaitResStatus();
 		mTicker = GetTickCount();
-		return TcpTask()->SyncSend((char *)&stSetRtbl, sizeof(stSetRtbl));
+		return SyncSend((char *)&stSetRtbl, sizeof(stSetRtbl));
 	}
 	return -1;
 }
@@ -254,7 +254,7 @@ int AgentCmd::ReloadCmd(string sCmd, vector<string> vParam)
 	SetWaitResStatus();
 	mTicker = GetTickCount();
 	RtblReqReload_t vRtl;
-	return TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
+	return SyncSend((char *)&vRtl, sizeof(vRtl));
 }
 
 //restart agent/router
@@ -262,6 +262,5 @@ int AgentCmd::RestartCmd(string sCmd, vector<string> vParam)
 {
 	SetWaitResStatus();
 	mTicker = GetTickCount();
-	//
 	return -1;
 }

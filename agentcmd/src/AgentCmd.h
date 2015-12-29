@@ -67,6 +67,15 @@ class AgentCmd: public wSingleton<AgentCmd>, public wMTcpClient<AgentCmdTask>
 			return 0;
 		}
 
+		int SyncSend(const char *pCmd, int iLen)
+		{
+			wTcpTask *pTcpTask = TcpTask();
+			if(pTcpTask != 0)
+			{
+				return pTcpTask->SyncSend(pCmd, iLen);
+			}
+			return -1;
+		}
 	protected:
 		DEC_DISP_S(mDispatch);
 		unsigned long long mTicker;
