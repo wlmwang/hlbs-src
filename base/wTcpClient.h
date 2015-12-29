@@ -46,9 +46,6 @@ class wTcpClient
 		
 		void Initialize();
 		
-		int ListeningRecv();
-		int ListeningSend();
-		
 		int ConnectToServer(const char *vIPAddress, unsigned short vPort);
 
 		int ReConnectToServer();
@@ -84,9 +81,6 @@ class wTcpClient
 
 		virtual void PrepareStart();
 		virtual void Start(bool bDaemon = true);
-		
-		virtual void PrepareRun();
-		virtual void Run();
 
 		void CheckTimer();
 		void CheckReconnect();
@@ -236,23 +230,10 @@ template <typename T>
 void wTcpClient<T>::PrepareStart()
 {
 	SetStatus(CLIENT_STATUS_RUNNING);
-	PrepareRun();
 }
 
 template <typename T>
 void wTcpClient<T>::Start(bool bDaemon)
-{
-	//...
-}
-
-template <typename T>
-void wTcpClient<T>::PrepareRun()
-{
-	//...
-}
-
-template <typename T>
-void wTcpClient<T>::Run()
 {
 	//...
 }
@@ -299,26 +280,6 @@ void wTcpClient<T>::CheckReconnect()
 			ReConnectToServer();
 		}
 	}
-}
-
-template <typename T>
-int wTcpClient<T>::ListeningRecv()
-{
-	if (mTcpTask != NULL && IsRunning())
-	{
-		return mTcpTask->ListeningRecv();
-	}
-	return -1;
-}
-
-template <typename T>
-int wTcpClient<T>::ListeningSend()
-{
-	if (mTcpTask != NULL && IsRunning())
-	{
-		return mTcpTask->ListeningSend();
-	}
-	return -1;
 }
 
 template <typename T>
