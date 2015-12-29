@@ -7,18 +7,15 @@
 #ifndef _W_TCP_CLIENT_H_
 #define _W_TCP_CLIENT_H_
 
-//#include <iostream>
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
 #include <typeinfo>
 #include <string>
 #include <string.h>
-
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
@@ -245,14 +242,7 @@ void wTcpClient<T>::PrepareStart()
 template <typename T>
 void wTcpClient<T>::Start(bool bDaemon)
 {
-	do {
-		Run();
-		
-		if(mIsCheckTimer) CheckTimer();
-		
-		ListeningRecv();
-		//ListeningSend();
-	} while(IsRunning() && bDaemon);
+	//...
 }
 
 template <typename T>

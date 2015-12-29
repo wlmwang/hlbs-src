@@ -22,16 +22,6 @@ enum eRunStatus
 	rt_stopped = 3
 };
 
-/*
-typedef struct
-{
-	char szThreadKey[32];
-	char szLogBaseName[200];
-	long lMaxLogSize;
-	int iMaxLogNum;
-} TLogCfg;
-*/
-
 void* ThreadProc(void *pvArgs);
 
 class wThread : private wNoncopyable
@@ -42,22 +32,20 @@ class wThread : private wNoncopyable
 
 		virtual int PrepareRun() = 0;
 		virtual int Run() = 0;
-		virtual int IsToBeBlocked() = 0;
+		virtual bool IsBlocked() = 0;
 
 		int CreateThread();
 		int StopThread();
 		int WakeUp();
 		
-		/*
-		void ThreadLogInit(char *sPLogBaseName, long lPMaxLogSize, int iPMaxLogNum, int iShow, int iLevel = 0);
-		void ThreadLogDebug(const char *sFormat, ...);
-		void ThreadLogInfo(const char *sFormat, ...);
-		void ThreadLogNotice(const char *sFormat, ...);
-		void ThreadLogWarn(const char *sFormat, ...);
-		void ThreadLogError(const char *sFormat, ...);
-		void ThreadLogFatal(const char *sFormat, ...);
-		*/
-		
+		bool IsRunning()
+		{
+			return mRunStatus == rt_running;
+		}
+		bool IsStop()
+		{
+			return mRunStatus == rt_stopped;
+		}
 	protected:
 		int CondBlock();
 
@@ -67,10 +55,6 @@ class wThread : private wNoncopyable
 		pthread_cond_t mCond;
 		int mRunStatus;
 		char mAbyRetVal[64];
-
-		//TLogCfg m_stLogCfg;
-
-	//private:
 };
 
 #endif

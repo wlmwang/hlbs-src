@@ -32,10 +32,12 @@ void* ThreadProc(void *pvArgs)
 wThread::wThread()
 {
 	mRunStatus = rt_init;
-	//memset((void *)&m_stLogCfg, 0, sizeof(m_stLogCfg));
 }
 
-wThread::~wThread() {}
+wThread::~wThread() 
+{
+	//...
+}
 
 int wThread::CreateThread()
 {
@@ -57,21 +59,21 @@ int wThread::CondBlock()
 {
 	pthread_mutex_lock(&mMutex);
 
-	while(IsToBeBlocked() || mRunStatus == rt_stopped)  // 线程被阻塞或者停止
+	while(IsBlocked() || mRunStatus == rt_stopped)  // 线程被阻塞或者停止
 	{
 		if(mRunStatus == rt_stopped)  // 如果线程需要停止则终止线程
 		{
-			//ThreadLogDebug( "Thread exit.");
+			//"Thread exit."
 			pthread_exit((void *)mAbyRetVal);
 		}
-		//ThreadLogDebug( "Thread would blocked." );
+		//"Thread would blocked."
 		mRunStatus = rt_blocked;
 		pthread_cond_wait(&mCond, &mMutex);  //进入休眠状态
 	}
 
 	if(mRunStatus != rt_running)  
 	{
-		//ThreadLogDebug("Thread waked up.");
+		//"Thread waked up."
 	}
 	
 	mRunStatus = rt_running;  //线程状态变为rt_running
@@ -85,7 +87,7 @@ int wThread::WakeUp()
 {
 	pthread_mutex_lock(&mMutex);
 
-	if(!IsToBeBlocked() && mRunStatus == rt_blocked)
+	if(!IsBlocked() && mRunStatus == rt_blocked)
     {
 		pthread_cond_signal(&mCond);  //向线程发出信号以唤醒
 	}
@@ -106,68 +108,6 @@ int wThread::StopThread()
 
 	//等待该线程终止
 	pthread_join(mPhreadId, NULL);
-	//ThreadLogDebug("Thread stopped.");
 
 	return 0;
 }
-
-/*
-void wThread::ThreadLogInit(char *sPLogBaseName, long lPMaxLogSize, int iPMaxLogNum, int iShow, int iLevel)
-{
-	memset(m_stLogCfg.szLogBaseName, 0, sizeof(m_stLogCfg.szLogBaseName));
-	strncpy(m_stLogCfg.szLogBaseName, sPLogBaseName, sizeof(m_stLogCfg.szLogBaseName)-1);
-	m_stLogCfg.lMaxLogSize = lPMaxLogSize;
-	m_stLogCfg.iMaxLogNum = iPMaxLogNum;
-	strncpy( m_stLogCfg.szThreadKey, m_stLogCfg.szLogBaseName, sizeof( m_stLogCfg.szThreadKey )-1 ) ;
-	
-	INIT_ROLLINGFILE_LOG( m_stLogCfg.szThreadKey, m_stLogCfg.szLogBaseName, (LogLevel) iLevel, m_stLogCfg.lMaxLogSize, m_stLogCfg.iMaxLogNum ); 
-}
-
-void wThread::ThreadLogDebug(const char *sFormat, ...)
-{
-	va_list va;
-	va_start(va, sFormat);
-	LogDebug_va(m_stLogCfg.szThreadKey, sFormat, va);
-	va_end(va);
-}
-
-void wThread::ThreadLogInfo(const char *sFormat, ...)
-{
-	va_list va;
-	va_start(va, sFormat);
-	LogInfo_va(m_stLogCfg.szThreadKey, sFormat, va);
-	va_end(va);
-}
-
-void wThread::ThreadLogNotice(const char *sFormat, ...)
-{
-	va_list va;
-	va_start(va, sFormat);
-	LogNotice_va(m_stLogCfg.szThreadKey, sFormat, va);
-	va_end(va);
-}
-
-void wThread::ThreadLogWarn(const char *sFormat, ...)
-{
-	va_list va;
-	va_start(va, sFormat);
-	LogWarn_va(m_stLogCfg.szThreadKey, sFormat, va);
-	va_end(va);
-}
-
-void wThread::ThreadLogError(const char *sFormat, ...)
-{
-	va_list va;
-	va_start(va, sFormat);
-	LogError_va(m_stLogCfg.szThreadKey, sFormat, va);
-	va_end(va);
-}
-
-void wThread::ThreadLogFatal(const char *sFormat, ...)
-{
-	va_list va;
-	va_start(va, sFormat);
-	LogFatal_va(m_stLogCfg.szThreadKey, sFormat, va);
-	va_end(va);
-}
-*/

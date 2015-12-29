@@ -21,7 +21,7 @@
 #include "AgentCmdConfig.h"
 #include "RtblCommand.h"
 
-AgentCmd::AgentCmd() : wTcpClient<AgentCmdTask>(AGENT_SERVER_TYPE, "AgentServer", true)
+AgentCmd::AgentCmd()
 {
 	Initialize();
 }
@@ -33,11 +33,22 @@ AgentCmd::~AgentCmd()
 
 void AgentCmd::Initialize()
 {
-	AgentCmdConfig *pConfig = AgentCmdConfig::Instance();
-	mAgentIp = pConfig->mIPAddr;
-	mPort = pConfig->mPort;
+	mTicker = GetTickCount();
+	SetWaitResStatus(false);
 
-	if (ConnectToServer(mAgentIp.c_str(), mPort) < 0)
+	CMD_REG_DISP_S("get", &AgentCmd::GetCmd);
+	CMD_REG_DISP_S("set", &AgentCmd::SetCmd);
+	CMD_REG_DISP_S("reload", &AgentCmd::ReloadCmd);
+	CMD_REG_DISP_S("restart", &AgentCmd::RestartCmd);
+}
+
+//准备工作
+void AgentCmd::PrepareRun()
+{
+	AgentCmdConfig *pConfig = AgentCmdConfig::Instance();
+	
+	bool bRet = GenerateClient(SERVER_AGENT, "SERVER AGENT", pConfig->mIPAddr, pConfig->mPort);
+	if (!bRet)
 	{
 		cout << "Connect to AgentServer failed! Please start it" <<endl;
 		LOG_ERROR("default", "Connect to AgentServer failed");
@@ -45,68 +56,18 @@ void AgentCmd::Initialize()
 	}
 
 	char cStr[32];
-	sprintf(cStr, "%s %d>", mAgentIp.c_str(), mPort);
-	mReadline.SetPrompt(cStr, strlen(cStr));
-	
-	mReadline.SetCompletion(&AgentCmd::Completion);
-	
-	CMD_REG_DISP_S("get", &AgentCmd::GetCmd);
-	CMD_REG_DISP_S("set", &AgentCmd::SetCmd);
-	CMD_REG_DISP_S("reload", &AgentCmd::ReloadCmd);
-	CMD_REG_DISP_S("restart", &AgentCmd::RestartCmd);
+	sprintf(cStr, "%s %d>", pConfig->mIPAddr, pConfig->mPort);
+	mReadlineThread = new ReadlineThread(cStr, strlen(cStr));
 
-	mTicker = GetTickCount();
-	SetWaitResStatus(false);
-}
-
-char* AgentCmd::Generator(const char *pText, int iState)
-{
-	static int iListIdx = 0, iTextLen = 0;
-	if(!iState)
-	{
-		iListIdx = 0;
-		iTextLen = strlen(pText);
-	}
-	
-	const char *pName = NULL;
-	/*
-	while((pName = AgentCmd::Instance()->GetCmdByIndex(iListIdx)))
-	{
-		iListIdx++;
-		if(!strncmp (pName, pText, iTextLen))
-		{
-			return strdup(pName);
-		}
-	}
-	*/
-	return NULL;
-}
-
-char** AgentCmd::Completion(const char *pText, int iStart, int iEnd)
-{
-	//rl_attempted_completion_over = 1;
-	char **pMatches = NULL;
-	if(0 == iStart)
-	{
-		pMatches = rl_completion_matches(pText, &AgentCmd::Generator);
-	}
-	return pMatches;
-}
-
-//准备工作
-void AgentCmd::PrepareRun()
-{
-	mIsCheckTimer = false;
+	mReadlineThread->CreateThread();
 }
 
 void AgentCmd::Run()
 {
-	ReadCmdLine();
-	
-	return;
+	ReadCmd();
 }
 
-void AgentCmd::ReadCmdLine()
+void AgentCmd::ReadCmd()
 {
 	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mTicker);
 	
@@ -120,27 +81,18 @@ void AgentCmd::ReadCmdLine()
 	}
 	
 	mTicker += iInterval;
+	
+	mReadlineThread->WakeUp();
 
-	//read cmd
-	int iRet = 0;
-	char *pCmdLine = 0;
-	
-	READLINE:
-	do {
-		pCmdLine = mReadline.ReadCmdLine();
-	} while(strlen(pCmdLine) == 0);
-	
-	if(mReadline.IsUserQuitCmd(pCmdLine))
+	if (mReadlineThread->mCmdLine != 0)
+	{
+		ParseCmd(mReadlineThread->mCmdLine, strlen(mReadlineThread->mCmdLine));
+		mReadlineThread->mCmdLine = 0;
+	}
+	else if(mReadlineThread->IsStop())
 	{
 		cout << "thanks for used! see you later~" << endl;
 		exit(0);
-	}
-
-	iRet = ParseCmd(pCmdLine, strlen(pCmdLine));
-	
-	if (iRet < 0)
-	{
-		goto READLINE;
 	}
 }
 
@@ -210,32 +162,32 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 	if(a == 1)
 	{
 		RtblReqAll_t vRtl;
-		return mTcpTask->SyncSend((char *)&vRtl, sizeof(vRtl));
+		return TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	else if(i != 0)
 	{
 		RtblReqId_t vRtl;
 		vRtl.mId = i;
-		return mTcpTask->SyncSend((char *)&vRtl, sizeof(vRtl));
+		return TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	else if(n != "")
 	{
 		RtblReqName_t vRtl;
 		memcpy(vRtl.mName, n.c_str(), n.size());
-		return mTcpTask->SyncSend((char *)&vRtl, sizeof(vRtl));
+		return TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	else if(g != 0 && x == 0)
 	{
 		RtblReqGid_t vRtl;
 		vRtl.mGid = g;
-		return mTcpTask->SyncSend((char *)&vRtl, sizeof(vRtl));
+		return TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	else if(g != 0 && x != 0)
 	{
 		RtblReqGXid_t vRtl;
 		vRtl.mGid = g;
 		vRtl.mXid = x;
-		return mTcpTask->SyncSend((char *)&vRtl, sizeof(vRtl));
+		return TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	SetWaitResStatus(false);
 	return -1;
@@ -291,7 +243,7 @@ int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 	{
 		SetWaitResStatus();
 		mTicker = GetTickCount();
-		return mTcpTask->SyncSend((char *)&stSetRtbl, sizeof(stSetRtbl));
+		return TcpTask()->SyncSend((char *)&stSetRtbl, sizeof(stSetRtbl));
 	}
 	return -1;
 }
@@ -302,7 +254,7 @@ int AgentCmd::ReloadCmd(string sCmd, vector<string> vParam)
 	SetWaitResStatus();
 	mTicker = GetTickCount();
 	RtblReqReload_t vRtl;
-	return mTcpTask->SyncSend((char *)&vRtl, sizeof(vRtl));
+	return TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
 }
 
 //restart agent/router
