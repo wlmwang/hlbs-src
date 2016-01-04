@@ -26,7 +26,7 @@ int wSocket::SetNonBlock(bool bNonblock)
 		return -1;
 	}
 
-	return fcntl(mSocketFD, F_SETFL, iFlags|(bNonblock==true ? O_NONBLOCK : ~O_NONBLOCK));
+	return fcntl(mSocketFD, F_SETFL, (bNonblock == true ? iFlags | O_NONBLOCK : iFlags & ~O_NONBLOCK));
 }
 
 int wSocket::SetTimeout(int iTimeout)
