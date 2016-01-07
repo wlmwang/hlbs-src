@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ROOT>
+	<ROUTERS>
+		<ROUTER IPADDRESS="192.168.8.13" PORT="10006"  DISABLED="0"/> <!--master-->
+		<ROUTER IPADDRESS="192.168.8.14" PORT="10006"  DISABLED="0"/>
+	</ROUTERS>
+</ROOT>

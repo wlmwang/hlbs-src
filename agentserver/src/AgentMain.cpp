@@ -9,10 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <errno.h>
 #include <signal.h>
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -43,14 +41,6 @@ void Sigusr2Handle(int nSigVal)
 }
 
 /**
- *  初始化日志
- */
-void InitailizeLog()
-{
-	//...
-}
-
-/**
  * 入口函数
  * @param  argc [参数个数]
  * @param  argv [参数字符]
@@ -65,12 +55,10 @@ int main(int argc, const char *argv[])
 		LOG_ERROR("default", "Get AgentConfig instance failed");
 		exit(1);
 	}
-	pConfig->ParseLineConfig(argc, argv);
-
 	pConfig->ParseBaseConfig();
+	pConfig->ParseRouterConfig();
 
-	//初始化日志
-	InitailizeLog();
+	pConfig->ParseLineConfig(argc, argv);
 
 	if (pConfig->mDaemonFlag) 
 	{

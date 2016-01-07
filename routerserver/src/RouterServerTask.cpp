@@ -26,8 +26,9 @@ RouterServerTask::~RouterServerTask()
 
 void RouterServerTask::Initialize()
 {
-	ROUTER_REG_DISP(CMD_RTBL_REQ, RTBL_REQ_RELOAD, &RouterServerTask::ReloadRtblReq);
-	ROUTER_REG_DISP(CMD_RTBL_REQ, RTBL_REQ_INIT, &RouterServerTask::InitRtblReq);
+	ROUTER_REG_DISP(CMD_SVR_REQ, SVR_REQ_INIT, &RouterServerTask::InitSvrReq);
+	ROUTER_REG_DISP(CMD_SVR_REQ, SVR_REQ_RELOAD, &RouterServerTask::ReloadSvrReq);
+	ROUTER_REG_DISP(CMD_SVR_REQ, SVR_REQ_SYNC, &RouterServerTask::SyncSvrReq);
 }
 
 int RouterServerTask::VerifyConn()
@@ -91,81 +92,35 @@ int RouterServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer,
 	return 0;
 }
 
-int RouterServerTask::ReloadRtblReq(char *pBuffer, int iLen)
+int RouterServerTask::InitSvrReq(char *pBuffer, int iLen)
 {
 	RouterConfig *pConfig = RouterConfig::Instance();
-	//RtblReqReload_t *pCmd = (struct RtblReqReload_t* )pBuffer;
 
-	RtblResReload_t vRRt;
-	vRRt.mNum = pConfig->ReloadRtbl(vRRt.mRtbl, 0);
+	SvrResInit_t vRRt;
+	vRRt.mCode = 0;
+	vRRt.mNum = pConfig->GetSvrAll(vRRt.mSvr, 0);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
 
-int RouterServerTask::InitRtblReq(char *pBuffer, int iLen)
+int RouterServerTask::ReloadSvrReq(char *pBuffer, int iLen)
 {
 	RouterConfig *pConfig = RouterConfig::Instance();
-	//RtblReqAll_t *pCmd = (struct RtblReqAll_t* )pBuffer;
 
-	RtblResInit_t vRRt;
-	vRRt.mNum = pConfig->GetRtblAll(vRRt.mRtbl, 0);
+	SvrResReload_t vRRt;
+	vRRt.mCode = 0;
+	vRRt.mNum = pConfig->ReloadSvr(vRRt.mSvr, 0);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
 
-/*
-int RouterServerTask::GetRtblAll(char *pBuffer, int iLen)
+int RouterServerTask::SyncSvrReq(char *pBuffer, int iLen)
 {
 	RouterConfig *pConfig = RouterConfig::Instance();
-	//RtblReqAll_t *pCmd = (struct RtblReqAll_t* )pBuffer;
 
-	RtblResData_t vRRt;
-	vRRt.mNum = pConfig->GetRtblAll(vRRt.mRtbl, 0);
+	SvrResSync_t vRRt;
+	vRRt.mCode = 0;
+	vRRt.mNum = pConfig->SyncSvr(vRRt.mSvr, 0);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
-
-int RouterServerTask::GetRtblById(char *pBuffer, int iLen)
-{
-	RouterConfig *pConfig = RouterConfig::Instance();
-	RtblReqId_t *pCmd = (struct RtblReqId_t* )pBuffer;
-
-	RtblResData_t vRRt;
-	vRRt.mNum = pConfig->GetRtblById(vRRt.mRtbl, pCmd->mId);
-	SyncSend((char *)&vRRt, sizeof(vRRt));
-	return 0;
-}
-
-int RouterServerTask::GetRtblByGid(char *pBuffer, int iLen)
-{
-	RouterConfig *pConfig = RouterConfig::Instance();
-	RtblReqGid_t *pCmd = (struct RtblReqGid_t* )pBuffer;
-	
-	RtblResData_t vRRt;
-	vRRt.mNum = pConfig->GetRtblByGid(vRRt.mRtbl, pCmd->mGid, 1);
-	SyncSend((char *)&vRRt, sizeof(vRRt));
-	return 0;
-}
-
-int RouterServerTask::GetRtblByName(char *pBuffer, int iLen)
-{
-	RouterConfig *pConfig = RouterConfig::Instance();
-	RtblReqName_t *pCmd = (struct RtblReqName_t* )pBuffer;
-	
-	RtblResData_t vRRt;
-	vRRt.mNum = pConfig->GetRtblByName(vRRt.mRtbl, pCmd->mName, 1);
-	SyncSend((char *)&vRRt, sizeof(vRRt));
-	return 0;
-}
-
-int RouterServerTask::GetRtblByGXid(char *pBuffer, int iLen)
-{
-	RouterConfig *pConfig = RouterConfig::Instance();
-	RtblReqGXid_t *pCmd = (struct RtblReqGXid_t* )pBuffer;
-	
-	RtblResData_t vRRt;
-	vRRt.mNum = pConfig->GetRtblByGXid(vRRt.mRtbl, pCmd->mGid, pCmd->mXid, 1);
-	SyncSend((char *)&vRRt, sizeof(vRRt));
-	return 0;
-}
-*/

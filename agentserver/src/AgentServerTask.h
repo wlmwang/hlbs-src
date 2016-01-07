@@ -14,7 +14,7 @@
 #include "wLog.h"
 #include "wTcpTask.h"
 #include "wDispatch.h"
-#include "RtblCommand.h"
+#include "SvrCommand.h"
 
 #define REG_FUNC(ActIdx, vFunc) wDispatch<function<int(char*, int)>, int>::Func_t {ActIdx, std::bind(vFunc, this, std::placeholders::_1, std::placeholders::_2)}
 #define DEC_DISP(dispatch) wDispatch<function<int(char*, int)>, int> dispatch
@@ -38,15 +38,17 @@ class AgentServerTask : public wTcpTask
 		
 		int ParseRecvMessage(struct wCommand* pCommand ,char *pBuffer,int iLen);
 		
-		DEC_FUNC(InitRtblRes);
-		DEC_FUNC(ReloadRtblRes);
-		DEC_FUNC(ReloadRtblReq);
-		DEC_FUNC(GetRtblAll);
-		DEC_FUNC(GetRtblById);
-		DEC_FUNC(GetRtblByGid);
-		DEC_FUNC(GetRtblByName);
-		DEC_FUNC(GetRtblByGXid);
-		DEC_FUNC(SetRtblAttr);
+		DEC_FUNC(ReloadSvrReq);
+		DEC_FUNC(GetSvrAll);
+		DEC_FUNC(GetSvrById);
+		DEC_FUNC(GetSvrByGid);
+		DEC_FUNC(GetSvrByName);
+		DEC_FUNC(GetSvrByGXid);
+		
+		DEC_FUNC(SetSvrAttr);
+
+		DEC_FUNC(ReloadSvrRes);
+		DEC_FUNC(InitSvrRes);
 		
 	protected:
 		DEC_DISP(mDispatch);

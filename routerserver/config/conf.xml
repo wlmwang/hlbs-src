@@ -1,9 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <ROOT>
-	<SERVER>
-		<WORKER IPADDRESS="192.168.8.13" PORT="10006" BACKLOG="1024"/>
-	</SERVER>
+	<SERVER IPADDRESS="192.168.8.13" PORT="10006" BACKLOG="1024" WORKERS="1"/>
 	
 	<LOG>
-		<LOG_INFO KEY="default"	FILE="../log/router_server.log" LEVEL="700" MAX_FILE_SIZE="10M"/>
+		<LOG_INFO KEY="default"	FILE="../log/default.log" LEVEL="700" MAX_FILE_SIZE="10485760"/> <!--10485760 == 10m-->
+		<LOG_INFO KEY="error"	FILE="../log/error.log" LEVEL="700" MAX_FILE_SIZE="10485760"/> <!--10485760 == 10m-->
+		<LOG_INFO KEY="svr"	FILE="../log/svr.log" LEVEL="700" MAX_FILE_SIZE="10485760"/>
+		<LOG_INFO KEY="client"	FILE="../log/client.log" LEVEL="700" MAX_FILE_SIZE="10485760"/>
 	</LOG>
 </ROOT>

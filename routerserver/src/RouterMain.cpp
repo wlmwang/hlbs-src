@@ -9,10 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <errno.h>
 #include <signal.h>
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -20,7 +18,6 @@
 #include "wType.h"
 #include "wLog.h"
 #include "wMisc.h"
-
 #include "RouterServer.h"
 #include "RouterConfig.h"
 
@@ -44,14 +41,6 @@ void Sigusr2Handle(int nSigVal)
 }
 
 /**
- *  初始化日志
- */
-void InitailizeLog()
-{
-	//...
-}
-
-/**
  * 入口函数
  * @param  argc [参数个数]
  * @param  argv [参数字符]
@@ -63,16 +52,13 @@ int main(int argc, const char *argv[])
 	RouterConfig *pConfig = RouterConfig::Instance();
 	if(pConfig == NULL) 
 	{
-		LOG_ERROR("default", "Get RouterConfig instance failed");
+		cout << "Get RouterConfig instance failed" << endl;
 		exit(1);
 	}
-	pConfig->ParseLineConfig(argc, argv);
-
 	pConfig->ParseBaseConfig();
-	pConfig->ParseRtblConfig();
+	pConfig->ParseSvrConfig();
 
-	//初始化日志
-	InitailizeLog();
+	pConfig->ParseLineConfig(argc, argv);
 
 	if (pConfig->mDaemonFlag) 
 	{
@@ -81,7 +67,7 @@ int main(int argc, const char *argv[])
 
 		if (InitDaemon(pFilename) < 0)
 		{
-			LOG_ERROR("default", "Create daemon failed!");
+			LOG_ERROR("error", "Create daemon failed!");
 			exit(1);
 		}
 	}
@@ -90,7 +76,7 @@ int main(int argc, const char *argv[])
     RouterServer *pServer = RouterServer::Instance();
 	if(pServer == NULL) 
 	{
-		LOG_ERROR("default", "Get RouterServer instance failed");
+		LOG_ERROR("error", "Get RouterServer instance failed");
 		exit(1);
 	}
 

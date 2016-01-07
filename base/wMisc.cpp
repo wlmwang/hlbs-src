@@ -71,7 +71,8 @@ int InitDaemon(const char *filename)
 		return -1;		
 	}
 	umask(0);
-
+	
+	unlink(filename);
 	return 0;
 }
 

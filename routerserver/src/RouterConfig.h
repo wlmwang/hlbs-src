@@ -14,8 +14,8 @@
 
 #include "wType.h"
 #include "wConfig.h"
-
-#include "Rtbl.h"
+#include "wLog.h"
+#include "Svr.h"
 
 /**
  * 配置文件读取的数据结构
@@ -26,15 +26,22 @@ class RouterConfig: public wConfig<RouterConfig>
 		char mIPAddr[MAX_IP_LEN];
 		unsigned int mPort;
 		unsigned int mBacklog;
+		unsigned int mWorkers;
 
-		~RouterConfig() {}
+		void Final();
+		virtual ~RouterConfig() 
+		{
+			Final();
+		}
 
 		//初始化
 		void Initialize()
 		{
 			memset(mIPAddr, 0, sizeof(mIPAddr));
 			mPort = 0;
-			mBacklog = 512;
+			mBacklog = 1024;
+			mWorkers = 1;
+			mDoc = new TiXmlDocument();
 		}
 
 		RouterConfig()
@@ -44,29 +51,32 @@ class RouterConfig: public wConfig<RouterConfig>
 		
 		/**
 		 * 解析配置
-		 */		
+		 */
 		void ParseBaseConfig();
 		
 		/**
-		 *  解析Rtbl配置
+		 *  解析Svr配置
 		 */
-		void ParseRtblConfig();
+		void ParseSvrConfig();
 		
-		int ReloadRtbl(Rtbl_t* pBuffer, int iNum = 0);
-		int GetRtblAll(Rtbl_t* pBuffer, int iNum = 0);
-		int GetRtblByName(Rtbl_t* pBuffer, string sName, int iNum = 0);
-		int GetRtblByGid(Rtbl_t* pBuffer, int iGid, int iNum = 0);
-		int GetRtblByGXid(Rtbl_t* pBuffer, int iGid, int iXid, int iNum = 0);
-		int GetRtblById(Rtbl_t* pBuffer, int iId);
+		int ReloadSvr(Svr_t* pBuffer, int iNum = 0);
+		int SyncSvr(Svr_t* pBuffer, int iNum = 0);
+		int GetSvrAll(Svr_t* pBuffer, int iNum = 0);
+		int GetSvrByName(Svr_t* pBuffer, string sName, int iNum = 0);
+		int GetSvrByGid(Svr_t* pBuffer, int iGid, int iNum = 0);
+		int GetSvrByGXid(Svr_t* pBuffer, int iGid, int iXid, int iNum = 0);
+		int GetSvrById(Svr_t* pBuffer, int iId);
 	protected:
-		void FixRtbl();
-		void CleanRtbl();
+		void FixSvr();
+		void CleanSvr();
 		
-		vector<Rtbl_t*> mRtbl;
-		map<int, Rtbl_t*> mRtblById;
-		map<int, vector<Rtbl_t*> > mRtblByGid;
-		map<string, vector<Rtbl_t*> > mRtblByName;
-		map<string, vector<Rtbl_t*> > mRtblByGXid;
+		vector<Svr_t*> mSvr;
+		map<int, Svr_t*> mSvrById;
+		map<int, vector<Svr_t*> > mSvrByGid;
+		map<string, vector<Svr_t*> > mSvrByName;
+		map<string, vector<Svr_t*> > mSvrByGXid;
+
+		TiXmlDocument* mDoc;
 };
 
 #endif

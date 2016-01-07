@@ -16,7 +16,7 @@
 
 #	include	"log4cpp/Category.hh"
 #	include	"log4cpp/RollingFileAppender.hh"
-#	include	"log4cpp/ImadyLayout.hh"
+#	include	"log4cpp/BasicLayout.hh"
 #endif // USE_LOG4CPP
 
 //初始一种类型的日志
@@ -37,7 +37,7 @@ int InitLog(const char* vLogName, const char* vLogDir, LogLevel vPriority, unsig
 		tpCategory->removeAllAppenders ();
 
 		// 2.实例化一个layout 对象
-		log4cpp::Layout* tpLayout = new log4cpp::ImadyLayout();
+		log4cpp::Layout* tpLayout = new log4cpp::BasicLayout();
 		// 3. 初始化一个appender 对象
 		log4cpp::Appender* tpAppender = new log4cpp::RollingFileAppender(vLogName, vLogDir, vMaxFileSize, vMaxBackupIndex, vAppend );
 		// 4. 把layout对象附着在appender对象上
@@ -53,7 +53,7 @@ int InitLog(const char* vLogName, const char* vLogDir, LogLevel vPriority, unsig
 	}
 
 	// 1实例化一个layout 对象
-	log4cpp::Layout* tpLayout = new log4cpp::ImadyLayout();
+	log4cpp::Layout* tpLayout = new log4cpp::BasicLayout();
 	// 2. 初始化一个appender 对象
 	log4cpp::Appender* tpAppender = new log4cpp::RollingFileAppender(vLogName, vLogDir, vMaxFileSize, vMaxBackupIndex, vAppend );
 	// 3. 把layout对象附着在appender对象上
@@ -477,4 +477,3 @@ void Log_bin(const char* vLogName, void* vBin, int vBinLen)
 #endif
 
 }
-

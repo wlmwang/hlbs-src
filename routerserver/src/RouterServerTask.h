@@ -14,7 +14,7 @@
 #include "wLog.h"
 #include "wTcpTask.h"
 #include "wDispatch.h"
-#include "RtblCommand.h"
+#include "SvrCommand.h"
 
 #define REG_FUNC(ActIdx, vFunc) wDispatch<function<int(char*, int)>, int>::Func_t {ActIdx, std::bind(vFunc, this, std::placeholders::_1, std::placeholders::_2)}
 #define DEC_DISP(dispatch) wDispatch<function<int(char*, int)>, int> dispatch
@@ -38,9 +38,10 @@ class RouterServerTask : public wTcpTask
 		
 		int ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen);
 
-		DEC_FUNC(ReloadRtblReq);
-		DEC_FUNC(InitRtblReq);
-
+		DEC_FUNC(InitSvrReq);
+		DEC_FUNC(ReloadSvrReq);
+		DEC_FUNC(SyncSvrReq);	//主动同步svr配置  建议agent只增量、更新、不删除同步（删除可让disabled=1）
+		
 	protected:
 		DEC_DISP(mDispatch);
 };

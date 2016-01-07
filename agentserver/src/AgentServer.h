@@ -17,7 +17,7 @@
 #include "wMTcpClient.h"
 #include "wTcpClient.h"
 #include "AgentServerTask.h"
-#include "BaseCommand.h"
+#include "SvrCommand.h"
 
 class AgentServer: public wTcpServer<AgentServer>
 {
@@ -34,8 +34,8 @@ class AgentServer: public wTcpServer<AgentServer>
 		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
 
 		void ConnectRouter();
-		int InitRtblReq();
-		int ReloadRtblReq();
+		int InitSvrReq();
+		int ReloadSvrReq();
 		
 		wMTcpClient<AgentServerTask>* RouterConn()
 		{

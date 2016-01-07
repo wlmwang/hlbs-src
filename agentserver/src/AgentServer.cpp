@@ -15,7 +15,6 @@
 #include "wMisc.h"
 #include "AgentServer.h"
 #include "AgentConfig.h"
-#include "BaseCommand.h"
 
 AgentServer::AgentServer():wTcpServer<AgentServer>("路由服务器")
 {
@@ -47,21 +46,28 @@ wTcpTask* AgentServer::NewTcpTask(wSocket *pSocket)
 void AgentServer::ConnectRouter()
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	
+	AgentConfig::RouterConf_t* pRconf = pConfig->GetOneRouterConf();
+	if (pRconf == NULL)
+	{
+		//cout << "Get RouterServer Config failed!" <<endl;
+		LOG_ERROR("error", "Get RouterServer Config failed!");
+		exit(1);
+	}
+
 	//mRouterConn
-	bool bRet = mRouterConn->GenerateClient(SERVER_ROUTER, "RouterFromAgent", pConfig->mRouterIPAddr, pConfig->mRouterPort);
+	bool bRet = mRouterConn->GenerateClient(SERVER_ROUTER, "RouterFromAgent", pRconf->mIPAddr, pRconf->mPort);
 	if (!bRet)
 	{
-		cout << "Connect to RouterServer failed! Please start it" <<endl;
-		LOG_ERROR("default", "Connect to RouterServer failed");
+		//cout << "Connect to RouterServer failed! Please start it" <<endl;
+		LOG_ERROR("error", "Connect to RouterServer failed");
 		exit(1);
 	}
 	
 	//发送初始化rtbl配置请求
-	InitRtblReq();
+	InitSvrReq();
 }
 
-int AgentServer::InitRtblReq()
+int AgentServer::InitSvrReq()
 {
 	wMTcpClient<AgentServerTask>* pRouterConn = RouterConn();
 	if(pRouterConn == NULL)
@@ -71,13 +77,13 @@ int AgentServer::InitRtblReq()
 	wTcpClient<AgentServerTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
 	if(pClient != NULL && pClient->TcpTask())
 	{
-		RtblReqInit_t vRtl;
+		SvrReqInit_t vRtl;
 		return pClient->TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	return -1;
 }
 
-int AgentServer::ReloadRtblReq()
+int AgentServer::ReloadSvrReq()
 {
 	wMTcpClient<AgentServerTask>* pRouterConn = RouterConn();
 	if(pRouterConn == NULL)
@@ -87,7 +93,7 @@ int AgentServer::ReloadRtblReq()
 	wTcpClient<AgentServerTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
 	if(pClient != NULL && pClient->TcpTask())
 	{
-		RtblReqReload_t vRtl;
+		SvrReqReload_t vRtl;
 		return pClient->TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	return -1;

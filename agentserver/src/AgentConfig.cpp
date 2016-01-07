@@ -16,61 +16,23 @@
  */
 void AgentConfig::ParseBaseConfig()
 {
-	TiXmlDocument stDoc;
-	bool bLoadOK = stDoc.LoadFile("../config/conf.xml");
+	bool bLoadOK = mDoc->LoadFile("../config/conf.xml");
 	if (!bLoadOK)
 	{
-		printf("Load config file(../config/conf.xml) failed\n");
+		cout << "Load config file(../config/conf.xml) failed" << endl;
 		exit(1);
 	}
 
-	TiXmlElement *pRoot = stDoc.FirstChildElement();
+	TiXmlElement *pRoot = mDoc->FirstChildElement();
 	if (NULL == pRoot)
 	{
-		printf("Read root from config file(../config/conf.xml) failed\n");
+		cout << "Read root from config file(../config/conf.xml) failed" << endl;
 		exit(1);
 	}
-	
+
 	TiXmlElement *pElement = NULL;
 	TiXmlElement *pChildElm = NULL;
-	pElement = pRoot->FirstChildElement("SERVER");
-	if(NULL != pElement)
-	{
-		for(pChildElm = pElement->FirstChildElement(); pChildElm != NULL ; pChildElm = pChildElm->NextSiblingElement())
-		{
-			const char *szIPAddr = pChildElm->Attribute("IPADDRESS");
-			const char *szPort = pChildElm->Attribute("PORT");
-			const char *szBacklog = pChildElm->Attribute("BACKLOG");
 
-			mBacklog = atoi(szBacklog);
-			mPort = atoi(szPort);
-			memcpy(mIPAddr, szIPAddr, MAX_IP_LEN);
-		}
-	}
-	else
-	{
-		printf("Get extranet connect ip and port from config file failed\n");
-		exit(1);
-	}
-
-	pElement = pRoot->FirstChildElement("ROUTER_SERVER");
-	if(NULL != pElement)
-	{
-		for(pChildElm = pElement->FirstChildElement(); pChildElm != NULL ; pChildElm = pChildElm->NextSiblingElement())
-		{
-			const char *szIPAddr = pChildElm->Attribute("IPADDRESS");
-			const char *szPort = pChildElm->Attribute("PORT");
-			
-			mRouterPort = atoi(szPort);
-			memcpy(mRouterIPAddr, szIPAddr, MAX_IP_LEN);
-		}
-	}
-	else
-	{
-		printf("Get extranet connect ip and port from config file failed\n");
-		exit(1);
-	}
-	
 	//读取日志配置
 	pElement = pRoot->FirstChildElement("LOG");
 	if(NULL != pElement)
@@ -81,36 +43,110 @@ void AgentConfig::ParseBaseConfig()
 			const char *szFile = pChildElm->Attribute("FILE");
 			const char *szLevel = pChildElm->Attribute("LEVEL");
 
-			//const char *szMaxFileSize = pChildElm->Attribute("MAX_FILE_SIZE");
-			//long long nMaxFileSize = atoi(szMaxFileSize);
+			if (szKey != NULL && szFile != NULL && szLevel != NULL)
+			{
+				const char *szMaxFileSize = pChildElm->Attribute("MAX_FILE_SIZE");
+				long long nMaxFileSize = szMaxFileSize == NULL ? atoi(szMaxFileSize) : 10*1024*1024;
 
-			//初始化日志
-			INIT_ROLLINGFILE_LOG(szKey, szFile, (LogLevel)atoi(szLevel), 10*1024*1024, 20);
+				INIT_ROLLINGFILE_LOG(szKey, szFile, (LogLevel)atoi(szLevel), nMaxFileSize, 20);
+			}
+			else
+			{
+				cout << "Warning: error log config" << endl;
+			}
 		}
 	}
 	else
 	{
-		printf("Get log configure from config file failed\n");
+		cout << "Get log configure from config file failed" << endl;
 		exit(1);
+	}
+
+	pElement = pRoot->FirstChildElement("SERVER");
+	if(NULL != pElement)
+	{
+		const char *szIPAddr = pElement->Attribute("IPADDRESS");
+		const char *szPort = pElement->Attribute("PORT");
+		const char *szBacklog = pElement->Attribute("BACKLOG");
+		const char *szWorkers = pElement->Attribute("WORKERS");
+		if (szIPAddr != NULL && szPort != NULL)
+		{
+			mPort = atoi(szPort);
+			memcpy(mIPAddr, szIPAddr, MAX_IP_LEN);
+		}
+		else
+		{
+			LOG_ERROR("error", "error ip or port config");
+		}
+		mBacklog = szBacklog != NULL ? atoi(szBacklog): mBacklog;
+		mWorkers = szWorkers != NULL ? atoi(szWorkers): mWorkers;
+	}
+	else
+	{
+		LOG_ERROR("error", "Get Server ip and port from config file failed");
 	}
 }
 
-int AgentConfig::GetRtblAll(Rtbl_t* pBuffer, int iNum)
+void AgentConfig::ParseRouterConfig()
 {
-	vector<Rtbl_t*>::iterator it = mRtbl.begin();
-	if(iNum == 0) iNum = mRtbl.size();
-	for(int i = 0; i < iNum && it != mRtbl.end(); i++, it++)
+	bool bLoadOK = mDoc->LoadFile("../config/router.xml");
+	if (!bLoadOK)
+	{
+		LOG_ERROR("error", "Load config file(../config/router.xml) failed");
+		exit(1);
+	}
+
+	TiXmlElement *pElement = NULL;
+	TiXmlElement *pChildElm = NULL;
+	TiXmlElement *pRoot = mDoc->FirstChildElement();
+	
+	pElement = pRoot->FirstChildElement("ROUTERS");
+	if(pElement != NULL)
+	{
+		int i = 0;
+		for(pChildElm = pElement->FirstChildElement(); pChildElm != NULL ; pChildElm = pChildElm->NextSiblingElement())
+		{
+			const char *szIPAddr = pChildElm->Attribute("IPADDRESS");
+			const char *szPort = pChildElm->Attribute("PORT");
+			const char *szDisabled = pChildElm->Attribute("DISABLED");
+			if (szIPAddr != NULL && szPort != NULL && i < 32)
+			{
+				mRouterConf[i].mPort = atoi(szPort);
+				memcpy(mRouterConf[i].mIPAddr, szIPAddr, MAX_IP_LEN);
+				mRouterConf[i].mDisabled = szDisabled != NULL ? atoi(szDisabled): mRouterConf[i].mDisabled;
+			}
+			else
+			{
+				LOG_ERROR("default", "error server config: line(%d)!", i+1);
+			}
+			i++;
+		}
+	}
+	else
+	{
+		LOG_ERROR("error", "Get server from config file failed");
+		exit(1);
+	}
+	
+	FixSvr();
+}
+
+int AgentConfig::GetSvrAll(Svr_t* pBuffer, int iNum)
+{
+	vector<Svr_t*>::iterator it = mSvr.begin();
+	if(iNum == 0) iNum = mSvr.size();
+	for(int i = 0; i < iNum && it != mSvr.end(); i++, it++)
 	{
 		*(pBuffer+i) = **it;
 	}
 	return iNum;
 }
 
-int AgentConfig::GetRtblById(Rtbl_t* pBuffer, int iId)
+int AgentConfig::GetSvrById(Svr_t* pBuffer, int iId)
 {
 	int iNum = 0;
-	map<int, Rtbl_t*>::iterator it = mRtblById.find(iId);
-	if(it != mRtblById.end())
+	map<int, Svr_t*>::iterator it = mSvrById.find(iId);
+	if(it != mSvrById.end())
 	{
 		iNum = 1;
 		*pBuffer = *(it->second);
@@ -118,17 +154,17 @@ int AgentConfig::GetRtblById(Rtbl_t* pBuffer, int iId)
 	return iNum;
 }
 
-int AgentConfig::GetRtblByGid(Rtbl_t* pBuffer, int iGid, int iNum)
+int AgentConfig::GetSvrByGid(Svr_t* pBuffer, int iGid, int iNum)
 {
-	vector<Rtbl_t*> vRtbl;
-	map<int, vector<Rtbl_t*> >::iterator mn = mRtblByGid.find(iGid);
-	if(mn != mRtblByGid.end())
+	vector<Svr_t*> vSvr;
+	map<int, vector<Svr_t*> >::iterator mn = mSvrByGid.find(iGid);
+	if(mn != mSvrByGid.end())
 	{
-		vRtbl = mn->second;
+		vSvr = mn->second;
 		
-		if(iNum == 0) iNum = vRtbl.size();
-		vector<Rtbl_t*>::iterator it = vRtbl.begin();
-		for(int i = 0; i < iNum && it != vRtbl.end(); i++, it++)
+		if(iNum == 0) iNum = vSvr.size();
+		vector<Svr_t*>::iterator it = vSvr.begin();
+		for(int i = 0; i < iNum && it != vSvr.end(); i++, it++)
 		{
 			*(pBuffer+i) = **it;
 		}
@@ -140,17 +176,17 @@ int AgentConfig::GetRtblByGid(Rtbl_t* pBuffer, int iGid, int iNum)
 	return iNum;
 }
 
-int AgentConfig::GetRtblByName(Rtbl_t* pBuffer, string sName, int iNum)
+int AgentConfig::GetSvrByName(Svr_t* pBuffer, string sName, int iNum)
 {
-	vector<Rtbl_t*> vRtbl;
-	map<string, vector<Rtbl_t*> >::iterator mn = mRtblByName.find(sName);
-	if(mn != mRtblByName.end())
+	vector<Svr_t*> vSvr;
+	map<string, vector<Svr_t*> >::iterator mn = mSvrByName.find(sName);
+	if(mn != mSvrByName.end())
 	{
-		vRtbl = mn->second;
-		if(iNum == 0) iNum = vRtbl.size();
+		vSvr = mn->second;
+		if(iNum == 0) iNum = vSvr.size();
 		
-		vector<Rtbl_t*>::iterator it = vRtbl.begin();
-		for(int i = 0; i < iNum && it != vRtbl.end(); i++, it++)
+		vector<Svr_t*>::iterator it = vSvr.begin();
+		for(int i = 0; i < iNum && it != vSvr.end(); i++, it++)
 		{
 			*(pBuffer+i) = **it;
 		}
@@ -162,21 +198,21 @@ int AgentConfig::GetRtblByName(Rtbl_t* pBuffer, string sName, int iNum)
 	return iNum;
 }
 
-int AgentConfig::GetRtblByGXid(Rtbl_t* pBuffer, int iGid, int iXid, int iNum)
+int AgentConfig::GetSvrByGXid(Svr_t* pBuffer, int iGid, int iXid, int iNum)
 {
 	string sGid = Itos(iGid);
 	string sXid = Itos(iXid);
 	string sGXid = sGid + "-" + sXid;
 	
-	vector<Rtbl_t*> vRtbl;
-	map<string, vector<Rtbl_t*> >::iterator mn = mRtblByGXid.find(sGXid);
-	if(mn != mRtblByGXid.end())
+	vector<Svr_t*> vSvr;
+	map<string, vector<Svr_t*> >::iterator mn = mSvrByGXid.find(sGXid);
+	if(mn != mSvrByGXid.end())
 	{
-		vRtbl = mn->second;
-		if(iNum == 0) iNum = vRtbl.size();
+		vSvr = mn->second;
+		if(iNum == 0) iNum = vSvr.size();
 
-		vector<Rtbl_t*>::iterator it = vRtbl.begin();
-		for(int i = 0; i < iNum && it != vRtbl.end(); i++, it++)
+		vector<Svr_t*>::iterator it = vSvr.begin();
+		for(int i = 0; i < iNum && it != vSvr.end(); i++, it++)
 		{
 			*(pBuffer+i) = **it;
 		}
@@ -188,44 +224,43 @@ int AgentConfig::GetRtblByGXid(Rtbl_t* pBuffer, int iGid, int iXid, int iNum)
 	return iNum;
 }
 
-
-int AgentConfig::InitRtbl(Rtbl_t *pBuffer, int iLen)
+int AgentConfig::InitSvr(Svr_t* pBuffer, int iNum)
 {
-	if (iLen < 0)
+	if (iLen <= 0)
 	{
 		return -1;
 	}
-	
-	CleanRtbl();
+
+	CleanSvr();
 	for(int i = 0; i < iLen ; i++)
 	{
-		mRtbl.push_back(&pBuffer[i]);
+		mSvr.push_back(&pBuffer[i]);
 	}
-	FixRtbl();
+	FixSvr();
 	return 0;
 }
 
-int AgentConfig::ReloadRtbl(Rtbl_t *pBuffer, int iLen)
+int AgentConfig::ReloadSvr(Svr_t *pBuffer, int iLen)
 {
-	return InitRtbl(pBuffer, iLen);
+	return InitSvr(pBuffer, iLen);
 }
 
-BYTE AgentConfig::SetRtblAttr(WORD iId, BYTE iDisabled, WORD iWeight, WORD iTimeline, WORD iConnTime, WORD iTasks, WORD iSuggest)
+BYTE AgentConfig::SetSvrAttr(WORD iId, BYTE iDisabled, WORD iWeight, WORD iTimeline, WORD iConnTime, WORD iTasks, WORD iSuggest)
 {
 	const int SuggestRate = 45;
 	const int TimelineRate = 25;
 	const int ConnTimeRate = 15;
 	const int TasksRate = 5;
 	
-	map<int, Rtbl_t*>::iterator it = mRtblById.find(iId);
-	if(it == mRtblById.end())
+	map<int, Svr_t*>::iterator it = mSvrById.find(iId);
+	if(it == mSvrById.end())
 	{
 		return -1;
 	}
 	
 	if(iDisabled == 1)
 	{
-		return DisabledRtbl(iId);
+		return DisabledSvr(iId);
 	}
 	
 	int iWt = 0;
@@ -238,33 +273,33 @@ BYTE AgentConfig::SetRtblAttr(WORD iId, BYTE iDisabled, WORD iWeight, WORD iTime
 		iWt = (SuggestRate*iSuggest*0.01)+ (TimelineRate*iTimeline*0.01)+ (ConnTimeRate*iConnTime*0.01)+ (TasksRate*iTasks*0.01);
 		iWt = iWt >= 100 ? 100 : iWt;
 	}
-	return SetRtblWeight(iId, iWt);
+	return SetSvrWeight(iId, iWt);
 }
 
-BYTE AgentConfig::DisabledRtbl(WORD iId)
+BYTE AgentConfig::DisabledSvr(WORD iId)
 {
-	vector<Rtbl_t*>::iterator it = mRtbl.begin();
-	for(it; it != mRtbl.end(); it++)
+	vector<Svr_t*>::iterator it = mSvr.begin();
+	for(it; it != mSvr.end(); it++)
 	{
 		if(iId == (*it)->mId)
 		{
 			(*it)->mDisabled = 1;
-			FixRtbl();
+			FixSvr();
 			break;
 		}
 	}
 	return 0;
 }
 
-BYTE AgentConfig::SetRtblWeight(WORD iId, WORD iWeight)
+BYTE AgentConfig::SetSvrWeight(WORD iId, WORD iWeight)
 {
-	vector<Rtbl_t*>::iterator it = mRtbl.begin();
-	for(it; it != mRtbl.end(); it++)
+	vector<Svr_t*>::iterator it = mSvr.begin();
+	for(it; it != mSvr.end(); it++)
 	{
 		if(iId == (*it)->mId)
 		{
 			(*it)->mWeight = iWeight;
-			FixRtbl();
+			FixSvr();
 			break;
 		}
 	}
@@ -272,62 +307,67 @@ BYTE AgentConfig::SetRtblWeight(WORD iId, WORD iWeight)
 }
 
 //整理容器
-void AgentConfig::FixRtbl()
+void AgentConfig::FixSvr()
 {
-	if(mRtbl.size() <= 0) return;
-
-	sort(mRtbl.begin(), mRtbl.end(), GreaterRtbl);//降序排序
+	if(mSvr.size() <= 0) return;
+	sort(mSvr.begin(), mSvr.end(), GreaterSvr);//降序排序
 
 	string sId, sName, sGid, sXid, sGXid;
-	vector<Rtbl_t*> vRtbl;
-	for(vector<Rtbl_t*>::iterator it = mRtbl.begin(); it != mRtbl.end(); it++)
+	vector<Svr_t*> vSvr;
+	for(vector<Svr_t*>::iterator it = mSvr.begin(); it != mSvr.end(); it++)
 	{
 		sId = Itos((*it)->mId); sName = (*it)->mName; sGid = Itos((*it)->mGid); sXid = Itos((*it)->mXid);
 		sGXid = sGid + "-" + sXid;
 		
-		//mRtblById
-		mRtblById.insert(pair<int, Rtbl_t*>((*it)->mId ,*it));
+		//mSvrById
+		mSvrById.insert(pair<int, Svr_t*>((*it)->mId ,*it));
 		
-		//mRtblByGid
-		map<int, vector<Rtbl_t*> >::iterator mg = mRtblByGid.find((*it)->mGid);
-		vRtbl.clear();
-		if(mg != mRtblByGid.end())
+		//mSvrByGid
+		map<int, vector<Svr_t*> >::iterator mg = mSvrByGid.find((*it)->mGid);
+		vSvr.clear();
+		if(mg != mSvrByGid.end())
 		{
-			vRtbl = mg->second;
-			mRtblByGid.erase(mg);
+			vSvr = mg->second;
+			mSvrByGid.erase(mg);
 		}
-		vRtbl.push_back(*it);
-		mRtblByGid.insert(pair<int, vector<Rtbl_t*> >((*it)->mGid, vRtbl));
+		vSvr.push_back(*it);
+		mSvrByGid.insert(pair<int, vector<Svr_t*> >((*it)->mGid, vSvr));
 		
-		//mRtblByName
-		map<string, vector<Rtbl_t*> >::iterator mn = mRtblByName.find(sName);
-		vRtbl.clear();
-		if(mn != mRtblByName.end())
+		//mSvrByName
+		map<string, vector<Svr_t*> >::iterator mn = mSvrByName.find(sName);
+		vSvr.clear();
+		if(mn != mSvrByName.end())
 		{
-			vRtbl = mn->second;
-			mRtblByName.erase(mn);
+			vSvr = mn->second;
+			mSvrByName.erase(mn);
 		}
-		vRtbl.push_back(*it);
-		mRtblByName.insert(pair<string, vector<Rtbl_t*> >(sName, vRtbl));
+		vSvr.push_back(*it);
+		mSvrByName.insert(pair<string, vector<Svr_t*> >(sName, vSvr));
 		
-		//mRtblByGXid
-		map<string, vector<Rtbl_t*> >::iterator mgx = mRtblByGXid.find(sGXid);
-		vRtbl.clear();
-		if(mgx != mRtblByGXid.end())
+		//mSvrByGXid
+		map<string, vector<Svr_t*> >::iterator mgx = mSvrByGXid.find(sGXid);
+		vSvr.clear();
+		if(mgx != mSvrByGXid.end())
 		{
-			vRtbl = mgx->second;
-			mRtblByGXid.erase(mgx);
+			vSvr = mgx->second;
+			mSvrByGXid.erase(mgx);
 		}
-		vRtbl.push_back(*it);
-		mRtblByGXid.insert(pair<string, vector<Rtbl_t*> >(sGXid, vRtbl));		
+		vSvr.push_back(*it);
+		mSvrByGXid.insert(pair<string, vector<Svr_t*> >(sGXid, vSvr));		
 	}
 }
 
-void AgentConfig::CleanRtbl()
+void AgentConfig::CleanSvr()
 {
-	mRtblById.clear();
-	mRtblByGid.clear();
-	mRtblByName.clear();
-	mRtblByGXid.clear();
-	mRtbl.clear();
+	mSvrById.clear();
+	mSvrByGid.clear();
+	mSvrByName.clear();
+	mSvrByGXid.clear();
+	mSvr.clear();
+}
+
+void AgentConfig::Final()
+{
+	CleanSvr();
+	SAFE_DELETE(mDoc);
 }

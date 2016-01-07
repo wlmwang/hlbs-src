@@ -26,7 +26,7 @@ class wConfig : public wSingleton<T>
 		
 		char* mHost;
 		int mPort;
-		
+
 		wConfig()
 		{
 			mShowVersionFlag = 0;
@@ -35,7 +35,9 @@ class wConfig : public wSingleton<T>
 			mHost = 0;
 			mPort = 0;
 		}
-
+		
+		virtual ~wConfig() {}
+		
 		virtual int ParseLineConfig(int argc, const char *argv[])
 		{
 			char *p;

@@ -11,7 +11,7 @@
 
 #pragma pack(1)
 
-//连接类型（对应command中）
+//连接类型
 enum
 {
 	CLIENT_USER = 2,

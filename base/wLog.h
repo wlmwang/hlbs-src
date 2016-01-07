@@ -37,6 +37,7 @@
 #	define INIT_ROLLINGFILE_LOG	
 #	define LOG_SHUTDOWN_ALL		
 #	define LOG_DEBUG
+#	define LOG_NOTICE
 #	define LOG_INFO	
 #	define LOG_WARN
 #	define LOG_ERROR
@@ -86,22 +87,22 @@ int ShutdownAllLog( );
 
 
 //具体日志记录函数，写入创建时关联的文件.
-int LogDebug	( const char* vLogName, const char* vFmt, ... );
-int LogInfo		( const char* vLogName, const char* vFmt, ... );
-int LogNotice	( const char* vLogName, const char* vFmt, ... );
-int LogWarn		( const char* vLogName, const char* vFmt, ... );
-int LogError	( const char* vLogName, const char* vFmt, ... );
-int LogFatal	( const char* vLogName, const char* vFmt, ... );
-int log			( const char* vLogName, int vPriority, const char* vFmt, ... );
+int LogDebug( const char* vLogName, const char* vFmt, ... );
+int LogInfo	( const char* vLogName, const char* vFmt, ... );
+int LogNotice( const char* vLogName, const char* vFmt, ... );
+int LogWarn( const char* vLogName, const char* vFmt, ... );
+int LogError( const char* vLogName, const char* vFmt, ... );
+int LogFatal( const char* vLogName, const char* vFmt, ... );
+int log( const char* vLogName, int vPriority, const char* vFmt, ... );
 
 void Log_bin( const char* vLogName, void* vBin, int vBinLen );
 
-int LogDebug_va	( const char* vLogName, const char* vFmt, va_list ap);
+int LogDebug_va( const char* vLogName, const char* vFmt, va_list ap);
 int LogNotice_va( const char* vLogName, const char* vFmt, va_list ap);
-int LogInfo_va	( const char* vLogName, const char* vFmt, va_list ap );
-int LogWarn_va	( const char* vLogName, const char* vFmt, va_list ap );
-int LogError_va	( const char* vLogName, const char* vFmt, va_list ap );
-int LogFatal_va	( const char* vLogName, const char* vFmt, va_list ap );
-int log_va		( const char* vLogName, int vPriority, const char* vFmt, va_list ap );
+int LogInfo_va( const char* vLogName, const char* vFmt, va_list ap );
+int LogWarn_va( const char* vLogName, const char* vFmt, va_list ap );
+int LogError_va( const char* vLogName, const char* vFmt, va_list ap );
+int LogFatal_va( const char* vLogName, const char* vFmt, va_list ap );
+int log_va( const char* vLogName, int vPriority, const char* vFmt, va_list ap );
 
 #endif // _W_LOG_H_

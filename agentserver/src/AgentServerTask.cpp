@@ -7,7 +7,6 @@
 #include "AgentServer.h" 
 #include "AgentServerTask.h"
 #include "AgentConfig.h"
-
 #include "wAssert.h"
 #include "LoginCommand.h"
 
@@ -28,15 +27,17 @@ AgentServerTask::~AgentServerTask()
 
 void AgentServerTask::Initialize()
 {
-	AGENT_REG_DISP(CMD_RTBL_REQ, RTBL_REQ_RELOAD, &AgentServerTask::ReloadRtblReq);
-	AGENT_REG_DISP(CMD_RTBL_REQ, RTBL_REQ_ALL, &AgentServerTask::GetRtblAll);
-	AGENT_REG_DISP(CMD_RTBL_REQ, RTBL_REQ_ID, &AgentServerTask::GetRtblById);
-	AGENT_REG_DISP(CMD_RTBL_REQ, RTBL_REQ_GID, &AgentServerTask::GetRtblByGid);
-	AGENT_REG_DISP(CMD_RTBL_REQ, RTBL_REQ_NAME, &AgentServerTask::GetRtblByName);
-	AGENT_REG_DISP(CMD_RTBL_REQ, RTBL_REQ_GXID, &AgentServerTask::GetRtblByGXid);
-	AGENT_REG_DISP(CMD_RTBL_RES, RTBL_RES_INIT, &AgentServerTask::InitRtblRes);
-	AGENT_REG_DISP(CMD_RTBL_RES, RTBL_RES_RELOAD, &AgentServerTask::ReloadRtblRes);
-	AGENT_REG_DISP(CMD_RTBL_SET_REQ, RTBL_SET_REQ_ID, &AgentServerTask::SetRtblAttr);
+	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_RELOAD, &AgentServerTask::ReloadSvrReq);
+	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_ALL, &AgentServerTask::GetSvrAll);
+	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_ID, &AgentServerTask::GetSvrById);
+	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_GID, &AgentServerTask::GetSvrByGid);
+	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_NAME, &AgentServerTask::GetSvrByName);
+	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_GXID, &AgentServerTask::GetSvrByGXid);
+
+	AGENT_REG_DISP(CMD_SVR_RES, SVR_RES_INIT, &AgentServerTask::InitSvrRes);
+	AGENT_REG_DISP(CMD_SVR_RES, SVR_RES_RELOAD, &AgentServerTask::ReloadSvrRes);
+
+	AGENT_REG_DISP(CLI_SVR_REQ, SVR_SET_REQ_ID, &AgentServerTask::SetSvrAttr);
 }
 
 int AgentServerTask::VerifyConn()
@@ -101,106 +102,111 @@ int AgentServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, 
 }
 
 //router发来相响应
-int AgentServerTask::InitRtblRes(char *pBuffer, int iLen)
+int AgentServerTask::InitSvrRes(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	RtblResInit_t *pCmd = (struct RtblResInit_t* )pBuffer;
+	SvrResInit_t *pCmd = (struct SvrResInit_t* )pBuffer;
 
-	if (pCmd->mNum > 0) pConfig->InitRtbl(pCmd->mRtbl, pCmd->mNum);
+	if (pCmd->mNum > 0) pConfig->InitSvr(pCmd->mSvr, pCmd->mNum);
 	return 0;
 }
 
 //router发来响应
-int AgentServerTask::ReloadRtblRes(char *pBuffer, int iLen)
+int AgentServerTask::ReloadSvrRes(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	RtblResReload_t *pCmd = (struct RtblResReload_t* )pBuffer;
+	SvrResReload_t *pCmd = (struct SvrResReload_t* )pBuffer;
 
-	if (pCmd->mNum > 0) pConfig->ReloadRtbl(pCmd->mRtbl, pCmd->mNum);
+	if (pCmd->mNum > 0) pConfig->ReloadSvr(pCmd->mSvr, pCmd->mNum);
 	return 0;
 }
 
 //agentcmd发来请求  。需同步reload router
-int AgentServerTask::ReloadRtblReq(char *pBuffer, int iLen)
+int AgentServerTask::ReloadSvrReq(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
 	RtblResReload_t *pCmd = (struct RtblResReload_t* )pBuffer;
 	AgentServer *pServer = AgentServer::Instance();
 	
-	RtblUpdateResData_t vRRt;
-	vRRt.mRes = pServer->ReloadRtblReq();
+	SvrSetResData_t vRRt;
+	vRRt.mCode = pServer->ReloadSvrReq();
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
 
 //agentcmd发来请求
-int AgentServerTask::SetRtblAttr(char *pBuffer, int iLen)
+int AgentServerTask::SetSvrAttr(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	RtblSetReqId_t *pCmd = (struct RtblSetReqId_t* )pBuffer;
+	SvrSetReqId_t *pCmd = (struct SvrSetReqId_t* )pBuffer;
 	
-	RtblUpdateResData_t vRRt;
-	vRRt.mRes = pConfig->SetRtblAttr(pCmd->mId, pCmd->mDisabled, pCmd->mWeight, pCmd->mTimeline, pCmd->mConnTime, pCmd->mTasks,  pCmd->mSuggest);
+	SvrSetResData_t vRRt;
+	vRRt.mCode = pConfig->SetSvrAttr(pCmd->mId, pCmd->mDisabled, pCmd->mWeight, pCmd->mTimeline, pCmd->mConnTime, pCmd->mTasks,  pCmd->mSuggest);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
 
 //agentcmd发来请求
-int AgentServerTask::GetRtblAll(char *pBuffer, int iLen)
+int AgentServerTask::GetSvrAll(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	RtblReqAll_t *pCmd = (struct RtblReqAll_t* )pBuffer;
+	SvrReqAll_t *pCmd = (struct SvrReqAll_t* )pBuffer;
 
-	RtblResData_t vRRt;
-	vRRt.mNum = pConfig->GetRtblAll(vRRt.mRtbl, 0);
+	SvrResData_t vRRt;
+	vRRt.mReqId = pCmd->GetId();
+	vRRt.mNum = pConfig->GetSvrAll(vRRt.mSvr, 0);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
 
 //agentcmd发来请求
-int AgentServerTask::GetRtblById(char *pBuffer, int iLen)
+int AgentServerTask::GetSvrById(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	RtblReqId_t *pCmd = (struct RtblReqId_t* )pBuffer;
+	SvrReqId_t *pCmd = (struct SvrReqId_t* )pBuffer;
 
-	RtblResData_t vRRt;
-	vRRt.mNum = pConfig->GetRtblById(vRRt.mRtbl, pCmd->mId);
+	SvrResData_t vRRt;
+	vRRt.mReqId = pCmd->GetId();
+	vRRt.mNum = pConfig->GetSvrById(vRRt.mSvr, pCmd->mId);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
 
 //agentcmd发来请求
-int AgentServerTask::GetRtblByGid(char *pBuffer, int iLen)
+int AgentServerTask::GetSvrByGid(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	RtblReqGid_t *pCmd = (struct RtblReqGid_t* )pBuffer;
+	SvrReqGid_t *pCmd = (struct SvrReqGid_t* )pBuffer;
 	
-	RtblResData_t vRRt;
-	vRRt.mNum = pConfig->GetRtblByGid(vRRt.mRtbl, pCmd->mGid, 1);
+	SvrResData_t vRRt;
+	vRRt.mReqId = pCmd->GetId();
+	vRRt.mNum = pConfig->GetSvrByGid(vRRt.mSvr, pCmd->mGid, 1);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
 
 //agentcmd发来请求
-int AgentServerTask::GetRtblByName(char *pBuffer, int iLen)
+int AgentServerTask::GetSvrByName(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	RtblReqName_t *pCmd = (struct RtblReqName_t* )pBuffer;
+	SvrReqName_t *pCmd = (struct SvrReqName_t* )pBuffer;
 	
-	RtblResData_t vRRt;
-	vRRt.mNum = pConfig->GetRtblByName(vRRt.mRtbl, pCmd->mName, 1);
+	SvrResData_t vRRt;
+	vRRt.mReqId = pCmd->GetId();
+	vRRt.mNum = pConfig->GetSvrByName(vRRt.mSvr, pCmd->mName, 1);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
 
 //agentcmd发来请求
-int AgentServerTask::GetRtblByGXid(char *pBuffer, int iLen)
+int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	RtblReqGXid_t *pCmd = (struct RtblReqGXid_t* )pBuffer;
+	SvrReqGXid_t *pCmd = (struct SvrReqGXid_t* )pBuffer;
 	
-	RtblResData_t vRRt;
-	vRRt.mNum = pConfig->GetRtblByGXid(vRRt.mRtbl, pCmd->mGid, pCmd->mXid, 1);
+	SvrResData_t vRRt;
+	vRRt.mReqId = pCmd->GetId();
+	vRRt.mNum = pConfig->GetSvrByGXid(vRRt.mSvr, pCmd->mGid, pCmd->mXid, 1);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
