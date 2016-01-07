@@ -4,8 +4,8 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#ifndef _W_SOCKET_H_
-#define _W_SOCKET_H_
+#ifndef _W_SHARE_MEMORY_H_
+#define _W_SHARE_MEMORY_H_
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -20,11 +20,11 @@
 #include "wLog.h"
 #include "wNoncopyable.h"
 
-class wShareMemery : private wNoncopyable
+class wShareMemory : private wNoncopyable
 {
 	public:
-		wShareMemery(const char *filename, int pipeid = 'i', size_t size = MSG_QUEUE_LEN);
-		~wShareMemery();
+		wShareMemory(const char *filename, int pipeid = 'i', size_t size = MSG_QUEUE_LEN);
+		~wShareMemory();
 		
 		char *CreateShareMemory();
 		char *AttachShareMemory();

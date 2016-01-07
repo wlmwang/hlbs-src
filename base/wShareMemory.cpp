@@ -6,14 +6,14 @@
  
 #include "wShareMemory.h"
 
-wShareMemery::wShareMemery(const char *filename, int pipeid = 'i', size_t size)
+wShareMemory::wShareMemory(const char *filename, int pipeid = 'i', size_t size)
 {
 	mFilename = filename;
 	mPipeId = pipeid;
 	mSize = size;
 }
 
-wShareMemery::wShareMemery()
+wShareMemory::wShareMemory()
 {
 	RemoveShareMemory();
 }
@@ -21,6 +21,7 @@ wShareMemery::wShareMemery()
 char *wShareMemory::CreateShareMemory()
 {
 	LOG_DEBUG("default", "try to alloc %lld bytes of share memory", mSize);
+	//open(mFilename,);
 	
 	mKey = ftok(mFilename, mPipeId);
 	if (mKey < 0) 

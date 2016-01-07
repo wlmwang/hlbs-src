@@ -9,6 +9,8 @@
 
 #include "wCommand.h"
 
+#define SVR_SHARE_MEM_PIPE "svr_pipe"
+
 #pragma pack(1)
 
 //连接类型

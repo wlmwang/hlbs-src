@@ -370,4 +370,32 @@ void AgentConfig::Final()
 {
 	CleanSvr();
 	SAFE_DELETE(mDoc);
+	SAFE_DELETE(mInShareMem);
+	SAFE_DELETE(mOutShareMem);
+	SAFE_DELETE(mInMsgQueue);
+	SAFE_DELETE(mOutMsgQueue);
+}
+
+void AgentConfig::Initialize()
+{
+	mPort = 0;
+	mBacklog = 1024;
+	memset(mIPAddr, 0, sizeof(mIPAddr));
+	
+	memset(mRouterIPAddr, 0, sizeof(mRouterIPAddr));
+	memset(mRouterPort, 0, sizeof(mRouterPort));
+	
+	mInShareMem = new wShareMemory(SVR_SHARE_MEM_PIPE, 'i', MSG_QUEUE_LEN);
+	mOutShareMem = new wShareMemory(SVR_SHARE_MEM_PIPE, 'o', MSG_QUEUE_LEN);
+	char * pBuff = NULL;
+	if((pBuff = mInShareMem->CreateShareMemory()) != NULL)
+	{
+		mInMsgQueue = new wMsgQueue();
+		mInMsgQueue->SetBuffer(pBuff, MSG_QUEUE_LEN);
+	}
+	if((pBuff = mOutShareMem->CreateShareMemory()) != NULL)
+	{
+		mOutMsgQueue = new wMsgQueue();
+		mOutMsgQueue->SetBuffer(pBuff, MSG_QUEUE_LEN);
+	}
 }

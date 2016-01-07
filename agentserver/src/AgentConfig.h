@@ -14,6 +14,8 @@
 #include "wType.h"
 #include "wLog.h"
 #include "wSingleton.h"
+#include "wShareMemory.h"
+#include "wMsgQueue.h"
 #include "AgentServer.h"
 #include "SvrCommand.h"
 
@@ -57,15 +59,7 @@ class AgentConfig: public wConfig<AgentConfig>
 		}
 		
 		//初始化
-		void Initialize()
-		{
-			memset(mIPAddr, 0, sizeof(mIPAddr));
-			mPort = 0;
-			mBacklog = 1024;
-			
-			memset(mRouterIPAddr, 0, sizeof(mRouterIPAddr));
-			memset(mRouterPort, 0, sizeof(mRouterPort));
-		}
+		void Initialize();
 
 		AgentConfig()
 		{
@@ -109,6 +103,12 @@ class AgentConfig: public wConfig<AgentConfig>
 		map<string, vector<Svr_t*> > mSvrByGXid;
 
 		TiXmlDocument* mDoc;
+		
+		wShareMemory *mInShareMem;	//输入的消息队列的缓冲区位置
+		wShareMemory *mOutShareMem; //输出的消息队列的缓冲区位置
+		
+		wMsgQueue* mInMsgQueue;	// 输入的消息队列
+		wMsgQueue* mOutMsgQueue;	// 输出的消息队列
 };
 
 #endif

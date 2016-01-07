@@ -52,7 +52,7 @@ class wMsgQueue
 		 * @param  vBufferLen [一次最多取多少字节数据，大多数时刻返回值小于该值，取完一整条消息即可]
 		 * @return            [< 0 出错，= 0 没消息，> 0 消息长度]
 		 */
-		int GetOneMsg(char *pBuffer, int vBufferLen)
+		int Pop(char *pBuffer, int vBufferLen)
 		{
 			W_ASSERT(pBuffer != NULL, return -1);
 			
@@ -141,7 +141,7 @@ class wMsgQueue
 
 		//放入第一个消息，本函数只改变mEndIdx
 		//返回值：= 0表示成功，< 0表示失败
-		int PutOneMsg(char *pBuffer, int vBufferLen)
+		int Push(char *pBuffer, int vBufferLen)
 		{
 			W_ASSERT(pBuffer != NULL || vBufferLen <= 0 || vBufferLen > mQueueSize - MSG_QUEUE_RESERVE_LEN, return -1);
 
