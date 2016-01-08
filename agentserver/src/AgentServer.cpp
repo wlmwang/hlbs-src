@@ -49,7 +49,7 @@ void AgentServer::ConnectRouter()
 	AgentConfig::RouterConf_t* pRconf = pConfig->GetOneRouterConf();
 	if (pRconf == NULL)
 	{
-		LOG_ERROR("error", "Get RouterServer Config failed!");
+		LOG_ERROR("error", "[startup] Get RouterServer Config failed!");
 		exit(1);
 	}
 
@@ -57,10 +57,11 @@ void AgentServer::ConnectRouter()
 	bool bRet = mRouterConn->GenerateClient(SERVER_ROUTER, "RouterFromAgent", pRconf->mIPAddr, pRconf->mPort);
 	if (!bRet)
 	{
-		LOG_ERROR("error", "Connect to RouterServer failed");
+		LOG_ERROR("error", "[startup] Connect to RouterServer failed");
 		exit(1);
 	}
-	
+
+	LOG_ERROR("server", "[connect] Connect to RouterServer success ip(%s) port(%d)", pRconf->mIPAddr, pRconf->mPort);
 	//发送初始化rtbl配置请求
 	InitSvrReq();
 }

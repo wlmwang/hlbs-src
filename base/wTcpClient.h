@@ -275,17 +275,17 @@ void wTcpClient<T>::CheckReconnect()
 		{
 			SetStatus();
 			LOG_INFO("error", "[runtime] disconnect server : out of heartbeat times");
-			LOG_ERROR("server", "[timeout] disconnect server : out of heartbeat times: ip(%s) port(%d)", mTcpTask->Socket()->IPAddr(), mTcpTask->Socket()->Port());
+			LOG_ERROR("server", "[timeout] disconnect server : out of heartbeat times: ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
 		}
 		else if(mTcpTask->Socket() != NULL && mTcpTask->Socket()->SocketFD() < 0)
 		{
 			if (ReConnectToServer() == 0)
 			{
-				LOG_ERROR("server", "[reconnect] success to reconnect : ip(%s) port(%d)", mTcpTask->Socket()->IPAddr(), mTcpTask->Socket()->Port());
+				LOG_ERROR("server", "[reconnect] success to reconnect : ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
 			}
 			else
 			{
-				LOG_ERROR("server", "[reconnect] failed to reconnect : ip(%s) port(%d)", mTcpTask->Socket()->IPAddr(), mTcpTask->Socket()->Port());
+				LOG_ERROR("server", "[reconnect] failed to reconnect : ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
 			}
 		}
 	}

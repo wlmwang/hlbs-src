@@ -38,13 +38,12 @@ class AgentConfig: public wConfig<AgentConfig>
 				mDisabled = 0;
 			}
 		};
+		RouterConf_t mRouterConf[32];
 
 		char mIPAddr[MAX_IP_LEN];
 		unsigned int mPort;
 		unsigned int mBacklog;
 		unsigned int mWorkers;
-
-		RouterConf_t mRouterConf[32];
 
 		RouterConf_t* GetOneRouterConf()
 		{
@@ -72,6 +71,8 @@ class AgentConfig: public wConfig<AgentConfig>
 			Final();
 		}
 		
+		void InitShareMemory();
+
 		/**
 		 * 解析配置
 		 */		

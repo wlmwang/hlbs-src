@@ -6,27 +6,34 @@
  
 #include "wShareMemory.h"
 
-wShareMemory::wShareMemory(const char *filename, int pipeid = 'i', size_t size)
+wShareMemory::wShareMemory(const char *filename, int pipeid, size_t size)
 {
-	mFilename = filename;
 	mPipeId = pipeid;
 	mSize = size;
+	memcpy(mFilename, filename, strlen(filename)+1);
 }
 
-wShareMemory::wShareMemory()
+wShareMemory::~wShareMemory()
 {
 	RemoveShareMemory();
 }
 
 char *wShareMemory::CreateShareMemory()
 {
-	LOG_DEBUG("default", "try to alloc %lld bytes of share memory", mSize);
-	//open(mFilename,);
+	LOG_DEBUG("default", "[runtime] try to alloc %lld bytes of share memory", mSize);
 	
+	int fd = open(mFilename, O_CREAT);
+	if (fd < 0)
+	{
+		LOG_ERROR("error", "[runtime] open file(%s) failed: %s", mFilename, strerror(errno));
+		return 0;
+	}
+	close(fd);
+
 	mKey = ftok(mFilename, mPipeId);
 	if (mKey < 0) 
 	{
-		LOG_ERROR("default", "create memory (ftok) failed: %s", strerror(errno));
+		LOG_ERROR("error", "[runtime] create memory (ftok) failed: %s", strerror(errno));
 		return 0;
 	}
 
@@ -38,11 +45,11 @@ char *wShareMemory::CreateShareMemory()
 	{
 		if (errno != EEXIST) 
 		{
-			LOG_ERROR("default", "Alloc share memory failed: %s", strerror(errno));
+			LOG_ERROR("error", "[runtime] alloc share memory failed: %s", strerror(errno));
 			return 0;
 		}
 
-		LOG_DEBUG("default", "share memory is exist now, try to attach it");
+		LOG_DEBUG("default", "[runtime] share memory is exist now, try to attach it");
 
 		//如果该内存已经被申请，则申请访问控制它
 		mShmId = shmget(mKey, mSize, 0666);
@@ -50,7 +57,7 @@ char *wShareMemory::CreateShareMemory()
 		//如果失败
 		if (mShmId < 0) 
 		{
-			LOG_DEBUG("default", "attach to share memory failed: %s, try to touch it", strerror(errno));
+			LOG_DEBUG("default", "[runtime] attach to share memory failed: %s, try to touch it", strerror(errno));
 			
 			//猜测是否是该内存大小太小，先获取内存ID
 			mShmId = shmget(mKey, 0, 0666);
@@ -58,17 +65,17 @@ char *wShareMemory::CreateShareMemory()
 			//如果失败，则无法操作该内存，只能退出
 			if (mShmId < 0) 
 			{
-				LOG_ERROR("default", "touch to share memory failed: %s", strerror(errno));
+				LOG_ERROR("default", "[runtime] touch to share memory failed: %s", strerror(errno));
 				return 0;
 			}
 			else 
 			{
-				LOG_DEBUG("default", "remove the exist share memory %d", mShmId);
+				LOG_DEBUG("default", "[runtime] remove the exist share memory %d", mShmId);
 
 				//如果成功，则先删除原内存
 				if (shmctl(mShmId, IPC_RMID, NULL) < 0) 
 				{
-					LOG_ERROR("default", "remove share memory failed: %s", strerror(errno));
+					LOG_ERROR("default", "[runtime] remove share memory failed: %s", strerror(errno));
 					return 0;
 				}
 
@@ -76,23 +83,23 @@ char *wShareMemory::CreateShareMemory()
 				mShmId = shmget(mKey, mSize, IPC_CREAT|IPC_EXCL|0666);
 				if (mShmId < 0) 
 				{
-					LOG_ERROR("default", "alloc share memory failed again: %s", strerror(errno));
+					LOG_ERROR("default", "[runtime] alloc share memory failed again: %s", strerror(errno));
 					return 0;
 				}
 			}
 		}
 		else
 		{
-			LOG_DEBUG("default", "attach to share memory succeed");
+			LOG_DEBUG("default", "[runtime] attach to share memory succeed");
 		}
 	}
 
-	LOG_INFO("default", "alloc %lld bytes of share memory succeed", mSize);
+	LOG_INFO("default", "[runtime] alloc %lld bytes of share memory succeed", mSize);
 	
 	mAddr = (char *)shmat(mShmId, NULL, 0);
     if (mAddr == (void *) -1) 
 	{
-		LOG_ERROR("default", "shmat() failed: %s", strerror(errno));
+		LOG_ERROR("error", "[runtime] shmat failed: %s", strerror(errno));
 		return 0;
     }
 	
@@ -117,7 +124,7 @@ char *wShareMemory::AttachShareMemory()
 	}
 
 	// 尝试获取
-	int mShmId = shmget(mKey, size, 0666);
+	int mShmId = shmget(mKey, mSize, 0666);
 	if( mShmId < 0 ) 
 	{
 		LOG_ERROR("default", "attach to share memory failed: %s", strerror(errno));

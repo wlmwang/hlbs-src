@@ -7,6 +7,7 @@
 #ifndef _W_SHARE_MEMORY_H_
 #define _W_SHARE_MEMORY_H_
 
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ipc.h>
@@ -32,7 +33,7 @@ class wShareMemory : private wNoncopyable
 	
 	protected:
 	
-		char* mFilename;
+		char mFilename[64];
 		int mPipeId;
 		size_t mSize;
 		

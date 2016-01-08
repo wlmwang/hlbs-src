@@ -191,7 +191,7 @@ int wMTcpClient<TASK>::InitEpoll()
 	mEpollFD = epoll_create(512); //512
 	if(mEpollFD < 0)
 	{
-		LOG_ERROR("default", "epoll_create failed: %s", strerror(errno));
+		LOG_ERROR("error", "[startup] epoll_create failed: %s", strerror(errno));
 		return -1;
 	}
 	return mEpollFD;
@@ -208,7 +208,7 @@ bool wMTcpClient<TASK>::GenerateClient(int iType, string sClientName, char *vIPA
 			return AddTcpClientPool(iType, pTcpClient);
 		}
 	}
-	LOG_DEBUG("default", "GenerateClient to (%s)server faild!",sClientName.c_str());
+	LOG_DEBUG("error", "[runtime] GenerateClient to (%s)server faild!",sClientName.c_str());
 	return false;
 }
 
@@ -222,7 +222,7 @@ wTcpClient<TASK>* wMTcpClient<TASK>::CreateClient(int iType, string sClientName,
 		pTcpClient->PrepareStart();
 		return pTcpClient;
 	}
-	LOG_DEBUG("default", "connect to (%s)server faild!",sClientName.c_str());
+	LOG_DEBUG("error", "[runtime] connect to (%s)server faild!",sClientName.c_str());
 	SAFE_DELETE(pTcpClient);
 	return NULL;
 }
@@ -281,7 +281,7 @@ int wMTcpClient<TASK>::AddToEpoll(wTcpClient<TASK> *pTcpClient)
 	int iRet = epoll_ctl(mEpollFD, EPOLL_CTL_ADD, iSocketFD, &mEpollEvent);
 	if(iRet < 0)
 	{
-		LOG_ERROR("default", "fd(%d) add into epoll failed: %s", iSocketFD, strerror(errno));
+		LOG_ERROR("error", "[runtime] fd(%d) add into epoll failed: %s", iSocketFD, strerror(errno));
 		return -1;
 	}
 	return 0;
@@ -298,6 +298,7 @@ void wMTcpClient<TASK>::Start(bool bDaemon)
 	} while(IsRunning() && bDaemon);
 }
 
+//心跳
 template <typename TASK>
 void wMTcpClient<TASK>::CheckTimer()
 {
@@ -331,7 +332,7 @@ void wMTcpClient<TASK>::Recv()
 	int iRet = epoll_wait(mEpollFD, &mEpollEventPool[0], mTcpClientCount, mTimeout /*10ms*/);
 	if(iRet < 0)
 	{
-		LOG_ERROR("default", "epoll_wait failed: %s", strerror(errno));
+		LOG_ERROR("error", "[runtime] epoll_wait failed: %s", strerror(errno));
 		return;
 	}
 	for(int i = 0 ; i < iRet ; i++)
@@ -342,7 +343,8 @@ void wMTcpClient<TASK>::Recv()
 		
 		if(pTask->Socket()->SocketFD() < 0)
 		{
-			LOG_ERROR("default", "socketfd error fd(%d): %s, close it", pTask->Socket()->SocketFD(), strerror(errno));
+			LOG_ERROR("error", "[runtime] socketfd error fd(%d): %s, close it", pTask->Socket()->SocketFD(), strerror(errno));
+			LOG_ERROR("server", "[disconnect] socketfd error(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
 			if (RemoveEpoll(pClient) >= 0)
 			{
 				RemoveTcpClientPool(iType, pClient);
@@ -351,7 +353,8 @@ void wMTcpClient<TASK>::Recv()
 		}
 		if (mEpollEventPool[i].events & (EPOLLERR | EPOLLPRI))
 		{
-			LOG_ERROR("default", "epoll event recv error from fd(%d): %s, close it", pTask->Socket()->SocketFD(), strerror(errno));
+			LOG_ERROR("error", "[runtime] epoll event recv error from fd(%d): %s, close it", pTask->Socket()->SocketFD(), strerror(errno));
+			LOG_ERROR("server", "[disconnect] epoll event recv error(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
 			if (RemoveEpoll(pClient) >= 0)
 			{
 				RemoveTcpClientPool(iType, pClient);
@@ -366,7 +369,8 @@ void wMTcpClient<TASK>::Recv()
 				//套接口准备好了读取操作
 				if (pTask->ListeningRecv() <= 0)
 				{
-					LOG_ERROR("default", "EPOLLIN(read) failed or server-socket closed: %s", strerror(errno));
+					LOG_ERROR("error", "[runtime] EPOLLIN(read) failed or server-socket closed: %s", strerror(errno));
+					LOG_ERROR("server", "[disconnect] EPOLLIN(read) failed or socket closed(%s):ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
 					if (RemoveEpoll(pClient) >= 0)
 					{
 						RemoveTcpClientPool(iType, pClient);
@@ -378,7 +382,8 @@ void wMTcpClient<TASK>::Recv()
 				//套接口准备好了写入操作
 				if (pTask->ListeningSend() < 0)
 				{
-					LOG_ERROR("default", "EPOLLOUT(write) failed: %s", strerror(errno));
+					LOG_ERROR("error", "[runtime] EPOLLOUT(write) failed: %s", strerror(errno));
+					LOG_ERROR("server", "[disconnect] EPOLLOUT(write) failed(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
 					if (RemoveEpoll(pClient) >= 0)
 					{
 						RemoveTcpClientPool(iType, pClient);
@@ -396,7 +401,7 @@ int wMTcpClient<TASK>::RemoveEpoll(wTcpClient<TASK> *pTcpClient)
 	mEpollEvent.data.fd = iSocketFD;
 	if(epoll_ctl(mEpollFD, EPOLL_CTL_DEL, iSocketFD, &mEpollEvent) < 0)
 	{
-		LOG_ERROR("default", "epoll remove socket fd(%d) error : %s", iSocketFD, strerror(errno));
+		LOG_ERROR("error", "[runtime] epoll remove socket fd(%d) error : %s", iSocketFD, strerror(errno));
 		return -1;
 	}
 	return 0;

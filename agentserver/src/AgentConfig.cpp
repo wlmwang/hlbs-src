@@ -226,13 +226,13 @@ int AgentConfig::GetSvrByGXid(Svr_t* pBuffer, int iGid, int iXid, int iNum)
 
 int AgentConfig::InitSvr(Svr_t* pBuffer, int iNum)
 {
-	if (iLen <= 0)
+	if (iNum <= 0)
 	{
 		return -1;
 	}
 
 	CleanSvr();
-	for(int i = 0; i < iLen ; i++)
+	for(int i = 0; i < iNum ; i++)
 	{
 		mSvr.push_back(&pBuffer[i]);
 	}
@@ -240,9 +240,9 @@ int AgentConfig::InitSvr(Svr_t* pBuffer, int iNum)
 	return 0;
 }
 
-int AgentConfig::ReloadSvr(Svr_t *pBuffer, int iLen)
+int AgentConfig::ReloadSvr(Svr_t *pBuffer, int iNum)
 {
-	return InitSvr(pBuffer, iLen);
+	return InitSvr(pBuffer, iNum);
 }
 
 BYTE AgentConfig::SetSvrAttr(WORD iId, BYTE iDisabled, WORD iWeight, WORD iTimeline, WORD iConnTime, WORD iTasks, WORD iSuggest)
@@ -380,11 +380,14 @@ void AgentConfig::Initialize()
 {
 	mPort = 0;
 	mBacklog = 1024;
+	mWorkers = 1;
 	memset(mIPAddr, 0, sizeof(mIPAddr));
-	
-	memset(mRouterIPAddr, 0, sizeof(mRouterIPAddr));
-	memset(mRouterPort, 0, sizeof(mRouterPort));
-	
+	memset(mRouterConf, 0, sizeof(mRouterConf));
+	mDoc = new TiXmlDocument();
+}
+
+void AgentConfig::InitShareMemory()
+{
 	mInShareMem = new wShareMemory(SVR_SHARE_MEM_PIPE, 'i', MSG_QUEUE_LEN);
 	mOutShareMem = new wShareMemory(SVR_SHARE_MEM_PIPE, 'o', MSG_QUEUE_LEN);
 	char * pBuff = NULL;
@@ -393,9 +396,17 @@ void AgentConfig::Initialize()
 		mInMsgQueue = new wMsgQueue();
 		mInMsgQueue->SetBuffer(pBuff, MSG_QUEUE_LEN);
 	}
+	else
+	{
+		LOG_ERROR("error","[runtime] Create (In) Share Memory failed");
+	}
 	if((pBuff = mOutShareMem->CreateShareMemory()) != NULL)
 	{
 		mOutMsgQueue = new wMsgQueue();
 		mOutMsgQueue->SetBuffer(pBuff, MSG_QUEUE_LEN);
+	}
+	else
+	{
+		LOG_ERROR("error","[runtime] Create (Out) Share Memory failed");
 	}
 }

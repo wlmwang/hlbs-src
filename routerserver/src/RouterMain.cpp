@@ -88,7 +88,7 @@ int main(int argc, const char *argv[])
 	signal(SIGUSR2, Sigusr2Handle);
 	
 	//服务器开始运行
-	LOG_INFO("default", "[runtime] RouterServer start succeed");
+	LOG_INFO("default", "[startup] RouterServer start succeed");
 	pServer->Start();
 
 	LOG_SHUTDOWN_ALL;

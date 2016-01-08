@@ -52,13 +52,14 @@ int main(int argc, const char *argv[])
 	AgentConfig *pConfig = AgentConfig::Instance();
 	if(pConfig == NULL) 
 	{
-		LOG_ERROR("error", "Get AgentConfig instance failed");
+		cout << "Get AgentConfig instance failed" << endl;
 		exit(1);
 	}
 	pConfig->ParseBaseConfig();
 	pConfig->ParseRouterConfig();
-
 	pConfig->ParseLineConfig(argc, argv);
+
+	pConfig->InitShareMemory();
 
 	if (pConfig->mDaemonFlag) 
 	{
@@ -67,7 +68,7 @@ int main(int argc, const char *argv[])
 
 		if (InitDaemon(pFilename) < 0)
 		{
-			LOG_ERROR("error", "Create daemon failed!");
+			LOG_ERROR("error", "[startup] Create daemon failed!");
 			exit(1);
 		}
 	}
@@ -76,7 +77,7 @@ int main(int argc, const char *argv[])
     AgentServer *pServer = AgentServer::Instance();
 	if(pServer == NULL) 
 	{
-		LOG_ERROR("error", "Get AgentServer instance failed");
+		LOG_ERROR("error", "[startup] Get AgentServer instance failed");
 		exit(1);
 	}
 
@@ -88,7 +89,7 @@ int main(int argc, const char *argv[])
 	signal(SIGUSR2, Sigusr2Handle);
 	
 	//服务器开始运行
-	LOG_INFO("default", "AgentServer start succeed");
+	LOG_INFO("default", "[startup] AgentServer start succeed");
 	pServer->Start();
 
 	LOG_SHUTDOWN_ALL;

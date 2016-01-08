@@ -5,6 +5,8 @@
  */
 
 #include <iostream>
+#include <algorithm>
+
 #include "wType.h"
 #include "wMisc.h"
 #include "tinyxml.h"	//lib tinyxml

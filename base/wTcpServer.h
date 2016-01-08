@@ -218,7 +218,7 @@ void wTcpServer<T>::CleanTaskPool()
 template <typename T>
 void wTcpServer<T>::PrepareStart(string sIpAddr ,unsigned int nPort)
 {
-	LOG_INFO("default", "[runtime] Server Prepare start succeed");
+	LOG_INFO("default", "[startup] Server Prepare start succeed");
 	
 	//初始化epoll
 	if(InitEpoll() < 0)
@@ -299,7 +299,7 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	}
 	if(getsockopt(iSocketFD, SOL_SOCKET, SO_SNDBUF, (void *)&iOptVal, (socklen_t *)&iOptLen) >= 0)
 	{
-		LOG_DEBUG("error", "[startup] Set send buffer to %d", iOptVal);
+		LOG_DEBUG("default", "[startup] Set send buffer to %d", iOptVal);
 	}
 
 	//listen
@@ -377,7 +377,7 @@ int wTcpServer<T>::AddToTaskPool(wTcpTask* pTcpTask)
 	{
 		mEpollEventPool.reserve(mTaskCount * 2);
 	}
-	LOG_INFO("default", "[runtime] fd(%d) add into task pool failed: %s", pTcpTask->Socket()->SocketFD(), strerror(errno));
+	//LOG_INFO("default", "[runtime] fd(%d) add into task pool", pTcpTask->Socket()->SocketFD());
 	return 0;
 }
 
@@ -412,7 +412,7 @@ void wTcpServer<T>::Recv()
 		if(iSocketFD < 0)
 		{
 			LOG_ERROR("error", "[runtime] socketfd error fd(%d): %s, close it", iSocketFD, strerror(errno));
-			LOG_ERROR("client", "[disconnect] socketfd error(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr(), pTask->Socket()->Port());
+			LOG_ERROR("client", "[disconnect] socketfd error(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -422,7 +422,7 @@ void wTcpServer<T>::Recv()
 		if (!pTask->IsRunning())	//多数是超时设置
 		{
 			LOG_ERROR("error", "[runtime] task status is quit, fd(%d): %s, close it", iSocketFD, strerror(errno));
-			LOG_ERROR("client", "[disconnect] task status is quit(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr(), pTask->Socket()->Port());
+			LOG_ERROR("client", "[disconnect] task status is quit(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -432,7 +432,7 @@ void wTcpServer<T>::Recv()
 		if (mEpollEventPool[i].events & (EPOLLERR | EPOLLPRI))	//出错
 		{
 			LOG_ERROR("error", "[runtime] epoll event recv error from fd(%d): %s, close it", iSocketFD, strerror(errno));
-			LOG_ERROR("client", "[disconnect] epoll event recv error(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr(), pTask->Socket()->Port());
+			LOG_ERROR("client", "[disconnect] epoll event recv error(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -455,7 +455,7 @@ void wTcpServer<T>::Recv()
 				if (pTask->ListeningRecv() <= 0)	//==0主动断开
 				{
 					LOG_ERROR("error", "[runtime] EPOLLIN(read) failed or socket closed: %s", strerror(errno));
-					LOG_ERROR("client", "[disconnect] EPOLLIN(read) failed or socket closed(%s):ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr(), pTask->Socket()->Port());
+					LOG_ERROR("client", "[disconnect] EPOLLIN(read) failed or socket closed(%s):ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
 					if (RemoveEpoll(pTask) >= 0)
 					{
 						RemoveTaskPool(pTask);
@@ -468,7 +468,7 @@ void wTcpServer<T>::Recv()
 				if (pTask->ListeningSend() < 0)	//写入失败，半连接
 				{
 					LOG_ERROR("error", "[runtime] EPOLLOUT(write) failed: %s", strerror(errno));
-					LOG_ERROR("client", "[disconnect] EPOLLOUT(write) failed(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr(), pTask->Socket()->Port());
+					LOG_ERROR("client", "[disconnect] EPOLLOUT(write) failed(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
 					if (RemoveEpoll(pTask) >= 0)
 					{
 						RemoveTaskPool(pTask);
@@ -508,7 +508,7 @@ int wTcpServer<T>::AcceptConn()
 	{
 		if(getsockopt(iNewSocketFD, SOL_SOCKET, SO_SNDBUF, (void *)&iOptVal, (socklen_t *)&iOptLen) >= 0 )
 		{
-			LOG_DEBUG("error", "[runtime] set send buffer to %d", iOptVal);
+			LOG_DEBUG("default", "[runtime] set send buffer to %d", iOptVal);
 		}
 	}
 	
@@ -541,7 +541,7 @@ int wTcpServer<T>::AcceptConn()
 		{
 			AddToTaskPool(mTcpTask);
 		}
-		LOG_ERROR("client", "[connect] client connect succeed: ip(%s) port(%d)", mTcpTask->Socket()->IPAddr(), mTcpTask->Socket()->Port());
+		LOG_ERROR("client", "[connect] client connect succeed: ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
 	}
 	return iNewSocketFD;
 }

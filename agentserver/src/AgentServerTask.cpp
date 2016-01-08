@@ -50,11 +50,11 @@ int AgentServerTask::VerifyConn()
 		LoginReqToken_t *pLoginRes = (LoginReqToken_t*) pBuffer;
 		if (strcmp(pLoginRes->mToken, "Anny") == 0)
 		{
-			LOG_ERROR("client", "[verify] receive client and verify success from ip(%s) port(%d) with token(%s)", Socket()->IPAddr(), Socket()->Port(), pLoginRes->mToken);
+			LOG_ERROR("client", "[verify] receive client and verify success from ip(%s) port(%d) with token(%s)", Socket()->IPAddr().c_str(), Socket()->Port(), pLoginRes->mToken);
 			mConnType = pLoginRes->mConnType;
 			return 0;
 		}
-		LOG_ERROR("client", "[verify] receive client and verify failed from ip(%s) port(%d) with token(%s)", Socket()->IPAddr(), Socket()->Port(), pLoginRes->mToken);
+		LOG_ERROR("client", "[verify] receive client and verify failed from ip(%s) port(%d) with token(%s)", Socket()->IPAddr().c_str(), Socket()->Port(), pLoginRes->mToken);
 	}
 	return -1;
 }
@@ -127,7 +127,7 @@ int AgentServerTask::ReloadSvrRes(char *pBuffer, int iLen)
 int AgentServerTask::ReloadSvrReq(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	RtblResReload_t *pCmd = (struct RtblResReload_t* )pBuffer;
+	SvrResReload_t *pCmd = (struct SvrResReload_t* )pBuffer;
 	AgentServer *pServer = AgentServer::Instance();
 	
 	SvrSetResData_t vRRt;
