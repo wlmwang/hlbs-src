@@ -27,35 +27,35 @@ struct SvrReqCmd_s : public wCommand
 };
 
 //agent主动初始化请求
-const BYTE SVR_REQ_INIT = 1;
+const BYTE SVR_REQ_INIT = 0;
 struct SvrReqInit_t : SvrReqCmd_s 
 {
 	SvrReqInit_t() : SvrReqCmd_s(SVR_REQ_INIT) {}
 };
 
 //router重新读取配置（agent重读配置由初始化请求替代）
-const BYTE SVR_REQ_RELOAD = 2;
+const BYTE SVR_REQ_RELOAD = 1;
 struct SvrReqReload_t : SvrReqCmd_s 
 {
 	SvrReqReload_t() : SvrReqCmd_s(SVR_REQ_RELOAD) {}
 };
 
 //router主动下发同步svr
-const BYTE SVR_REQ_SYNC = 3;
+const BYTE SVR_REQ_SYNC = 2;
 struct SvrReqSync_t : SvrReqCmd_s 
 {
 	SvrReqSync_t() : SvrReqCmd_s(SVR_REQ_SYNC) {}
 };
 
 //获取全部svr
-const BYTE SVR_REQ_ALL = 4;
+const BYTE SVR_REQ_ALL = 3;
 struct SvrReqAll_t : SvrReqCmd_s 
 {
 	SvrReqAll_t() : SvrReqCmd_s(SVR_REQ_ALL) {}
 };
 
 //根据id获取svr
-const BYTE SVR_REQ_ID = 5;
+const BYTE SVR_REQ_ID = 4;
 struct SvrReqId_t : SvrReqCmd_s 
 {
 	SvrReqId_t() : SvrReqCmd_s(SVR_REQ_ID), mId(0) {}
@@ -64,7 +64,7 @@ struct SvrReqId_t : SvrReqCmd_s
 };
 
 //根据gid获取svr
-const BYTE SVR_REQ_GID = 6;
+const BYTE SVR_REQ_GID = 5;
 struct SvrReqGid_t : SvrReqCmd_s 
 {
 	SvrReqGid_t() : SvrReqCmd_s(SVR_REQ_GID), mGid(0) {}
@@ -73,7 +73,7 @@ struct SvrReqGid_t : SvrReqCmd_s
 };
 
 //根据name获取svr
-const BYTE SVR_REQ_NAME = 7;
+const BYTE SVR_REQ_NAME = 6;
 struct SvrReqName_t : SvrReqCmd_s 
 {
 	SvrReqName_t() : SvrReqCmd_s(SVR_REQ_NAME) 
@@ -84,7 +84,7 @@ struct SvrReqName_t : SvrReqCmd_s
 };
 
 //根据gid、xid获取svr
-const BYTE SVR_REQ_GXID = 8;
+const BYTE SVR_REQ_GXID = 7;
 struct SvrReqGXid_t : SvrReqCmd_s 
 {
 	SvrReqGXid_t() : SvrReqCmd_s(SVR_REQ_GXID), mGid(0),mXid(0) {}
@@ -107,7 +107,7 @@ struct SvrResCmd_s : public wCommand
 };
 
 //初始化返回
-const BYTE SVR_RES_INIT = 1;
+const BYTE SVR_RES_INIT = 0;
 struct SvrResInit_t : SvrResCmd_s 
 {
 	SvrResInit_t() : SvrResCmd_s(SVR_RES_INIT) 
@@ -120,7 +120,7 @@ struct SvrResInit_t : SvrResCmd_s
 };
 
 //重载返回
-const BYTE SVR_RES_RELOAD = 2;
+const BYTE SVR_RES_RELOAD = 1;
 struct SvrResReload_t : SvrResCmd_s 
 {
 	SvrResReload_t() : SvrResCmd_s(SVR_RES_RELOAD) 
@@ -133,7 +133,7 @@ struct SvrResReload_t : SvrResCmd_s
 };
 
 //同步返回
-const BYTE SVR_RES_SYNC = 3;
+const BYTE SVR_RES_SYNC = 2;
 struct SvrResSync_t : SvrResCmd_s 
 {
 	SvrResSync_t() : SvrResCmd_s(SVR_RES_SYNC) 
@@ -146,7 +146,7 @@ struct SvrResSync_t : SvrResCmd_s
 };
 
 //获取svr请求返回数据，包括all|id|name|gid/xid
-const BYTE SVR_RES_DATA = 4;
+const BYTE SVR_RES_DATA = 3;
 struct SvrResData_t : SvrResCmd_s 
 {
 	SvrResData_t() : SvrResCmd_s(SVR_RES_DATA) 
@@ -173,7 +173,7 @@ struct SvrReqCli_s : public wCommand
 	}
 };
 
-const BYTE SVR_SET_REQ_ID = 1;
+const BYTE SVR_SET_REQ_ID = 0;
 struct SvrSetReqId_t : SvrReqCli_s 
 {
 	SvrSetReqId_t() : SvrReqCli_s(SVR_SET_REQ_ID)
@@ -208,7 +208,7 @@ struct SvrResCli_s : public wCommand
 	short mCode;
 };
 
-const BYTE SVR_SET_RES_DATA = 1;
+const BYTE SVR_SET_RES_DATA = 0;
 struct SvrSetResData_t : SvrResCli_s 
 {
 	SvrSetResData_t() : SvrResCli_s(SVR_SET_RES_DATA) {}

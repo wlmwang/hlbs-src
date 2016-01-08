@@ -12,7 +12,7 @@
 
 #pragma pack(1)
 
-//请求数据结构
+//++++++++++++请求数据结构
 const BYTE CMD_LOGIN_REQ = 1;
 struct LoginReqCmd_s : public wCommand
 {
@@ -23,7 +23,7 @@ struct LoginReqCmd_s : public wCommand
 	}
 };
 
-const BYTE LOGIN_REQ_TOKEN = 1;
+const BYTE LOGIN_REQ_TOKEN = 0;
 struct LoginReqToken_t : LoginReqCmd_s 
 {
 	LoginReqToken_t() : LoginReqCmd_s(LOGIN_REQ_TOKEN)
@@ -35,7 +35,7 @@ struct LoginReqToken_t : LoginReqCmd_s
 };
 
 
-//返回
+//++++++++++++返回
 const BYTE CMD_LOGIN_RES = 2;
 struct LoginResCmd_s : public wCommand
 {
@@ -46,7 +46,7 @@ struct LoginResCmd_s : public wCommand
 	}
 };
 
-const BYTE LOGIN_RES_STATUS = 1;
+const BYTE LOGIN_RES_STATUS = 0;
 struct LoginResStatus_t : LoginResCmd_s 
 {
 	LoginResStatus_t() : LoginResCmd_s(LOGIN_RES_STATUS)
