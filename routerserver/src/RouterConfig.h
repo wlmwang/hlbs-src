@@ -7,10 +7,12 @@
 #ifndef _ROUTER_CONFIG_H_
 #define _ROUTER_CONFIG_H_
 
+#include <unistd.h>
 #include <string.h>
 #include <string>
 #include <map>
 #include <vector>
+#include <sys/stat.h>
 
 #include "wType.h"
 #include "wConfig.h"
@@ -48,7 +50,11 @@ class RouterConfig: public wConfig<RouterConfig>
 		{
             Initialize();
 		}
-		
+
+		bool IsModTime();
+		int ModifyTime();
+		int GetModSvr(Svr_t* pBuffer, int iNum = 0);
+
 		/**
 		 * 解析配置
 		 */
@@ -76,6 +82,7 @@ class RouterConfig: public wConfig<RouterConfig>
 		map<string, vector<Svr_t*> > mSvrByName;
 		map<string, vector<Svr_t*> > mSvrByGXid;
 
+		time_t mMtime;	//svr.xml 修改时间
 		TiXmlDocument* mDoc;
 };
 

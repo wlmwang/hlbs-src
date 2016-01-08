@@ -52,5 +52,19 @@ void RouterServer::PrepareRun()
 
 void RouterServer::Run()
 {
-	//...
+	CheckModSvr();
+}
+
+void RouterServer::CheckModSvr()
+{
+	RouterConfig *pConfig = RouterConfig::Instance();
+	if (pConfig->IsModTime())
+	{
+		SvrResSync_t vRRt;
+		vRRt.mCode = 0;
+		vRRt.mNum = pConfig->GetModSvr(vRRt.mSvr, 0);
+		//-SyncSend((char *)&vRRt, sizeof(vRRt));
+		//+Bastcast((char *)&vRRt, sizeof(vRRt));
+		pConfig->GetModSvr();
+	}
 }

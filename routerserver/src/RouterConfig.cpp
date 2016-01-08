@@ -17,17 +17,18 @@
  */
 void RouterConfig::ParseBaseConfig()
 {
-	bool bLoadOK = mDoc->LoadFile("../config/conf.xml");
+	const char* filename = "../config/conf.xml";
+	bool bLoadOK = mDoc->LoadFile(filename);
 	if (!bLoadOK)
 	{
-		cout << "[startup] Load config file(../config/conf.xml) failed" << endl;
+		cout << "[startup] Load config file(conf.xml) failed" << endl;
 		exit(1);
 	}
 
 	TiXmlElement *pRoot = mDoc->FirstChildElement();
 	if (NULL == pRoot)
 	{
-		cout << "[startup] Read root from config file(../config/conf.xml) failed" << endl;
+		cout << "[startup] Read root from config file(conf.xml) failed" << endl;
 		exit(1);
 	}
 	
@@ -91,10 +92,11 @@ void RouterConfig::ParseBaseConfig()
 
 void RouterConfig::ParseSvrConfig()
 {
-	bool bLoadOK = mDoc->LoadFile("../config/svr.xml");
+	const char* filename = "../config/svr.xml";
+	bool bLoadOK = mDoc->LoadFile(filename);
 	if (!bLoadOK)
 	{
-		LOG_ERROR("error", "[startup] Load config file(../config/svr.xml) failed");
+		LOG_ERROR("error", "[startup] Load config file(svr.xml) failed");
 		exit(1);
 	}
 
@@ -141,7 +143,8 @@ void RouterConfig::ParseSvrConfig()
 		LOG_ERROR("error", "[startup] Get SVRS node from svr.xml failed");
 		exit(1);
 	}
-	
+	ModifyTime();
+
 	FixSvr();
 }
 
@@ -322,4 +325,100 @@ void RouterConfig::Final()
 {
 	CleanSvr();
 	SAFE_DELETE(mDoc);
+}
+
+int RouterConfig::ModifyTime()
+{
+	const char* filename = "../config/svr.xml";
+	struct stat stBuf;
+	int iRet = stat(filename, &stBuf);
+	if (iRet == 0)
+	{
+		mMtime = stBuf.st_mtime;
+		return mMtime;
+	}
+	return iRet;
+}
+
+bool RouterConfig::IsModTime()
+{
+	const char* filename = "../config/svr.xml";
+	struct stat stBuf;
+	int iRet = stat(filename, &stBuf);
+	if (iRet == 0 && stBuf.st_mtime > mMtime)
+	{
+		return true;
+	}
+	return false;
+}
+
+//todo
+int RouterConfig::GetModSvr(Svr_t* pBuffer, int iNum)
+{
+	const char* filename = "../config/svr.xml";
+	bool bLoadOK = mDoc->LoadFile(filename);
+	if (!bLoadOK)
+	{
+		LOG_ERROR("error", "[modify svr] Load config file(svr.xml) failed");
+		return -1;
+	}
+
+	TiXmlElement *pElement = NULL;
+	TiXmlElement *pChildElm = NULL;
+	TiXmlElement *pRoot = mDoc->FirstChildElement();
+	
+	pElement = pRoot->FirstChildElement("SVRS");
+	if(pElement != NULL)
+	{
+		int i = 0;
+		for(pChildElm = pElement->FirstChildElement(); pChildElm != NULL ; pChildElm = pChildElm->NextSiblingElement())
+		{
+			i++;
+			const char *szId = pChildElm->Attribute("ID");
+			const char *szGid = pChildElm->Attribute("GID");
+			const char *szXid = pChildElm->Attribute("XID");
+			const char *szName = pChildElm->Attribute("NAME");
+			const char *szIPAddr = pChildElm->Attribute("IPADDRESS");
+			const char *szPort = pChildElm->Attribute("PORT");
+			const char *szDisabled = pChildElm->Attribute("DISABLED");
+			const char *szWeight = pChildElm->Attribute("WEIGHT");
+			if (szId != NULL && szGid != NULL && szXid != NULL && (szName != NULL && (strlen(szName) < MAX_SVR_NAME_LEN || strlen(szName) >= MIN_SVR_NAME_LEN)) && szIPAddr != NULL && szPort != NULL)
+			{
+				Svr_t *pSvr = new Svr_t();
+				pSvr->mId = atoi(szId);
+				pSvr->mGid = atoi(szGid);
+				pSvr->mXid = atoi(szXid);
+				pSvr->mPort = atoi(szPort);
+				pSvr->mWeight = szWeight != NULL ? atoi(szWeight): 0;
+				pSvr->mDisabled = szDisabled != NULL ? atoi(szDisabled) : 0;
+				memcpy(pSvr->mName, szName, MAX_SVR_NAME_LEN);
+				memcpy(pSvr->mIp, szIPAddr, MAX_SVR_IP_LEN);
+				//mSvr.push_back(pSvr);
+			}
+			else
+			{
+				LOG_ERROR("svr", "[modify svr] Parse svr config from svr.xml occur error: line(%d)!", i);
+			}
+		}
+	}
+	else
+	{
+		LOG_ERROR("error", "[modify svr] Get SVRS node from svr.xml failed");
+		return -1;
+	}
+	ModifyTime();
+
+	/*
+	vector<Svr_t*>::iterator it = mSvr.begin();
+	if(iNum == 0) iNum = mSvr.size();
+	for(int i = 0; i < iNum && it != mSvr.end(); i++, it++)
+	{
+		//if ((*it)->)
+		{
+			//
+		}
+		//*(pBuffer+i) = **it;
+	}
+	*/
+	return iNum;
 }
