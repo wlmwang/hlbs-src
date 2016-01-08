@@ -41,13 +41,16 @@ int RouterServerTask::VerifyConn()
 		LoginReqToken_t *pLoginRes = (LoginReqToken_t*) pBuffer;
 		if (strcmp(pLoginRes->mToken, "Anny") == 0)
 		{
+			LOG_ERROR("client", "[verify] receive client and verify success from ip(%s) port(%d) with token(%s)", Socket()->IPAddr(), Socket()->Port(), pLoginRes->mToken);
 			mConnType = pLoginRes->mConnType;
 			return 0;
 		}
+		LOG_ERROR("client", "[verify] receive client and verify failed from ip(%s) port(%d) with token(%s)", Socket()->IPAddr(), Socket()->Port(), pLoginRes->mToken);
 	}
 	return -1;
 }
 
+//发送登录验证
 int RouterServerTask::Verify()
 {
 	//验证登录
@@ -86,7 +89,7 @@ int RouterServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer,
 		}
 		else
 		{
-			LOG_DEBUG("default", "client fd(%d) send a invalid msg id(%u)", mSocket->SocketFD(), pCommand->GetId());
+			LOG_DEBUG("default", "[runtime] client fd(%d) send a invalid msg id(%u)", mSocket->SocketFD(), pCommand->GetId());
 		}
 	}
 	return 0;

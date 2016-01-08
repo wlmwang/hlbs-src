@@ -18,14 +18,14 @@ void RouterConfig::ParseBaseConfig()
 	bool bLoadOK = mDoc->LoadFile("../config/conf.xml");
 	if (!bLoadOK)
 	{
-		cout << "Load config file(../config/conf.xml) failed" << endl;
+		cout << "[startup] Load config file(../config/conf.xml) failed" << endl;
 		exit(1);
 	}
 
 	TiXmlElement *pRoot = mDoc->FirstChildElement();
 	if (NULL == pRoot)
 	{
-		cout << "Read root from config file(../config/conf.xml) failed" << endl;
+		cout << "[startup] Read root from config file(../config/conf.xml) failed" << endl;
 		exit(1);
 	}
 	
@@ -51,13 +51,13 @@ void RouterConfig::ParseBaseConfig()
 			}
 			else
 			{
-				cout << "Warning: error log config" << endl;
+				cout << "[startup] Get log config from conf.xml error" << endl;
 			}
 		}
 	}
 	else
 	{
-		cout << "Get log configure from config file failed" << endl;
+		cout << "[startup] Get log config from conf.xml failed" << endl;
 		exit(1);
 	}
 
@@ -75,14 +75,15 @@ void RouterConfig::ParseBaseConfig()
 		}
 		else
 		{
-			LOG_ERROR("error", "error ip or port config");
+			LOG_ERROR("error", "[startup] Get SERVER ip or port from conf.xml failed");
 		}
 		mBacklog = szBacklog != NULL ? atoi(szBacklog): mBacklog;
 		mWorkers = szWorkers != NULL ? atoi(szWorkers): mWorkers;
 	}
 	else
 	{
-		LOG_ERROR("error", "Get Server ip and port from config file failed");
+		LOG_ERROR("error", "[startup] Get SERVER node from conf.xml failed");
+		exit(1);
 	}
 }
 
@@ -91,7 +92,7 @@ void RouterConfig::ParseSvrConfig()
 	bool bLoadOK = mDoc->LoadFile("../config/svr.xml");
 	if (!bLoadOK)
 	{
-		LOG_ERROR("error", "Load config file(../config/svr.xml) failed");
+		LOG_ERROR("error", "[startup] Load config file(../config/svr.xml) failed");
 		exit(1);
 	}
 
@@ -129,13 +130,13 @@ void RouterConfig::ParseSvrConfig()
 			}
 			else
 			{
-				LOG_ERROR("svr", "error svr config: line(%d)!", i);
+				LOG_ERROR("svr", "[startup] Parse svr config from svr.xml occur error: line(%d)!", i);
 			}
 		}
 	}
 	else
 	{
-		LOG_ERROR("error", "Get svr from config file failed");
+		LOG_ERROR("error", "[startup] Get SVRS node from svr.xml failed");
 		exit(1);
 	}
 	

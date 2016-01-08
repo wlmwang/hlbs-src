@@ -67,7 +67,7 @@ int main(int argc, const char *argv[])
 
 		if (InitDaemon(pFilename) < 0)
 		{
-			LOG_ERROR("error", "Create daemon failed!");
+			LOG_ERROR("error", "[startup] Create daemon failed!");
 			exit(1);
 		}
 	}
@@ -76,7 +76,7 @@ int main(int argc, const char *argv[])
     RouterServer *pServer = RouterServer::Instance();
 	if(pServer == NULL) 
 	{
-		LOG_ERROR("error", "Get RouterServer instance failed");
+		LOG_ERROR("error", "[startup] Get RouterServer instance failed");
 		exit(1);
 	}
 
@@ -88,7 +88,7 @@ int main(int argc, const char *argv[])
 	signal(SIGUSR2, Sigusr2Handle);
 	
 	//服务器开始运行
-	LOG_INFO("default", "RouterServer start succeed");
+	LOG_INFO("default", "[runtime] RouterServer start succeed");
 	pServer->Start();
 
 	LOG_SHUTDOWN_ALL;

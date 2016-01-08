@@ -49,7 +49,6 @@ void AgentServer::ConnectRouter()
 	AgentConfig::RouterConf_t* pRconf = pConfig->GetOneRouterConf();
 	if (pRconf == NULL)
 	{
-		//cout << "Get RouterServer Config failed!" <<endl;
 		LOG_ERROR("error", "Get RouterServer Config failed!");
 		exit(1);
 	}
@@ -58,7 +57,6 @@ void AgentServer::ConnectRouter()
 	bool bRet = mRouterConn->GenerateClient(SERVER_ROUTER, "RouterFromAgent", pRconf->mIPAddr, pRconf->mPort);
 	if (!bRet)
 	{
-		//cout << "Connect to RouterServer failed! Please start it" <<endl;
 		LOG_ERROR("error", "Connect to RouterServer failed");
 		exit(1);
 	}

@@ -166,7 +166,7 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 	int iSocketFD = socket(AF_INET, SOCK_STREAM, 0);
 	if( iSocketFD < 0 )
 	{
-		LOG_ERROR("default", "create socket failed: %s", strerror(errno));
+		LOG_ERROR("error", "[runtime] create socket failed: %s", strerror(errno));
 		return -1;
 	}
 
@@ -181,24 +181,25 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 
 	if(setsockopt(iSocketFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) != 0)
 	{
-		LOG_ERROR("default", "set send buffer size to %d failed: %s", iOptVal, strerror(errno));
+		LOG_ERROR("error", "[runtime] set send buffer size to %d failed: %s", iOptVal, strerror(errno));
 		return -1;
 	}
 
 	if(getsockopt(iSocketFD, SOL_SOCKET, SO_SNDBUF, (void *)&iOptVal, &iOptLen) == 0)
 	{
-		LOG_INFO("default", "set send buffer of socket is %d", iOptVal);
+		LOG_INFO("default", "[runtime] set send buffer of socket is %d", iOptVal);
 	}
 	
 	int iRet = connect(iSocketFD, (const struct sockaddr *)&stSockAddr, sizeof(stSockAddr));
 	if( iRet < 0 )
 	{
-		LOG_ERROR("default", "connect to server port(%d) failed: %s", vPort, strerror(errno));
+		LOG_ERROR("error", "[runtime] connect to server port(%d) failed: %s", vPort, strerror(errno));
 		return -1;
 	}
 
-	LOG_INFO("default", "connect to %s:%d successfully", inet_ntoa(stSockAddr.sin_addr), vPort);
-	
+	LOG_INFO("default", "[runtime] connect to %s:%d successfully", inet_ntoa(stSockAddr.sin_addr), vPort);
+	//LOG_INFO("server", "[connect] connect to %s:%d successfully", inet_ntoa(stSockAddr.sin_addr), vPort);
+
 	wSocket* pSocket = new wSocket();
 	pSocket->SocketFD() = iSocketFD;
 	pSocket->IPAddr() = vIPAddress;
@@ -211,14 +212,14 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 	{
 		if (mTcpTask->Verify() < 0 || mTcpTask->VerifyConn() < 0)
 		{
-			LOG_ERROR("default", "connect illegal or verify timeout: %d, close it", iSocketFD);
+			LOG_ERROR("error", "[runtime] connect illegal or verify timeout: %d, close it", iSocketFD);
 			SAFE_DELETE(mTcpTask);
 			return -1;
 		}
 		
 		if(mTcpTask->Socket()->SetNonBlock() < 0) 
 		{
-			LOG_ERROR("default", "set non block failed: %d, close it", iSocketFD);
+			LOG_ERROR("error", "[runtime] set non block failed: %d, close it", iSocketFD);
 			return -1;
 		}
 		return 0;
@@ -273,11 +274,19 @@ void wTcpClient<T>::CheckReconnect()
 		if(mTcpTask->Heartbeat() < 0 && mTcpTask->HeartbeatOutTimes())
 		{
 			SetStatus();
-			LOG_INFO("default", "disconnect server : out of heartbeat times");
+			LOG_INFO("error", "[runtime] disconnect server : out of heartbeat times");
+			LOG_ERROR("server", "[timeout] disconnect server : out of heartbeat times: ip(%s) port(%d)", mTcpTask->Socket()->IPAddr(), mTcpTask->Socket()->Port());
 		}
 		else if(mTcpTask->Socket() != NULL && mTcpTask->Socket()->SocketFD() < 0)
 		{
-			ReConnectToServer();
+			if (ReConnectToServer() == 0)
+			{
+				LOG_ERROR("server", "[reconnect] success to reconnect : ip(%s) port(%d)", mTcpTask->Socket()->IPAddr(), mTcpTask->Socket()->Port());
+			}
+			else
+			{
+				LOG_ERROR("server", "[reconnect] failed to reconnect : ip(%s) port(%d)", mTcpTask->Socket()->IPAddr(), mTcpTask->Socket()->Port());
+			}
 		}
 	}
 }
@@ -293,7 +302,7 @@ wTcpTask* wTcpClient<T>::NewTcpTask(wSocket *pSocket)
 	}
 	catch(std::bad_cast& vBc)
 	{
-		LOG_ERROR("default", "bad_cast caught: : %s", vBc.what());
+		LOG_ERROR("error", "[runtime] bad_cast caught: : %s", vBc.what());
 	}
 	return pTcpTask;
 }

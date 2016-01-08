@@ -50,9 +50,11 @@ int AgentServerTask::VerifyConn()
 		LoginReqToken_t *pLoginRes = (LoginReqToken_t*) pBuffer;
 		if (strcmp(pLoginRes->mToken, "Anny") == 0)
 		{
+			LOG_ERROR("client", "[verify] receive client and verify success from ip(%s) port(%d) with token(%s)", Socket()->IPAddr(), Socket()->Port(), pLoginRes->mToken);
 			mConnType = pLoginRes->mConnType;
 			return 0;
 		}
+		LOG_ERROR("client", "[verify] receive client and verify failed from ip(%s) port(%d) with token(%s)", Socket()->IPAddr(), Socket()->Port(), pLoginRes->mToken);
 	}
 	return -1;
 }

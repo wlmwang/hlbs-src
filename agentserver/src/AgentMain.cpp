@@ -52,7 +52,7 @@ int main(int argc, const char *argv[])
 	AgentConfig *pConfig = AgentConfig::Instance();
 	if(pConfig == NULL) 
 	{
-		LOG_ERROR("default", "Get AgentConfig instance failed");
+		LOG_ERROR("error", "Get AgentConfig instance failed");
 		exit(1);
 	}
 	pConfig->ParseBaseConfig();
@@ -67,7 +67,7 @@ int main(int argc, const char *argv[])
 
 		if (InitDaemon(pFilename) < 0)
 		{
-			LOG_ERROR("default", "Create daemon failed!");
+			LOG_ERROR("error", "Create daemon failed!");
 			exit(1);
 		}
 	}
@@ -76,7 +76,7 @@ int main(int argc, const char *argv[])
     AgentServer *pServer = AgentServer::Instance();
 	if(pServer == NULL) 
 	{
-		LOG_ERROR("default", "Get AgentServer instance failed");
+		LOG_ERROR("error", "Get AgentServer instance failed");
 		exit(1);
 	}
 
