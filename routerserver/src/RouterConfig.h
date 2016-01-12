@@ -34,6 +34,7 @@ class RouterConfig: public wConfig<RouterConfig>
 		virtual ~RouterConfig() 
 		{
 			Final();
+			SAFE_DELETE(mDoc);
 		}
 
 		//初始化
@@ -52,8 +53,8 @@ class RouterConfig: public wConfig<RouterConfig>
 		}
 
 		bool IsModTime();
-		int ModifyTime();
-		int GetModSvr(Svr_t* pBuffer, int iNum = 0);
+		int SetModTime();
+		int GetModSvr(Svr_t* pBuffer);
 
 		/**
 		 * 解析配置
@@ -64,17 +65,18 @@ class RouterConfig: public wConfig<RouterConfig>
 		 *  解析Svr配置
 		 */
 		void ParseSvrConfig();
+		int GetSvrAll(Svr_t* pBuffer);
+		int ReloadSvr(Svr_t* pBuffer);
+		int SyncSvr(Svr_t* pBuffer);
 		
-		int ReloadSvr(Svr_t* pBuffer, int iNum = 0);
-		int SyncSvr(Svr_t* pBuffer, int iNum = 0);
-		int GetSvrAll(Svr_t* pBuffer, int iNum = 0);
+		int GetSvrById(Svr_t* pBuffer, int iId);
 		int GetSvrByName(Svr_t* pBuffer, string sName, int iNum = 0);
 		int GetSvrByGid(Svr_t* pBuffer, int iGid, int iNum = 0);
 		int GetSvrByGXid(Svr_t* pBuffer, int iGid, int iXid, int iNum = 0);
-		int GetSvrById(Svr_t* pBuffer, int iId);
 	protected:
-		void FixSvr();
-		void CleanSvr();
+		void FixContainer();
+		void DelContainer();
+		vector<Svr_t*>::iterator GetItById(int iId);
 		
 		vector<Svr_t*> mSvr;
 		map<int, Svr_t*> mSvrById;

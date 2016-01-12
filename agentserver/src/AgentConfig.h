@@ -9,14 +9,12 @@
 
 #include <string.h>
 #include <vector>
+#include <map>
 
 #include "wConfig.h"
 #include "wType.h"
 #include "wLog.h"
 #include "wSingleton.h"
-#include "wShareMemory.h"
-#include "wMsgQueue.h"
-#include "AgentServer.h"
 #include "SvrCommand.h"
 
 /**
@@ -69,9 +67,8 @@ class AgentConfig: public wConfig<AgentConfig>
 		virtual ~AgentConfig() 
 		{
 			Final();
+			SAFE_DELETE(mDoc);
 		}
-		
-		void InitShareMemory();
 
 		/**
 		 * 解析配置
@@ -79,23 +76,30 @@ class AgentConfig: public wConfig<AgentConfig>
 		void ParseBaseConfig();
 		void ParseRouterConfig();
 
+		int GetSvrAll(Svr_t* pBuffer);
+		int GetSvrById(Svr_t* pBuffer, int iId);
+
 		int InitSvr(Svr_t *pBuffer, int iLen = 0);
 		int ReloadSvr(Svr_t *pBuffer, int iLen = 0);
+		int SyncSvr(Svr_t *pBuffer, int iLen = 0);
 
-		int GetSvrAll(Svr_t* pBuffer, int iNum = 0);
 		int GetSvrByName(Svr_t* pBuffer, string sName, int iNum = 0);
 		int GetSvrByGid(Svr_t* pBuffer, int iGid, int iNum = 0);
 		int GetSvrByGXid(Svr_t* pBuffer, int iGid, int iXid, int iNum = 0);
-		int GetSvrById(Svr_t* pBuffer, int iId);
 		
 		BYTE SetSvrAttr(WORD iId, BYTE iDisabled, WORD iWeight, WORD iTimeline, WORD iConnTime, WORD iTasks, WORD iSuggest);
-	
+
+		void ReportSvr(SvrReportReqId_t *pReportSvr);
+		void Statistics();
+
+		float Calculate(Svr_t* pBuffer);
 	protected:
 		BYTE DisabledSvr(WORD iId);
 		BYTE SetSvrWeight(WORD iId, WORD iWeight);
 
-		void CleanSvr();
-		void FixSvr();
+		void FixContainer();
+		void DelContainer();
+		vector<Svr_t*>::iterator GetItById(int iId);
 		
 		vector<Svr_t*> mSvr;
 		map<int, Svr_t*> mSvrById;
@@ -104,12 +108,6 @@ class AgentConfig: public wConfig<AgentConfig>
 		map<string, vector<Svr_t*> > mSvrByGXid;
 
 		TiXmlDocument* mDoc;
-		
-		wShareMemory *mInShareMem;	//输入的消息队列的缓冲区位置
-		wShareMemory *mOutShareMem; //输出的消息队列的缓冲区位置
-		
-		wMsgQueue* mInMsgQueue;	// 输入的消息队列
-		wMsgQueue* mOutMsgQueue;	// 输出的消息队列
 };
 
 #endif

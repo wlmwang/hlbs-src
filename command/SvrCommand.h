@@ -195,6 +195,20 @@ struct SvrSetReqId_t : SvrReqCli_s
 	WORD mSuggest;	//建议参考值 1-100
 };
 
+const BYTE SVR_REPORT_REQ_ID = 1;
+struct SvrReportReqId_t : SvrReqCli_s 
+{
+	SvrReportReqId_t() : SvrReqCli_s(SVR_REPORT_REQ_ID)
+	{
+		mId = 0;
+		mDelay = 0;
+		mOkRate = 0.0;
+	}
+	WORD mId;
+	WORD mDelay;	//min
+	float mOkRate;	//max
+};
+
 //++++++++++++返回数据结构
 const BYTE CLI_SVR_RES = 21;
 struct SvrResCli_s : public wCommand

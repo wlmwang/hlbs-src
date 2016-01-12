@@ -20,7 +20,7 @@ class RouterServer: public wTcpServer<RouterServer>
 		RouterServer();
 		virtual ~RouterServer();
 		
-		virtual void Initialize();
+		void Initialize();
 		
 		virtual void PrepareRun();
 		

@@ -4,6 +4,7 @@
 	</SERVER>
 	
 	<LOG>
-		<LOG_INFO KEY="default"	FILE="../log/agent_cmd.log" LEVEL="700" MAX_FILE_SIZE="10M"/>
+		<LOG_INFO KEY="default"	FILE="../log/default.log" LEVEL="700" MAX_FILE_SIZE="10485760"/> <!--10485760 == 10m-->
+		<LOG_INFO KEY="error"	FILE="../log/error.log" LEVEL="700" MAX_FILE_SIZE="10485760"/> <!--10485760 == 10m-->
 	</LOG>
 </ROOT>

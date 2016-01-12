@@ -32,6 +32,7 @@ class AgentCmdConfig: public wConfig<AgentCmdConfig>
 		{
 			memset(mIPAddr, 0, sizeof(mIPAddr));
 			mPort = 0;
+			mDoc = new TiXmlDocument();
 		}
 
 		AgentCmdConfig()
@@ -43,6 +44,9 @@ class AgentCmdConfig: public wConfig<AgentCmdConfig>
 		 * 解析配置
 		 */		
 		void ParseBaseConfig();
+
+	protected:
+		TiXmlDocument* mDoc;
 };
 
 #endif

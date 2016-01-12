@@ -13,8 +13,9 @@
 
 #include "wMisc.h"
 #include "wLog.h"
-#include "RouterServer.h"
 
+#include "RouterConfig.h"
+#include "RouterServer.h"
 #include "RouterServerTask.h"
 
 RouterServer::RouterServer():wTcpServer<RouterServer>("路由服务器")
@@ -62,9 +63,11 @@ void RouterServer::CheckModSvr()
 	{
 		SvrResSync_t vRRt;
 		vRRt.mCode = 0;
-		vRRt.mNum = pConfig->GetModSvr(vRRt.mSvr, 0);
-		//-SyncSend((char *)&vRRt, sizeof(vRRt));
-		//+Bastcast((char *)&vRRt, sizeof(vRRt));
-		pConfig->GetModSvr();
+		vRRt.mNum = pConfig->GetModSvr(vRRt.mSvr);
+		if (vRRt.mNum > 0)
+		{
+			cout << "broadcast new svr" << endl;
+			Broadcast((char *)&vRRt, sizeof(vRRt));
+		}
 	}
 }

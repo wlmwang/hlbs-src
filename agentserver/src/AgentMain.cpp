@@ -59,8 +59,6 @@ int main(int argc, const char *argv[])
 	pConfig->ParseRouterConfig();
 	pConfig->ParseLineConfig(argc, argv);
 
-	pConfig->InitShareMemory();
-
 	if (pConfig->mDaemonFlag) 
 	{
 		//初始化守护进程

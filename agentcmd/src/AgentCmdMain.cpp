@@ -43,14 +43,6 @@ void Sigusr2Handle(int nSigVal)
 }
 
 /**
- *  初始化日志
- */
-void InitailizeLog()
-{
-	//...
-}
-
-/**
  * 入口函数
  * @param  argc [参数个数]
  * @param  argv [参数字符]
@@ -62,21 +54,17 @@ int main(int argc, const char *argv[])
 	AgentCmdConfig *pConfig = AgentCmdConfig::Instance();
 	if(pConfig == NULL) 
 	{
-		LOG_ERROR("default", "Get AgentCmdConfig instance failed");
+		cout << "Get AgentCmdConfig instance failed" << endl;
 		exit(1);
 	}
-	pConfig->ParseLineConfig(argc, argv);
-
 	pConfig->ParseBaseConfig();
-
-	//初始化日志
-	InitailizeLog();
+	pConfig->ParseLineConfig(argc, argv);
 
 	//获取服务器实体
     AgentCmd *pServer = AgentCmd::Instance();
 	if(pServer == NULL) 
 	{
-		LOG_ERROR("default", "Get AgentCmd instance failed");
+		LOG_ERROR("error", "[startup] Get AgentCmd instance failed");
 		exit(1);
 	}
 	
@@ -88,7 +76,7 @@ int main(int argc, const char *argv[])
 	signal(SIGUSR2, Sigusr2Handle);
 	
 	//服务器开始运行
-	LOG_INFO("default", "AgentCmd start succeed");
+	LOG_INFO("default", "[startup] AgentCmd start succeed");
 	pServer->Start();
 
 	LOG_SHUTDOWN_ALL;

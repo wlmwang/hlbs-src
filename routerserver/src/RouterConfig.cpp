@@ -126,8 +126,8 @@ void RouterConfig::ParseSvrConfig()
 				pSvr->mGid = atoi(szGid);
 				pSvr->mXid = atoi(szXid);
 				pSvr->mPort = atoi(szPort);
-				pSvr->mWeight = szWeight != NULL ? atoi(szWeight): 0;
-				pSvr->mDisabled = szDisabled != NULL ? atoi(szDisabled) : 0;
+				pSvr->mDisabled = szDisabled != NULL ? atoi(szDisabled) : pSvr->mDisabled;
+				pSvr->mWeight = szWeight != NULL ? atof(szWeight): pSvr->mWeight;
 				memcpy(pSvr->mName, szName, MAX_SVR_NAME_LEN);
 				memcpy(pSvr->mIp, szIPAddr, MAX_SVR_IP_LEN);
 				mSvr.push_back(pSvr);
@@ -143,37 +143,34 @@ void RouterConfig::ParseSvrConfig()
 		LOG_ERROR("error", "[startup] Get SVRS node from svr.xml failed");
 		exit(1);
 	}
-	ModifyTime();
 
-	FixSvr();
+	FixContainer();
+	SetModTime();
 }
 
-int RouterConfig::ReloadSvr(Svr_t* pBuffer, int iNum)
+int RouterConfig::ReloadSvr(Svr_t* pBuffer)
 {
-	CleanSvr();
+	Final();
 	ParseSvrConfig();
-	iNum = GetSvrAll(pBuffer, 0);
-	return iNum;
+	return GetSvrAll(pBuffer);
 }
 
 //TODO.
-int RouterConfig::SyncSvr(Svr_t* pBuffer, int iNum)
+int RouterConfig::SyncSvr(Svr_t* pBuffer)
 {
-	CleanSvr();
+	Final();
 	ParseSvrConfig();
-	iNum = GetSvrAll(pBuffer, 0);
-	return iNum;
+	return GetSvrAll(pBuffer);
 }
 
-int RouterConfig::GetSvrAll(Svr_t* pBuffer, int iNum)
+int RouterConfig::GetSvrAll(Svr_t* pBuffer)
 {
 	vector<Svr_t*>::iterator it = mSvr.begin();
-	if(iNum == 0) iNum = mSvr.size();
-	for(int i = 0; i < iNum && it != mSvr.end(); i++, it++)
+	for(int i = 0; it != mSvr.end(); i++, it++)
 	{
 		*(pBuffer+i) = **it;
 	}
-	return iNum;
+	return mSvr.size();
 }
 
 int RouterConfig::GetSvrById(Svr_t* pBuffer, int iId)
@@ -258,11 +255,12 @@ int RouterConfig::GetSvrByGXid(Svr_t* pBuffer, int iGid, int iXid, int iNum)
 	return iNum;
 }
 
-void RouterConfig::FixSvr()
+void RouterConfig::FixContainer()
 {
 	if(mSvr.size() <= 0) return;
 	sort(mSvr.begin(), mSvr.end(), GreaterSvr);//降序排序
-
+	
+	DelContainer();
 	string sId, sName, sGid, sXid, sGXid;
 	vector<Svr_t*> vSvr;
 	for(vector<Svr_t*>::iterator it = mSvr.begin(); it != mSvr.end(); it++)
@@ -274,46 +272,33 @@ void RouterConfig::FixSvr()
 		mSvrById.insert(pair<int, Svr_t*>((*it)->mId ,*it));
 		
 		//mSvrByGid
-		map<int, vector<Svr_t*> >::iterator mg = mSvrByGid.find((*it)->mGid);
 		vSvr.clear();
-		if(mg != mSvrByGid.end())
-		{
-			vSvr = mg->second;
-			mSvrByGid.erase(mg);
-		}
 		vSvr.push_back(*it);
 		mSvrByGid.insert(pair<int, vector<Svr_t*> >((*it)->mGid, vSvr));
 		
 		//mSvrByName
-		map<string, vector<Svr_t*> >::iterator mn = mSvrByName.find(sName);
 		vSvr.clear();
-		if(mn != mSvrByName.end())
-		{
-			vSvr = mn->second;
-			mSvrByName.erase(mn);
-		}
 		vSvr.push_back(*it);
 		mSvrByName.insert(pair<string, vector<Svr_t*> >(sName, vSvr));
 		
 		//mSvrByGXid
-		map<string, vector<Svr_t*> >::iterator mgx = mSvrByGXid.find(sGXid);
 		vSvr.clear();
-		if(mgx != mSvrByGXid.end())
-		{
-			vSvr = mgx->second;
-			mSvrByGXid.erase(mgx);
-		}
 		vSvr.push_back(*it);
-		mSvrByGXid.insert(pair<string, vector<Svr_t*> >(sGXid, vSvr));		
+		mSvrByGXid.insert(pair<string, vector<Svr_t*> >(sGXid, vSvr));
 	}
 }
 
-void RouterConfig::CleanSvr()
+void RouterConfig::DelContainer()
 {
 	mSvrById.clear();
 	mSvrByGid.clear();
 	mSvrByName.clear();
 	mSvrByGXid.clear();
+}
+
+void RouterConfig::Final()
+{
+	DelContainer();
 	for(vector<Svr_t*>::iterator it = mSvr.begin(); it != mSvr.end(); it++)
 	{
 		SAFE_DELETE(*it);
@@ -321,13 +306,7 @@ void RouterConfig::CleanSvr()
 	mSvr.clear();
 }
 
-void RouterConfig::Final()
-{
-	CleanSvr();
-	SAFE_DELETE(mDoc);
-}
-
-int RouterConfig::ModifyTime()
+int RouterConfig::SetModTime()
 {
 	const char* filename = "../config/svr.xml";
 	struct stat stBuf;
@@ -337,7 +316,7 @@ int RouterConfig::ModifyTime()
 		mMtime = stBuf.st_mtime;
 		return mMtime;
 	}
-	return iRet;
+	return iRet; //-1
 }
 
 bool RouterConfig::IsModTime()
@@ -352,8 +331,9 @@ bool RouterConfig::IsModTime()
 	return false;
 }
 
-//todo
-int RouterConfig::GetModSvr(Svr_t* pBuffer, int iNum)
+//获取修改的svr
+//不能删除节点（可修改Disabled=1属性，达到删除节点效果）
+int RouterConfig::GetModSvr(Svr_t* pBuffer)
 {
 	const char* filename = "../config/svr.xml";
 	bool bLoadOK = mDoc->LoadFile(filename);
@@ -368,9 +348,10 @@ int RouterConfig::GetModSvr(Svr_t* pBuffer, int iNum)
 	TiXmlElement *pRoot = mDoc->FirstChildElement();
 	
 	pElement = pRoot->FirstChildElement("SVRS");
+
+	int i = 0 , j = 0;
 	if(pElement != NULL)
 	{
-		int i = 0;
 		for(pChildElm = pElement->FirstChildElement(); pChildElm != NULL ; pChildElm = pChildElm->NextSiblingElement())
 		{
 			i++;
@@ -389,36 +370,57 @@ int RouterConfig::GetModSvr(Svr_t* pBuffer, int iNum)
 				pSvr->mGid = atoi(szGid);
 				pSvr->mXid = atoi(szXid);
 				pSvr->mPort = atoi(szPort);
-				pSvr->mWeight = szWeight != NULL ? atoi(szWeight): 0;
-				pSvr->mDisabled = szDisabled != NULL ? atoi(szDisabled) : 0;
+				pSvr->mDisabled = szDisabled != NULL ? atoi(szDisabled) : pSvr->mDisabled;
+				pSvr->mWeight = szWeight != NULL ? atof(szWeight): pSvr->mWeight;
 				memcpy(pSvr->mName, szName, MAX_SVR_NAME_LEN);
 				memcpy(pSvr->mIp, szIPAddr, MAX_SVR_IP_LEN);
-				//mSvr.push_back(pSvr);
+
+				vector<Svr_t*>::iterator it = GetItById(pSvr->mId);
+				if (it != mSvr.end())
+				{
+					if (pSvr->mGid != (*it)->mGid || pSvr->mXid != (*it)->mXid || pSvr->mDisabled != (*it)->mDisabled || pSvr->mWeight != (*it)->mWeight || pSvr->mPort != (*it)->mPort || strcpy(pSvr->mIp,(*it)->mIp) != 0 || strcpy(pSvr->mName,(*it)->mName) != 0)
+					{
+						//更新配置
+						mSvr.erase(it);
+						mSvr.push_back(pSvr);
+						*(pBuffer + j) = **it;
+						j++;
+					}
+				}
+				else
+				{
+					//添加新配置
+					mSvr.push_back(pSvr);
+					*(pBuffer + j) = **it;
+					j++;
+				}
 			}
 			else
 			{
 				LOG_ERROR("svr", "[modify svr] Parse svr config from svr.xml occur error: line(%d)!", i);
 			}
 		}
+		//重新整理容器
+		FixContainer();
+		SetModTime();
 	}
 	else
 	{
 		LOG_ERROR("error", "[modify svr] Get SVRS node from svr.xml failed");
 		return -1;
 	}
-	ModifyTime();
+	return j;
+}
 
-	/*
-	vector<Svr_t*>::iterator it = mSvr.begin();
-	if(iNum == 0) iNum = mSvr.size();
-	for(int i = 0; i < iNum && it != mSvr.end(); i++, it++)
+vector<Svr_t*>::iterator RouterConfig::GetItById(int iId)
+{
+	vector<Svr_t*>::iterator it;
+	for (it = mSvr.begin(); it != mSvr.end(); it++)
 	{
-		//if ((*it)->)
+		if ((*it)->mId == iId)
 		{
-			//
+			break;
 		}
-		//*(pBuffer+i) = **it;
 	}
-	*/
-	return iNum;
+	return it;
 }

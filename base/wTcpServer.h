@@ -45,6 +45,7 @@ class wTcpServer: public wSingleton<T>
 {
 	public:
 		void Recv();
+		void Broadcast(const char *pCmd, int iLen);
 		
 		/**
 		 * 初始化服务器
@@ -213,6 +214,22 @@ void wTcpServer<T>::CleanTaskPool()
 	}
 	mTcpTaskPool.clear();
 	mTaskCount = 0;
+}
+
+template <typename T>
+void wTcpServer<T>::Broadcast(const char *pCmd, int iLen)
+{
+	if(mTcpTaskPool.size() > 0)
+	{
+		vector<wTcpTask*>::iterator iter;
+		for(iter = mTcpTaskPool.begin(); iter != mTcpTaskPool.end(); iter++)
+		{
+			if ((*iter)->IsRunning() && (*iter)->Socket()->SocketType() == CONNECT_SOCKET && (*iter)->Socket()->SocketFlag() == RECV_DATA)
+			{
+				(*iter)->SyncSend(pCmd, iLen);
+			}
+		}
+	}
 }
 
 template <typename T>

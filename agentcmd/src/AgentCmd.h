@@ -19,7 +19,9 @@
 #include "AgentCmdTask.h"
 #include "ReadlineThread.h"
 #include "wMTcpClient.h"
-#include "BaseCommand.h"
+#include "SvrCommand.h"
+#include "wShareMemory.h"
+#include "wMsgQueue.h"
 
 #define REG_FUNC_S(name, vFunc) wDispatch<function<int(string, vector<string>)>, string>::Func_t {name, std::bind(vFunc, this, std::placeholders::_1, std::placeholders::_2)}
 #define DEC_DISP_S(dispatch) wDispatch<function<int(string, vector<string>)>, string> dispatch
@@ -33,17 +35,19 @@ class AgentCmd: public wSingleton<AgentCmd>, public wMTcpClient<AgentCmdTask>
 		AgentCmd();
 
 		void Initialize();
+		void InitShareMemory();
 
 		virtual ~AgentCmd();
 
 		virtual void Run();
 		virtual void PrepareRun();
-		
-		void ReadCmd();
+
+		void CheckCmd();
 		int ParseCmd(char *pStr, int iLen);
-		
+
 		DEC_FUNC_S(GetCmd);
 		DEC_FUNC_S(SetCmd);
+		DEC_FUNC_S(ReportCmd);
 		DEC_FUNC_S(ReloadCmd);
 		DEC_FUNC_S(RestartCmd);
 
@@ -76,11 +80,17 @@ class AgentCmd: public wSingleton<AgentCmd>, public wMTcpClient<AgentCmdTask>
 			}
 			return -1;
 		}
+
 	protected:
 		DEC_DISP_S(mDispatch);
 		unsigned long long mTicker;
 		bool mWaitResStatus;
 		ReadlineThread *mReadlineThread;
+
+		wShareMemory *mInShareMem;	//输入的消息队列的缓冲区位置
+		wShareMemory *mOutShareMem; //输出的消息队列的缓冲区位置
+		wMsgQueue* mInMsgQueue;	// 输入的消息队列
+		wMsgQueue* mOutMsgQueue;// 输出的消息队列
 };
 
 #endif

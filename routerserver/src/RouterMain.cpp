@@ -57,7 +57,6 @@ int main(int argc, const char *argv[])
 	}
 	pConfig->ParseBaseConfig();
 	pConfig->ParseSvrConfig();
-
 	pConfig->ParseLineConfig(argc, argv);
 
 	if (pConfig->mDaemonFlag) 

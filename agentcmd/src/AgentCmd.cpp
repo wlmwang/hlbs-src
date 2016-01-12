@@ -19,27 +19,60 @@
 #include "wMisc.h"
 #include "AgentCmd.h"
 #include "AgentCmdConfig.h"
-#include "RtblCommand.h"
 
 AgentCmd::AgentCmd()
 {
+	mInShareMem = 0;
+	mOutShareMem = 0;
+	mInMsgQueue = 0;
+	mOutMsgQueue = 0;
 	Initialize();
 }
 
 AgentCmd::~AgentCmd() 
 {
-	//
+	SAFE_DELETE(mInShareMem);
+	SAFE_DELETE(mOutShareMem);
+	SAFE_DELETE(mInMsgQueue);
+	SAFE_DELETE(mOutMsgQueue);
 }
 
 void AgentCmd::Initialize()
 {
 	mTicker = GetTickCount();
 	SetWaitResStatus(false);
+	InitShareMemory();
 
 	CMD_REG_DISP_S("get", &AgentCmd::GetCmd);
 	CMD_REG_DISP_S("set", &AgentCmd::SetCmd);
+	CMD_REG_DISP_S("report", &AgentCmd::ReportCmd);
 	CMD_REG_DISP_S("reload", &AgentCmd::ReloadCmd);
 	CMD_REG_DISP_S("restart", &AgentCmd::RestartCmd);
+}
+
+void AgentCmd::InitShareMemory()
+{
+	mInShareMem = new wShareMemory(SVR_SHARE_MEM_PIPE, 'o', MSG_QUEUE_LEN);
+	mOutShareMem = new wShareMemory(SVR_SHARE_MEM_PIPE, 'i', MSG_QUEUE_LEN);
+	char * pBuff = NULL;
+	if((pBuff = mInShareMem->AttachShareMemory()) != NULL)
+	{
+		mInMsgQueue = new wMsgQueue();
+		mInMsgQueue->SetBuffer(pBuff, MSG_QUEUE_LEN);
+	}
+	else
+	{
+		LOG_ERROR("error","[startup] Attach (In) Share Memory failed");
+	}
+	if((pBuff = mOutShareMem->AttachShareMemory()) != NULL)
+	{
+		mOutMsgQueue = new wMsgQueue();
+		mOutMsgQueue->SetBuffer(pBuff, MSG_QUEUE_LEN);
+	}
+	else
+	{
+		LOG_ERROR("error","[startup] Attach (Out) Share Memory failed");
+	}
 }
 
 //准备工作
@@ -51,7 +84,7 @@ void AgentCmd::PrepareRun()
 	if (!bRet)
 	{
 		cout << "Connect to AgentServer failed! Please start it" <<endl;
-		LOG_ERROR("default", "Connect to AgentServer failed");
+		LOG_ERROR("error", "[startup] Connect to AgentServer failed");
 		exit(1);
 	}
 
@@ -64,10 +97,10 @@ void AgentCmd::PrepareRun()
 
 void AgentCmd::Run()
 {
-	ReadCmd();
+	CheckCmd();
 }
 
-void AgentCmd::ReadCmd()
+void AgentCmd::CheckCmd()
 {
 	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mTicker);
 	
@@ -82,7 +115,7 @@ void AgentCmd::ReadCmd()
 	
 	mTicker += iInterval;
 	
-	mReadlineThread->WakeUp();
+	mReadlineThread->WakeUp();	//唤醒readline线程，进入等待输入状态
 
 	if (mReadlineThread->mCmdLine != 0)
 	{
@@ -122,7 +155,7 @@ int AgentCmd::ParseCmd(char *pCmdLine, int iLen)
 	return -1;
 }
 
-//get -a -i 100 -n redis -g 122 -x 122
+//get [-a] [-i 100] [-n redis] [-g 122 -x 122]
 int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 {
 	int a = 0, i = 0, g = 0 , x = 0;
@@ -158,33 +191,32 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 	}
 
 	SetWaitResStatus();
-	mTicker = GetTickCount();
 	if(a == 1)
 	{
-		RtblReqAll_t vRtl;
+		SvrReqAll_t vRtl;
 		return SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	else if(i != 0)
 	{
-		RtblReqId_t vRtl;
+		SvrReqId_t vRtl;
 		vRtl.mId = i;
 		return SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	else if(n != "")
 	{
-		RtblReqName_t vRtl;
+		SvrReqName_t vRtl;
 		memcpy(vRtl.mName, n.c_str(), n.size());
 		return SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	else if(g != 0 && x == 0)
 	{
-		RtblReqGid_t vRtl;
+		SvrReqGid_t vRtl;
 		vRtl.mGid = g;
 		return SyncSend((char *)&vRtl, sizeof(vRtl));
 	}
 	else if(g != 0 && x != 0)
 	{
-		RtblReqGXid_t vRtl;
+		SvrReqGXid_t vRtl;
 		vRtl.mGid = g;
 		vRtl.mXid = x;
 		return SyncSend((char *)&vRtl, sizeof(vRtl));
@@ -193,16 +225,16 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 	return -1;
 }
 
-//set -i 100 -d -w 10 -t 122 -c 1222 -s 200 -k 500
+//set -i 100 [-d 1] [-w 10] [-t 122] [-c 1222] [-s 200] [-k 500]
 int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 {
-	RtblSetReqId_t stSetRtbl;
+	SvrSetReqId_t stSetRtbl;
 	int iCnt = vParam.size();
 	for(size_t j = 1; j < vParam.size(); j++)
 	{
-		if(vParam[j] == "-d") 
+		if(vParam[j] == "-d" && j + 1 < iCnt) 
 		{
-			stSetRtbl.mDisabled = 1; continue;
+			stSetRtbl.mDisabled = atoi(vParam[++j].c_str()); continue;
 		}
 		else if(vParam[j] == "-i" && j + 1 < iCnt) 
 		{
@@ -242,8 +274,50 @@ int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 	else
 	{
 		SetWaitResStatus();
-		mTicker = GetTickCount();
 		return SyncSend((char *)&stSetRtbl, sizeof(stSetRtbl));
+	}
+	return -1;
+}
+
+//report -i 100 [-o 0.1] [-d 100]
+int AgentCmd::ReportCmd(string sCmd, vector<string> vParam)
+{
+	SvrReportReqId_t stReportSvr;
+	int iCnt = vParam.size();
+	for(size_t j = 1; j < vParam.size(); j++)
+	{
+		if(vParam[j] == "-i" && j + 1 < iCnt) 
+		{
+			stReportSvr.mId = atoi(vParam[++j].c_str()); continue;
+		}
+		else if(vParam[j] == "-d" && j + 1 < iCnt) 
+		{
+			stReportSvr.mDelay = atoi(vParam[++j].c_str()); continue;
+		}
+		else if(vParam[j] == "-o" && j + 1 < iCnt) 
+		{
+			stReportSvr.mOkRate = atof(vParam[++j].c_str()); continue;
+		}
+		else 
+		{ 
+			cout << "Unknow param." << endl;
+			return -1;
+		}
+	}
+
+	if(stReportSvr.mId == 0)
+	{
+		cout << "need -i param" << endl;
+	}
+	else
+	{
+		SetWaitResStatus();
+		mOutMsgQueue->Push((char *)&stReportSvr, sizeof(stReportSvr));	//保存输出共享内存
+		cout << "report message success" << endl;
+		
+		SetWaitResStatus(false);
+		LOG_INFO("default","[runtime] report a message(shm) success");
+		return 0;
 	}
 	return -1;
 }
@@ -252,8 +326,7 @@ int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
 int AgentCmd::ReloadCmd(string sCmd, vector<string> vParam)
 {
 	SetWaitResStatus();
-	mTicker = GetTickCount();
-	RtblReqReload_t vRtl;
+	SvrReqReload_t vRtl;
 	return SyncSend((char *)&vRtl, sizeof(vRtl));
 }
 
@@ -261,6 +334,5 @@ int AgentCmd::ReloadCmd(string sCmd, vector<string> vParam)
 int AgentCmd::RestartCmd(string sCmd, vector<string> vParam)
 {
 	SetWaitResStatus();
-	mTicker = GetTickCount();
 	return -1;
 }

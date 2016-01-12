@@ -16,7 +16,8 @@
 #define MAX_SVR_IP_LEN 16
 #define MIN_SVR_IP_LEN 3
 
-#define TIME_TICK 300
+#define REPORT_TIME_TICK 300000
+
 /**
  * 定义Svr_t
  */
@@ -27,13 +28,15 @@ struct Svr_t
 	int		mId;
 	int		mGid;
 	int		mXid;
-	char	mName[MAX_SVR_NAME_LEN];
-	char	mIp[MAX_SVR_IP_LEN];
-	int		mPort;
-	short	mWeight;	//权重
+	int		mDelay;		//最小延时 单位：s
+	float	mOkRate;	//最大成功率 0-1
+	float	mWeight;	//权重
 	short	mDisabled;	//是否可用
-	time_t	mDelay;		//延时 单位：s
-	double	mOkRate;	//成功率 0-1
+	short	mDirty;		//是否要更新
+	int		mPort;
+	char	mIp[MAX_SVR_IP_LEN];
+	char	mName[MAX_SVR_NAME_LEN];
+	
 
 	Svr_t()
 	{
@@ -41,10 +44,11 @@ struct Svr_t
 		mGid = 0;
 		mXid = 0;
 		mPort = 0;
-		mWeight = 0;
 		mDisabled = 0;
+		mDirty = 0;
 		mDelay = 0;
 		mOkRate = 0.0;
+		mWeight = 1.0;
 		memset(mName, 0, MAX_SVR_NAME_LEN);
 		memset(mIp, 0, MAX_SVR_IP_LEN);
 	}
@@ -57,6 +61,7 @@ struct Svr_t
 		mPort = svr.mPort;
 		mWeight = svr.mWeight;
 		mDisabled = svr.mDisabled;
+		mDirty = svr.mDirty;
 		mDelay = svr.mDelay;
 		mOkRate = svr.mOkRate;
 		memcpy(mName, svr.mName, MAX_SVR_NAME_LEN);
@@ -69,8 +74,9 @@ struct Svr_t
 		mGid = svr.mGid;
 		mXid = svr.mXid;
 		mPort = svr.mPort;
-		mWeight = svr.mWeight;
 		mDisabled = svr.mDisabled;
+		mDirty = svr.mDirty;
+		mWeight = svr.mWeight;
 		mDelay = svr.mDelay;
 		mOkRate = svr.mOkRate;
 		memcpy(mName, svr.mName, MAX_SVR_NAME_LEN);
@@ -80,12 +86,12 @@ struct Svr_t
 	
 	bool operator>(const Svr_t& svr)  const	//降序
 	{
-		return mWeight > svr.mWeight; 
+		return 1/mWeight > 1/svr.mWeight; 
 	}
 	
 	bool operator<(const Svr_t& svr)  const	//升序
 	{
-		return mWeight < svr.mWeight;
+		return 1/mWeight < 1/svr.mWeight;
 	}
 	
 	bool operator==(const Svr_t &svr) const
@@ -97,12 +103,12 @@ struct Svr_t
 
 inline bool GreaterSvr(const Svr_t* pR1, const Svr_t* pR2)
 {
-	return   pR1->mWeight > pR2->mWeight;
+	return   1/pR1->mWeight > 1/pR2->mWeight;
 }
 
 inline bool LessSvr(const Svr_t* pR1, const Svr_t* pR2)
 {
-	return   pR1->mWeight < pR2->mWeight;
+	return   1/pR1->mWeight < 1/pR2->mWeight;
 }
 
 #pragma pack()

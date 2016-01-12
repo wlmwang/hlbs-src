@@ -28,8 +28,8 @@ AgentCmdTask::~AgentCmdTask()
 
 void AgentCmdTask::Initialize()
 {
-	CMD_REG_DISP(CMD_RTBL_RES, RTBL_RES_DATA, &AgentCmdTask::RtblResData);
-	CMD_REG_DISP(CMD_RTBL_UPDATE_RES, RTBL_UPDATE_RES_DATA, &AgentCmdTask::RtblUpdateResData);
+	CMD_REG_DISP(CMD_SVR_RES, SVR_RES_DATA, &AgentCmdTask::SvrResData);
+	CMD_REG_DISP(CLI_SVR_REQ, SVR_SET_RES_DATA, &AgentCmdTask::SvrSetResData);
 }
 
 int AgentCmdTask::VerifyConn()
@@ -42,9 +42,11 @@ int AgentCmdTask::VerifyConn()
 		LoginReqToken_t *pLoginRes = (LoginReqToken_t*) pBuffer;
 		if (strcmp(pLoginRes->mToken, "Anny") == 0)
 		{
+			LOG_ERROR("client", "[verify] receive client and verify success from ip(%s) port(%d) with token(%s)", Socket()->IPAddr().c_str(), Socket()->Port(), pLoginRes->mToken);
 			mConnType = pLoginRes->mConnType;
 			return 0;
 		}
+		LOG_ERROR("client", "[verify] receive client and verify failed from ip(%s) port(%d) with token(%s)", Socket()->IPAddr().c_str(), Socket()->Port(), pLoginRes->mToken);
 	}
 	return -1;
 }
@@ -87,28 +89,28 @@ int AgentCmdTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int
 		}
 		else
 		{
-			LOG_DEBUG("default", "client fd(%d) send a invalid msg id(%u)", mSocket->SocketFD(), pCommand->GetId());
+			LOG_DEBUG("error", "client fd(%d) send a invalid msg id(%u)", mSocket->SocketFD(), pCommand->GetId());
 		}
 	}
 	return 0;
 }
 
-int AgentCmdTask::RtblResData(char *pBuffer, int iLen)
+int AgentCmdTask::SvrResData(char *pBuffer, int iLen)
 {
-	RtblResData_t *pCmd = (struct RtblResData_t* )pBuffer;
+	SvrResData_t *pCmd = (struct SvrResData_t* )pBuffer;
 	if(pCmd->mNum > 0)
 	{
 		for(int i = 0; i < pCmd->mNum; i++)
 		{
 			cout << i << ")";
-			cout << " id:" << pCmd->mRtbl[i].mId;
-			cout << " gid:" << pCmd->mRtbl[i].mGid;
-			cout << " xid:" << pCmd->mRtbl[i].mXid;
-			cout << " name:" << pCmd->mRtbl[i].mName;
-			cout << " ip:" << pCmd->mRtbl[i].mIp;
-			cout << " port:" << pCmd->mRtbl[i].mPort;
-			cout << " weight:" << pCmd->mRtbl[i].mWeight;
-			cout << " disabled:" << pCmd->mRtbl[i].mDisabled;
+			cout << " id:" << pCmd->mSvr[i].mId;
+			cout << " gid:" << pCmd->mSvr[i].mGid;
+			cout << " xid:" << pCmd->mSvr[i].mXid;
+			cout << " name:" << pCmd->mSvr[i].mName;
+			cout << " ip:" << pCmd->mSvr[i].mIp;
+			cout << " port:" << pCmd->mSvr[i].mPort;
+			cout << " weight:" << pCmd->mSvr[i].mWeight;
+			cout << " disabled:" << pCmd->mSvr[i].mDisabled;
 			cout << endl;
 		}
 	}
@@ -120,10 +122,10 @@ int AgentCmdTask::RtblResData(char *pBuffer, int iLen)
 	return 0;
 }
 
-int AgentCmdTask::RtblUpdateResData(char *pBuffer, int iLen)
+int AgentCmdTask::SvrSetResData(char *pBuffer, int iLen)
 {
-	RtblUpdateResData_t *pCmd = (struct RtblUpdateResData_t* )pBuffer;
-	if(pCmd->mRes >= 0)
+	SvrSetResData_t *pCmd = (struct SvrSetResData_t* )pBuffer;
+	if(pCmd->mCode >= 0)
 	{
 		cout << "send success!" << endl;
 	}

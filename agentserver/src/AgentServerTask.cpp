@@ -32,10 +32,11 @@ void AgentServerTask::Initialize()
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_ID, &AgentServerTask::GetSvrById);
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_GID, &AgentServerTask::GetSvrByGid);
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_NAME, &AgentServerTask::GetSvrByName);
-	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_GXID, &AgentServerTask::GetSvrByGXid);
+	//AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_SYNC, &AgentServerTask::SyncSvrReq);
 
 	AGENT_REG_DISP(CMD_SVR_RES, SVR_RES_INIT, &AgentServerTask::InitSvrRes);
 	AGENT_REG_DISP(CMD_SVR_RES, SVR_RES_RELOAD, &AgentServerTask::ReloadSvrRes);
+	AGENT_REG_DISP(CMD_SVR_RES, SVR_RES_SYNC, &AgentServerTask::SyncSvrRes);
 
 	AGENT_REG_DISP(CLI_SVR_REQ, SVR_SET_REQ_ID, &AgentServerTask::SetSvrAttr);
 }
@@ -103,7 +104,7 @@ int AgentServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, 
 	return 0;
 }
 
-//router发来相响应
+//router发来init相响应
 int AgentServerTask::InitSvrRes(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
@@ -113,7 +114,7 @@ int AgentServerTask::InitSvrRes(char *pBuffer, int iLen)
 	return 0;
 }
 
-//router发来响应
+//router发来reload响应
 int AgentServerTask::ReloadSvrRes(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
@@ -123,11 +124,27 @@ int AgentServerTask::ReloadSvrRes(char *pBuffer, int iLen)
 	return 0;
 }
 
+//router发来sync响应
+int AgentServerTask::SyncSvrRes(char *pBuffer, int iLen)
+{
+	AgentConfig *pConfig = AgentConfig::Instance();
+	SvrResSync_t *pCmd = (struct SvrResSync_t* )pBuffer;
+
+	if (pCmd->mNum > 0) pConfig->SyncSvr(pCmd->mSvr, pCmd->mNum);
+	return 0;
+}
+
+//agentcmd发来请求，(正常由router主动下发，而非请求下发)
+int AgentServerTask::SyncSvrReq(char *pBuffer, int iLen)
+{
+	SvrReqSync_t vRRt;
+	SyncSend((char *)&vRRt, sizeof(vRRt));
+	return 0;
+}
+
 //agentcmd发来请求  。需同步reload router
 int AgentServerTask::ReloadSvrReq(char *pBuffer, int iLen)
 {
-	AgentConfig *pConfig = AgentConfig::Instance();
-	SvrResReload_t *pCmd = (struct SvrResReload_t* )pBuffer;
 	AgentServer *pServer = AgentServer::Instance();
 	
 	SvrSetResData_t vRRt;
@@ -156,7 +173,7 @@ int AgentServerTask::GetSvrAll(char *pBuffer, int iLen)
 
 	SvrResData_t vRRt;
 	vRRt.mReqId = pCmd->GetId();
-	vRRt.mNum = pConfig->GetSvrAll(vRRt.mSvr, 0);
+	vRRt.mNum = pConfig->GetSvrAll(vRRt.mSvr);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
@@ -200,7 +217,7 @@ int AgentServerTask::GetSvrByName(char *pBuffer, int iLen)
 	return 0;
 }
 
-//agentcmd发来请求
+//agentcmd发来请求(重点考虑此接口~)
 int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();

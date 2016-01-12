@@ -12,11 +12,15 @@
 
 #include "wType.h"
 #include "wSingleton.h"
+#include "wTimer.h"
 #include "wTcpServer.h"
 #include "wTcpTask.h"
 #include "wMTcpClient.h"
 #include "wTcpClient.h"
+#include "wShareMemory.h"
+#include "wMsgQueue.h"
 #include "AgentServerTask.h"
+#include "AgentConfig.h"
 #include "SvrCommand.h"
 
 class AgentServer: public wTcpServer<AgentServer>
@@ -25,11 +29,15 @@ class AgentServer: public wTcpServer<AgentServer>
 		AgentServer();
 		virtual ~AgentServer();
 		
-		virtual void Initialize();
-		
+		void Initialize();
+		void InitShareMemory();
+
 		virtual void PrepareRun();
 		
 		virtual void Run();
+		
+		void CheckTimer();
+		void CheckQueue();
 		
 		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
 
@@ -44,6 +52,15 @@ class AgentServer: public wTcpServer<AgentServer>
 		
 	private:
 		wMTcpClient<AgentServerTask> *mRouterConn;	//连接router
+		AgentConfig *mConfig;
+
+		unsigned long long mTicker;
+		wTimer mReportTimer;
+
+		wShareMemory *mInShareMem;	//输入的消息队列的缓冲区位置
+		wShareMemory *mOutShareMem; //输出的消息队列的缓冲区位置
+		wMsgQueue* mInMsgQueue;	// 输入的消息队列
+		wMsgQueue* mOutMsgQueue;// 输出的消息队列
 };
 
 #endif

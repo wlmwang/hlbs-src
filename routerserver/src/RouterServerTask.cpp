@@ -101,7 +101,7 @@ int RouterServerTask::InitSvrReq(char *pBuffer, int iLen)
 
 	SvrResInit_t vRRt;
 	vRRt.mCode = 0;
-	vRRt.mNum = pConfig->GetSvrAll(vRRt.mSvr, 0);
+	vRRt.mNum = pConfig->GetSvrAll(vRRt.mSvr);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
@@ -112,18 +112,24 @@ int RouterServerTask::ReloadSvrReq(char *pBuffer, int iLen)
 
 	SvrResReload_t vRRt;
 	vRRt.mCode = 0;
-	vRRt.mNum = pConfig->ReloadSvr(vRRt.mSvr, 0);
+	vRRt.mNum = pConfig->ReloadSvr(vRRt.mSvr);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
 
+//下发修改的svr
 int RouterServerTask::SyncSvrReq(char *pBuffer, int iLen)
 {
 	RouterConfig *pConfig = RouterConfig::Instance();
-
-	SvrResSync_t vRRt;
-	vRRt.mCode = 0;
-	vRRt.mNum = pConfig->SyncSvr(vRRt.mSvr, 0);
-	SyncSend((char *)&vRRt, sizeof(vRRt));
+	if (pConfig->IsModTime())
+	{
+		SvrResSync_t vRRt;
+		vRRt.mCode = 0;
+		vRRt.mNum = pConfig->GetModSvr(vRRt.mSvr);
+		if (vRRt.mNum > 0)
+		{
+			SyncSend((char *)&vRRt, sizeof(vRRt));
+		}
+	}
 	return 0;
 }

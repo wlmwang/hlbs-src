@@ -9,7 +9,7 @@
 
 #include "wCommand.h"
 
-#define SVR_SHARE_MEM_PIPE "svr_pipe"
+#define SVR_SHARE_MEM_PIPE "../../bin/svr_shm"
 
 #pragma pack(1)
 

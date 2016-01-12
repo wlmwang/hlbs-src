@@ -127,19 +127,69 @@ void AgentConfig::ParseRouterConfig()
 		LOG_ERROR("error", "Get server from config file failed");
 		exit(1);
 	}
-	
-	FixSvr();
+	FixContainer();
 }
 
-int AgentConfig::GetSvrAll(Svr_t* pBuffer, int iNum)
+int AgentConfig::GetSvrAll(Svr_t* pBuffer)
 {
 	vector<Svr_t*>::iterator it = mSvr.begin();
-	if(iNum == 0) iNum = mSvr.size();
-	for(int i = 0; i < iNum && it != mSvr.end(); i++, it++)
+	for(int i = 0; it != mSvr.end(); i++, it++)
 	{
 		*(pBuffer+i) = **it;
 	}
-	return iNum;
+	return mSvr.size();
+}
+
+int AgentConfig::InitSvr(Svr_t* pBuffer, int iNum)
+{
+	if (iNum <= 0)
+	{
+		return -1;
+	}
+
+	Final();
+	for(int i = 0; i < iNum ; i++)
+	{
+		mSvr.push_back(&pBuffer[i]);
+	}
+	FixContainer();
+	return 0;
+}
+
+int AgentConfig::ReloadSvr(Svr_t *pBuffer, int iNum)
+{
+	return InitSvr(pBuffer, iNum);
+}
+
+int AgentConfig::SyncSvr(Svr_t *pBuffer, int iNum)
+{
+	if (iNum <= 0)
+	{
+		return -1;
+	}
+	int j = 0;
+	for(int i = 0; i < iNum ; i++)
+	{
+		vector<Svr_t*>::iterator it = GetItById((pBuffer+i)->mId);
+		if (it != mSvr.end())
+		{
+			if (pBuffer[i].mGid != (*it)->mGid || pBuffer[i].mXid != (*it)->mXid || pBuffer[i].mDisabled != (*it)->mDisabled || pBuffer[i].mWeight != (*it)->mWeight || pBuffer[i].mPort != (*it)->mPort || strcpy(pBuffer[i].mIp,(*it)->mIp) != 0 || strcpy(pBuffer[i].mName,(*it)->mName) != 0)
+			{
+				//更新配置
+				mSvr.erase(it);
+				mSvr.push_back(pBuffer+i);
+				j++;
+			}
+		}
+		else
+		{
+			//添加新配置
+			mSvr.push_back(pBuffer+i);
+			j++;
+		}
+	}
+	FixContainer();	
+	return j;
 }
 
 int AgentConfig::GetSvrById(Svr_t* pBuffer, int iId)
@@ -208,7 +258,7 @@ int AgentConfig::GetSvrByGXid(Svr_t* pBuffer, int iGid, int iXid, int iNum)
 	map<string, vector<Svr_t*> >::iterator mn = mSvrByGXid.find(sGXid);
 	if(mn != mSvrByGXid.end())
 	{
-		vSvr = mn->second;
+		vSvr = mn->second;	//已排序
 		if(iNum == 0) iNum = vSvr.size();
 
 		vector<Svr_t*>::iterator it = vSvr.begin();
@@ -222,27 +272,6 @@ int AgentConfig::GetSvrByGXid(Svr_t* pBuffer, int iGid, int iXid, int iNum)
 		iNum = 0;
 	}
 	return iNum;
-}
-
-int AgentConfig::InitSvr(Svr_t* pBuffer, int iNum)
-{
-	if (iNum <= 0)
-	{
-		return -1;
-	}
-
-	CleanSvr();
-	for(int i = 0; i < iNum ; i++)
-	{
-		mSvr.push_back(&pBuffer[i]);
-	}
-	FixSvr();
-	return 0;
-}
-
-int AgentConfig::ReloadSvr(Svr_t *pBuffer, int iNum)
-{
-	return InitSvr(pBuffer, iNum);
 }
 
 BYTE AgentConfig::SetSvrAttr(WORD iId, BYTE iDisabled, WORD iWeight, WORD iTimeline, WORD iConnTime, WORD iTasks, WORD iSuggest)
@@ -284,7 +313,7 @@ BYTE AgentConfig::DisabledSvr(WORD iId)
 		if(iId == (*it)->mId)
 		{
 			(*it)->mDisabled = 1;
-			FixSvr();
+			FixContainer();
 			break;
 		}
 	}
@@ -299,81 +328,59 @@ BYTE AgentConfig::SetSvrWeight(WORD iId, WORD iWeight)
 		if(iId == (*it)->mId)
 		{
 			(*it)->mWeight = iWeight;
-			FixSvr();
+			FixContainer();
 			break;
 		}
 	}
 	return 0;
 }
 
-//整理容器
-void AgentConfig::FixSvr()
+//整理容器 & 同步其他容器
+void AgentConfig::FixContainer()
 {
 	if(mSvr.size() <= 0) return;
 	sort(mSvr.begin(), mSvr.end(), GreaterSvr);//降序排序
 
+	/*+*/DelContainer();
 	string sId, sName, sGid, sXid, sGXid;
 	vector<Svr_t*> vSvr;
 	for(vector<Svr_t*>::iterator it = mSvr.begin(); it != mSvr.end(); it++)
 	{
 		sId = Itos((*it)->mId); sName = (*it)->mName; sGid = Itos((*it)->mGid); sXid = Itos((*it)->mXid);
 		sGXid = sGid + "-" + sXid;
-		
+	
 		//mSvrById
 		mSvrById.insert(pair<int, Svr_t*>((*it)->mId ,*it));
 		
 		//mSvrByGid
-		map<int, vector<Svr_t*> >::iterator mg = mSvrByGid.find((*it)->mGid);
 		vSvr.clear();
-		if(mg != mSvrByGid.end())
-		{
-			vSvr = mg->second;
-			mSvrByGid.erase(mg);
-		}
 		vSvr.push_back(*it);
 		mSvrByGid.insert(pair<int, vector<Svr_t*> >((*it)->mGid, vSvr));
 		
 		//mSvrByName
-		map<string, vector<Svr_t*> >::iterator mn = mSvrByName.find(sName);
 		vSvr.clear();
-		if(mn != mSvrByName.end())
-		{
-			vSvr = mn->second;
-			mSvrByName.erase(mn);
-		}
 		vSvr.push_back(*it);
 		mSvrByName.insert(pair<string, vector<Svr_t*> >(sName, vSvr));
 		
 		//mSvrByGXid
-		map<string, vector<Svr_t*> >::iterator mgx = mSvrByGXid.find(sGXid);
 		vSvr.clear();
-		if(mgx != mSvrByGXid.end())
-		{
-			vSvr = mgx->second;
-			mSvrByGXid.erase(mgx);
-		}
 		vSvr.push_back(*it);
-		mSvrByGXid.insert(pair<string, vector<Svr_t*> >(sGXid, vSvr));		
+		mSvrByGXid.insert(pair<string, vector<Svr_t*> >(sGXid, vSvr));
 	}
 }
 
-void AgentConfig::CleanSvr()
+void AgentConfig::DelContainer()
 {
 	mSvrById.clear();
 	mSvrByGid.clear();
 	mSvrByName.clear();
 	mSvrByGXid.clear();
-	mSvr.clear();
 }
 
 void AgentConfig::Final()
 {
-	CleanSvr();
-	SAFE_DELETE(mDoc);
-	SAFE_DELETE(mInShareMem);
-	SAFE_DELETE(mOutShareMem);
-	SAFE_DELETE(mInMsgQueue);
-	SAFE_DELETE(mOutMsgQueue);
+	DelContainer();
+	mSvr.clear();
 }
 
 void AgentConfig::Initialize()
@@ -386,27 +393,71 @@ void AgentConfig::Initialize()
 	mDoc = new TiXmlDocument();
 }
 
-void AgentConfig::InitShareMemory()
+vector<Svr_t*>::iterator AgentConfig::GetItById(int iId)
 {
-	mInShareMem = new wShareMemory(SVR_SHARE_MEM_PIPE, 'i', MSG_QUEUE_LEN);
-	mOutShareMem = new wShareMemory(SVR_SHARE_MEM_PIPE, 'o', MSG_QUEUE_LEN);
-	char * pBuff = NULL;
-	if((pBuff = mInShareMem->CreateShareMemory()) != NULL)
+	vector<Svr_t*>::iterator it;
+	for (it = mSvr.begin(); it != mSvr.end(); it++)
 	{
-		mInMsgQueue = new wMsgQueue();
-		mInMsgQueue->SetBuffer(pBuff, MSG_QUEUE_LEN);
+		if ((*it)->mId == iId)
+		{
+			break;
+		}
 	}
-	else
+	return it;
+}
+
+void AgentConfig::ReportSvr(SvrReportReqId_t *pReportSvr)
+{
+	vector<Svr_t*>::iterator it = GetItById(pReportSvr->mId);
+	if (it != mSvr.end() && pReportSvr->mDelay > 0 && pReportSvr->mOkRate > 0)
 	{
-		LOG_ERROR("error","[runtime] Create (In) Share Memory failed");
+		(*it)->mDirty = 1;
+		(*it)->mDelay = pReportSvr->mDelay;
+		(*it)->mOkRate = pReportSvr->mOkRate;
+		LOG_DEBUG("default","[runtime] recvive a report message(shm)");
 	}
-	if((pBuff = mOutShareMem->CreateShareMemory()) != NULL)
+	FixContainer();
+}
+
+void AgentConfig::Statistics()
+{
+	if(mSvr.size() <= 0) return;
+
+	vector<Svr_t*>::iterator it;
+	for (it = mSvr.begin(); it != mSvr.end(); it++)
 	{
-		mOutMsgQueue = new wMsgQueue();
-		mOutMsgQueue->SetBuffer(pBuff, MSG_QUEUE_LEN);
+		if ((*it)->mDirty == 1)	//TODO.要能影响其他svr
+		{
+			(*it)->mWeight = Calculate(*it);
+			(*it)->mDirty = 0;
+		}
 	}
-	else
+	FixContainer();
+
+	LOG_DEBUG("default","[runtime] statistics svr success");
+}
+
+float AgentConfig::Calculate(Svr_t* pBuffer)
+{
+	Svr_t pSvr[255];
+	int iNum = GetSvrByGXid(pSvr, pBuffer->mGid, pBuffer->mXid, 0);
+	if (iNum <= 0)
 	{
-		LOG_ERROR("error","[runtime] Create (Out) Share Memory failed");
+		return 1.0;	//讲道理的话，这里不可能执行到（至少有其自身）
 	}
+
+	int iDelay = 0;
+	float fOkRate = 0.0;
+	for (int i = 0; i < iNum; ++i)
+	{
+		if (iDelay > pSvr[i].mDelay && pSvr[i].mDelay != 0)
+		{
+			iDelay = pSvr[i].mDelay;	//最小延时
+		}
+		if (fOkRate < pSvr[i].mOkRate && pSvr[i].mOkRate != 0)
+		{
+			fOkRate = pSvr[i].mOkRate;	//最大成功率
+		}
+	}
+	return iDelay!=0 && fOkRate!=0 && pBuffer->mDelay!=0 && pBuffer->mOkRate!=0? ((float)pBuffer->mDelay / iDelay)*(fOkRate / pBuffer->mOkRate) : 1.0;
 }
