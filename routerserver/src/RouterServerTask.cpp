@@ -101,7 +101,7 @@ int RouterServerTask::InitSvrReq(char *pBuffer, int iLen)
 
 	SvrResInit_t vRRt;
 	vRRt.mCode = 0;
-	vRRt.mNum = pConfig->GetSvrAll(vRRt.mSvr);
+	vRRt.mNum = pConfig->GetSvrAll(vRRt.mSvr);	//SvrNet_t
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
@@ -112,7 +112,7 @@ int RouterServerTask::ReloadSvrReq(char *pBuffer, int iLen)
 
 	SvrResReload_t vRRt;
 	vRRt.mCode = 0;
-	vRRt.mNum = pConfig->ReloadSvr(vRRt.mSvr);
+	vRRt.mNum = pConfig->ReloadSvr(vRRt.mSvr);	//SvrNet_t
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
@@ -125,7 +125,7 @@ int RouterServerTask::SyncSvrReq(char *pBuffer, int iLen)
 	{
 		SvrResSync_t vRRt;
 		vRRt.mCode = 0;
-		vRRt.mNum = pConfig->GetModSvr(vRRt.mSvr);
+		vRRt.mNum = pConfig->GetModSvr(vRRt.mSvr);	//SvrNet_t
 		if (vRRt.mNum > 0)
 		{
 			SyncSend((char *)&vRRt, sizeof(vRRt));

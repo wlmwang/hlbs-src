@@ -17,8 +17,7 @@
  */
 void RouterConfig::ParseBaseConfig()
 {
-	const char* filename = "../config/conf.xml";
-	bool bLoadOK = mDoc->LoadFile(filename);
+	bool bLoadOK = mDoc->LoadFile(mBaseConfFile);
 	if (!bLoadOK)
 	{
 		cout << "[startup] Load config file(conf.xml) failed" << endl;
@@ -92,8 +91,7 @@ void RouterConfig::ParseBaseConfig()
 
 void RouterConfig::ParseSvrConfig()
 {
-	const char* filename = "../config/svr.xml";
-	bool bLoadOK = mDoc->LoadFile(filename);
+	bool bLoadOK = mDoc->LoadFile(mSvrConfFile);
 	if (!bLoadOK)
 	{
 		LOG_ERROR("error", "[startup] Load config file(svr.xml) failed");
@@ -127,7 +125,7 @@ void RouterConfig::ParseSvrConfig()
 				pSvr->mXid = atoi(szXid);
 				pSvr->mPort = atoi(szPort);
 				pSvr->mDisabled = szDisabled != NULL ? atoi(szDisabled) : pSvr->mDisabled;
-				pSvr->mWeight = szWeight != NULL ? atof(szWeight): pSvr->mWeight;
+				pSvr->mSWeight = szWeight != NULL ? atoi(szWeight): pSvr->mSWeight;
 				memcpy(pSvr->mName, szName, MAX_SVR_NAME_LEN);
 				memcpy(pSvr->mIp, szIPAddr, MAX_SVR_IP_LEN);
 				mSvr.push_back(pSvr);
@@ -148,44 +146,36 @@ void RouterConfig::ParseSvrConfig()
 	SetModTime();
 }
 
-int RouterConfig::ReloadSvr(Svr_t* pBuffer)
+int RouterConfig::ReloadSvr(SvrNet_t* pBuffer)
 {
 	Final();
 	ParseSvrConfig();
 	return GetSvrAll(pBuffer);
 }
 
-//TODO.
-int RouterConfig::SyncSvr(Svr_t* pBuffer)
-{
-	Final();
-	ParseSvrConfig();
-	return GetSvrAll(pBuffer);
-}
-
-int RouterConfig::GetSvrAll(Svr_t* pBuffer)
+int RouterConfig::GetSvrAll(SvrNet_t* pBuffer)
 {
 	vector<Svr_t*>::iterator it = mSvr.begin();
 	for(int i = 0; it != mSvr.end(); i++, it++)
 	{
-		*(pBuffer+i) = **it;
+		*(pBuffer+i) = **it;	//Svr_t => SvrNet_t
 	}
 	return mSvr.size();
 }
 
-int RouterConfig::GetSvrById(Svr_t* pBuffer, int iId)
+int RouterConfig::GetSvrById(SvrNet_t* pBuffer, int iId)
 {
 	int iNum = 0;
 	map<int, Svr_t*>::iterator it = mSvrById.find(iId);
 	if(it != mSvrById.end())
 	{
 		iNum = 1;
-		*pBuffer = *(it->second);
+		*pBuffer = *(it->second);	//Svr_t => SvrNet_t
 	}
 	return iNum;
 }
 
-int RouterConfig::GetSvrByGid(Svr_t* pBuffer, int iGid, int iNum)
+int RouterConfig::GetSvrByGid(SvrNet_t* pBuffer, int iGid, int iNum)
 {
 	vector<Svr_t*> vSvr;
 	map<int, vector<Svr_t*> >::iterator mn = mSvrByGid.find(iGid);
@@ -197,7 +187,7 @@ int RouterConfig::GetSvrByGid(Svr_t* pBuffer, int iGid, int iNum)
 		vector<Svr_t*>::iterator it = vSvr.begin();
 		for(int i = 0; i < iNum && it != vSvr.end(); i++, it++)
 		{
-			*(pBuffer+i) = **it;
+			*(pBuffer+i) = **it;	//Svr_t => SvrNet_t
 		}
 	}
 	else
@@ -207,7 +197,7 @@ int RouterConfig::GetSvrByGid(Svr_t* pBuffer, int iGid, int iNum)
 	return iNum;
 }
 
-int RouterConfig::GetSvrByName(Svr_t* pBuffer, string sName, int iNum)
+int RouterConfig::GetSvrByName(SvrNet_t* pBuffer, string sName, int iNum)
 {
 	vector<Svr_t*> vSvr;
 	map<string, vector<Svr_t*> >::iterator mn = mSvrByName.find(sName);
@@ -219,7 +209,7 @@ int RouterConfig::GetSvrByName(Svr_t* pBuffer, string sName, int iNum)
 		vector<Svr_t*>::iterator it = vSvr.begin();
 		for(int i = 0; i < iNum && it != vSvr.end(); i++, it++)
 		{
-			*(pBuffer+i) = **it;
+			*(pBuffer+i) = **it;	//Svr_t => SvrNet_t
 		}
 	}
 	else
@@ -229,7 +219,7 @@ int RouterConfig::GetSvrByName(Svr_t* pBuffer, string sName, int iNum)
 	return iNum;
 }
 
-int RouterConfig::GetSvrByGXid(Svr_t* pBuffer, int iGid, int iXid, int iNum)
+int RouterConfig::GetSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid, int iNum)
 {
 	string sGid = Itos(iGid);
 	string sXid = Itos(iXid);
@@ -245,7 +235,7 @@ int RouterConfig::GetSvrByGXid(Svr_t* pBuffer, int iGid, int iXid, int iNum)
 		vector<Svr_t*>::iterator it = vSvr.begin();
 		for(int i = 0; i < iNum && it != vSvr.end(); i++, it++)
 		{
-			*(pBuffer+i) = **it;
+			*(pBuffer+i) = **it;	//Svr_t => SvrNet_t
 		}
 	}
 	else
@@ -308,9 +298,8 @@ void RouterConfig::Final()
 
 int RouterConfig::SetModTime()
 {
-	const char* filename = "../config/svr.xml";
 	struct stat stBuf;
-	int iRet = stat(filename, &stBuf);
+	int iRet = stat(mSvrConfFile, &stBuf);
 	if (iRet == 0)
 	{
 		mMtime = stBuf.st_mtime;
@@ -321,9 +310,8 @@ int RouterConfig::SetModTime()
 
 bool RouterConfig::IsModTime()
 {
-	const char* filename = "../config/svr.xml";
 	struct stat stBuf;
-	int iRet = stat(filename, &stBuf);
+	int iRet = stat(mSvrConfFile, &stBuf);
 	if (iRet == 0 && stBuf.st_mtime > mMtime)
 	{
 		return true;
@@ -333,10 +321,9 @@ bool RouterConfig::IsModTime()
 
 //获取修改的svr
 //不能删除节点（可修改Disabled=1属性，达到删除节点效果）
-int RouterConfig::GetModSvr(Svr_t* pBuffer)
+int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 {
-	const char* filename = "../config/svr.xml";
-	bool bLoadOK = mDoc->LoadFile(filename);
+	bool bLoadOK = mDoc->LoadFile(mSvrConfFile);
 	if (!bLoadOK)
 	{
 		LOG_ERROR("error", "[modify svr] Load config file(svr.xml) failed");
@@ -371,19 +358,19 @@ int RouterConfig::GetModSvr(Svr_t* pBuffer)
 				pSvr->mXid = atoi(szXid);
 				pSvr->mPort = atoi(szPort);
 				pSvr->mDisabled = szDisabled != NULL ? atoi(szDisabled) : pSvr->mDisabled;
-				pSvr->mWeight = szWeight != NULL ? atof(szWeight): pSvr->mWeight;
+				pSvr->mSWeight = szWeight != NULL ? atof(szWeight): pSvr->mSWeight;
 				memcpy(pSvr->mName, szName, MAX_SVR_NAME_LEN);
 				memcpy(pSvr->mIp, szIPAddr, MAX_SVR_IP_LEN);
 
 				vector<Svr_t*>::iterator it = GetItById(pSvr->mId);
 				if (it != mSvr.end())
 				{
-					if (pSvr->mGid != (*it)->mGid || pSvr->mXid != (*it)->mXid || pSvr->mDisabled != (*it)->mDisabled || pSvr->mWeight != (*it)->mWeight || pSvr->mPort != (*it)->mPort || strcpy(pSvr->mIp,(*it)->mIp) != 0 || strcpy(pSvr->mName,(*it)->mName) != 0)
+					if (pSvr->mGid != (*it)->mGid || pSvr->mXid != (*it)->mXid || pSvr->mDisabled != (*it)->mDisabled || pSvr->mSWeight != (*it)->mSWeight || pSvr->mPort != (*it)->mPort || strcpy(pSvr->mIp,(*it)->mIp) != 0 || strcpy(pSvr->mName,(*it)->mName) != 0)
 					{
 						//更新配置
 						mSvr.erase(it);
 						mSvr.push_back(pSvr);
-						*(pBuffer + j) = **it;
+						*(pBuffer + j) = **it;	//Svr_t => SvrNet_t
 						j++;
 					}
 				}
@@ -391,7 +378,7 @@ int RouterConfig::GetModSvr(Svr_t* pBuffer)
 				{
 					//添加新配置
 					mSvr.push_back(pSvr);
-					*(pBuffer + j) = **it;
+					*(pBuffer + j) = **it;	//Svr_t => SvrNet_t
 					j++;
 				}
 			}

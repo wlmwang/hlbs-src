@@ -116,7 +116,7 @@ int AgentCmdTask::SvrResData(char *pBuffer, int iLen)
 	}
 	else
 	{
-		cout << "empty table." << endl;
+		cout << "empty table" << endl;
 	}
 	AgentCmd::Instance()->SetWaitResStatus(false);
 	return 0;
@@ -127,11 +127,11 @@ int AgentCmdTask::SvrSetResData(char *pBuffer, int iLen)
 	SvrSetResData_t *pCmd = (struct SvrSetResData_t* )pBuffer;
 	if(pCmd->mCode >= 0)
 	{
-		cout << "send success!" << endl;
+		cout << "set svr success" << endl;
 	}
 	else
 	{
-		cout << "faild!" << endl;
+		cout << "set svr faild" << endl;
 	}
 	AgentCmd::Instance()->SetWaitResStatus(false);
 	return 0;

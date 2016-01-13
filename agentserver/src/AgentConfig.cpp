@@ -130,7 +130,7 @@ void AgentConfig::ParseRouterConfig()
 	FixContainer();
 }
 
-int AgentConfig::GetSvrAll(Svr_t* pBuffer)
+int AgentConfig::GetSvrAll(SvrNet_t* pBuffer)
 {
 	vector<Svr_t*>::iterator it = mSvr.begin();
 	for(int i = 0; it != mSvr.end(); i++, it++)
@@ -140,7 +140,7 @@ int AgentConfig::GetSvrAll(Svr_t* pBuffer)
 	return mSvr.size();
 }
 
-int AgentConfig::InitSvr(Svr_t* pBuffer, int iNum)
+int AgentConfig::InitSvr(SvrNet_t* pBuffer, int iNum)
 {
 	if (iNum <= 0)
 	{
@@ -150,41 +150,47 @@ int AgentConfig::InitSvr(Svr_t* pBuffer, int iNum)
 	Final();
 	for(int i = 0; i < iNum ; i++)
 	{
-		mSvr.push_back(&pBuffer[i]);
+		Svr_t *pSvr = new Svr_t(pBuffer[i]);
+		mSvr.push_back(pSvr);
 	}
 	FixContainer();
 	return 0;
 }
 
-int AgentConfig::ReloadSvr(Svr_t *pBuffer, int iNum)
+int AgentConfig::ReloadSvr(SvrNet_t *pBuffer, int iNum)
 {
 	return InitSvr(pBuffer, iNum);
 }
 
-int AgentConfig::SyncSvr(Svr_t *pBuffer, int iNum)
+//更新不同配置 & 添加新配置
+int AgentConfig::SyncSvr(SvrNet_t *pBuffer, int iNum)
 {
 	if (iNum <= 0)
 	{
 		return -1;
 	}
+
 	int j = 0;
 	for(int i = 0; i < iNum ; i++)
 	{
-		vector<Svr_t*>::iterator it = GetItById((pBuffer+i)->mId);
+		vector<Svr_t*>::iterator it = GetItById( (pBuffer+i)->mId );
 		if (it != mSvr.end())
 		{
 			if (pBuffer[i].mGid != (*it)->mGid || pBuffer[i].mXid != (*it)->mXid || pBuffer[i].mDisabled != (*it)->mDisabled || pBuffer[i].mWeight != (*it)->mWeight || pBuffer[i].mPort != (*it)->mPort || strcpy(pBuffer[i].mIp,(*it)->mIp) != 0 || strcpy(pBuffer[i].mName,(*it)->mName) != 0)
 			{
 				//更新配置
+				SAFE_DELETE(*it);
 				mSvr.erase(it);
-				mSvr.push_back(pBuffer+i);
+				Svr_t *pSvr = new Svr_t(pBuffer[i]);
+				mSvr.push_back(pSvr);
 				j++;
 			}
 		}
 		else
 		{
 			//添加新配置
-			mSvr.push_back(pBuffer+i);
+			Svr_t *pSvr = new Svr_t(pBuffer[i]);
+			mSvr.push_back(pSvr);
 			j++;
 		}
 	}
@@ -192,7 +198,7 @@ int AgentConfig::SyncSvr(Svr_t *pBuffer, int iNum)
 	return j;
 }
 
-int AgentConfig::GetSvrById(Svr_t* pBuffer, int iId)
+int AgentConfig::GetSvrById(SvrNet_t* pBuffer, int iId)
 {
 	int iNum = 0;
 	map<int, Svr_t*>::iterator it = mSvrById.find(iId);
@@ -204,7 +210,7 @@ int AgentConfig::GetSvrById(Svr_t* pBuffer, int iId)
 	return iNum;
 }
 
-int AgentConfig::GetSvrByGid(Svr_t* pBuffer, int iGid, int iNum)
+int AgentConfig::GetSvrByGid(SvrNet_t* pBuffer, int iGid, int iNum)
 {
 	vector<Svr_t*> vSvr;
 	map<int, vector<Svr_t*> >::iterator mn = mSvrByGid.find(iGid);
@@ -226,7 +232,7 @@ int AgentConfig::GetSvrByGid(Svr_t* pBuffer, int iGid, int iNum)
 	return iNum;
 }
 
-int AgentConfig::GetSvrByName(Svr_t* pBuffer, string sName, int iNum)
+int AgentConfig::GetSvrByName(SvrNet_t* pBuffer, string sName, int iNum)
 {
 	vector<Svr_t*> vSvr;
 	map<string, vector<Svr_t*> >::iterator mn = mSvrByName.find(sName);
@@ -248,7 +254,7 @@ int AgentConfig::GetSvrByName(Svr_t* pBuffer, string sName, int iNum)
 	return iNum;
 }
 
-int AgentConfig::GetSvrByGXid(Svr_t* pBuffer, int iGid, int iXid, int iNum)
+int AgentConfig::GetSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid, int iNum)
 {
 	string sGid = Itos(iGid);
 	string sXid = Itos(iXid);
@@ -380,6 +386,10 @@ void AgentConfig::DelContainer()
 void AgentConfig::Final()
 {
 	DelContainer();
+	for(vector<Svr_t*>::iterator it = mSvr.begin(); it != mSvr.end(); it++)
+	{
+		SAFE_DELETE(*it);
+	}
 	mSvr.clear();
 }
 
@@ -406,17 +416,25 @@ vector<Svr_t*>::iterator AgentConfig::GetItById(int iId)
 	return it;
 }
 
+//使用私有结构
 void AgentConfig::ReportSvr(SvrReportReqId_t *pReportSvr)
 {
 	vector<Svr_t*>::iterator it = GetItById(pReportSvr->mId);
-	if (it != mSvr.end() && pReportSvr->mDelay > 0 && pReportSvr->mOkRate > 0)
+	if (it != mSvr.end() && pReportSvr->mDelay != 0 && pReportSvr->mStu != 0)
 	{
-		(*it)->mDirty = 1;
+		SetGXDirty((*it), 1);	//设置同组所有svr更新位
 		(*it)->mDelay = pReportSvr->mDelay;
-		(*it)->mOkRate = pReportSvr->mOkRate;
-		LOG_DEBUG("default","[runtime] recvive a report message(shm)");
+		if (pReportSvr->mStu == 1)	//成功
+		{
+			(*it)->mOkNum++;
+		}
+		else if(pReportSvr->mStu == -1)	//失败
+		{
+			(*it)->mErrNum++;
+		}
+		LOG_DEBUG("default","[runtime] recvive a report message(shm), Ok(%d),Err(%d)", (*it)->mOkNum, (*it)->mErrNum);
 	}
-	FixContainer();
+	//FixContainer();
 }
 
 void AgentConfig::Statistics()
@@ -426,28 +444,59 @@ void AgentConfig::Statistics()
 	vector<Svr_t*>::iterator it;
 	for (it = mSvr.begin(); it != mSvr.end(); it++)
 	{
-		if ((*it)->mDirty == 1)	//TODO.要能影响其他svr
+		if ((*it)->mDirty == 1)
 		{
-			(*it)->mWeight = Calculate(*it);
-			(*it)->mDirty = 0;
+			(*it)->mOkRate = (float)(*it)->mOkNum / (*it)->mTotalNum;
+			(*it)->mErrRate = (float)(*it)->mErrNum / (*it)->mTotalNum;
+			(*it)->mRfuRate = (float)(*it)->mRfuNum / (*it)->mTotalNum;
+			
+			(*it)->mPreNum = CalcPre(*it);
+			(*it)->mOverLoad = CalcOverLoad(*it);
+			(*it)->mWeight = CalcWeight(*it);
+
+			(*it)->ClearStatistics();	//清除统计数据
 		}
 	}
 	FixContainer();
-
 	LOG_DEBUG("default","[runtime] statistics svr success");
 }
 
-float AgentConfig::Calculate(Svr_t* pBuffer)
+short AgentConfig::CalcPre(Svr_t* stSvr)
 {
-	Svr_t pSvr[255];
-	int iNum = GetSvrByGXid(pSvr, pBuffer->mGid, pBuffer->mXid, 0);
-	if (iNum <= 0)
+	return 1;
+}
+
+short AgentConfig::CalcOverLoad(Svr_t* stSvr)
+{
+	float fDefault = 0.3;
+	if (stSvr->mErrNum > 0 && stSvr->mPreNum <= 0)	//本周期
 	{
-		return 1.0;	//讲道理的话，这里不可能执行到（至少有其自身）
+		return 1; //过载
+	}
+	else if(stSvr->mErrRate > fDefault)	//上一周期错误率
+	{
+		return 1; //过载
+	}
+	return 0;
+}
+
+float AgentConfig::CalcWeight(Svr_t* stSvr)
+{
+	float fDefault = 1.0;
+	if (stSvr->mDelay == 0 && stSvr->mOkRate == 0)
+	{
+		return fDefault;
 	}
 
-	int iDelay = 0;
-	float fOkRate = 0.0;
+	Svr_t pSvr[255];
+	int iNum = GetSvrByGXid(pSvr, stSvr->mGid, stSvr->mXid, 0);
+	if (iNum <= 0)
+	{
+		return fDefault;	//讲道理的话，这里不可能执行到（至少有其自身）
+	}
+
+	int iDelay = stSvr->mDelay;
+	float fOkRate = stSvr->mOkRate;
 	for (int i = 0; i < iNum; ++i)
 	{
 		if (iDelay > pSvr[i].mDelay && pSvr[i].mDelay != 0)
@@ -459,5 +508,25 @@ float AgentConfig::Calculate(Svr_t* pBuffer)
 			fOkRate = pSvr[i].mOkRate;	//最大成功率
 		}
 	}
-	return iDelay!=0 && fOkRate!=0 && pBuffer->mDelay!=0 && pBuffer->mOkRate!=0? ((float)pBuffer->mDelay / iDelay)*(fOkRate / pBuffer->mOkRate) : 1.0;
+
+	if (iDelay != 0 && fOkRate != 0)
+	{
+		return ((float)stSvr->mDelay / iDelay) * (fOkRate / stSvr->mOkRate) * stSvr->mSWeight;
+	}
+	return 1.0;
+}
+
+//设置同组所有svr更新位
+void AgentConfig::SetGXDirty(Svr_t* stSvr, int iDirty)
+{
+	Svr_t pSvr[255];
+	int iNum = GetSvrByGXid(pSvr, stSvr->mGid, stSvr->mXid, 0);
+	if (iNum <= 0)
+	{
+		return;	//讲道理的话，这里不可能执行到（至少有其自身）
+	}
+	for (int i = 0; i < iNum; ++i)
+	{
+		 pSvr[i].mDirty = iDirty;
+	}
 }

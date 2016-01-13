@@ -32,7 +32,6 @@ void AgentServerTask::Initialize()
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_ID, &AgentServerTask::GetSvrById);
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_GID, &AgentServerTask::GetSvrByGid);
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_NAME, &AgentServerTask::GetSvrByName);
-	//AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_SYNC, &AgentServerTask::SyncSvrReq);
 
 	AGENT_REG_DISP(CMD_SVR_RES, SVR_RES_INIT, &AgentServerTask::InitSvrRes);
 	AGENT_REG_DISP(CMD_SVR_RES, SVR_RES_RELOAD, &AgentServerTask::ReloadSvrRes);

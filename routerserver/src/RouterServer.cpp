@@ -56,6 +56,7 @@ void RouterServer::Run()
 	CheckModSvr();
 }
 
+//检测配置文件是否修改
 void RouterServer::CheckModSvr()
 {
 	RouterConfig *pConfig = RouterConfig::Instance();
@@ -63,11 +64,11 @@ void RouterServer::CheckModSvr()
 	{
 		SvrResSync_t vRRt;
 		vRRt.mCode = 0;
-		vRRt.mNum = pConfig->GetModSvr(vRRt.mSvr);
+		vRRt.mNum = pConfig->GetModSvr(vRRt.mSvr);	//SvrNet_t
 		if (vRRt.mNum > 0)
 		{
 			cout << "broadcast new svr" << endl;
-			Broadcast((char *)&vRRt, sizeof(vRRt));
+			Broadcast((char *)&vRRt, sizeof(vRRt));	//广播所有agent
 		}
 	}
 }

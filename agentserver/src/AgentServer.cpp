@@ -100,7 +100,7 @@ void AgentServer::ConnectRouter()
 	}
 
 	LOG_ERROR("server", "[connect] Connect to RouterServer success ip(%s) port(%d)", pRconf->mIPAddr, pRconf->mPort);
-	//发送初始化rtbl配置请求
+	//发送初始化svr配置请求
 	InitSvrReq();
 }
 
@@ -114,8 +114,8 @@ int AgentServer::InitSvrReq()
 	wTcpClient<AgentServerTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
 	if(pClient != NULL && pClient->TcpTask())
 	{
-		SvrReqInit_t vRtl;
-		return pClient->TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
+		SvrReqInit_t stSvr;
+		return pClient->TcpTask()->SyncSend((char *)&stSvr, sizeof(stSvr));
 	}
 	return -1;
 }
@@ -130,8 +130,8 @@ int AgentServer::ReloadSvrReq()
 	wTcpClient<AgentServerTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
 	if(pClient != NULL && pClient->TcpTask())
 	{
-		SvrReqReload_t vRtl;
-		return pClient->TcpTask()->SyncSend((char *)&vRtl, sizeof(vRtl));
+		SvrReqReload_t stSvr;
+		return pClient->TcpTask()->SyncSend((char *)&stSvr, sizeof(stSvr));
 	}
 	return -1;
 }
@@ -151,7 +151,7 @@ void AgentServer::Run()
 }
 
 /**
- * 此队列解析不具通用性  Time up...
+ * 此队列解析不具通用性  Time is up...
  */
 void AgentServer::CheckQueue()
 {
@@ -204,6 +204,6 @@ void AgentServer::CheckTimer()
 	//检测客户端超时
 	if(mReportTimer.CheckTimer(iInterval))
 	{
-		mConfig->Statistics();
+		mConfig->Statistics();	//统计上报svr的weight值
 	}
 }

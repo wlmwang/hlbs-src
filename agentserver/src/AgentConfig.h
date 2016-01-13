@@ -76,30 +76,35 @@ class AgentConfig: public wConfig<AgentConfig>
 		void ParseBaseConfig();
 		void ParseRouterConfig();
 
-		int GetSvrAll(Svr_t* pBuffer);
-		int GetSvrById(Svr_t* pBuffer, int iId);
+		int GetSvrAll(SvrNet_t* pBuffer);
+		int GetSvrById(SvrNet_t* pBuffer, int iId);
 
-		int InitSvr(Svr_t *pBuffer, int iLen = 0);
-		int ReloadSvr(Svr_t *pBuffer, int iLen = 0);
-		int SyncSvr(Svr_t *pBuffer, int iLen = 0);
+		int InitSvr(SvrNet_t *pBuffer, int iLen = 0);
+		int ReloadSvr(SvrNet_t *pBuffer, int iLen = 0);
+		int SyncSvr(SvrNet_t *pBuffer, int iLen = 0);
 
-		int GetSvrByName(Svr_t* pBuffer, string sName, int iNum = 0);
-		int GetSvrByGid(Svr_t* pBuffer, int iGid, int iNum = 0);
-		int GetSvrByGXid(Svr_t* pBuffer, int iGid, int iXid, int iNum = 0);
+		int GetSvrByName(SvrNet_t* pBuffer, string sName, int iNum = 0);
+		int GetSvrByGid(SvrNet_t* pBuffer, int iGid, int iNum = 0);
+		int GetSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid, int iNum = 0);
 		
 		BYTE SetSvrAttr(WORD iId, BYTE iDisabled, WORD iWeight, WORD iTimeline, WORD iConnTime, WORD iTasks, WORD iSuggest);
 
-		void ReportSvr(SvrReportReqId_t *pReportSvr);
+		void ReportSvr(SvrReportReqId_t *pReportSvr);	//上报结果
 		void Statistics();
 
-		float Calculate(Svr_t* pBuffer);
 	protected:
 		BYTE DisabledSvr(WORD iId);
 		BYTE SetSvrWeight(WORD iId, WORD iWeight);
 
 		void FixContainer();
 		void DelContainer();
+
 		vector<Svr_t*>::iterator GetItById(int iId);
+		void SetGXDirty(Svr_t* stSvr, int iDirty = 1);
+
+		float CalcWeight(Svr_t* stSvr);
+		int CalcPre(Svr_t* stSvr);
+		int CalcOverLoad(Svr_t* stSvr);
 		
 		vector<Svr_t*> mSvr;
 		map<int, Svr_t*> mSvrById;

@@ -28,7 +28,7 @@ class RouterServer: public wTcpServer<RouterServer>
 		
 		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
 
-		void CheckModSvr();
+		void CheckModSvr();	//检测配置文件是否修改
 };
 
 #endif

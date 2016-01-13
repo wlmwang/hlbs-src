@@ -45,16 +45,14 @@ class RouterConfig: public wConfig<RouterConfig>
 			mBacklog = 1024;
 			mWorkers = 1;
 			mDoc = new TiXmlDocument();
+			memcpy(mBaseConfFile, "../config/conf.xml", sizeof("../config/conf.xml"));
+			memcpy(mSvrConfFile, "../config/svr.xml", sizeof("../config/svr.xml"));
 		}
 
 		RouterConfig()
 		{
             Initialize();
 		}
-
-		bool IsModTime();
-		int SetModTime();
-		int GetModSvr(Svr_t* pBuffer);
 
 		/**
 		 * 解析配置
@@ -65,14 +63,18 @@ class RouterConfig: public wConfig<RouterConfig>
 		 *  解析Svr配置
 		 */
 		void ParseSvrConfig();
-		int GetSvrAll(Svr_t* pBuffer);
-		int ReloadSvr(Svr_t* pBuffer);
-		int SyncSvr(Svr_t* pBuffer);
 		
-		int GetSvrById(Svr_t* pBuffer, int iId);
-		int GetSvrByName(Svr_t* pBuffer, string sName, int iNum = 0);
-		int GetSvrByGid(Svr_t* pBuffer, int iGid, int iNum = 0);
-		int GetSvrByGXid(Svr_t* pBuffer, int iGid, int iXid, int iNum = 0);
+		bool IsModTime();
+		int SetModTime();
+		int GetModSvr(SvrNet_t* pBuffer);
+
+		int GetSvrAll(SvrNet_t* pBuffer);
+		int ReloadSvr(SvrNet_t* pBuffer);
+		
+		int GetSvrById(SvrNet_t* pBuffer, int iId);
+		int GetSvrByName(SvrNet_t* pBuffer, string sName, int iNum = 0);
+		int GetSvrByGid(SvrNet_t* pBuffer, int iGid, int iNum = 0);
+		int GetSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid, int iNum = 0);
 	protected:
 		void FixContainer();
 		void DelContainer();
@@ -86,6 +88,9 @@ class RouterConfig: public wConfig<RouterConfig>
 
 		time_t mMtime;	//svr.xml 修改时间
 		TiXmlDocument* mDoc;
+
+		char mSvrConfFile[32];
+		char mBaseConfFile[32];
 };
 
 #endif

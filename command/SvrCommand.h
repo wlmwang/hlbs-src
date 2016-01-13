@@ -116,7 +116,7 @@ struct SvrResInit_t : SvrResCmd_s
 		memset(mSvr, 0, sizeof(mSvr));
 	}
 	int mNum;
-	Svr_t mSvr[255];
+	SvrNet_t mSvr[255];
 };
 
 //重载返回
@@ -129,7 +129,7 @@ struct SvrResReload_t : SvrResCmd_s
 		memset(mSvr, 0, sizeof(mSvr));
 	}
 	int mNum;
-	Svr_t mSvr[255];
+	SvrNet_t mSvr[255];
 };
 
 //同步返回
@@ -142,7 +142,7 @@ struct SvrResSync_t : SvrResCmd_s
 		memset(mSvr, 0, sizeof(mSvr));
 	}
 	int mNum;
-	Svr_t mSvr[255];
+	SvrNet_t mSvr[255];
 };
 
 //获取svr请求返回数据，包括all|id|name|gid/xid
@@ -157,7 +157,7 @@ struct SvrResData_t : SvrResCmd_s
 	}
 	short mReqId;	//包括all|id|name|gid/xid的wCommand::mId
 	int mNum;
-	Svr_t mSvr[255];
+	SvrNet_t mSvr[255];
 };
 
 
@@ -202,11 +202,11 @@ struct SvrReportReqId_t : SvrReqCli_s
 	{
 		mId = 0;
 		mDelay = 0;
-		mOkRate = 0.0;
+		mStu = 0;
 	}
 	WORD mId;
-	WORD mDelay;	//min
-	float mOkRate;	//max
+	WORD mDelay;
+	BYTE mStu;
 };
 
 //++++++++++++返回数据结构
