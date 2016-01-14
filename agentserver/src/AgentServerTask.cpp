@@ -29,9 +29,7 @@ void AgentServerTask::Initialize()
 {
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_RELOAD, &AgentServerTask::ReloadSvrReq);
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_ALL, &AgentServerTask::GetSvrAll);
-	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_ID, &AgentServerTask::GetSvrById);
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_GID, &AgentServerTask::GetSvrByGid);
-	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_NAME, &AgentServerTask::GetSvrByName);
 
 	AGENT_REG_DISP(CMD_SVR_RES, SVR_RES_INIT, &AgentServerTask::InitSvrRes);
 	AGENT_REG_DISP(CMD_SVR_RES, SVR_RES_RELOAD, &AgentServerTask::ReloadSvrRes);
@@ -178,19 +176,6 @@ int AgentServerTask::GetSvrAll(char *pBuffer, int iLen)
 }
 
 //agentcmd发来请求
-int AgentServerTask::GetSvrById(char *pBuffer, int iLen)
-{
-	AgentConfig *pConfig = AgentConfig::Instance();
-	SvrReqId_t *pCmd = (struct SvrReqId_t* )pBuffer;
-
-	SvrResData_t vRRt;
-	vRRt.mReqId = pCmd->GetId();
-	vRRt.mNum = pConfig->GetSvrById(vRRt.mSvr, pCmd->mId);
-	SyncSend((char *)&vRRt, sizeof(vRRt));
-	return 0;
-}
-
-//agentcmd发来请求
 int AgentServerTask::GetSvrByGid(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
@@ -198,20 +183,7 @@ int AgentServerTask::GetSvrByGid(char *pBuffer, int iLen)
 	
 	SvrResData_t vRRt;
 	vRRt.mReqId = pCmd->GetId();
-	vRRt.mNum = pConfig->GetSvrByGid(vRRt.mSvr, pCmd->mGid, 1);
-	SyncSend((char *)&vRRt, sizeof(vRRt));
-	return 0;
-}
-
-//agentcmd发来请求
-int AgentServerTask::GetSvrByName(char *pBuffer, int iLen)
-{
-	AgentConfig *pConfig = AgentConfig::Instance();
-	SvrReqName_t *pCmd = (struct SvrReqName_t* )pBuffer;
-	
-	SvrResData_t vRRt;
-	vRRt.mReqId = pCmd->GetId();
-	vRRt.mNum = pConfig->GetSvrByName(vRRt.mSvr, pCmd->mName, 1);
+	vRRt.mNum = pConfig->GetSvrByGid(vRRt.mSvr, pCmd->mGid);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
@@ -224,7 +196,7 @@ int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 	
 	SvrResData_t vRRt;
 	vRRt.mReqId = pCmd->GetId();
-	vRRt.mNum = pConfig->GetSvrByGXid(vRRt.mSvr, pCmd->mGid, pCmd->mXid, 1);
+	vRRt.mNum = pConfig->GetSvrByGXid(vRRt.mSvr, pCmd->mGid, pCmd->mXid);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }

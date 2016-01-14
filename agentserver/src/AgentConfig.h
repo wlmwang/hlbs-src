@@ -70,47 +70,56 @@ class AgentConfig: public wConfig<AgentConfig>
 			SAFE_DELETE(mDoc);
 		}
 
-		/**
-		 * 解析配置
-		 */		
 		void ParseBaseConfig();
 		void ParseRouterConfig();
 
-		int GetSvrAll(SvrNet_t* pBuffer);
-		int GetSvrById(SvrNet_t* pBuffer, int iId);
-
-		int InitSvr(SvrNet_t *pBuffer, int iLen = 0);
-		int ReloadSvr(SvrNet_t *pBuffer, int iLen = 0);
-		int SyncSvr(SvrNet_t *pBuffer, int iLen = 0);
-
-		int GetSvrByName(SvrNet_t* pBuffer, string sName, int iNum = 0);
-		int GetSvrByGid(SvrNet_t* pBuffer, int iGid, int iNum = 0);
-		int GetSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid, int iNum = 0);
+		int InitSvr(SvrNet_t *pSvr, int iLen = 0);
+		int ReloadSvr(SvrNet_t *pSvr, int iLen = 0);
+		int SyncSvr(SvrNet_t *pSvr, int iLen = 0);
 		
-		BYTE SetSvrAttr(WORD iId, BYTE iDisabled, WORD iWeight, WORD iTimeline, WORD iConnTime, WORD iTasks, WORD iSuggest);
-
+		int GetSvrAll(SvrNet_t* pBuffer);
+		int GetSvrByGid(SvrNet_t* pBuffer, int iGid);
+		int GetSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid);
+		
 		void ReportSvr(SvrReportReqId_t *pReportSvr);	//上报结果
 		void Statistics();
-
+		
 	protected:
-		BYTE DisabledSvr(WORD iId);
-		BYTE SetSvrWeight(WORD iId, WORD iWeight);
-
 		void FixContainer();
 		void DelContainer();
-
+		vector<Svr_t*>::iterator GetItFromV(Svr_t* pSvr);
 		vector<Svr_t*>::iterator GetItById(int iId);
+		
+		bool IsChangeSvr(const Svr_t* pR1, const Svr_t* pR2);
+
+		int GetAllSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid);
+		int GetAllSvrByGid(SvrNet_t* pBuffer, int iGid);
 		void SetGXDirty(Svr_t* stSvr, int iDirty = 1);
 
-		float CalcWeight(Svr_t* stSvr);
-		int CalcPre(Svr_t* stSvr);
-		int CalcOverLoad(Svr_t* stSvr);
+		int CalcWeight(Svr_t* stSvr);
+		short CalcPre(Svr_t* stSvr);
+		short CalcOverLoad(Svr_t* stSvr);
 		
+		struct RunWRR_t
+		{
+			int mIndex;
+			int mWeight;	//初始化最大值
+			int mWeightGcd;	//公约数（通用wrr算法）
+			int mWeightAva;	//平均值
+			RunWRR_t()
+			{
+				mIndex = -1;
+				mWeight = 0;
+				mWeightGcd = 0;
+				mWeightAva = 0;
+			}
+		};
 		vector<Svr_t*> mSvr;
-		map<int, Svr_t*> mSvrById;
 		map<int, vector<Svr_t*> > mSvrByGid;
-		map<string, vector<Svr_t*> > mSvrByName;
 		map<string, vector<Svr_t*> > mSvrByGXid;
+
+		map<int, RunWRR_t*> mRunWrrGid;
+		map<string, RunWRR_t*> mRunWrrGXid;
 
 		TiXmlDocument* mDoc;
 };

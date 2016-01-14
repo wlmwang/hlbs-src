@@ -54,15 +54,6 @@ struct SvrReqAll_t : SvrReqCmd_s
 	SvrReqAll_t() : SvrReqCmd_s(SVR_REQ_ALL) {}
 };
 
-//根据id获取svr
-const BYTE SVR_REQ_ID = 4;
-struct SvrReqId_t : SvrReqCmd_s 
-{
-	SvrReqId_t() : SvrReqCmd_s(SVR_REQ_ID), mId(0) {}
-	
-	WORD mId;
-};
-
 //根据gid获取svr
 const BYTE SVR_REQ_GID = 5;
 struct SvrReqGid_t : SvrReqCmd_s 
@@ -70,17 +61,6 @@ struct SvrReqGid_t : SvrReqCmd_s
 	SvrReqGid_t() : SvrReqCmd_s(SVR_REQ_GID), mGid(0) {}
 	
 	WORD mGid;
-};
-
-//根据name获取svr
-const BYTE SVR_REQ_NAME = 6;
-struct SvrReqName_t : SvrReqCmd_s 
-{
-	SvrReqName_t() : SvrReqCmd_s(SVR_REQ_NAME) 
-	{
-		memset(mName, 0, MAX_SVR_NAME_LEN);
-	}
-	char mName[MAX_SVR_NAME_LEN];
 };
 
 //根据gid、xid获取svr
@@ -116,7 +96,7 @@ struct SvrResInit_t : SvrResCmd_s
 		memset(mSvr, 0, sizeof(mSvr));
 	}
 	int mNum;
-	SvrNet_t mSvr[255];
+	SvrNet_t mSvr[MAX_SVR_NUM];
 };
 
 //重载返回
@@ -129,7 +109,7 @@ struct SvrResReload_t : SvrResCmd_s
 		memset(mSvr, 0, sizeof(mSvr));
 	}
 	int mNum;
-	SvrNet_t mSvr[255];
+	SvrNet_t mSvr[MAX_SVR_NUM];
 };
 
 //同步返回
@@ -142,7 +122,7 @@ struct SvrResSync_t : SvrResCmd_s
 		memset(mSvr, 0, sizeof(mSvr));
 	}
 	int mNum;
-	SvrNet_t mSvr[255];
+	SvrNet_t mSvr[MAX_SVR_NUM];
 };
 
 //获取svr请求返回数据，包括all|id|name|gid/xid
@@ -157,7 +137,7 @@ struct SvrResData_t : SvrResCmd_s
 	}
 	short mReqId;	//包括all|id|name|gid/xid的wCommand::mId
 	int mNum;
-	SvrNet_t mSvr[255];
+	SvrNet_t mSvr[MAX_SVR_NUM];
 };
 
 

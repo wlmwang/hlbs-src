@@ -110,3 +110,28 @@ void itoa(unsigned long val, char *buf, unsigned radix)
 		++firstdig; /* advance to next two digits */ 
 	} while (firstdig < p); /* repeat until halfway */ 
 }
+
+int Gcd(int a, int b)
+{
+	if (a < b)
+	{
+		int tmp = a;
+		a = b;
+		b = tmp;
+	}
+
+	if (b == 0)
+	{
+		return a;
+	}
+	else
+	{
+		return Gcd(b, a % b);
+	}
+}
+
+int Ngcd(int *arr, int n)
+{
+	if (n == 1)  return *arr;
+	return Gcd(arr[n-1], Ngcd(arr, n-1));
+}

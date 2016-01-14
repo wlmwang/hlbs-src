@@ -31,9 +31,6 @@ RouterServer::~RouterServer()
 	//...
 }
 
-/**
- * 初始化
- */
 void RouterServer::Initialize()
 {
 	//...
@@ -62,13 +59,13 @@ void RouterServer::CheckModSvr()
 	RouterConfig *pConfig = RouterConfig::Instance();
 	if (pConfig->IsModTime())
 	{
-		SvrResSync_t vRRt;
-		vRRt.mCode = 0;
-		vRRt.mNum = pConfig->GetModSvr(vRRt.mSvr);	//SvrNet_t
-		if (vRRt.mNum > 0)
+		SvrResSync_t stSvr;
+		stSvr.mCode = 0;
+		stSvr.mNum = pConfig->GetModSvr(stSvr.mSvr);	//SvrNet_t
+		if (stSvr.mNum > 0)
 		{
 			cout << "broadcast new svr" << endl;
-			Broadcast((char *)&vRRt, sizeof(vRRt));	//广播所有agent
+			Broadcast((char *)&stSvr, sizeof(stSvr));	//广播所有agent
 		}
 	}
 }

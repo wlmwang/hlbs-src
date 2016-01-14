@@ -10,13 +10,13 @@
 #include <string.h>
 #include "wType.h"
 
-//名字的最大长度
-#define MAX_SVR_NAME_LEN 64
-#define MIN_SVR_NAME_LEN 3
 #define MAX_SVR_IP_LEN 16
-#define MIN_SVR_IP_LEN 3
 
 #define REPORT_TIME_TICK 300000
+
+#define RATE_PRECISION 2	//保留有效小数位（平均延时率、平均成功率、拒绝率）
+
+#define MAX_SVR_NUM 255
 
 /**
  * 定义Svr_t
@@ -29,21 +29,21 @@ struct SvrNet_t
 	int		mId;
 	int		mGid;
 	int		mXid;
-	int		mSWeight;	//静态权重
-	short	mDisabled;	//是否可用
-	int		mPort;		//端口
-	char	mIp[MAX_SVR_IP_LEN];	//ip
-	char	mName[MAX_SVR_NAME_LEN];//名称
+	//静态权重
+	//不要配太高，否则会弱化Svr动态负载均衡效果。
+	//能表示各个Svr处理能力即可(0~100)。0为禁用此Svr
+	//建议设为1，让动态权重感知各Svr性能
+	int		mSWeight;
+	int		mPort;
+	char	mIp[MAX_SVR_IP_LEN];
 	
 	SvrNet_t()
 	{
 		mId = 0;
 		mGid = 0;
 		mXid = 0;
-		mDisabled = 0;
-		mPort = 0;
 		mSWeight = 100;
-		memset(mName, 0, MAX_SVR_NAME_LEN);
+		mPort = 0;
 		memset(mIp, 0, MAX_SVR_IP_LEN);
 	}
 
@@ -52,10 +52,8 @@ struct SvrNet_t
 		mId = svr.mId;
 		mGid = svr.mGid;
 		mXid = svr.mXid;
-		mPort = svr.mPort;
 		mSWeight = svr.mSWeight;
-		mDisabled = svr.mDisabled;
-		memcpy(mName, svr.mName, MAX_SVR_NAME_LEN);
+		mPort = svr.mPort;
 		memcpy(mIp, svr.mIp, MAX_SVR_IP_LEN);
 	}
 
@@ -64,10 +62,8 @@ struct SvrNet_t
 		mId = svr.mId;
 		mGid = svr.mGid;
 		mXid = svr.mXid;
-		mPort = svr.mPort;
 		mSWeight = svr.mSWeight;
-		mDisabled = svr.mDisabled;
-		memcpy(mName, svr.mName, MAX_SVR_NAME_LEN);
+		mPort = svr.mPort;
 		memcpy(mIp, svr.mIp, MAX_SVR_IP_LEN);
 		return *this;
 	}
@@ -75,7 +71,8 @@ struct SvrNet_t
 
 struct Svr_t : public SvrNet_t
 {
-	float	mWeight;	//综合权重值（动态计算, 默认为1.0*mSWeight）
+	//动态权重值(经放大因子 动态计算 时延率、成功率得出)
+	int		mWeight;
 	short	mPreNum;	//预取数，默认为1
 	short	mOverLoad;	//是否过载
 	long	mUsedNum;	//已被分配数量（返回给某CGI次数），0未知
@@ -95,6 +92,9 @@ struct Svr_t : public SvrNet_t
 
 	Svr_t()
 	{
+		mOkRate = 0.0;
+		mErrRate = 0.0;
+		mRfuRate = 0.0;
 		mDirty = 0;
 		mOkNum = 0;
 		mErrNum = 0;
@@ -102,19 +102,13 @@ struct Svr_t : public SvrNet_t
 		mUsedNum = 0;
 		mTotalNum = 0;
 		mDelay = 0;
-		mOkRate = 0.0;
-		mErrRate = 0.0;
-		mRfuRate = 0.0;
 		mOverLoad = 0;
 		mPreNum = 1;
 		mWeight = mSWeight;
 	}
 
 	//由SvrNet_t 复制构造 Svr_t
-	Svr_t(const SvrNet_t &svr) : SvrNet_t(svr) 
-	{
-		mWeight *= svr.mSWeight;
-	}
+	Svr_t(const SvrNet_t &svr) : SvrNet_t(svr) {}
 	
 	Svr_t(const Svr_t &svr) : SvrNet_t(svr)
 	{
@@ -152,23 +146,23 @@ struct Svr_t : public SvrNet_t
 
 	bool operator>(const Svr_t& svr)  const	//降序
 	{
-		return 1/mWeight > 1/svr.mWeight; 
+		return mSWeight/mWeight > svr.mSWeight/svr.mWeight; 
 	}
 	
 	bool operator<(const Svr_t& svr)  const	//升序
 	{
-		return 1/mWeight < 1/svr.mWeight;
+		return mSWeight/mWeight < svr.mSWeight/svr.mWeight;
 	}
 };
 
 inline bool GreaterSvr(const Svr_t* pR1, const Svr_t* pR2)
 {
-	return   1/pR1->mWeight > 1/pR2->mWeight;
+	return   pR1->mSWeight/pR1->mWeight > pR2->mSWeight/pR2->mWeight;
 }
 
 inline bool LessSvr(const Svr_t* pR1, const Svr_t* pR2)
 {
-	return   1/pR1->mWeight < 1/pR2->mWeight;
+	return   pR1->mSWeight/pR1->mWeight < pR2->mSWeight/pR2->mWeight;
 }
 
 #pragma pack()

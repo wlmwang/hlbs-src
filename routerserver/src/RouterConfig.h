@@ -67,23 +67,16 @@ class RouterConfig: public wConfig<RouterConfig>
 		bool IsModTime();
 		int SetModTime();
 		int GetModSvr(SvrNet_t* pBuffer);
-
 		int GetSvrAll(SvrNet_t* pBuffer);
 		int ReloadSvr(SvrNet_t* pBuffer);
-		
-		int GetSvrById(SvrNet_t* pBuffer, int iId);
-		int GetSvrByName(SvrNet_t* pBuffer, string sName, int iNum = 0);
-		int GetSvrByGid(SvrNet_t* pBuffer, int iGid, int iNum = 0);
-		int GetSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid, int iNum = 0);
 	protected:
+		bool IsChangeSvr(const Svr_t* pR1, const Svr_t* pR2);
 		void FixContainer();
 		void DelContainer();
-		vector<Svr_t*>::iterator GetItById(int iId);
+		vector<Svr_t*>::iterator GetItFromV(Svr_t* pSvr);
 		
 		vector<Svr_t*> mSvr;
-		map<int, Svr_t*> mSvrById;
 		map<int, vector<Svr_t*> > mSvrByGid;
-		map<string, vector<Svr_t*> > mSvrByName;
 		map<string, vector<Svr_t*> > mSvrByGXid;
 
 		time_t mMtime;	//svr.xml 修改时间

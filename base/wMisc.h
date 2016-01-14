@@ -98,4 +98,9 @@ int InitDaemon(const char *filename);
 //linux没有这个函数,不好说什么时候就用到了
 void itoa(unsigned long val, char *buf, unsigned radix);
 
+//两个数最大公约数
+int Gcd(int a, int b);
+//n个数最大公约数
+int Ngcd(int *arr, int n);
+
 #endif

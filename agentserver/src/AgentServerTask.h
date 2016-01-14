@@ -40,9 +40,7 @@ class AgentServerTask : public wTcpTask
 		
 		DEC_FUNC(ReloadSvrReq);
 		DEC_FUNC(GetSvrAll);
-		DEC_FUNC(GetSvrById);
 		DEC_FUNC(GetSvrByGid);
-		DEC_FUNC(GetSvrByName);
 		DEC_FUNC(GetSvrByGXid);
 		
 		DEC_FUNC(SyncSvrReq);		

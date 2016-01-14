@@ -117,7 +117,7 @@ int RouterServerTask::ReloadSvrReq(char *pBuffer, int iLen)
 	return 0;
 }
 
-//下发修改的svr
+//agent请求下发修改的svr。一般不需要，由router主动下发
 int RouterServerTask::SyncSvrReq(char *pBuffer, int iLen)
 {
 	RouterConfig *pConfig = RouterConfig::Instance();
