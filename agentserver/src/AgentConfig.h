@@ -13,6 +13,7 @@
 
 #include "wConfig.h"
 #include "wType.h"
+#include "wMisc.h"
 #include "wLog.h"
 #include "wSingleton.h"
 #include "SvrCommand.h"
@@ -78,19 +79,35 @@ class AgentConfig: public wConfig<AgentConfig>
 		int SyncSvr(SvrNet_t *pSvr, int iLen = 0);
 		
 		int GetSvrAll(SvrNet_t* pBuffer);
-		int GetSvrByGid(SvrNet_t* pBuffer, int iGid);
 		int GetSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid);
 		
 		void ReportSvr(SvrReportReqId_t *pReportSvr);	//上报结果
 		void Statistics();
 		
+		int GXidWRRSvr(SvrNet_t* pBuffer, string sKey, vector<Svr_t*> vSvr);
 	protected:
+		struct StatcsGXid_t
+		{
+			int mSumConn;//该类目下总共被分配次数
+
+			int mIdx;	//当前分配到索引号
+			int mCur;	//当前weight。初始化为最大值
+			int mGcd;	//weight最大公约数
+			StatcsGXid_t()
+			{
+				mIdx = -1;
+				mCur = 0;
+				mGcd = 0;
+				mSumConn = 0;
+			}
+		};
+
 		void FixContainer();
 		void DelContainer();
 		vector<Svr_t*>::iterator GetItFromV(Svr_t* pSvr);
 		vector<Svr_t*>::iterator GetItById(int iId);
 		
-		bool IsChangeSvr(const Svr_t* pR1, const Svr_t* pR2);
+		bool IsChangeSvr(const SvrNet_t* pR1, const SvrNet_t* pR2);
 
 		int GetAllSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid);
 		int GetAllSvrByGid(SvrNet_t* pBuffer, int iGid);
@@ -99,27 +116,15 @@ class AgentConfig: public wConfig<AgentConfig>
 		int CalcWeight(Svr_t* stSvr);
 		short CalcPre(Svr_t* stSvr);
 		short CalcOverLoad(Svr_t* stSvr);
-		
-		struct RunWRR_t
-		{
-			int mIndex;
-			int mWeight;	//初始化最大值
-			int mWeightGcd;	//公约数（通用wrr算法）
-			int mWeightAva;	//平均值
-			RunWRR_t()
-			{
-				mIndex = -1;
-				mWeight = 0;
-				mWeightGcd = 0;
-				mWeightAva = 0;
-			}
-		};
-		vector<Svr_t*> mSvr;
-		map<int, vector<Svr_t*> > mSvrByGid;
-		map<string, vector<Svr_t*> > mSvrByGXid;
+		short CalcShutdown(Svr_t* stSvr);
 
-		map<int, RunWRR_t*> mRunWrrGid;
-		map<string, RunWRR_t*> mRunWrrGXid;
+		int GcdWeight(vector<Svr_t*> vSvr, int n);
+		void ReleaseConn(Svr_t* stSvr);
+		int GetSumConn(Svr_t* stSvr);
+
+		vector<Svr_t*> mSvr;
+		map<string, vector<Svr_t*> > mSvrByGXid;
+		map<string, StatcsGXid_t*> mStatcsGXid;
 
 		TiXmlDocument* mDoc;
 };

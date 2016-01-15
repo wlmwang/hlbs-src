@@ -16,7 +16,7 @@ kill_proc()
 kill_proc routersvrd
 kill_proc agentsvrd
 
-#echo "delete share memory" 
-#shmid=`ipcs -m | grep -w $USER | awk '$6==0{printf " -m  " $2  " "}'` 
-#echo "$shmid" 
-#ipcrm $shmid
+echo "delete share memory" 
+shmid=`ipcs -m | grep -w $USER | awk '$6==0{printf " -m  " $2  " "}'` 
+echo "$shmid" 
+ipcrm $shmid

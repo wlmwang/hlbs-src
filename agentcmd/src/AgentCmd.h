@@ -46,7 +46,6 @@ class AgentCmd: public wSingleton<AgentCmd>, public wMTcpClient<AgentCmdTask>
 		int ParseCmd(char *pStr, int iLen);
 
 		DEC_FUNC_S(GetCmd);
-		DEC_FUNC_S(SetCmd);
 		DEC_FUNC_S(ReportCmd);
 		DEC_FUNC_S(ReloadCmd);
 		DEC_FUNC_S(RestartCmd);

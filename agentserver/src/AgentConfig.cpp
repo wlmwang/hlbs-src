@@ -199,32 +199,9 @@ int AgentConfig::GetSvrAll(SvrNet_t* pBuffer)
 	vector<Svr_t*>::iterator it = mSvr.begin();
 	for(int i = 0; it != mSvr.end(); i++, it++)
 	{
-		*(pBuffer+i) = **it;
+		*(pBuffer+i) = *((struct SvrNet_t*)*it);
 	}
 	return mSvr.size();
-}
-
-int AgentConfig::GetAllSvrByGid(SvrNet_t* pBuffer, int iGid)
-{
-	vector<Svr_t*> vSvr;
-	int iNum = 0;
-	map<int, vector<Svr_t*> >::iterator mn = mSvrByGid.find(iGid);
-	if(mn != mSvrByGid.end())
-	{
-		vSvr = mn->second;
-		
-		iNum = vSvr.size();
-		vector<Svr_t*>::iterator it = vSvr.begin();
-		for(int i = 0; i < iNum && it != vSvr.end(); i++, it++)
-		{
-			*(pBuffer+i) = **it;
-		}
-	}
-	else
-	{
-		iNum = 0;
-	}
-	return iNum;
 }
 
 int AgentConfig::GetAllSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid)
@@ -244,7 +221,7 @@ int AgentConfig::GetAllSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid)
 		vector<Svr_t*>::iterator it = vSvr.begin();
 		for(int i = 0; i < iNum && it != vSvr.end(); i++, it++)
 		{
-			*(pBuffer+i) = **it;
+			*(pBuffer+i) = *((struct SvrNet_t*)*it);
 		}
 	}
 	else
@@ -254,70 +231,78 @@ int AgentConfig::GetAllSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid)
 	return iNum;
 }
 
+//获取gid、xid下的某一svr
 int AgentConfig::GetSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid)
 {
 	string sGid = Itos(iGid);
 	string sXid = Itos(iXid);
 	string sGXid = sGid + "-" + sXid;
 	
-	vector<Svr_t*> vSvr;
-	int iNum = 0;
+	int iId = 0;
 	map<string, vector<Svr_t*> >::iterator mn = mSvrByGXid.find(sGXid);
 	if(mn != mSvrByGXid.end())
 	{
-		vSvr = mn->second;	//已排序
-
-		iNum = ChooseOneSvr(vSvr, pBuffer);
+		iId = GXidWRRSvr(pBuffer, sGXid, mn->second);
 	}
-	else
-	{
-		iNum = 0;
-	}
-	return iNum;
+	return iId;
 }
 
 //加权轮询
-int ChooseOneSvr(vector<Svr_t*> vSvr, SvrNet_t* pBuffer)
+int AgentConfig::GXidWRRSvr(SvrNet_t* pBuffer, string sKey, vector<Svr_t*> vSvr)
 {
-	//static long iIndex = 0;
-	
-	vector<Svr_t*>::iterator it = vSvr.begin();
-	for(; it != vSvr.end(); it++)
+	map<string, StatcsGXid_t*>::iterator mn = mStatcsGXid.find(sKey);
+	int iLen = vSvr.size();
+	if (iLen <= 0 || mn == mStatcsGXid.end())
 	{
-		if ((*it)->mDisabled == 1)
-		{
-			continue;
-		}
-		if (CalcOverLoad(*it) == 1)	//过载
-		{
-			(*it)->mRfuNum++;
-			continue;
-		}
-
-/*
-		i = -1;
-		cw = 0;
-		while (true) {
-		  i = (i + 1) % 3;
-		  if (i == 0) {
-		     cw = cw - gcd(S); 
-		     if (cw <= 0) {
-		       cw = max(S);
-		       if (cw == 0)
-		         return NULL;
-		     }
-		  } 
-		  if (W(Si) >= cw) 
-		    return Si;
-		}
-*/
-
-		//WRR Start
-		*pBuffer = **it;
-		
-		return 1;
+		return -1;	//讲道理的话，这里不会被执行
 	}
-	return 0;
+	int iLoop = iLen;
+	StatcsGXid_t *pWrr = mn->second;
+	while(iLoop-- >= 0)
+	{
+		pWrr->mIdx = (pWrr->mIdx + 1) % iLen;
+		if (pWrr->mIdx == 0)
+		{
+			pWrr->mCur = pWrr->mCur - pWrr->mGcd;
+			if (pWrr->mCur <= 0)
+			{
+				pWrr->mCur = vSvr[0]->mWeight; //最大值
+				if (pWrr->mCur <= 0)
+				{
+					return -1;
+				}
+			}
+		}
+		//权重为0，禁用
+		if (vSvr[pWrr->mIdx]->mWeight == 0)
+		{
+			continue;
+		}
+		else if (vSvr[pWrr->mIdx]->mShutdown == 1)	//是否故障
+		{
+			vSvr[pWrr->mIdx]->mRfuNum++;
+		}
+		else if (vSvr[pWrr->mIdx]->mWeight >= pWrr->mCur)
+		{
+			if (vSvr[pWrr->mIdx]->mPreNum <= 0 && (vSvr[pWrr->mIdx]->mOverLoad == 1 || CalcOverLoad(vSvr[pWrr->mIdx]) == 1))	//过载
+			{
+				vSvr[pWrr->mIdx]->mRfuNum++;
+			} 
+			else
+			{
+				if(vSvr[pWrr->mIdx]->mOverLoad == 1 || CalcOverLoad(vSvr[pWrr->mIdx]) == 1)
+				{
+					vSvr[pWrr->mIdx]->mPreNum--;
+				}
+				pWrr->mSumConn++;
+				vSvr[pWrr->mIdx]->mUsedNum++;
+
+				*pBuffer = (struct SvrNet_t)*vSvr[pWrr->mIdx];	//Svr_t => SvrNet_t
+				return vSvr[pWrr->mIdx]->mId;
+			}
+		}
+	}
+	return -1;
 }
 
 //使用私有结构
@@ -326,7 +311,7 @@ void AgentConfig::ReportSvr(SvrReportReqId_t *pReportSvr)
 	vector<Svr_t*>::iterator it = GetItById(pReportSvr->mId);
 	if (it != mSvr.end() && pReportSvr->mDelay != 0 && pReportSvr->mStu != 0)
 	{
-		SetGXDirty((*it), 1);	//设置同组所有svr更新位
+		SetGXDirty((*it), 1);	//设置同组所有Svr更新位(重新设置对应权值、错误率)
 		(*it)->mDelay = pReportSvr->mDelay;
 		if (pReportSvr->mStu == 1)	//成功
 		{
@@ -336,6 +321,8 @@ void AgentConfig::ReportSvr(SvrReportReqId_t *pReportSvr)
 		{
 			(*it)->mErrNum++;
 		}
+		//释放连接
+		ReleaseConn(*it);
 		LOG_DEBUG("default","[runtime] recvive a report message(shm), Ok(%d),Err(%d)", (*it)->mOkNum, (*it)->mErrNum);
 	}
 }
@@ -344,16 +331,19 @@ void AgentConfig::Statistics()
 {
 	if(mSvr.size() <= 0) return;
 
+	int iSunConn = -1;
 	vector<Svr_t*>::iterator it;
 	for (it = mSvr.begin(); it != mSvr.end(); it++)
 	{
 		if ((*it)->mDirty == 1)
 		{
-			(*it)->mOkRate = (float)(*it)->mOkNum / (*it)->mTotalNum;
-			(*it)->mErrRate = (float)(*it)->mErrNum / (*it)->mTotalNum;
-			(*it)->mRfuRate = (float)(*it)->mRfuNum / (*it)->mTotalNum;
+			iSunConn = GetSumConn(*it);
+			(*it)->mOkRate = (float)(*it)->mOkNum / iSunConn;
+			(*it)->mErrRate = (float)(*it)->mErrNum / iSunConn;
+			(*it)->mRfuRate = (float)(*it)->mRfuNum / iSunConn;
 
-			(*it)->mPreNum = CalcPre(*it);
+			(*it)->mPreNum = CalcPre(*it);	//每一周期预取数重置为1 （后期实现扩张、收缩）
+			(*it)->mShutdown = CalcShutdown(*it);	//非压力故障
 			(*it)->mWeight = CalcWeight(*it);
 			
 			(*it)->ClearStatistics();	//清除统计数据
@@ -368,20 +358,24 @@ short AgentConfig::CalcPre(Svr_t* stSvr)
 	return 1;
 }
 
+short AgentConfig::CalcShutdown(Svr_t* stSvr)
+{
+	return 0;
+}
+
 //计算动态权重
 int AgentConfig::CalcWeight(Svr_t* stSvr)
 {
-	int fDefault = 1;
-	if (stSvr->mDelay == 0 && stSvr->mOkRate == 0)
+	if (stSvr->mDelay == 0 && stSvr->mOkRate == 0)	//从未访问过
 	{
-		return fDefault;
+		return stSvr->mWeight;
 	}
 
 	Svr_t pSvr[MAX_SVR_NUM];
 	int iNum = GetAllSvrByGXid(pSvr, stSvr->mGid, stSvr->mXid);
 	if (iNum <= 0)
 	{
-		return fDefault;	//讲道理的话，这里不可能执行到（至少有其自身）
+		return stSvr->mWeight;	//讲道理的话，这里不可能执行到（至少有其自身）
 	}
 
 	int iDelay = stSvr->mDelay;
@@ -397,26 +391,29 @@ int AgentConfig::CalcWeight(Svr_t* stSvr)
 			fOkRate = pSvr[i].mOkRate;	//最大成功率
 		}
 	}
-	float fLoadW = ((float)stSvr->mDelay/iDelay) * (fOkRate/stSvr->mOkRate);
-	do {
-		fLoadW *= 10;
-	} while (RATE_PRECISION--);
-	return (int)fLoadW;
+
+	float fLoadWeight = 1/(((float)stSvr->mDelay/iDelay) * (fOkRate/stSvr->mOkRate));
+	return (int)(fLoadWeight * ZOOM_WEIGHT * stSvr->mSWeight);	//放大
 }
 
 //检测是否过载
+//TODO
 short AgentConfig::CalcOverLoad(Svr_t* stSvr)
 {
-	float fDefault = 0.5; //错误率
 	if (stSvr->mErrNum > 0 && stSvr->mPreNum <= 0)	//本周期
 	{
-		return 1; //过载
+		stSvr->mOverLoad = 1;	//过载
 	}
-	else if(stSvr->mErrRate > fDefault)	//上一周期错误率
+	else if(stSvr->mErrRate > ERR_RATE_THRESHOLD)	//上一周期错误率
 	{
-		return 1; //过载(存在故障可能性)
+		stSvr->mOverLoad = 1; //过载(存在故障可能性)
+		//stSvr->mShutdown = 1;
 	}
-	return 0;
+	else
+	{
+		stSvr->mOverLoad = 0;
+	}
+	return stSvr->mOverLoad;
 }
 
 //设置同组所有svr更新位
@@ -460,9 +457,9 @@ vector<Svr_t*>::iterator AgentConfig::GetItById(int iId)
 	return it;
 }
 
-bool AgentConfig::IsChangeSvr(const Svr_t* pR1, const Svr_t* pR2)
+bool AgentConfig::IsChangeSvr(const SvrNet_t* pR1, const SvrNet_t* pR2)
 {
-	if (pR1->mGid!=pR2->mGid || pR1->mXid!=pR2->mXid || pR1->mSWeight!=pR2->mSWeight || pR1->mPort!=pR2->mPort || strncmp(pR1->mIp,pR2->mIp,MAX_SVR_IP_LEN)!=0)
+	if (pR1->mVersion!=pR2->mVersion || pR1->mGid!=pR2->mGid || pR1->mXid!=pR2->mXid || pR1->mSWeight!=pR2->mSWeight || pR1->mPort!=pR2->mPort || strncmp(pR1->mIp,pR2->mIp,MAX_SVR_IP_LEN)!=0)
 	{
 		return true;
 	}
@@ -471,8 +468,8 @@ bool AgentConfig::IsChangeSvr(const Svr_t* pR1, const Svr_t* pR2)
 
 void AgentConfig::DelContainer()
 {
-	mSvrByGid.clear();
 	mSvrByGXid.clear();
+	mStatcsGXid.clear();
 }
 
 void AgentConfig::Final()
@@ -482,6 +479,10 @@ void AgentConfig::Final()
 	{
 		SAFE_DELETE(*it);
 	}
+	for(map<string, StatcsGXid_t*>::iterator it = mStatcsGXid.begin(); it != mStatcsGXid.end(); it++)
+	{
+		SAFE_DELETE(it->second);
+	}
 	mSvr.clear();
 }
 
@@ -489,7 +490,7 @@ void AgentConfig::Final()
 void AgentConfig::FixContainer()
 {
 	if(mSvr.size() <= 0) return;
-	//sort(mSvr.begin(), mSvr.end(), GreaterSvr);	//降序排序
+	sort(mSvr.begin(), mSvr.end(), GreaterSvr);	//降序排序
 
 	DelContainer();
 	string sGid, sXid, sGXid;
@@ -500,14 +501,68 @@ void AgentConfig::FixContainer()
 		sXid = Itos((*it)->mXid);
 		sGXid = sGid + "-" + sXid;
 
-		//mSvrByGid
-		vSvr.clear();
-		vSvr.push_back(*it);
-		mSvrByGid.insert(pair<int, vector<Svr_t*> >((*it)->mGid, vSvr));
-		
 		//mSvrByGXid
 		vSvr.clear();
 		vSvr.push_back(*it);
 		mSvrByGXid.insert(pair<string, vector<Svr_t*> >(sGXid, vSvr));
 	}
+
+	StatcsGXid_t *pStatcsGXid = 0;
+	map<string, vector<Svr_t*> >::iterator it = mSvrByGXid.begin();
+	for(; it != mSvrByGXid.end(); it++)
+	{
+		map<string, StatcsGXid_t*>::iterator mgx = mStatcsGXid.find(it->first);
+		if(mgx == mStatcsGXid.end())
+		{
+			pStatcsGXid = new StatcsGXid_t();
+		}
+		else
+		{
+			pStatcsGXid = mgx->second;
+			//mStatcsGXid.erase(mgx);
+		}
+		pStatcsGXid->mGcd = GcdWeight(it->second, it->second.size());
+		mStatcsGXid.insert(pair<string, StatcsGXid_t*>(it->first, pStatcsGXid));
+	}
+}
+
+void AgentConfig::ReleaseConn(Svr_t* stSvr)
+{
+	string sGid, sXid, sGXid;
+	sGid = Itos(stSvr->mGid); 
+	sXid = Itos(stSvr->mXid);
+	sGXid = sGid + "-" + sXid;
+	map<string, StatcsGXid_t*>::iterator mgx = mStatcsGXid.find(sGXid);
+	StatcsGXid_t *pStatcsGXid = 0;
+	if(mgx == mStatcsGXid.end())
+	{
+		pStatcsGXid = mgx->second;
+		pStatcsGXid->mSumConn--;
+	}
+}
+
+int AgentConfig::GetSumConn(Svr_t* stSvr)
+{
+	string sGid, sXid, sGXid;
+	sGid = Itos(stSvr->mGid); 
+	sXid = Itos(stSvr->mXid);
+	sGXid = sGid + "-" + sXid;
+
+	map<string, StatcsGXid_t*>::iterator mgx = mStatcsGXid.find(sGXid);
+	StatcsGXid_t *pStatcsGXid = 0;
+	if(mgx == mStatcsGXid.end())
+	{
+		pStatcsGXid = mgx->second;
+		return pStatcsGXid->mSumConn;
+	}
+	return -1;
+}
+
+int AgentConfig::GcdWeight(vector<Svr_t*> vSvr, int n)
+{
+	if (n == 1) 
+	{
+		return vSvr[0]->mWeight;
+	}
+	return Gcd(vSvr[n-1]->mWeight, GcdWeight(vSvr, n - 1));
 }

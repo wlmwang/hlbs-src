@@ -44,7 +44,6 @@ void AgentCmd::Initialize()
 	InitShareMemory();
 
 	CMD_REG_DISP_S("get", &AgentCmd::GetCmd);
-	CMD_REG_DISP_S("set", &AgentCmd::SetCmd);
 	CMD_REG_DISP_S("report", &AgentCmd::ReportCmd);
 	CMD_REG_DISP_S("reload", &AgentCmd::ReloadCmd);
 	CMD_REG_DISP_S("restart", &AgentCmd::RestartCmd);
@@ -156,21 +155,16 @@ int AgentCmd::ParseCmd(char *pCmdLine, int iLen)
 	return -1;
 }
 
-//get [-a] [-i 100] [-n redis] [-g 122 -x 122]
+//get [-a] [-g 122 -x 122]
 int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 {
-	int a = 0, i = 0, g = 0 , x = 0;
-	string n = "";
+	int a = 0, g = 0 , x = 0;
 	int iCnt = vParam.size();
 	for(size_t j = 1; j < vParam.size(); j++)
 	{
 		if(vParam[j] == "-a") 
 		{
 			a = 1; continue;
-		}
-		else if(vParam[j] == "-i" && j + 1 < iCnt) 
-		{
-			i = atoi(vParam[++j].c_str()); continue;
 		}
 		else if(vParam[j] == "-g" && j + 1 < iCnt) 
 		{
@@ -179,10 +173,6 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 		else if(vParam[j] == "-x" && j + 1 < iCnt) 
 		{
 			x = atoi(vParam[++j].c_str()); continue;
-		}
-		else if(vParam[j] == "-n" && j + 1 < iCnt) 
-		{
-			n = vParam[++j]; continue;
 		}
 		else 
 		{
@@ -197,24 +187,6 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 		SvrReqAll_t stSvr;
 		return SyncSend((char *)&stSvr, sizeof(stSvr));
 	}
-	else if(i != 0)
-	{
-		SvrReqId_t stSvr;
-		stSvr.mId = i;
-		return SyncSend((char *)&stSvr, sizeof(stSvr));
-	}
-	else if(n != "")
-	{
-		SvrReqName_t stSvr;
-		memcpy(stSvr.mName, n.c_str(), n.size());
-		return SyncSend((char *)&stSvr, sizeof(stSvr));
-	}
-	else if(g != 0 && x == 0)
-	{
-		SvrReqGid_t stSvr;
-		stSvr.mGid = g;
-		return SyncSend((char *)&stSvr, sizeof(stSvr));
-	}
 	else if(g != 0 && x != 0)
 	{
 		SvrReqGXid_t stSvr;
@@ -227,60 +199,6 @@ int AgentCmd::GetCmd(string sCmd, vector<string> vParam)
 		cout << "Error param" << endl;
 	}
 	SetWaitResStatus(false);
-	return -1;
-}
-
-//set -i 100 [-d 1] [-w 10] [-t 122] [-c 1222] [-s 200] [-k 500]
-int AgentCmd::SetCmd(string sCmd, vector<string> vParam)
-{
-	SvrSetReqId_t stSetSvr;
-	int iCnt = vParam.size();
-	for(size_t j = 1; j < vParam.size(); j++)
-	{
-		if(vParam[j] == "-d" && j + 1 < iCnt) 
-		{
-			stSetSvr.mDisabled = atoi(vParam[++j].c_str()); continue;
-		}
-		else if(vParam[j] == "-i" && j + 1 < iCnt) 
-		{
-			stSetSvr.mId = atoi(vParam[++j].c_str()); continue;
-		}
-		else if(vParam[j] == "-w" && j + 1 < iCnt) 
-		{
-			stSetSvr.mWeight = atoi(vParam[++j].c_str()); continue;
-		}
-		else if(vParam[j] == "-k" && j + 1 < iCnt) 
-		{
-			stSetSvr.mTasks = atoi(vParam[++j].c_str()); continue;
-		}
-		else if(vParam[j] == "-t" && j + 1 < iCnt) 
-		{
-			stSetSvr.mTimeline = atoi(vParam[++j].c_str()); continue;
-		}
-		else if(vParam[j] == "-c" && j + 1 < iCnt) 
-		{
-			stSetSvr.mConnTime = atoi(vParam[++j].c_str()); continue;
-		}
-		else if(vParam[j] == "-s" && j + 1 < iCnt) 
-		{
-			stSetSvr.mSuggest = atoi(vParam[++j].c_str()); continue;
-		}
-		else 
-		{ 
-			cout << "Unknow param" << endl;
-			return -1;
-		}
-	}
-
-	if(stSetSvr.mId == 0)
-	{
-		cout << "Need -i param" << endl;
-	}
-	else
-	{
-		SetWaitResStatus();
-		return SyncSend((char *)&stSetSvr, sizeof(stSetSvr));
-	}
 	return -1;
 }
 
@@ -299,7 +217,7 @@ int AgentCmd::ReportCmd(string sCmd, vector<string> vParam)
 		{
 			stReportSvr.mDelay = atoi(vParam[++j].c_str()); continue;
 		}
-		else if(vParam[j] == "-s" && j + 1 < iCnt) 
+		else if(vParam[j] == "-s" && j + 1 < iCnt) 	//0未知状态 -1失败 1成功
 		{
 			stReportSvr.mStu = atoi(vParam[++j].c_str()); continue;
 		}
@@ -310,9 +228,9 @@ int AgentCmd::ReportCmd(string sCmd, vector<string> vParam)
 		}
 	}
 
-	if(stReportSvr.mId == 0)
+	if(stReportSvr.mId == 0 || stReportSvr.mDelay == 0 || stReportSvr.mStu == 0)
 	{
-		cout << "Need -i param" << endl;
+		cout << "Error param" << endl;
 	}
 	else
 	{

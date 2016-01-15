@@ -29,13 +29,11 @@ void AgentServerTask::Initialize()
 {
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_RELOAD, &AgentServerTask::ReloadSvrReq);
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_ALL, &AgentServerTask::GetSvrAll);
-	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_GID, &AgentServerTask::GetSvrByGid);
+	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_GXID, &AgentServerTask::GetSvrByGXid);
 
 	AGENT_REG_DISP(CMD_SVR_RES, SVR_RES_INIT, &AgentServerTask::InitSvrRes);
 	AGENT_REG_DISP(CMD_SVR_RES, SVR_RES_RELOAD, &AgentServerTask::ReloadSvrRes);
 	AGENT_REG_DISP(CMD_SVR_RES, SVR_RES_SYNC, &AgentServerTask::SyncSvrRes);
-
-	AGENT_REG_DISP(CLI_SVR_REQ, SVR_SET_REQ_ID, &AgentServerTask::SetSvrAttr);
 }
 
 int AgentServerTask::VerifyConn()
@@ -151,18 +149,6 @@ int AgentServerTask::ReloadSvrReq(char *pBuffer, int iLen)
 }
 
 //agentcmd发来请求
-int AgentServerTask::SetSvrAttr(char *pBuffer, int iLen)
-{
-	AgentConfig *pConfig = AgentConfig::Instance();
-	SvrSetReqId_t *pCmd = (struct SvrSetReqId_t* )pBuffer;
-	
-	SvrSetResData_t vRRt;
-	vRRt.mCode = pConfig->SetSvrAttr(pCmd->mId, pCmd->mDisabled, pCmd->mWeight, pCmd->mTimeline, pCmd->mConnTime, pCmd->mTasks,  pCmd->mSuggest);
-	SyncSend((char *)&vRRt, sizeof(vRRt));
-	return 0;
-}
-
-//agentcmd发来请求
 int AgentServerTask::GetSvrAll(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
@@ -171,19 +157,6 @@ int AgentServerTask::GetSvrAll(char *pBuffer, int iLen)
 	SvrResData_t vRRt;
 	vRRt.mReqId = pCmd->GetId();
 	vRRt.mNum = pConfig->GetSvrAll(vRRt.mSvr);
-	SyncSend((char *)&vRRt, sizeof(vRRt));
-	return 0;
-}
-
-//agentcmd发来请求
-int AgentServerTask::GetSvrByGid(char *pBuffer, int iLen)
-{
-	AgentConfig *pConfig = AgentConfig::Instance();
-	SvrReqGid_t *pCmd = (struct SvrReqGid_t* )pBuffer;
-	
-	SvrResData_t vRRt;
-	vRRt.mReqId = pCmd->GetId();
-	vRRt.mNum = pConfig->GetSvrByGid(vRRt.mSvr, pCmd->mGid);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }

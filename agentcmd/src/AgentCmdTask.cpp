@@ -106,11 +106,9 @@ int AgentCmdTask::SvrResData(char *pBuffer, int iLen)
 			cout << " id:" << pCmd->mSvr[i].mId;
 			cout << " gid:" << pCmd->mSvr[i].mGid;
 			cout << " xid:" << pCmd->mSvr[i].mXid;
-			cout << " name:" << pCmd->mSvr[i].mName;
 			cout << " ip:" << pCmd->mSvr[i].mIp;
 			cout << " port:" << pCmd->mSvr[i].mPort;
-			cout << " weight:" << pCmd->mSvr[i].mWeight;
-			cout << " disabled:" << pCmd->mSvr[i].mDisabled;
+			cout << " weight:" << pCmd->mSvr[i].mSWeight;
 			cout << endl;
 		}
 	}
