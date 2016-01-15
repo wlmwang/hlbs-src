@@ -233,6 +233,7 @@ int RouterConfig::GetSvrAll(SvrNet_t* pBuffer)
 	for(int i = 0; it != mSvr.end(); i++, it++)
 	{
 		*(pBuffer+i) = *((struct SvrNet_t*)*it);	//Svr_t => SvrNet_t
+		//pBuffer[i] = ((struct SvrNet_t)**it);   //Svr_t => SvrNet_t
 	}
 	return mSvr.size();
 }
