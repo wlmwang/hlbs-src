@@ -191,7 +191,7 @@ int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 						//更新配置
 						mSvr.erase(it);
 						mSvr.push_back(pSvr);
-						*(pBuffer + j) = *((struct SvrNet_t*)*it);	//Svr_t => SvrNet_t
+						pBuffer[j] = ((struct SvrNet_t)**it);   //Svr_t => SvrNet_t
 						j++;
 					}
 				}
@@ -199,7 +199,7 @@ int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 				{
 					//添加新配置
 					mSvr.push_back(pSvr);
-					*(pBuffer + j) = *((struct SvrNet_t*)*it);	//Svr_t => SvrNet_t
+					pBuffer[j] = ((struct SvrNet_t)**it);   //Svr_t => SvrNet_t
 					j++;
 				}
 			}
@@ -232,8 +232,7 @@ int RouterConfig::GetSvrAll(SvrNet_t* pBuffer)
 	vector<Svr_t*>::iterator it = mSvr.begin();
 	for(int i = 0; it != mSvr.end(); i++, it++)
 	{
-		*(pBuffer+i) = *((struct SvrNet_t*)*it);	//Svr_t => SvrNet_t
-		//pBuffer[i] = ((struct SvrNet_t)**it);   //Svr_t => SvrNet_t
+		pBuffer[i] = ((struct SvrNet_t)**it);   //Svr_t => SvrNet_t
 	}
 	return mSvr.size();
 }

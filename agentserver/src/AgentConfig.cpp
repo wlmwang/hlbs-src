@@ -146,8 +146,8 @@ int AgentConfig::InitSvr(SvrNet_t* pSvr, int iNum)
 	Final();
 	for(int i = 0; i < iNum ; i++)
 	{
-		Svr_t *pSvr = new Svr_t(pSvr[i]);
-		mSvr.push_back(pSvr);
+		Svr_t *pTmpSvr = new Svr_t(pSvr[i]);
+		mSvr.push_back(pTmpSvr);
 	}
 	FixContainer();
 	return 0;
@@ -177,16 +177,16 @@ int AgentConfig::SyncSvr(SvrNet_t *pSvr, int iNum)
 				//更新配置
 				SAFE_DELETE(*it);
 				mSvr.erase(it);
-				Svr_t *pSvr = new Svr_t(pSvr[i]);
-				mSvr.push_back(pSvr);
+				Svr_t *pTmpSvr = new Svr_t(pSvr[i]);
+				mSvr.push_back(pTmpSvr);
 				j++;
 			}
 		}
 		else
 		{
 			//添加新配置
-			Svr_t *pSvr = new Svr_t(pSvr[i]);
-			mSvr.push_back(pSvr);
+			Svr_t *pTmpSvr = new Svr_t(pSvr[i]);
+			mSvr.push_back(pTmpSvr);
 			j++;
 		}
 	}
@@ -199,7 +199,7 @@ int AgentConfig::GetSvrAll(SvrNet_t* pBuffer)
 	vector<Svr_t*>::iterator it = mSvr.begin();
 	for(int i = 0; it != mSvr.end(); i++, it++)
 	{
-		*(pBuffer+i) = *((struct SvrNet_t*)*it);
+		pBuffer[i] = ((struct SvrNet_t)**it);   //Svr_t => SvrNet_t
 	}
 	return mSvr.size();
 }
@@ -221,7 +221,7 @@ int AgentConfig::GetAllSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid)
 		vector<Svr_t*>::iterator it = vSvr.begin();
 		for(int i = 0; i < iNum && it != vSvr.end(); i++, it++)
 		{
-			*(pBuffer+i) = *((struct SvrNet_t*)*it);
+			pBuffer[i] = ((struct SvrNet_t)**it);   //Svr_t => SvrNet_t
 		}
 	}
 	else
@@ -297,7 +297,7 @@ int AgentConfig::GXidWRRSvr(SvrNet_t* pBuffer, string sKey, vector<Svr_t*> vSvr)
 				pWrr->mSumConn++;
 				vSvr[pWrr->mIdx]->mUsedNum++;
 
-				*pBuffer = (struct SvrNet_t)*vSvr[pWrr->mIdx];	//Svr_t => SvrNet_t
+				*pBuffer = (struct SvrNet_t) *vSvr[pWrr->mIdx];	//Svr_t => SvrNet_t
 				return vSvr[pWrr->mIdx]->mId;
 			}
 		}
