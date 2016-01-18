@@ -94,23 +94,14 @@ struct Svr_t : public SvrNet_t
 
 	Svr_t()
 	{
-		mOkRate = 0.0;
-		mErrRate = 0.0;
-		mRfuRate = 0.0;
-		mDirty = 0;
-		mOkNum = 0;
-		mErrNum = 0;
-		mRfuNum = 0;
-		mDelay = 0;
-		mOverLoad = 0;
-		mUsedNum = 0;
-		mShutdown = 0;
-		mPreNum = 1;
-		mWeight = ZOOM_WEIGHT * mSWeight;	//静态权重 * 放大系数
+		Initialize();
 	}
 
 	//由SvrNet_t 复制构造 Svr_t
-	Svr_t(const SvrNet_t &svr) : SvrNet_t(svr) {}
+	Svr_t(const SvrNet_t &svr) : SvrNet_t(svr) 
+	{
+		Initialize();
+	}
 	
 	Svr_t(const Svr_t &svr) : SvrNet_t(svr)
 	{
@@ -127,6 +118,23 @@ struct Svr_t : public SvrNet_t
 		mOverLoad = svr.mOverLoad;
 		mShutdown = svr.mShutdown;
 		mWeight = svr.mWeight;
+	}
+	
+	void Initialize()
+	{
+		mOkRate = 0.0;
+		mErrRate = 0.0;
+		mRfuRate = 0.0;
+		mDirty = 0;
+		mOkNum = 0;
+		mErrNum = 0;
+		mRfuNum = 0;
+		mDelay = 0;
+		mOverLoad = 0;
+		mUsedNum = 0;
+		mShutdown = 0;
+		mPreNum = 1;
+		mWeight = ZOOM_WEIGHT * mSWeight;	//静态权重 * 放大系数
 	}
 
 	void ClearStatistics()

@@ -169,7 +169,8 @@ int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 	
 	SvrResData_t vRRt;
 	vRRt.mReqId = pCmd->GetId();
-	vRRt.mNum = pConfig->GetSvrByGXid(vRRt.mSvr, pCmd->mGid, pCmd->mXid);
+	vRRt.mNum = 1;
+	pConfig->GetSvrByGXid(vRRt.mSvr, pCmd->mGid, pCmd->mXid);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }

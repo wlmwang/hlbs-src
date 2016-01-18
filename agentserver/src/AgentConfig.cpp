@@ -257,48 +257,58 @@ int AgentConfig::GXidWRRSvr(SvrNet_t* pBuffer, string sKey, vector<Svr_t*> vSvr)
 		return -1;	//讲道理的话，这里不会被执行
 	}
 	int iLoop = iLen;
-	StatcsGXid_t *pWrr = mn->second;
+	StatcsGXid_t *pStatcs = mn->second;
+
+	cout << "init id" << pStatcs->mIdx << endl;
+	cout << "init cur" << pStatcs->mCur << endl;
+	cout << "init gcd" << pStatcs->mGcd << endl;	
+
 	while(iLoop-- >= 0)
 	{
-		pWrr->mIdx = (pWrr->mIdx + 1) % iLen;
-		if (pWrr->mIdx == 0)
+		pStatcs->mIdx = (pStatcs->mIdx + 1) % iLen;
+		if (pStatcs->mIdx == 0)
 		{
-			pWrr->mCur = pWrr->mCur - pWrr->mGcd;
-			if (pWrr->mCur <= 0)
+			pStatcs->mCur = pStatcs->mCur - pStatcs->mGcd;
+			if (pStatcs->mCur <= 0)
 			{
-				pWrr->mCur = vSvr[0]->mWeight; //最大值
-				if (pWrr->mCur <= 0)
+				pStatcs->mCur = vSvr[0]->mWeight; //最大值
+				if (pStatcs->mCur <= 0)
 				{
 					return -1;
 				}
 			}
 		}
 		//权重为0，禁用
-		if (vSvr[pWrr->mIdx]->mWeight == 0)
+		if (vSvr[pStatcs->mIdx]->mWeight == 0)
 		{
 			continue;
 		}
-		else if (vSvr[pWrr->mIdx]->mShutdown == 1)	//是否故障
+		else if (vSvr[pStatcs->mIdx]->mShutdown == 1)	//是否故障
 		{
-			vSvr[pWrr->mIdx]->mRfuNum++;
+			vSvr[pStatcs->mIdx]->mRfuNum++;
 		}
-		else if (vSvr[pWrr->mIdx]->mWeight >= pWrr->mCur)
+		else if (vSvr[pStatcs->mIdx]->mWeight >= pStatcs->mCur)
 		{
-			if (vSvr[pWrr->mIdx]->mPreNum <= 0 && (vSvr[pWrr->mIdx]->mOverLoad == 1 || CalcOverLoad(vSvr[pWrr->mIdx]) == 1))	//过载
+			if (vSvr[pStatcs->mIdx]->mPreNum <= 0 && (vSvr[pStatcs->mIdx]->mOverLoad == 1 || CalcOverLoad(vSvr[pStatcs->mIdx]) == 1))	//过载
 			{
-				vSvr[pWrr->mIdx]->mRfuNum++;
+				vSvr[pStatcs->mIdx]->mRfuNum++;
 			} 
 			else
 			{
-				if(vSvr[pWrr->mIdx]->mOverLoad == 1 || CalcOverLoad(vSvr[pWrr->mIdx]) == 1)
+				if(vSvr[pStatcs->mIdx]->mOverLoad == 1 || CalcOverLoad(vSvr[pStatcs->mIdx]) == 1)
 				{
-					vSvr[pWrr->mIdx]->mPreNum--;
+					vSvr[pStatcs->mIdx]->mPreNum--;
 				}
-				pWrr->mSumConn++;
-				vSvr[pWrr->mIdx]->mUsedNum++;
-
-				*pBuffer = (struct SvrNet_t) *vSvr[pWrr->mIdx];	//Svr_t => SvrNet_t
-				return vSvr[pWrr->mIdx]->mId;
+				pStatcs->mSumConn++;
+				vSvr[pStatcs->mIdx]->mUsedNum++;
+				
+				//cout << "id" << pStatcs->mIdx << endl;
+				//cout << "cur" << pStatcs->mCur << endl;
+				//cout << "gcd" << pStatcs->mGcd << endl;
+				//cout << "mWeight" << vSvr[pStatcs->mIdx]->mWeight << endl;
+				
+				*pBuffer = (struct SvrNet_t) *vSvr[pStatcs->mIdx];	//Svr_t => SvrNet_t
+				return vSvr[pStatcs->mIdx]->mId;
 			}
 		}
 	}
@@ -502,9 +512,15 @@ void AgentConfig::FixContainer()
 		sGXid = sGid + "-" + sXid;
 
 		//mSvrByGXid
+		map<string, vector<Svr_t*> >::iterator mg = mSvrByGXid.find(sGXid);
 		vSvr.clear();
+		if(mg != mSvrByGXid.end())
+		{
+			vSvr = mg->second;
+			mSvrByGXid.erase(mg);
+		}
 		vSvr.push_back(*it);
-		mSvrByGXid.insert(pair<string, vector<Svr_t*> >(sGXid, vSvr));
+		mSvrByGXid.insert(pair<string, vector<Svr_t*> >(sGXid, vSvr));		
 	}
 
 	StatcsGXid_t *pStatcsGXid = 0;
