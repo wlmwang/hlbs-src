@@ -42,12 +42,12 @@ wThread::~wThread()
 int wThread::StartThread()
 {
 	pthread_attr_init(&mPthreadAttr);
-	pthread_attr_setscope(&mPthreadAttr, PTHREAD_SCOPE_SYSTEM);  // 设置线程状态为与系统中所有线程一起竞争CPU时间
-	pthread_attr_setdetachstate(&mPthreadAttr, PTHREAD_CREATE_JOINABLE);  // 设置非分离的线程
+	pthread_attr_setscope(&mPthreadAttr, PTHREAD_SCOPE_SYSTEM);  //设置线程状态为与系统中所有线程一起竞争CPU时间
+	pthread_attr_setdetachstate(&mPthreadAttr, PTHREAD_CREATE_JOINABLE);  //设置非分离的线程
 	
-	pthread_cond_init(&mCond, NULL);
-	pthread_mutex_init(&mMutex, NULL);
-	
+	mMutex = new wMutex(NULL);
+	mCond = new wCond(NULL);
+
 	mRunStatus = rt_running;
 
 	pthread_create(&mPhreadId, &mPthreadAttr, ThreadProc, (void *)this);
@@ -57,55 +57,53 @@ int wThread::StartThread()
 
 int wThread::CondBlock()
 {
-	pthread_mutex_lock(&mMutex);
+	mMutex->Lock();
 
-	while(IsBlocked() || mRunStatus == rt_stopped)  // 线程被阻塞或者停止
+	while(IsBlocked() || mRunStatus == rt_stopped)  //线程被阻塞或者停止
 	{
-		if(mRunStatus == rt_stopped)  // 如果线程需要停止则终止线程
+		if(mRunStatus == rt_stopped)  //如果线程需要停止则终止线程
 		{
-			//"Thread exit."
-			pthread_exit((void *)mAbyRetVal);
+			pthread_exit((void *)mAbyRetVal);	//"Thread exit"
 		}
-		//"Thread would blocked."
-		mRunStatus = rt_blocked;
-		pthread_cond_wait(&mCond, &mMutex);  //进入休眠状态
+		
+		mRunStatus = rt_blocked;	//"Thread would blocked"
+		
+		mCond->Wait(*mMutex);	//进入休眠状态
 	}
 
 	if(mRunStatus != rt_running)  
 	{
-		//"Thread waked up."
+		//"Thread waked up"
 	}
 	
 	mRunStatus = rt_running;  //线程状态变为rt_running
 
-	pthread_mutex_unlock(&mMutex);  //该过程需要在线程锁内完成
-
+	mMutex->Unlock();	//该过程需要在线程锁内完成
 	return 0;
 }
 
 int wThread::WakeUp()
 {
-	pthread_mutex_lock(&mMutex);
+	mMutex->Lock();
 
 	if(!IsBlocked() && mRunStatus == rt_blocked)
     {
-		pthread_cond_signal(&mCond);  //向线程发出信号以唤醒
+		mCond->Signal();	//向线程发出信号以唤醒
 	}
 
-	pthread_mutex_unlock(&mMutex);
-
+	mMutex->Unlock();
 	return 0;
 }
 
 int wThread::StopThread()
 {
-	pthread_mutex_lock(&mMutex);
+	mMutex->Lock();
 
 	mRunStatus = rt_stopped;
-	pthread_cond_signal(&mCond);
+	mCond->Signal();
 
-	pthread_mutex_unlock(&mMutex);
-
+	mMutex->Unlock();
+	
 	//等待该线程终止
 	pthread_join(mPhreadId, NULL);
 

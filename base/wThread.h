@@ -12,6 +12,8 @@
  */
 
 #include <pthread.h>
+#include "wMutex.h"
+#include "wCond.h"
 #include "wNoncopyable.h"
 
 enum eRunStatus
@@ -51,10 +53,10 @@ class wThread : private wNoncopyable
 
 		pthread_t mPhreadId;
 		pthread_attr_t mPthreadAttr;
-		pthread_mutex_t mMutex;
-		pthread_cond_t mCond;
 		int mRunStatus;
 		char mAbyRetVal[64];
+		wMutex *mMutex;
+		wCond *mCond;
 };
 
 #endif
