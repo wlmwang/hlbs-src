@@ -4,8 +4,8 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#ifndef _W_SHARE_MEMORY_H_
-#define _W_SHARE_MEMORY_H_
+#ifndef _W_SHM_H_
+#define _W_SHM_H_
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -21,15 +21,15 @@
 #include "wLog.h"
 #include "wNoncopyable.h"
 
-class wShareMemory : private wNoncopyable
+class wShm : private wNoncopyable
 {
 	public:
-		wShareMemory(const char *filename, int pipeid = 'i', size_t size = MSG_QUEUE_LEN);
-		~wShareMemory();
+		wShm(const char *filename, int pipeid = 'i', size_t size = MSG_QUEUE_LEN);
+		~wShm();
 		
-		char *CreateShareMemory();
-		char *AttachShareMemory();
-		virtual void RemoveShareMemory();
+		char *CreateShm();
+		char *AttachShm();
+		virtual void RemoveShm();
 	
 	protected:
 	

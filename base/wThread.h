@@ -34,7 +34,7 @@ class wThread : private wNoncopyable
 		virtual int Run() = 0;
 		virtual bool IsBlocked() = 0;
 
-		int CreateThread();
+		int StartThread();
 		int StopThread();
 		int WakeUp();
 		

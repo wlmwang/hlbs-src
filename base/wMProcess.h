@@ -17,7 +17,7 @@
 #include "wLog.h"
 #include "wNoncopyable.h"
 #include "wProcess.h"
-#include "wShareMemory.h"
+#include "wShm.h"
 #include "wMsgQueue.h"
 
 class wMProcess : private wNoncopyable
@@ -36,7 +36,7 @@ class wMProcess : private wNoncopyable
 		string mName;
 		pid_t mPid;
 
-		wShareMemory* mShm;
+		wShm* mShm;
 };
 
 #endif

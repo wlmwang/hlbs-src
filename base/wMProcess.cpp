@@ -19,8 +19,8 @@ wMProcess::~wMProcess()
 
 void wMProcess::Start(int iNum)
 {
-	mShm = new wShareMemory();
-	mShm->CreateShareMemory(mName.c_str());
+	mShm = new wShm();
+	mShm->CreateShm(mName.c_str());
 
 	pid_t pid;
 	for(int i = 0; i < iNum; i++)
@@ -38,7 +38,7 @@ wProcess* wMProcess::NewProcess(int iIdx, string sTitle)
 {
 	wProcess* pProc = new wProcess(sTitle);
 
-	if(pProc->mShm->AttachShareMemory(sTitle.c_str()) == 0)
+	if(pProc->mShm->AttachShm(sTitle.c_str()) == 0)
 	{
 		SAFE_DELETE(pProc);
 		return 0;

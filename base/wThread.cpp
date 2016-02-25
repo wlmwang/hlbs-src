@@ -39,7 +39,7 @@ wThread::~wThread()
 	//...
 }
 
-int wThread::CreateThread()
+int wThread::StartThread()
 {
 	pthread_attr_init(&mPthreadAttr);
 	pthread_attr_setscope(&mPthreadAttr, PTHREAD_SCOPE_SYSTEM);  // 设置线程状态为与系统中所有线程一起竞争CPU时间

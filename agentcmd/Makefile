@@ -31,7 +31,18 @@ INCPATH=-I./$(BASEPATH) -I./$(LIBPATH)/log4cpp/include -I./$(LIBPATH)/tinyxml -I
 
 DIRS=./log ./bin ./debug
 TARGET=./bin/agentcmd
-OBJECTS=./debug/AgentCmdMain.o ./debug/AgentCmdConfig.o  ./debug/AgentCmd.o  ./debug/AgentCmdTask.o  ./debug/wLog.o ./debug/wMisc.o  ./debug/wTcpTask.o  ./debug/wSocket.o ./debug/wReadline.o ./debug/wThread.o ./debug/ReadlineThread.o ./debug/wShareMemory.o
+OBJECTS=./debug/AgentCmdMain.o \
+		./debug/AgentCmdConfig.o  \
+		./debug/AgentCmd.o  \
+		./debug/AgentCmdTask.o  \
+		./debug/wLog.o \
+		./debug/wMisc.o  \
+		./debug/wTcpTask.o  \
+		./debug/wSocket.o \
+		./debug/wReadline.o \
+		./debug/wThread.o \
+		./debug/ReadlineThread.o \
+		./debug/wShm.o
 
 $(TARGET): $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $(TARGET) $(LIBS)
@@ -71,7 +82,7 @@ all: $(TARGET)
 ./debug/wThread.o: $(BASEPATH)/wThread.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
-./debug/wShareMemory.o: $(BASEPATH)/wShareMemory.cpp
+./debug/wShm.o: $(BASEPATH)/wShm.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 clean:

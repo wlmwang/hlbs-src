@@ -51,8 +51,8 @@ void AgentCmd::Initialize()
 
 void AgentCmd::InitShareMemory()
 {
-	mInShareMem = new wShareMemory(SVR_SHARE_MEM_PIPE, 'o', MSG_QUEUE_LEN);
-	mOutShareMem = new wShareMemory(SVR_SHARE_MEM_PIPE, 'i', MSG_QUEUE_LEN);
+	mInShareMem = new wShm(SVR_SHARE_MEM_PIPE, 'o', MSG_QUEUE_LEN);
+	mOutShareMem = new wShm(SVR_SHARE_MEM_PIPE, 'i', MSG_QUEUE_LEN);
 	char * pBuff = NULL;
 	if((pBuff = mInShareMem->AttachShareMemory()) != NULL)
 	{
@@ -91,7 +91,7 @@ void AgentCmd::PrepareRun()
 	sprintf(cStr, "%s %d>", pConfig->mIPAddr, pConfig->mPort);
 	mReadlineThread = new ReadlineThread(cStr, strlen(cStr));
 
-	mReadlineThread->CreateThread();	//开启readline线程
+	mReadlineThread->StartThread();	//开启readline线程
 }
 
 void AgentCmd::Run()

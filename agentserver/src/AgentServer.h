@@ -17,7 +17,7 @@
 #include "wTcpTask.h"
 #include "wMTcpClient.h"
 #include "wTcpClient.h"
-#include "wShareMemory.h"
+#include "wShm.h"
 #include "wMsgQueue.h"
 #include "AgentServerTask.h"
 #include "AgentConfig.h"
@@ -57,8 +57,8 @@ class AgentServer: public wTcpServer<AgentServer>
 		unsigned long long mTicker;
 		wTimer mReportTimer;
 
-		wShareMemory *mInShareMem;	//输入的消息队列的缓冲区位置
-		wShareMemory *mOutShareMem; //输出的消息队列的缓冲区位置
+		wShm *mInShareMem;	//输入的消息队列的缓冲区位置
+		wShm *mOutShareMem; //输出的消息队列的缓冲区位置
 		wMsgQueue* mInMsgQueue;	// 输入的消息队列
 		wMsgQueue* mOutMsgQueue;// 输出的消息队列
 };

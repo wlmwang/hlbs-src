@@ -24,7 +24,14 @@ INCPATH=-I./$(BASEPATH) -I./$(LIBPATH)/log4cpp/include -I./$(LIBPATH)/tinyxml -I
 
 DIRS=./log ./bin ./debug
 TARGET=./bin/agentsvrd
-OBJECTS=./debug/AgentMain.o ./debug/AgentConfig.o  ./debug/AgentServer.o  ./debug/AgentServerTask.o  ./debug/wLog.o ./debug/wMisc.o  ./debug/wTcpTask.o  ./debug/wSocket.o ./debug/wShareMemory.o
+OBJECTS=./debug/AgentMain.o \
+		./debug/AgentConfig.o  \
+		./debug/AgentServer.o  \
+		./debug/AgentServerTask.o  \
+		./debug/wLog.o ./debug/wMisc.o  \
+		./debug/wTcpTask.o  \
+		./debug/wSocket.o \
+		./debug/wShm.o
 
 $(TARGET): $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $(TARGET) $(LIBS)
@@ -55,7 +62,7 @@ all: $(TARGET)
 ./debug/wSocket.o: $(BASEPATH)/wSocket.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
-./debug/wShareMemory.o: $(BASEPATH)/wShareMemory.cpp
+./debug/wShm.o: $(BASEPATH)/wShm.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 clean:

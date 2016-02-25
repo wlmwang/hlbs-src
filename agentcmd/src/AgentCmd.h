@@ -20,7 +20,7 @@
 #include "ReadlineThread.h"
 #include "wMTcpClient.h"
 #include "SvrCommand.h"
-#include "wShareMemory.h"
+#include "wShm.h"
 #include "wMsgQueue.h"
 
 #define REG_FUNC_S(name, vFunc) wDispatch<function<int(string, vector<string>)>, string>::Func_t {name, std::bind(vFunc, this, std::placeholders::_1, std::placeholders::_2)}
@@ -86,8 +86,8 @@ class AgentCmd: public wSingleton<AgentCmd>, public wMTcpClient<AgentCmdTask>
 		bool mWaitResStatus;
 		ReadlineThread *mReadlineThread;
 
-		wShareMemory *mInShareMem;	//输入的消息队列的缓冲区位置
-		wShareMemory *mOutShareMem; //输出的消息队列的缓冲区位置
+		wShm *mInShareMem;	//输入的消息队列的缓冲区位置
+		wShm *mOutShareMem; //输出的消息队列的缓冲区位置
 		wMsgQueue* mInMsgQueue;	// 输入的消息队列
 		wMsgQueue* mOutMsgQueue;// 输出的消息队列
 };

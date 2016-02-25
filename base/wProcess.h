@@ -10,7 +10,7 @@
 #include "wType.h"
 #include "wLog.h"
 #include "wNoncopyable.h"
-#include "wShareMemory.h"
+#include "wShm.h"
 #include "wMsgQueue.h"
 
 class wMProcess;
@@ -28,7 +28,7 @@ class wProcess : private wNoncopyable
 		pid_t mPid;
 		string mName;
 
-		wShareMemory* mShm;
+		wShm* mShm;
 };
 
 wProcess* G_pProc;

@@ -4,21 +4,21 @@
  * Copyright (C) Disvr, Inc.
  */
  
-#include "wShareMemory.h"
+#include "wShm.h"
 
-wShareMemory::wShareMemory(const char *filename, int pipeid, size_t size)
+wShm::wShm(const char *filename, int pipeid, size_t size)
 {
 	mPipeId = pipeid;
 	mSize = size;
 	memcpy(mFilename, filename, strlen(filename)+1);
 }
 
-wShareMemory::~wShareMemory()
+wShm::~wShm()
 {
-	RemoveShareMemory();
+	RemoveShm();
 }
 
-char *wShareMemory::CreateShareMemory()
+char *wShm::CreateShm()
 {
 	LOG_DEBUG("default", "[runtime] try to alloc %lld bytes of share memory", mSize);
 	
@@ -113,7 +113,7 @@ char *wShareMemory::CreateShareMemory()
 	return mAddr;
 }
 
-char *wShareMemory::AttachShareMemory()
+char *wShm::AttachShm()
 {
 	LOG_DEBUG("default", "[runtime] try to attach %lld bytes of share memory", mSize);
 	
@@ -150,7 +150,7 @@ char *wShareMemory::AttachShareMemory()
 	return mAddr;
 }
 
-void wShareMemory::RemoveShareMemory()
+void wShm::RemoveShm()
 {
 	if(mAddr ==0)
 	{

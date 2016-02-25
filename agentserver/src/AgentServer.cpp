@@ -53,10 +53,10 @@ void AgentServer::Initialize()
 
 void AgentServer::InitShareMemory()
 {
-	mInShareMem = new wShareMemory(SVR_SHARE_MEM_PIPE, 'i', MSG_QUEUE_LEN);
-	mOutShareMem = new wShareMemory(SVR_SHARE_MEM_PIPE, 'o', MSG_QUEUE_LEN);
+	mInShareMem = new wShm(SVR_SHARE_MEM_PIPE, 'i', MSG_QUEUE_LEN);
+	mOutShareMem = new wShm(SVR_SHARE_MEM_PIPE, 'o', MSG_QUEUE_LEN);
 	char * pBuff = NULL;
-	if((pBuff = mInShareMem->CreateShareMemory()) != NULL)
+	if((pBuff = mInShareMem->CreateShm()) != NULL)
 	{
 		mInMsgQueue = new wMsgQueue();
 		mInMsgQueue->SetBuffer(pBuff, MSG_QUEUE_LEN);
@@ -65,7 +65,7 @@ void AgentServer::InitShareMemory()
 	{
 		LOG_ERROR("error","[startup] Create (In) Share Memory failed");
 	}
-	if((pBuff = mOutShareMem->CreateShareMemory()) != NULL)
+	if((pBuff = mOutShareMem->CreateShm()) != NULL)
 	{
 		mOutMsgQueue = new wMsgQueue();
 		mOutMsgQueue->SetBuffer(pBuff, MSG_QUEUE_LEN);
