@@ -7,17 +7,22 @@
 #ifndef _W_TYPE_H_
 #define _W_TYPE_H_
 
-#include <cctype>
+#define _FILE_OFFSET_BITS  64	//off_t 突破单文件4G大小限制，系统库sys/types.h中使用
+
+#include <unistd.h>
+#include <errno.h>
+#include <sched.h>
+#include <sys/types.h>
+#include <ctype.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
-#define SAFE_DELETE(x) { if (x) { delete(x); (x) = NULL; } }
-#define SAFE_DELETE_VEC(x) { if (x) { delete [] (x); (x) = NULL; } }
-#define SAFE_FREE(x) { if (x) { free(x); (x) = NULL; } }
-
-#define SAFE_SUB(x, y) ((x) > (y) ? (x)-(y) : 0)
-
-#define CAST_CMD(x,y,t)	const t* x = (const t*)y;
+#include <stdio.h>
+#include <iostream>
+#include <string>
 
 //单字节无符号整数
 typedef uint8_t BYTE;
@@ -88,5 +93,35 @@ typedef signed long long int SLLWORD;
 #define MSG_QUEUE_LEN 16777216 /* 1024 * 1024 * 16 */
 #endif
 
+//主机名长度
+#ifndef MAXHOSTNAMELEN
+#define MAXHOSTNAMELEN  256
+#endif
+
+//listen socket backlog长度
+#define LISTEN_BACKLOG        511
+
+//对齐
+#define ALIGNMENT	sizeof(unsigned long)    /* platform word */
+
+#define ALIGN(d, a)		(((d) + (a - 1)) & ~(a - 1))
+#define ALIGN_PTR(p, a)	(u_char *) (((uintptr_t) (p) + ((uintptr_t) a - 1)) & ~((uintptr_t) a - 1))
+
+//释放对象
+#define SAFE_DELETE(x) { if(x) { delete(x); (x) = NULL; } }
+#define SAFE_DELETE_VEC(x) { if(x) { delete [] (x); (x) = NULL; } }
+
+#define SAFE_FREE(x) { if(x) { free(x); (x) = NULL; } }
+
+#define SAFE_SUB(x, y) ((x) > (y) ? (x) - (y) : 0)
+
+#define CAST_CMD(x, y, t)	const t* x = (const t*)y;
+
+#define SETPROCTITLE_PAD       '\0'
+
+extern char **environ;
+
+//命名空间
 using namespace std;
+
 #endif

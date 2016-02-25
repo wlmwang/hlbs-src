@@ -7,11 +7,8 @@
 #ifndef _W_MPROCESS_H_
 #define _W_MPROCESS_H_
 
-#include <unistd.h>
 #include <map>
 #include <vector>
-#include <string>
-#include <string.h>
 
 #include "wType.h"
 #include "wLog.h"
@@ -19,6 +16,8 @@
 #include "wProcess.h"
 #include "wShm.h"
 #include "wMsgQueue.h"
+
+#define MAX_PROCESSES         1024
 
 class wMProcess : private wNoncopyable
 {

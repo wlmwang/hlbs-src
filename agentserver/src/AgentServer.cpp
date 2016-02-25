@@ -53,8 +53,8 @@ void AgentServer::Initialize()
 
 void AgentServer::InitShareMemory()
 {
-	mInShareMem = new wShm(SVR_SHARE_MEM_PIPE, 'i', MSG_QUEUE_LEN);
-	mOutShareMem = new wShm(SVR_SHARE_MEM_PIPE, 'o', MSG_QUEUE_LEN);
+	mInShareMem = new wShm(IPC_SHM, 'i', MSG_QUEUE_LEN);
+	mOutShareMem = new wShm(IPC_SHM, 'o', MSG_QUEUE_LEN);
 	char * pBuff = NULL;
 	if((pBuff = mInShareMem->CreateShm()) != NULL)
 	{

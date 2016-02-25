@@ -59,12 +59,10 @@ int main(int argc, const char *argv[])
 	pConfig->ParseRouterConfig();
 	pConfig->ParseLineConfig(argc, argv);
 
-	if (pConfig->mDaemonFlag) 
+	if (pConfig->mDaemon) 
 	{
 		//初始化守护进程
-		const char *pFilename = "./agent_server.lock";
-
-		if (InitDaemon(pFilename) < 0)
+		if (InitDaemon(LOCK_PATH) < 0)
 		{
 			LOG_ERROR("error", "[startup] Create daemon failed!");
 			exit(1);

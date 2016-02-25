@@ -7,9 +7,20 @@
 #ifndef _W_BASE_COMMAND_H_
 #define _W_BASE_COMMAND_H_
 
-#include "wCommand.h"
+#define PREFIX  "/usr/local/disvr/"
 
-#define SVR_SHARE_MEM_PIPE "/tmp/svr_shm"
+#define CONF_PREFIX  "conf/"
+
+#define PID_PATH  "log/disvr.pid"
+
+#define LOCK_PATH  "log/disvr.lock"
+
+#define USER  "nobody"			//默认用户名
+#define GROUP  "nobody"			//默认用户组
+
+#define IPC_SHM "/tmp/shm.ipc"
+
+#include "wCommand.h"
 
 #pragma pack(1)
 

@@ -54,18 +54,6 @@ inline vector<string> Split(string sStr, string sPattern, bool bRepeat = true)
     for(int i = 0; i < iSize; i++)  
     {  
         iPos = iNextPos = sStr.find(sPattern, i);
-        /*
-        while(bRepeat)
-        {
-        	i = iNextPos + sPattern.size() - 1;
-        	iNextPos = sStr.find(sPattern, i);
-        	if(iNextPos + 1 != i)
-        	{
-        		i -= iNextPos + sPattern.size() - 1;
-        		break;
-        	}
-        }
-        */
         if(iPos < iSize)
         {
             string s = sStr.substr(i, iPos - i);
@@ -90,6 +78,40 @@ inline string Itos(const int &i)
 	stringstream sRet(sTmp);
 	sRet << i;
 	return sRet.str();
+}
+
+u_char *Cpystrn(u_char *dst, u_char *src, size_t n)
+{
+    if (n == 0) 
+    {
+        return dst;
+    }
+
+    while (--n) 
+    {
+        *dst = *src;
+
+        if (*dst == '\0') 
+        {
+            return dst;
+        }
+        dst++;
+        src++;
+    }
+
+    *dst = '\0';
+    return dst;
+}
+
+void Strlow(u_char *dst, u_char *src, size_t n)
+{
+    while (n) 
+    {
+        *dst = tolower(*src);
+        dst++;
+        src++;
+        n--;
+    }
 }
 
 //变为守护进程

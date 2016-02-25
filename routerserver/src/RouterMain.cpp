@@ -4,14 +4,7 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include <iostream>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
 #include <signal.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
@@ -59,12 +52,10 @@ int main(int argc, const char *argv[])
 	pConfig->ParseSvrConfig();
 	pConfig->ParseLineConfig(argc, argv);
 
-	if (pConfig->mDaemonFlag) 
+	if (pConfig->mDaemon) 
 	{
 		//初始化守护进程
-		const char *pFilename = "./router_server.lock";
-
-		if (InitDaemon(pFilename) < 0)
+		if (InitDaemon(LOCK_PATH) < 0)
 		{
 			LOG_ERROR("error", "[startup] Create daemon failed!");
 			exit(1);
