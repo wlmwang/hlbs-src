@@ -12,8 +12,7 @@
 
 #include "wType.h"
 #include "wLog.h"
-#include "wNoncopyable.h"
-#include "wProcess.h"
+#include "wSingleton.h"
 #include "wFile.h"
 
 template <typename T>

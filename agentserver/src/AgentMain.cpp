@@ -5,8 +5,6 @@
  */
 
 #include <signal.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 #include "wType.h"
 #include "wMisc.h"
@@ -65,8 +63,6 @@ int main(int argc, const char *argv[])
 	wMaster *pMaster = wMaster<wMaster>::Instance();
 
 	pMaster->MasterStart();
-	
-	//pMaster->SingleStart();
 
 	//获取服务器实体
     AgentServer *pServer = AgentServer::Instance();
