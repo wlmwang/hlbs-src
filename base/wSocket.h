@@ -10,10 +10,6 @@
 #ifndef _W_SOCKET_H_
 #define _W_SOCKET_H_
 
-#include <unistd.h>
-#include <fcntl.h>
-#include <string>
-
 #include "wType.h"
 
 enum SOCKET_TYPE

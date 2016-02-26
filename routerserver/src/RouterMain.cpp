@@ -50,7 +50,7 @@ int main(int argc, const char *argv[])
 	}
 	pConfig->ParseBaseConfig();
 	pConfig->ParseSvrConfig();
-	pConfig->ParseLineConfig(argc, argv);
+	pConfig->GetOption(argc, argv);
 
 	if (pConfig->mDaemon) 
 	{

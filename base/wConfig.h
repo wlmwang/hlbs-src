@@ -7,9 +7,6 @@
 #ifndef _W_CONFIG_H_
 #define _W_CONFIG_H_
 
-#include <string.h>
-#include <iostream>
-
 #include "tinyxml.h"	//lib tinyxml
 #include "wType.h"
 #include "wLog.h"
@@ -20,7 +17,6 @@ template <typename T>
 class wConfig : public wSingleton<T>
 {
 	public:
-		int mProcess;	//进程类型
 		int mShowVer;	//版本信息
 		int mDaemon;	//是否启动为守护进程
 		char *mSignal;	//信号字符串
@@ -36,16 +32,25 @@ class wConfig : public wSingleton<T>
 
 		string *mArgv;	//堆上参数
 
+		int InitErrLog()
+		{
+			return INIT_ROLLINGFILE_LOG(ELOG_KEY, ELOG_FILE, ELOG_LEVEL, ELOG_FSIZE, ELOG_BACKUP);
+		}
+
 		wConfig()
 		{
-			mProcess = 0;
 			mShowVer = 0;
 			mDaemon = 1;
 			mHost = 0;
 			mPort = 0;
+			mMoveEnv = 0;
 			mArgc = 0;
 			mSignal = NULL;
-			mMoveEnv = 0;
+			mOsArgv = NULL;
+			mOsArgvLast = NULL;
+			mOsEnv = NULL;
+
+			InitErrLog();	//初始化日志
 		}
 		
 		virtual ~wConfig() 
@@ -70,6 +75,99 @@ class wConfig : public wSingleton<T>
 
 			mOsArgv = argv;
 			mOsEnv = environ;
+		}
+
+		virtual int GetOption(int argc, const char *argv[])
+		{
+			char *p;
+			int  i;
+
+			SaveArgv(argc, argv);	//保存参数
+
+			for (i = 1; i < argc; i++) 
+			{
+				p = (char *) argv[i];
+				if (*p++ != '-') 
+				{
+					LOG_ERROR(ELOG_KEY, "invalid option: \"%s\"", argv[i]);
+					return -1;
+				}
+
+				while (*p) 
+				{
+					switch (*p++) 
+					{
+					case '?':
+					case 'v':
+						mShowVer = 1;
+						break;
+
+					case 'd':
+						mDaemon = 1;
+						break;
+						
+					case 'h':
+						if (*p) 
+						{
+							mHost = p;
+							goto next;
+						}
+
+						if (argv[++i]) 
+						{
+							mHost = (char *) argv[i];
+							goto next;
+						}
+						
+						LOG_ERROR(ELOG_KEY, "option \"-h\" requires ip address");
+						return -1;
+						
+					case 'p':
+						if (*p) 
+						{
+							mPort = atoi(p);
+							goto next;
+						}
+
+						if (argv[++i]) 
+						{
+							mPort = atoi(argv[i]);
+							goto next;
+						}
+						
+						LOG_ERROR(ELOG_KEY, "option \"-h\" requires port number");
+						return -1;
+
+					case 's':
+						if (*p) 
+						{
+							mSignal = (char *) p;
+							goto next;
+						}
+
+						if (argv[++i]) 
+						{
+							mSignal = argv[i];
+
+			                if (strcmp(ngx_signal, "stop") == 0 || strcmp(ngx_signal, "quit") == 0)
+			                {
+			                    //mProcess = PROCESS_SIGNALLER;  //该进程只为发送信号而运行
+			                    goto next;
+			                }
+						}
+						
+						LOG_ERROR(ELOG_KEY, "option \"-h\" requires signal number");
+						return -1;	
+					default:
+						LOG_ERROR(ELOG_KEY, "invalid option: \"%c\"", *(p - 1));
+						return -1;
+					}
+				}
+
+			next:
+				continue;
+			}
+			return 0;
 		}
 
 		/**
@@ -142,99 +240,6 @@ class wConfig : public wSingleton<T>
 		    {
 		        memset(p, SETPROCTITLE_PAD, mOsArgvLast - (char *) p);
 		    }
-		}
-
-		virtual int ParseLineConfig(int argc, const char *argv[])
-		{
-			char *p;
-			int  i;
-
-			SaveArgv(argc, argv);	//保存参数
-
-			for (i = 1; i < argc; i++) 
-			{
-				p = (char *) argv[i];
-				if (*p++ != '-') 
-				{
-					LOG_ERROR("default", "invalid option: \"%s\"", argv[i]);
-					return -1;
-				}
-
-				while (*p) 
-				{
-					switch (*p++) 
-					{
-					case '?':
-					case 'v':
-						mShowVer = 1;
-						break;
-
-					case 'd':
-						mDaemon = 1;
-						break;
-						
-					case 'h':
-						if (*p) 
-						{
-							mHost = p;
-							goto next;
-						}
-
-						if (argv[++i]) 
-						{
-							mHost = (char *) argv[i];
-							goto next;
-						}
-						
-						LOG_ERROR("default", "option \"-h\" requires ip address");
-						return -1;
-						
-					case 'p':
-						if (*p) 
-						{
-							mPort = atoi(p);
-							goto next;
-						}
-
-						if (argv[++i]) 
-						{
-							mPort = atoi(argv[i]);
-							goto next;
-						}
-						
-						LOG_ERROR("default", "option \"-h\" requires port number");
-						return -1;
-
-					case 's':
-						if (*p) 
-						{
-							mSignal = (char *) p;
-							goto next;
-						}
-
-						if (argv[++i]) 
-						{
-							mSignal = argv[i];
-
-			                if (strcmp(ngx_signal, "stop") == 0 || strcmp(ngx_signal, "quit") == 0)
-			                {
-			                    mProcess = PROCESS_SIGNALLER;  //该进程只为发送信号而运行
-			                    goto next;
-			                }
-						}
-						
-						LOG_ERROR("default", "option \"-h\" requires signal number");
-						return -1;	
-					default:
-						LOG_ERROR("default", "invalid option: \"%c\"", *(p - 1));
-						return -1;
-					}
-				}
-
-			next:
-				continue;
-			}
-			return 0;
 		}
 
 };

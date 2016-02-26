@@ -8,12 +8,9 @@
 #define _W_MISC_H_
 
 #include <sstream>
-#include <string>
 #include <vector>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/time.h>
-#include <string.h>
 
 #include "wCommand.h"
 #include "wType.h"

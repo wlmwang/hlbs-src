@@ -12,7 +12,6 @@
 #ifndef _W_DISPATCH_H_
 #define _W_DISPATCH_H_
 
-#include <string>
 #include <map>
 #include <vector>
 #include <functional>

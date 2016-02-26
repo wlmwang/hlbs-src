@@ -10,7 +10,6 @@
 #ifndef _W_COMMAND_H_
 #define _W_COMMAND_H_
 
-#include <string.h>
 #include "wType.h"
 
 #define ASSERT_CMD(cmd, para) ((para)<<8 | (cmd))

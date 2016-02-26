@@ -7,21 +7,11 @@
 #ifndef _W_TCP_SERVER_H_
 #define _W_TCP_SERVER_H_
 
-#include <iostream>
-#include <unistd.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <algorithm>
-#include <string>
-#include <string.h>
 #include <vector>
 
 #include <sys/epoll.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <arpa/inet.h>
 
 #include "wAssert.h"

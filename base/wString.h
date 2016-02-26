@@ -11,9 +11,7 @@
 #ifndef _W_STRING_H_
 #define _W_STRING_H_
 
-#include <string.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <ostream>
 
 namespace W

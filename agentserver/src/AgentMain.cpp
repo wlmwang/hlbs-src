@@ -4,14 +4,7 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include <iostream>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
 #include <signal.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
@@ -55,19 +48,25 @@ int main(int argc, const char *argv[])
 		cout << "Get AgentConfig instance failed" << endl;
 		exit(1);
 	}
-	pConfig->ParseBaseConfig();
-	pConfig->ParseRouterConfig();
-	pConfig->ParseLineConfig(argc, argv);
-
-	if (pConfig->mDaemon) 
+	pConfig->GetOption(argc, argv);
+	
+	if (pConfig->mDaemon)
 	{
-		//初始化守护进程
 		if (InitDaemon(LOCK_PATH) < 0)
 		{
-			LOG_ERROR("error", "[startup] Create daemon failed!");
+			LOG_ERROR(ELOG_KEY, "[startup] Create daemon failed!");
 			exit(1);
 		}
 	}
+
+	pConfig->ParseBaseConfig();
+	pConfig->ParseRouterConfig();
+	
+	wMaster *pMaster = wMaster<wMaster>::Instance();
+
+	pMaster->MasterStart();
+	
+	//pMaster->SingleStart();
 
 	//获取服务器实体
     AgentServer *pServer = AgentServer::Instance();

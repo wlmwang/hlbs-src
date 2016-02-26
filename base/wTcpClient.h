@@ -7,17 +7,8 @@
 #ifndef _W_TCP_CLIENT_H_
 #define _W_TCP_CLIENT_H_
 
-#include <unistd.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <typeinfo>
-#include <string>
-#include <string.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <arpa/inet.h>
 
 #include "wType.h"

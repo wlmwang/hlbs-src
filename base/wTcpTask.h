@@ -7,7 +7,6 @@
 #ifndef _W_TCP_TASK_H_
 #define _W_TCP_TASK_H_
 
-#include <string>
 #include <arpa/inet.h>
 
 #include "wType.h"

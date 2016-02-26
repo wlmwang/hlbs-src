@@ -7,10 +7,6 @@
 #ifndef _W_READLINE_H_
 #define _W_READLINE_H_
 
-#include <unistd.h>
-#include <string.h>
-#include <cstdio>
-
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "wType.h"

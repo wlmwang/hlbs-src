@@ -5,7 +5,6 @@
  */
 
 #include "wLog.h"
-#include <string.h>
 
 #ifdef USE_LOG4CPP
 #	ifdef LINUX

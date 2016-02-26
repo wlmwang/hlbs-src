@@ -12,41 +12,42 @@
 #include "wLog.h"
 #include "wNoncopyable.h"
 
+/*
 typedef struct {
     int     signo;
-    //信号的字符串表现形式，如"SIGIO"
-    char   *signame;
-    //信号的名称，如"stop"
-    char   *name;
-    //信号处理函数
-    void  (*handler)(int signo);
+    char   *signame;	//信号的字符串表现形式，如"SIGIO"
+    char   *name;		//信号的名称，如"stop"
+    void  (*handler)(int signo);	    //信号处理函数
 } signal_t;
-
+*/
 
 class wSignal : private wNoncopyable
 {
 	public:
-		wSignal(string sName);
-		virtual ~wSignal();
-
-		int InitSignals()
+		//SIG_DFL(采用缺省的处理方式)，也可以为SIG_IGN
+		wSignal(__sighandler_t  func)
 		{
-		    signal_t      *sig;
-		    struct sigaction   sa;
-
-		    for (sig = signals; sig->signo != 0; sig++) 
-		    {
-		        memzero(&sa, sizeof(struct sigaction));
-		        sa.sa_handler = sig->handler;
-		        sigemptyset(&sa.sa_mask);
-		        if (sigaction(sig->signo, &sa, NULL) == -1) 
-		        {
-		        	//log...
-		        }
-		    }
-
-		    return 0;
+			sigemptyset(&mSigAct.sa_mask);
+			mSigAct.sa_sigaction = func;
+			mSigAct.sa_flags = 0;
 		}
+
+		//添加屏蔽集
+		int AddMaskSet(int signo)
+		{
+			return sigaddset(&mSigAct.sa_mask, signo);
+		}
+
+		//添加信号处理
+		int AddSignal(int signo, struct sigaction *oact = NULL)
+		{
+			return sigaction(signo, &mSigAct, oact);
+		}
+
+		virtual ~wSignal() {}
+
+	private:
+		struct sigaction mSigAct;
 };
 
 #endif

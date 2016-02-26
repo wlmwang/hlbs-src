@@ -7,15 +7,8 @@
 #ifndef _W_SHM_H_
 #define _W_SHM_H_
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
-#include <fcntl.h>
-#include <string.h>
-#include <stdio.h>
-#include <errno.h>
 
 #include "wType.h"
 #include "wLog.h"

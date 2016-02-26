@@ -4,9 +4,6 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include <errno.h>
-#include <string.h>
-#include <sys/time.h>
 #include <arpa/inet.h>
 
 #include "wLog.h"

@@ -58,7 +58,7 @@ int main(int argc, const char *argv[])
 		exit(1);
 	}
 	pConfig->ParseBaseConfig();
-	pConfig->ParseLineConfig(argc, argv);
+	pConfig->GetOption(argc, argv);
 
 	//获取服务器实体
     AgentCmd *pServer = AgentCmd::Instance();

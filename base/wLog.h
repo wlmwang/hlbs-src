@@ -13,7 +13,7 @@
 #define _W_LOG_H_
 
 #include <stdarg.h>
-
+#include "wType.h"
 
 #ifdef USE_LOG4CPP
 #	define INIT_ROLLINGFILE_LOG		InitLog					//初始化一种日志类型（基于回卷文件)
@@ -105,4 +105,12 @@ int LogError_va( const char* vLogName, const char* vFmt, va_list ap );
 int LogFatal_va( const char* vLogName, const char* vFmt, va_list ap );
 int log_va( const char* vLogName, int vPriority, const char* vFmt, va_list ap );
 
-#endif // _W_LOG_H_
+
+//error log
+#define ELOG_KEY	"error"
+#define ELOG_LEVEL	LEVEL_INFO
+#define ELOG_FILE	"log/error.log"
+#define ELOG_FSIZE 10*1024*1024
+#define ELOG_BACKUP	20
+
+#endif
