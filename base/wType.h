@@ -142,6 +142,9 @@ typedef signed long long int SLLWORD;
 
 #define CAST_CMD(x, y, t)	const t* x = (const t*)y;
 
+//计算数组中个体的个数
+#define CountV(arr) (sizeof(arr) / sizeof((arr)[0]))
+
 #define SETPROCTITLE_PAD       '\0'
 
 extern char **environ;

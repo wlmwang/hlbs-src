@@ -37,6 +37,7 @@ class wFile : private wNoncopyable
 			mFD = open(pFilename, flags, mode);
 			if (mFD == -1)
 			{
+				mErrno = errno;
 				return -1;
 			}
 			fstat(mFD, &mInfo);
@@ -73,6 +74,7 @@ class wFile : private wNoncopyable
 			n = pread(mFD, pBuf, nbyte, offset);
 			if (n == -1)
 			{
+				mErrno = errno;
 				LOG_ERROR(ELOG_KEY, "pread() \"%s\" failed", mFileName.c_str());
 				return -1;
 			}
@@ -89,7 +91,6 @@ class wFile : private wNoncopyable
 		ssize_t Write(const void *pBuf, size_t nbytes, off_t offset)
 		{
 		    ssize_t n, written;
-		    int  err;
 
 		    written = 0;
 		    for ( ;; ) 
@@ -98,9 +99,9 @@ class wFile : private wNoncopyable
 
 		        if (n == -1) 
 		        {
-		            err = errno;
+					mErrno = errno;
 
-		            if (err == EINTR) 
+		            if (mErrno == EINTR) 
 		            {
 		                LOG_DEBUG(ELOG_KEY, "pwrite() was interrupted");
 		                continue;
@@ -149,8 +150,9 @@ class wFile : private wNoncopyable
 		}
 
 	private:
-	    int mFD;		//文件句柄描述符
+	    int mFD;		//文件描述符
 	    string  mFileName;	//文件名称
+		int mErr;
 
 	    struct stat mInfo;	//文件大小等资源信息
 	    off_t  mOffset;		//现在处理到文件何处了

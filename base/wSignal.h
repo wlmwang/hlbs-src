@@ -7,7 +7,7 @@
 #ifndef _W_SIGNAL_H_
 #define _W_SIGNAL_H_
 
-#include <signal.h>
+#include <signal.h>		//typedef void (*sighandler_t)(int);
 #include "wType.h"
 #include "wLog.h"
 #include "wNoncopyable.h"
@@ -17,7 +17,7 @@ typedef struct {
     int     signo;
     char   *signame;	//信号的字符串表现形式，如"SIGIO"
     char   *name;		//信号的名称，如"stop"
-    void  (*handler)(int signo);	    //信号处理函数
+    void  (*handler)(int signo);//信号处理函数
 } signal_t;
 */
 

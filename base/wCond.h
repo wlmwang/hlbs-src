@@ -14,41 +14,50 @@
 
 class wCond : private wNoncopyable
 {
-
 	public:
-		wCond()
+		wCond(int pshared = PTHREAD_PROCESS_PRIVATE)
 		{
-			pthread_cond_init(&mCond, NULL);
+			pthread_condattr_init(&mAttr);
+			pthread_condattr_setpshared(&mAttr, pshared);
+			pthread_cond_init(&mCond, &mAttr);
 		}
 		
 		~wCond()
 		{
+			pthread_condattr_destroy(&mAttr);
 			pthread_cond_destroy(&mCond);
 		}
 		
-		void Broadcast()
+		int Broadcast()
 		{
-			pthread_cond_broadcast(&mCond);
+			return pthread_cond_broadcast(&mCond);
 		}
 		
-		void Signal()
+		/**
+		 *  使用pthread_cond_signal不会有“惊群现象”产生，他最多只给一个线程发信号
+		 */
+		int Signal()
 		{
-			pthread_cond_signal(&mCond);
+			return pthread_cond_signal(&mCond);
 		}
 
 		/**
 		 * 等待特定的条件变量满足
 		 * @param stMutex 需要等待的互斥体
 		 */
-		void Wait(wMutex &stMutex)
+		int Wait(wMutex &stMutex)
 		{
-			pthread_cond_wait(&mCond, &stMutex.mMutex);
+			return pthread_cond_wait(&mCond, &stMutex.mMutex);
 		}
-
+		
+		int TimeWait(wMutex &stMutex, struct timespec *tsptr)
+		{
+			return pthread_cond_timewait(&mCond, &stMutex.mMutex, tsptr);
+		}
+		
 	private:
-
-		pthread_cond_t mCond;		/**< 系统条件变量 */
-
+		pthread_cond_t mCond;		//系统条件变量
+		pthread_condattr_t mAttr;
 };
 
 

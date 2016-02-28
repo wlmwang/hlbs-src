@@ -32,11 +32,6 @@ class wConfig : public wSingleton<T>
 
 		string *mArgv;	//堆上参数
 
-		int InitErrLog()
-		{
-			return INIT_ROLLINGFILE_LOG(ELOG_KEY, ELOG_FILE, ELOG_LEVEL, ELOG_FSIZE, ELOG_BACKUP);
-		}
-
 		wConfig()
 		{
 			mShowVer = 0;
@@ -61,6 +56,11 @@ class wConfig : public wSingleton<T>
 				SAFE_DELETE(environ);
 				environ = mOsEnv;
 			}
+		}
+		
+		int InitErrLog()
+		{
+			return INIT_ROLLINGFILE_LOG(ELOG_KEY, ELOG_FILE, ELOG_LEVEL, ELOG_FSIZE, ELOG_BACKUP);
 		}
 		
 		void SaveArgv(int argc, char *const *argv)

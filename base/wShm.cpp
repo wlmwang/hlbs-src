@@ -9,7 +9,15 @@
 wShm::wShm(const char *filename, int pipeid, size_t size)
 {
 	mPipeId = pipeid;
-	mSize = size;
+	int pagesize = getpagesize();
+	if(pagesize > 0)
+	{
+		mSize = ALIGN(size, pagesize);
+	}
+	else
+	{
+		mSize = size;
+	}
 	memcpy(mFilename, filename, strlen(filename)+1);
 }
 
@@ -103,13 +111,6 @@ char *wShm::CreateShm()
 		return 0;
     }
 	
-	/*
-    if (shmctl(mShmId, IPC_RMID, NULL) == -1) 
-	{
-		LOG_ERROR("default", "remove share memory failed: %s", strerror(errno));
-		return 0;
-    }
-	*/
 	return mAddr;
 }
 
@@ -140,13 +141,6 @@ char *wShm::AttachShm()
 		return 0;
     }
 	
-	/*
-    if (shmctl(mShmId, IPC_RMID, NULL) == -1) 
-	{
-		LOG_ERROR("default", "remove share memory failed: %s", strerror(errno));
-		return 0;
-    }
-	*/
 	return mAddr;
 }
 
@@ -156,14 +150,15 @@ void wShm::RemoveShm()
 	{
 		return;
 	}
-    if (shmdt(mAddr) == -1) 
+	
+	//IPC都是内核级数据结构
+    if (shmdt(mAddr) == -1)		//对共享操作结束，分离该shmid_ds与该进程关联计数器
 	{
 		LOG_ERROR("default", "shmdt(%d) failed", mAddr);
     }
-	/*
-    if (shmctl(mShmId, IPC_RMID, NULL) == -1) 
+    if (shmctl(mShmId, IPC_RMID, NULL) == -1)	//删除该shmid_ds共享存储段
 	{
 		LOG_ERROR("default", "remove share memory failed: %s", strerror(errno));
     }
-	*/
+	//unlink(mFilename);
 }

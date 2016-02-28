@@ -18,10 +18,10 @@
 
 enum eRunStatus
 {
-	rt_init = 0,
-	rt_blocked = 1,
-	rt_running = 2,
-	rt_stopped = 3
+	RT_INIT = 0,
+	RT_BLOCKED = 1,
+	RT_RUNNING = 2,
+	RT_STOPPED = 3
 };
 
 void* ThreadProc(void *pvArgs);
@@ -36,25 +36,38 @@ class wThread : private wNoncopyable
 		virtual int Run() = 0;
 		virtual bool IsBlocked() = 0;
 
-		int StartThread();
+		int StartThread(int join = 1);
 		int StopThread();
-		int WakeUp();
+		int Wakeup();
+		int CancelThread();
 		
 		bool IsRunning()
 		{
-			return mRunStatus == rt_running;
+			return mRunStatus == RT_RUNNING;
 		}
+		
 		bool IsStop()
 		{
-			return mRunStatus == rt_stopped;
+			return mRunStatus == RT_STOPPED;
+		}
+		
+		pthread_t GetTid()
+		{
+			return mTid;
+		}
+		
+		virtual char* GetRetVal()
+		{
+			mRetVal = "pthread exited";
+			return mRetVal;
 		}
 	protected:
 		int CondBlock();
 
-		pthread_t mPhreadId;
-		pthread_attr_t mPthreadAttr;
+		pthread_t mTid;
+		pthread_attr_t mAttr;
 		int mRunStatus;
-		char mAbyRetVal[64];
+		char mRetVal[64];
 		wMutex *mMutex;
 		wCond *mCond;
 };

@@ -14,6 +14,7 @@
 #include "wLog.h"
 #include "wNoncopyable.h"
 
+// IPC 共享内存存储
 class wShm : private wNoncopyable
 {
 	public:
@@ -25,8 +26,7 @@ class wShm : private wNoncopyable
 		virtual void RemoveShm();
 	
 	protected:
-	
-		char mFilename[64];
+		char mFilename[255];
 		int mPipeId;
 		size_t mSize;
 		

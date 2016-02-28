@@ -15,9 +15,6 @@
 #include "wCommand.h"
 #include "wType.h"
 
-//计算数组中个体的个数
-#define CountV(entry_v) (sizeof(entry_v) / sizeof((entry_v)[0]))
-
 inline const char* IP2Text(DWORD ip)
 {
 	in_addr in;

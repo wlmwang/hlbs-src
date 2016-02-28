@@ -115,7 +115,7 @@ void AgentCmd::CheckCmd()
 	
 	mTicker += iInterval;
 	
-	mReadlineThread->WakeUp();	//唤醒readline线程，进入等待输入状态
+	mReadlineThread->Wakeup();	//唤醒readline线程，进入等待输入状态
 
 	if (mReadlineThread->mCmdLine != 0)
 	{
