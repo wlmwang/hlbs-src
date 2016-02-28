@@ -16,7 +16,6 @@
 
 #define MSG_QUEUE_RESERVE_LEN 8
 
-//template <unsigned int mQueueSize>	//消息缓冲队列大小
 class wMsgQueue
 {
 	public:
@@ -29,7 +28,6 @@ class wMsgQueue
 
 		void Initialize()
 		{
-			//memset(mRealQueue, 0, sizeof(mRealQueue));
 			mBeginIdxPtr = NULL;
 			mEndIdxPtr = NULL;
 		}
@@ -37,12 +35,12 @@ class wMsgQueue
 		void SetBuffer(char *vBuffer, int vBufferLen)
 		{
 			char *pBuffer = vBuffer;
-			mBeginIdxPtr = (int *)pBuffer;
+			mBeginIdxPtr = (int *)pBuffer;	//前4位开始地址
 			pBuffer += sizeof(int);
-			mEndIdxPtr = (int *)pBuffer;
+			mEndIdxPtr = (int *)pBuffer;	//后4位开始地址
 			pBuffer += sizeof(int);
-			mBufferPtr = pBuffer;
-			mQueueSize = vBufferLen - 2 * sizeof(int);
+			mBufferPtr = pBuffer;	//实际数据地址
+			mQueueSize = vBufferLen - 2 * sizeof(int);	//实际数据长度
 		}
 		
 		/**
@@ -225,11 +223,10 @@ class wMsgQueue
 		}
 		
 	private:
-		//char mRealQueue[mQueueSize];	// 实际的消息队列
-		int *mBeginIdxPtr;
-		int *mEndIdxPtr;
-		int mQueueSize;
-		char *mBufferPtr;
+		int *mBeginIdxPtr;	//前4位记录开始地址
+		int *mEndIdxPtr;	//后4位开始地址
+		int mQueueSize;		//实际数据长度
+		char *mBufferPtr;	//实际数据地址
 };
 
 #endif

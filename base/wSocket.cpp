@@ -4,10 +4,6 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include <arpa/inet.h>
-
-#include "wLog.h"
-#include "wMisc.h"
 #include "wSocket.h"
 
 int wSocket::SetNonBlock(bool bNonblock)

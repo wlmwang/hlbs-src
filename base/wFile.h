@@ -7,11 +7,6 @@
 #ifndef _W_FILE_H_
 #define _W_FILE_H_
 
-#include <sys/param.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-
 #include "wType.h"
 #include "wLog.h"
 #include "wNoncopyable.h"
@@ -30,7 +25,7 @@ class wFile : private wNoncopyable
 			memset(&mInfo, 0, sizeof(struct stat));
 		}
 
-		//成功则返回0, 失败返回-1, 错误原因存于errno
+		//成功则返回0, 失败返回-1, 错误原因存于mErrno
 		int Open(const char *pFilename, int flags = O_RDWR| O_APPEND| O_EXCL, mode_t mode = 644)
 		{
 			mFileName = pFilename;
@@ -47,13 +42,23 @@ class wFile : private wNoncopyable
 		//成功则返回0, 失败返回-1, 错误原因存于errno
 		int Close(const char *pFilename, int flags = , mode_t mode = 777)
 		{
-			return close(mFD);
+			if(close(mFD) == -1)
+			{
+				mErrno = errno;
+				return -1;
+			}
+			return 0;
 		}
 
 		//成功则返回0, 失败返回-1, 错误原因存于errno
 		int Unlink()
 		{
-			return unlink(mFileName.c_str());
+			if(unlink(mFileName.c_str()) == -1)
+			{
+				mErrno = errno;
+				return -1;
+			}
+			return 0;
 		}
 
 		//新的偏移量（成功），-1（失败）
@@ -93,7 +98,7 @@ class wFile : private wNoncopyable
 		    ssize_t n, written;
 
 		    written = 0;
-		    for ( ;; ) 
+		    while (true) 
 		    {
 		        n = pwrite(mFD, pBuf + written, nbytes, offset);
 
@@ -152,7 +157,7 @@ class wFile : private wNoncopyable
 	private:
 	    int mFD;		//文件描述符
 	    string  mFileName;	//文件名称
-		int mErr;
+		int mErrno;
 
 	    struct stat mInfo;	//文件大小等资源信息
 	    off_t  mOffset;		//现在处理到文件何处了

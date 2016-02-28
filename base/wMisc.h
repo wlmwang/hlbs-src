@@ -12,10 +12,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "wCommand.h"
 #include "wType.h"
+#include "wCommand.h"
 
-inline const char* IP2Text(DWORD ip)
+inline const char* IP2Text(long ip)
 {
 	in_addr in;
 	in.s_addr = ip;
@@ -23,7 +23,7 @@ inline const char* IP2Text(DWORD ip)
 	return inet_ntoa(in);
 }
 
-inline DWORD Text2IP(const char* ipstr)
+inline long Text2IP(const char* ipstr)
 {
 	return inet_addr(ipstr);
 }

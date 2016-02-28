@@ -4,7 +4,6 @@
  * Copyright (C) Disvr, Inc.
  */
 
-
 /**
  * 每种回调Func_t（mFunc调用参数不同）需不同的wDispatch
  */
@@ -26,6 +25,7 @@ class wDispatch : private wNoncopyable
 		struct Func_t
 		{
 			IDX mActIdx;
+			
 			/**
 			 * T为function类型，例：function<void(void)>
 			 * mFunc用类似std::bind函数绑定，例：bind(&wTcpTask::Get, this, std::placeholders::_1)

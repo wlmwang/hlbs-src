@@ -12,7 +12,7 @@
 
 #include "wType.h"
 
-#define ASSERT_CMD(cmd, para) ((para)<<8 | (cmd))
+#define CMD_ID(cmd, para) ((para)<<8 | (cmd))
 
 #pragma pack(1)
 

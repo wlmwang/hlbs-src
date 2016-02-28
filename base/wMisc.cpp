@@ -4,15 +4,6 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include <iostream>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>		//atoi random srandom
-#include <string.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <sys/file.h>	//int flock(int fd,int operation);
 
 #include <signal.h>
@@ -29,14 +20,14 @@ int InitDaemon(const char *filename)
 	int lock_fd = open(filename, O_RDWR|O_CREAT, 0640);
 	if (lock_fd < 0) 
 	{
-		cout << "Open lock file failed when init daemon" <<endl;
+		LOG_ERROR(ELOG_KEY, "[startup] Open lock file failed when init daemon");
 		return -1;
 	}
 	//独占式锁定文件，防止有相同程序的进程已经启动
 	int ret = flock(lock_fd, LOCK_EX | LOCK_NB);
 	if (ret < 0) 
 	{
-		cout << "Lock file failed, server is already running" <<endl;
+		LOG_ERROR(ELOG_KEY, "[startup] Lock file failed, server is already running");
 		return -1;
 	}
 
@@ -67,7 +58,7 @@ int InitDaemon(const char *filename)
 
 	if (chdir(dir_path)) 
 	{
-		cout << "Can not change run dir to "<< dir_path << ", init daemon failed" << strerror(errno) <<endl;
+		LOG_ERROR(ELOG_KEY, "[startup] Can not change run dir to %s , init daemon failed: %s", dir_path, strerror(errno));
 		return -1;		
 	}
 	umask(0);

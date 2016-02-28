@@ -7,21 +7,18 @@
 #ifndef _W_NONCOPYABLE_h_
 #define _W_NONCOPYABLE_h_
 
+/**
+ *  禁止复制、赋值
+ */
 class wNoncopyable
 {
-
 	protected:
-
 		wNoncopyable() {};
-		
 		~wNoncopyable() {};
-
-	private:
-
-		wNoncopyable(const wNoncopyable&);
 		
+	private:
+		wNoncopyable(const wNoncopyable&);
 		const wNoncopyable & operator= (const wNoncopyable &);
-
 };
 
 #endif

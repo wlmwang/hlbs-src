@@ -20,7 +20,7 @@
 #define DEC_DISP(dispatch) wDispatch<function<int(char*, int)>, int> dispatch
 #define DEC_FUNC(func) int func(char *pBuffer, int iLen)
 
-#define CMD_REG_DISP(cmdid, paraid, func) mDispatch.Register("AgentCmdTask", ASSERT_CMD(cmdid, paraid), REG_FUNC(ASSERT_CMD(cmdid, paraid), func));
+#define CMD_REG_DISP(cmdid, paraid, func) mDispatch.Register("AgentCmdTask", CMD_ID(cmdid, paraid), REG_FUNC(CMD_ID(cmdid, paraid), func));
 
 class AgentCmdTask : public wTcpTask
 {

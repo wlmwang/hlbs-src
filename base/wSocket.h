@@ -10,7 +10,12 @@
 #ifndef _W_SOCKET_H_
 #define _W_SOCKET_H_
 
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
 #include "wType.h"
+#include "wLog.h"
+#include "wMisc.h"
 
 enum SOCKET_TYPE
 {

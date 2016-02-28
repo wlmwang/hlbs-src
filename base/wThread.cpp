@@ -45,7 +45,8 @@ wThread::~wThread()
 int wThread::StartThread(int join)
 {
 	pthread_attr_init(&mAttr);
-	pthread_attr_setscope(&mAttr, PTHREAD_SCOPE_SYSTEM);  //设置线程状态为与系统中所有线程一起竞争CPU时间
+	//设置线程状态为与系统中所有线程一起竞争CPU时间
+	pthread_attr_setscope(&mAttr, PTHREAD_SCOPE_SYSTEM);
 	if(join == 1)
 	{
 		pthread_attr_setdetachstate(&mAttr, PTHREAD_CREATE_JOINABLE);	//设置非分离的线程

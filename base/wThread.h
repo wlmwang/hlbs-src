@@ -7,10 +7,6 @@
 #ifndef _W_THREAD_H_
 #define _W_THREAD_H_
 
-/**
- *  实现了一个线程的父类
- */
-
 #include <pthread.h>
 #include "wMutex.h"
 #include "wCond.h"
@@ -67,7 +63,7 @@ class wThread : private wNoncopyable
 		pthread_t mTid;
 		pthread_attr_t mAttr;
 		int mRunStatus;
-		char mRetVal[64];
+		char mRetVal[255];
 		wMutex *mMutex;
 		wCond *mCond;
 };

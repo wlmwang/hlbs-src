@@ -33,13 +33,17 @@ class wChannel : private wNoncopyable
 		     int	mFD;	//发送方ch[0]描述符
 		};
 
-		wChannel() {}
+		wChannel() 
+		{
+			memset(mChannel, 0, sizeof(mChannel));
+		}
 
 		int Open()
 		{
 	        int iRt = socketpair(AF_UNIX, SOCK_STREAM, 0, mChannel);
 	        if (iRt == -1)
 	        {
+				LOG_ERROR(ELOG_KEY, "[runtime] socketpair failed");
 	        	return -1;
 	        }
 
@@ -57,12 +61,12 @@ class wChannel : private wNoncopyable
 
 	        if (fcntl(mChannel[0], F_SETFD, FD_CLOEXEC) == -1) 
 	        {
-	        	//fcntl(FD_CLOEXEC) failed
+				LOG_ERROR(ELOG_KEY, "[runtime] fcntl(FD_CLOEXEC) failed");
 	        }
 
 	        if (fcntl(mChannel[1], F_SETFD, FD_CLOEXEC) == -1) 
 	        {
-	        	//fcntl(FD_CLOEXEC) failed
+				LOG_ERROR(ELOG_KEY, "[runtime] fcntl(FD_CLOEXEC) failed");
 	        }
 	        return 0;
 		}
@@ -77,7 +81,7 @@ class wChannel : private wNoncopyable
 		    union 
 		    {
 		        struct cmsghdr  cm;
-		        char            space[CMSG_SPACE(sizeof(int))];
+		        char	space[CMSG_SPACE(sizeof(int))];
 		    } cmsg;
 
 		    if (pCh->mFD == -1) 
@@ -119,8 +123,8 @@ class wChannel : private wNoncopyable
 		        {
 		            return EAGAIN;
 		        }
-
-		        //sendmsg() failed
+				
+				LOG_ERROR(ELOG_KEY, "[runtime] sendmsg() failed");
 		        return -1;
 		    }
 
@@ -130,15 +134,15 @@ class wChannel : private wNoncopyable
 
 		int Recv(int iFD, channel_t *pCh, size_t size)
 		{
-		    ssize_t             n;
-		    ngx_err_t           err;
-		    struct iovec        iov[1];
-		    struct msghdr       msg;
+		    ssize_t	n;
+		    int	err;
+		    struct iovec	iov[1];
+		    struct msghdr	msg;
 
 		    union 
 		    {
 		        struct cmsghdr  cm;
-		        char            space[CMSG_SPACE(sizeof(int))];
+		        char	space[CMSG_SPACE(sizeof(int))];
 		    } cmsg;
 
 		    iov[0].iov_base = (char *) ch;
@@ -161,20 +165,20 @@ class wChannel : private wNoncopyable
 		        {
 		            return EAGAIN;
 		        }
-
-		        //"recvmsg() failed"
+				
+				LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() failed");
 		        return -1;
 		    }
 
 		    if (n == 0) 
 		    {
-		        //"recvmsg() returned zero"
+				LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() returned zero");
 		        return -1;
 		    }
 
 		    if ((size_t) n < sizeof(channel_t)) 
 		    {
-		    	//recvmsg() returned not enough data: 3
+				LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() returned not enough data: %d", n);
 		        return -1;
 		    }
 
@@ -183,24 +187,23 @@ class wChannel : private wNoncopyable
 
 		        if (cmsg.cm.cmsg_len < (socklen_t) CMSG_LEN(sizeof(int))) 
 		        {
-		        	//recvmsg() returned too small ancillary data
+					LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() returned too small ancillary data");
 		            return -1;
 		        }
 
 		        if (cmsg.cm.cmsg_level != SOL_SOCKET || cmsg.cm.cmsg_type != SCM_RIGHTS)
 		        {
-		        	//recvmsg() returned invalid ancillary data
+					LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() returned invalid ancillary data");
 		            return -1;
 		        }
 
-		        /* pCh->fd = *(int *) CMSG_DATA(&cmsg.cm); */
-
-		        memcpy(&pCh->fd, CMSG_DATA(&cmsg.cm), sizeof(int));
+		        /* pCh->mFD = *(int *) CMSG_DATA(&cmsg.cm); */
+		        memcpy(&pCh->mFD, CMSG_DATA(&cmsg.cm), sizeof(int));
 		    }
 
 		    if (msg.msg_flags & (MSG_TRUNC|MSG_CTRUNC)) 
 		    {
-		    	//recvmsg() truncated data
+				LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() truncated data");
 		    }
 
 		    return n;
@@ -210,12 +213,12 @@ class wChannel : private wNoncopyable
 		{
 		    if (close(mChannel[0]) == -1) 
 		    {
-		    	//errno "close() channel failed"
+				LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed");
 		    }
 
 		    if (close(mChannel[1]) == -1) 
 		    {
-		    	//"close() channel failed"
+				LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed");
 		    }
 		}
 

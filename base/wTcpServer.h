@@ -9,13 +9,12 @@
 
 #include <algorithm>
 #include <vector>
-
 #include <sys/epoll.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#include "wAssert.h"
 #include "wType.h"
+#include "wAssert.h"
 #include "wMisc.h"
 #include "wLog.h"
 #include "wSingleton.h"

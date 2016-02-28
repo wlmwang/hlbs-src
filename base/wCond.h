@@ -15,6 +15,10 @@
 class wCond : private wNoncopyable
 {
 	public:
+		/**
+		 *  PTHREAD_PROCESS_PRIVATE：单进程条件变量，默认设置
+		 *  PTHREAD_PROCESS_SHARED：进程间，共享条件变量（条件变量需进程间共享。如在共享内存中） 
+		 */
 		wCond(int pshared = PTHREAD_PROCESS_PRIVATE)
 		{
 			pthread_condattr_init(&mAttr);
@@ -34,7 +38,7 @@ class wCond : private wNoncopyable
 		}
 		
 		/**
-		 *  使用pthread_cond_signal不会有“惊群现象”产生，他最多只给一个线程发信号
+		 *  使用pthread_cond_signal不会有"惊群现象"产生，他最多只给一个线程发信号
 		 */
 		int Signal()
 		{

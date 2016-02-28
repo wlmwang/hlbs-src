@@ -7,8 +7,8 @@
 #ifndef _W_CONFIG_H_
 #define _W_CONFIG_H_
 
-#include "tinyxml.h"	//lib tinyxml
 #include "wType.h"
+#include "tinyxml.h"	//lib tinyxml
 #include "wLog.h"
 #include "wMisc.h"
 #include "wSingleton.h"

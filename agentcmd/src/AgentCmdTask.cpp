@@ -74,7 +74,7 @@ int AgentCmdTask::HandleRecvMessage(char * pBuffer, int nLen)
 
 int AgentCmdTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen)
 {
-	if (pCommand->GetId() == ASSERT_CMD(CMD_NULL, PARA_NULL))
+	if (pCommand->GetId() == CMD_ID(CMD_NULL, PARA_NULL))
 	{
 		//空消息(心跳返回)
 		mHeartbeatTimes = 0;

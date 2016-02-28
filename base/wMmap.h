@@ -14,7 +14,6 @@
 #include "wNoncopyable.h"
 
 //ÄÚ´æÓ³Éä
-//PAGE_SIZE
 class wMmap : private wNoncopyable
 {
 	public:

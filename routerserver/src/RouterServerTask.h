@@ -20,7 +20,7 @@
 #define DEC_DISP(dispatch) wDispatch<function<int(char*, int)>, int> dispatch
 #define DEC_FUNC(func) int func(char *pBuffer, int iLen)
 
-#define ROUTER_REG_DISP(cmdid, paraid, func) mDispatch.Register("RouterServerTask", ASSERT_CMD(cmdid, paraid), REG_FUNC(ASSERT_CMD(cmdid, paraid), func));
+#define ROUTER_REG_DISP(cmdid, paraid, func) mDispatch.Register("RouterServerTask", CMD_ID(cmdid, paraid), REG_FUNC(CMD_ID(cmdid, paraid), func));
 
 class RouterServerTask : public wTcpTask
 {

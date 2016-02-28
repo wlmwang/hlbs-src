@@ -23,7 +23,7 @@
 #	define LOG_DEBUG				LogDebug
 #else
 #	define LOG_DEBUG				LogDebug
-#endif // !_DEBUG_
+#endif
 
 #	define LOG_NOTICE				LogNotice
 #	define LOG_INFO					LogInfo
@@ -44,7 +44,7 @@
 #	define LOG_FATAL
 #	define LOG
 #	define RE_INIT_LOG				ReInitLog
-#endif // !USE_LOG4CPP
+#endif
 
 
 //日志等级
