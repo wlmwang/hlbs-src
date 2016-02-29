@@ -12,7 +12,7 @@
 
 #include "wType.h"
 #include "wAssert.h"
-
+#include "wShm.h"
 
 #define MSG_QUEUE_RESERVE_LEN 8
 

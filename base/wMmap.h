@@ -37,19 +37,19 @@ class wMmap : private wNoncopyable
 			}
 		}
 		
-		void * CreateShm()
+		void * CreateMap()
 		{
 			mStart = mmap(start, length, prot, flags, fd, offset);
 		}
 		
-		int RemoveShm()
+		int FreeMap()
 		{
 			return munmap(mStart, mSize);
 		}
 		
 		~wMmap()
 		{
-			RemoveShm();
+			FreeShm();
 		}
 	
 	private:
@@ -58,4 +58,6 @@ class wMmap : private wNoncopyable
 		size_t mSize;
 		
 		int mFD;
-}
+};
+
+#endif

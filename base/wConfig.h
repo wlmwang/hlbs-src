@@ -8,30 +8,15 @@
 #define _W_CONFIG_H_
 
 #include "wType.h"
-#include "tinyxml.h"	//lib tinyxml
 #include "wLog.h"
 #include "wMisc.h"
 #include "wSingleton.h"
+#include "tinyxml.h"	//lib tinyxml
 
 template <typename T>
 class wConfig : public wSingleton<T>
 {
 	public:
-		int mShowVer;	//版本信息
-		int mDaemon;	//是否启动为守护进程
-		char *mSignal;	//信号字符串
-		char *mHost;
-		int mPort;
-
-		int mArgc;
-		char **mOsArgv;		//原生参数
-		char *mOsArgvLast;	//原始argv和environ的总体大小
-
-		char **mOsEnv;	//原生环境变量
-		int mMoveEnv;	//是否移动了environ
-
-		string *mArgv;	//堆上参数
-
 		wConfig()
 		{
 			mShowVer = 0;
@@ -242,6 +227,21 @@ class wConfig : public wSingleton<T>
 		    }
 		}
 
+	public:
+		int mShowVer;	//版本信息
+		int mDaemon;	//是否启动为守护进程
+		char *mSignal;	//信号字符串
+		char *mHost;
+		int mPort;
+
+		int mArgc;
+		char **mOsArgv;		//原生参数
+		char *mOsArgvLast;	//原始argv和environ的总体大小
+
+		char **mOsEnv;	//原生环境变量
+		int mMoveEnv;	//是否移动了environ
+
+		string *mArgv;	//堆上参数
 };
 
 #endif

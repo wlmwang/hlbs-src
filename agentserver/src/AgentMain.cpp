@@ -39,14 +39,18 @@ void Sigusr2Handle(int nSigVal)
  */
 int main(int argc, const char *argv[])
 {
-	//初始化配置
 	AgentConfig *pConfig = AgentConfig::Instance();
 	if(pConfig == NULL) 
 	{
 		cout << "Get AgentConfig instance failed" << endl;
 		exit(1);
 	}
-	pConfig->GetOption(argc, argv);
+
+	if (pConfig->GetOption(argc, argv) < 0)
+	{
+		cout << "Get Option failed" << endl;
+		exit(1);
+	}
 	
 	if (pConfig->mDaemon)
 	{

@@ -9,30 +9,33 @@
 wShm::wShm(const char *filename, int pipeid, size_t size)
 {
 	Initialize();
+
 	mPipeId = pipeid;
-	int pagesize = getpagesize();
-	if(pagesize > 0)
+	mSize = size;
+	if(mPagesize > 0)
 	{
-		mSize = ALIGN(size, pagesize);
+		mSize = ALIGN(size, mPagesize);
 	}
-	else
-	{
-		mSize = size;
-	}
+	
+	//加上头部长度
+	mSize += sizeof(shmhead_t);
 	memcpy(mFilename, filename, strlen(filename) +1);
 }
 
 void wShm::Initialize()
 {
+	mPagesize = getpagesize();
 	memset(mFilename, 0, sizeof(mFilename));
 	mPipeId = 0;
 	mSize = 0;
-	mStart = mEnd = mPos = 0;
+	mShmId = 0;
+	mKey = 0;
+	mShmhead = NULL;
 }
 
 wShm::~wShm()
 {
-	RemoveShm();
+	FreeShm();
 }
 
 char *wShm::CreateShm()
@@ -113,15 +116,19 @@ char *wShm::CreateShm()
 
 	LOG_DEBUG(ELOG_KEY, "[runtime] alloc %lld bytes of share memory succeed", mSize);
 	
-	mStart = mPos = (char *)shmat(mShmId, NULL, 0);
-    if (mStart == (void *) -1) 
+	char *pAddr = (char *)shmat(mShmId, NULL, 0);
+    if (pAddr == (char *)-1) 
 	{
 		LOG_ERROR(ELOG_KEY, "[runtime] shmat failed: %s", strerror(errno));
 		return 0;
     }
-	
-	mEnd = mStart + mSize;
-	return mStart;
+
+    //shm头
+	mShmhead = (struct shmhead_t*) pAddr;
+	mShmhead->mStart = pAddr;
+	mShmhead->mEnd = pAddr + mSize;
+	mShmhead->mUsedOff = pAddr + sizeof(struct shmhead_t);
+	return mShmhead->mUsedOff;
 }
 
 char *wShm::AttachShm()
@@ -138,49 +145,55 @@ char *wShm::AttachShm()
 
 	// 尝试获取
 	int mShmId = shmget(mKey, mSize, 0666);
-	if( mShmId < 0 ) 
+	if(mShmId < 0) 
 	{
 		LOG_ERROR(ELOG_KEY, "attach to share memory failed: %s", strerror(errno));
 		return 0;
 	}
 	
-	mStart = mPos = (char *)shmat(mShmId, NULL, 0);
-    if (mStart == (void *) -1) 
+	char *pAddr = (char *)shmat(mShmId, NULL, 0);
+    if (pAddr == (char *) -1) 
 	{
 		LOG_ERROR(ELOG_KEY, "shmat() failed: %s", strerror(errno));
 		return 0;
     }
 	
-	mEnd = mStart + mSize;
-	return mStart;
+    //shm头
+	mShmhead = (struct shmhead_t*) pAddr;
+	mShmhead->mStart = pAddr;
+	mShmhead->mEnd = pAddr + mSize;
+	mShmhead->mUsedOff = pAddr + sizeof(struct shmhead_t);
+	return mShmhead->mUsedOff;
 }
 
-char *Alloc(size_t len)
+char *AllocShm(size_t iLen)
 {
-	if(mPos + len < mEnd)
+	if(mShmhead.mUsedOff + iLen < mShmhead.mEnd)
 	{
-		char *pAddr = mPos;
-		mPos += len;
+		char *pAddr = mShmhead.mUsedOff;
+		mShmhead.mUsedOff += iLen;
 		return pAddr;
 	}
-	LOG_ERROR(ELOG_KEY, "shmat() failed: %s", strerror(errno));
+
+	LOG_ERROR(ELOG_KEY, "alloc shm failed: shm space not enough");
 	return 0;
 }
 
-void wShm::RemoveShm()
+void wShm::FreeShm()
 {
-	if(mStart == 0)
+	if(mShmhead == 0 || mShmhead.mStart == 0)
 	{
 		return;
 	}
-	
-	//IPC都是内核级数据结构
-    if (shmdt(mStart) == -1)		//对共享操作结束，分离该shmid_ds与该进程关联计数器
+
+	//对共享操作结束，分离该shmid_ds与该进程关联计数器
+    if (shmdt(mShmhead.mStart) == -1)
 	{
-		LOG_ERROR(ELOG_KEY, "shmdt(%d) failed", mStart);
+		LOG_ERROR(ELOG_KEY, "shmdt(%d) failed", mShmhead.mStart);
     }
 	
-    if (shmctl(mShmId, IPC_RMID, NULL) == -1)	//删除该shmid_ds共享存储段
+	//删除该shmid_ds共享存储段
+    if (shmctl(mShmId, IPC_RMID, NULL) == -1)
 	{
 		LOG_ERROR(ELOG_KEY, "remove share memory failed: %s", strerror(errno));
     }

@@ -86,10 +86,10 @@ class AgentCmd: public wSingleton<AgentCmd>, public wMTcpClient<AgentCmdTask>
 		bool mWaitResStatus;
 		ReadlineThread *mReadlineThread;
 
-		wShm *mInShareMem;	//输入的消息队列的缓冲区位置
-		wShm *mOutShareMem; //输出的消息队列的缓冲区位置
-		wMsgQueue* mInMsgQueue;	// 输入的消息队列
-		wMsgQueue* mOutMsgQueue;// 输出的消息队列
+		wShm *mInShm;	//输入的消息队列的缓冲区位置
+		wShm *mOutShm; //输出的消息队列的缓冲区位置
+		wMsgQueue* mInMsgQ;	// 输入的消息队列
+		wMsgQueue* mOutMsgQ;// 输出的消息队列
 };
 
 #endif

@@ -18,4 +18,6 @@
 class wWorker : public wNoncopyable
 {
 	//
-}
+};
+
+#endif

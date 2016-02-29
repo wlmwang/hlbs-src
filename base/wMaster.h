@@ -62,3 +62,5 @@ class wMaster : public wSingleton<T>
 		wFile mPidFile;
 		map<int, wWorker* > mWorkerPool;
 };
+
+#endif

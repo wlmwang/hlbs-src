@@ -22,19 +22,19 @@
 
 AgentCmd::AgentCmd()
 {
-	mInShareMem = 0;
-	mOutShareMem = 0;
-	mInMsgQueue = 0;
-	mOutMsgQueue = 0;
+	mInShm = 0;
+	mOutShm = 0;
+	mInMsgQ = 0;
+	mOutMsgQ = 0;
 	Initialize();
 }
 
 AgentCmd::~AgentCmd() 
 {
-	SAFE_DELETE(mInShareMem);
-	SAFE_DELETE(mOutShareMem);
-	SAFE_DELETE(mInMsgQueue);
-	SAFE_DELETE(mOutMsgQueue);
+	SAFE_DELETE(mInShm);
+	SAFE_DELETE(mOutShm);
+	SAFE_DELETE(mInMsgQ);
+	SAFE_DELETE(mOutMsgQ);
 }
 
 void AgentCmd::Initialize()
@@ -51,22 +51,22 @@ void AgentCmd::Initialize()
 
 void AgentCmd::InitShareMemory()
 {
-	mInShareMem = new wShm(IPC_SHM, 'o', MSG_QUEUE_LEN);
-	mOutShareMem = new wShm(IPC_SHM, 'i', MSG_QUEUE_LEN);
-	char * pBuff = NULL;
-	if((pBuff = mInShareMem->AttachShareMemory()) != NULL)
+	mInShm = new wShm(IPC_SHM, 'o', MSG_QUEUE_LEN);
+	mOutShm = new wShm(IPC_SHM, 'i', MSG_QUEUE_LEN);
+	char *pAddr = NULL;
+	if((mInShm->AttachShm() != NULL) && ((pAddr = mInShm.AllocShm(MSG_QUEUE_LEN)) != NULL))
 	{
-		mInMsgQueue = new wMsgQueue();
-		mInMsgQueue->SetBuffer(pBuff, MSG_QUEUE_LEN);
+		mInMsgQ = new wMsgQueue();
+		mInMsgQ->SetBuffer(pAddr, MSG_QUEUE_LEN);
 	}
 	else
 	{
 		LOG_ERROR("error","[startup] Attach (In) Share Memory failed");
 	}
-	if((pBuff = mOutShareMem->AttachShareMemory()) != NULL)
+	if((mOutShm->AttachShm() != NULL) && ((pAddr = mOutShm.AllocShm(MSG_QUEUE_LEN)) != NULL))
 	{
-		mOutMsgQueue = new wMsgQueue();
-		mOutMsgQueue->SetBuffer(pBuff, MSG_QUEUE_LEN);
+		mOutMsgQ = new wMsgQueue();
+		mOutMsgQ->SetBuffer(pAddr, MSG_QUEUE_LEN);
 	}
 	else
 	{

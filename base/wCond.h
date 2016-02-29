@@ -38,6 +38,7 @@ class wCond : private wNoncopyable
 		}
 		
 		/**
+		 *  唤醒等待中的线程
 		 *  使用pthread_cond_signal不会有"惊群现象"产生，他最多只给一个线程发信号
 		 */
 		int Signal()
@@ -54,6 +55,12 @@ class wCond : private wNoncopyable
 			return pthread_cond_wait(&mCond, &stMutex.mMutex);
 		}
 		
+		/**
+		 * 带超时的等待条件
+		 * @param  stMutex 需要等待的互斥体
+		 * @param  tsptr   超时时间
+		 * @return         
+		 */
 		int TimeWait(wMutex &stMutex, struct timespec *tsptr)
 		{
 			return pthread_cond_timewait(&mCond, &stMutex.mMutex, tsptr);

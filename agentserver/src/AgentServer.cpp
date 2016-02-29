@@ -21,10 +21,10 @@ AgentServer::AgentServer():wTcpServer<AgentServer>("路由服务器")
 	{
 		mConfig = 0;
 		mRouterConn = 0;
-		mInShareMem = 0;
-		mOutShareMem = 0;
-		mInMsgQueue = 0;
-		mOutMsgQueue = 0;
+		mInShm = 0;
+		mOutShm = 0;
+		mInMsgQ = 0;
+		mOutMsgQ = 0;
 		Initialize();
 	}
 }
@@ -32,10 +32,10 @@ AgentServer::AgentServer():wTcpServer<AgentServer>("路由服务器")
 AgentServer::~AgentServer() 
 {
 	SAFE_DELETE(mRouterConn);
-	SAFE_DELETE(mInShareMem);
-	SAFE_DELETE(mOutShareMem);
-	SAFE_DELETE(mInMsgQueue);
-	SAFE_DELETE(mOutMsgQueue);
+	SAFE_DELETE(mInShm);
+	SAFE_DELETE(mOutShm);
+	SAFE_DELETE(mInMsgQ);
+	SAFE_DELETE(mOutMsgQ);
 }
 
 /**
@@ -53,22 +53,22 @@ void AgentServer::Initialize()
 
 void AgentServer::InitShareMemory()
 {
-	mInShareMem = new wShm(IPC_SHM, 'i', MSG_QUEUE_LEN);
-	mOutShareMem = new wShm(IPC_SHM, 'o', MSG_QUEUE_LEN);
-	char * pBuff = NULL;
-	if((pBuff = mInShareMem->CreateShm()) != NULL)
+	mInShm = new wShm(IPC_SHM, 'i', MSG_QUEUE_LEN);
+	mOutShm = new wShm(IPC_SHM, 'o', MSG_QUEUE_LEN);
+	char *pAddr = NULL;
+	if((mInShm->CreateShm() != NULL) && ((pAddr = mInShm.AllocShm(MSG_QUEUE_LEN)) != NULL))
 	{
-		mInMsgQueue = new wMsgQueue();
-		mInMsgQueue->SetBuffer(pBuff, MSG_QUEUE_LEN);
+		mInMsgQ = new wMsgQueue();
+		mInMsgQ->SetBuffer(pAddr, MSG_QUEUE_LEN);
 	}
 	else
 	{
 		LOG_ERROR("error","[startup] Create (In) Share Memory failed");
 	}
-	if((pBuff = mOutShareMem->CreateShm()) != NULL)
+	if((mOutShm->CreateShm() != NULL) && ((pAddr = mOutShm.AllocShm(MSG_QUEUE_LEN)) != NULL))
 	{
-		mOutMsgQueue = new wMsgQueue();
-		mOutMsgQueue->SetBuffer(pBuff, MSG_QUEUE_LEN);
+		mOutMsgQ = new wMsgQueue();
+		mOutMsgQ->SetBuffer(pAddr, MSG_QUEUE_LEN);
 	}
 	else
 	{
@@ -162,7 +162,7 @@ void AgentServer::CheckQueue()
 	int iRet;
 	while(1)
 	{
-		iRet = mInMsgQueue->Pop(szBuff, iLen);	//取出数据
+		iRet = mInMsgQ->Pop(szBuff, iLen);	//取出数据
 		
 		//没有消息了
 		if(iRet == 0) 

@@ -19,12 +19,17 @@ class wFile : private wNoncopyable
 	public:
 		wFile()
 		{
+			Initialize();
+		}
+
+		void Initialize()
+		{
 			mFileName = "";
 			mFD = 0;
 			mOffset = 0;
 			memset(&mInfo, 0, sizeof(struct stat));
 		}
-
+		
 		//成功则返回0, 失败返回-1, 错误原因存于mErrno
 		int Open(const char *pFilename, int flags = O_RDWR| O_APPEND| O_EXCL, mode_t mode = 644)
 		{
@@ -161,4 +166,6 @@ class wFile : private wNoncopyable
 
 	    struct stat mInfo;	//文件大小等资源信息
 	    off_t  mOffset;		//现在处理到文件何处了
-}
+};
+
+#endif

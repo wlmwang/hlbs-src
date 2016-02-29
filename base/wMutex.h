@@ -30,7 +30,11 @@ class wMutex : private wNoncopyable
 			pthread_mutexattr_init(&mAttr);
 			pthread_mutexattr_settype(&mAttr, kind);
 			pthread_mutexattr_setpshared(&mAttr, pshared);
-			pthread_mutex_init(&mMutex, &mAttr);
+			if (pthread_mutex_init(&mMutex, &mAttr) < 0)
+			{
+				LOG_ERROR(ELOG_KEY, "pthread_mutex_init failed: %s", strerror(errno));
+				exit(-1);
+			}
 		}
 		
 		~wMutex()
@@ -43,7 +47,6 @@ class wMutex : private wNoncopyable
 		 *  阻塞获取锁
 		 *  0		成功
 		 *  EINVAL	锁不合法，mMutex 未被初始化
-		 *  EAGAIN	Mutex的lock count(锁数量)已经超过 递归索的最大值，无法再获得该mutex锁
 		 *  EDEADLK	重复加锁错误
 		 * 	...
 		 */

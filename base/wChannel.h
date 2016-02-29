@@ -38,6 +38,10 @@ class wChannel : private wNoncopyable
 			memset(mChannel, 0, sizeof(mChannel));
 		}
 
+		/**
+		 * 创建非阻塞channel
+		 * @return 0成功 -1发生错误
+		 */
 		int Open()
 		{
 	        int iRt = socketpair(AF_UNIX, SOCK_STREAM, 0, mChannel);
@@ -49,12 +53,14 @@ class wChannel : private wNoncopyable
 
 	        if (fcntl(mChannel[0], F_SETFL, fcntl(mChannel[0], F_GETFL) | O_NONBLOCK) == -1)
 	        {
+	        	LOG_ERROR(ELOG_KEY, "[runtime] fcntl(O_NONBLOCK) failed");
 	        	Close();
 	        	return -1;
 	        }
 
 	        if (fcntl(mChannel[1], F_SETFL, fcntl(mChannel[1], F_GETFL) | O_NONBLOCK) == -1)
 	        {
+	        	LOG_ERROR(ELOG_KEY, "[runtime] fcntl(O_NONBLOCK) failed");
 	        	Close();
 	        	return -1;
 	        }
@@ -63,14 +69,21 @@ class wChannel : private wNoncopyable
 	        {
 				LOG_ERROR(ELOG_KEY, "[runtime] fcntl(FD_CLOEXEC) failed");
 	        }
-
 	        if (fcntl(mChannel[1], F_SETFD, FD_CLOEXEC) == -1) 
 	        {
 				LOG_ERROR(ELOG_KEY, "[runtime] fcntl(FD_CLOEXEC) failed");
 	        }
+
 	        return 0;
 		}
 
+		/**
+		 * 发送channel_t消息
+		 * @param  iFD  channel FD
+		 * @param  pCh  channel_t消息
+		 * @param  size channel_t长度
+		 * @return 0成功，-1失败     
+		 */
 		int Send(int iFD, channel_t *pCh, size_t size)
 		{
 		    ssize_t	n;
@@ -105,7 +118,6 @@ class wChannel : private wNoncopyable
 		    }
 		    msg.msg_flags = 0;
 
-		    //
 		    iov[0].iov_base = (char *) pCh;
 		    iov[0].iov_len = size;
 
@@ -129,9 +141,15 @@ class wChannel : private wNoncopyable
 		    }
 
 		    return 0;
-
 		}
 
+		/**
+		 * 接受channel数据
+		 * @param  iFD  channel FD
+		 * @param  pCh  接受缓冲
+		 * @param  size 缓冲长度
+		 * @return      <0 失败 >0实际接受长度
+		 */
 		int Recv(int iFD, channel_t *pCh, size_t size)
 		{
 		    ssize_t	n;
@@ -197,7 +215,7 @@ class wChannel : private wNoncopyable
 		            return -1;
 		        }
 
-		        /* pCh->mFD = *(int *) CMSG_DATA(&cmsg.cm); */
+		        /*pCh->mFD = *(int *) CMSG_DATA(&cmsg.cm); */
 		        memcpy(&pCh->mFD, CMSG_DATA(&cmsg.cm), sizeof(int));
 		    }
 
@@ -209,13 +227,15 @@ class wChannel : private wNoncopyable
 		    return n;
 		}
 
+		/**
+		 * 关闭channel[0] channel[1] 描述符
+		 */
 		void Close()
 		{
 		    if (close(mChannel[0]) == -1) 
 		    {
 				LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed");
 		    }
-
 		    if (close(mChannel[1]) == -1) 
 		    {
 				LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed");
@@ -224,4 +244,6 @@ class wChannel : private wNoncopyable
 
 	private:
 		int	mChannel[2];
-}
+};
+
+#endif
