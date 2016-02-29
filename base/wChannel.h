@@ -242,6 +242,15 @@ class wChannel : private wNoncopyable
 		    }
 		}
 
+		int Channel(int i = 0)
+		{
+			if (i > 1)
+			{
+				return -1;
+			}
+			return mChannel[i];
+		}
+		
 	private:
 		int	mChannel[2];
 };
