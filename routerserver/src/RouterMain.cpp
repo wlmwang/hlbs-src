@@ -5,19 +5,11 @@
  */
 
 #include "wType.h"
-#include "wMisc.h"
 #include "wLog.h"
-#include "wSignal.h"
 #include "BaseCommand.h"
-#include "RouterMaster.h"
 #include "RouterConfig.h"
+#include "RouterMaster.h"
 
-/**
- * 入口函数
- * @param  argc [参数个数]
- * @param  argv [参数字符]
- * @return      [int]
- */
 int main(int argc, const char *argv[])
 {
 	//config
@@ -32,8 +24,8 @@ int main(int argc, const char *argv[])
 		cout << "Get Option failed" << endl;
 		exit(1);
 	}
-	pConfig->ParseBaseConfig();
-	pConfig->ParseSvrConfig();
+	pConfig->GetBaseConf();
+	pConfig->GetSvrConf();
 
 	//daemon
 	if (pConfig->mDaemon == 1)

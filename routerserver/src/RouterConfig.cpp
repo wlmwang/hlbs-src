@@ -12,10 +12,18 @@
 #include "tinyxml.h"	//lib tinyxml
 #include "RouterConfig.h"
 
-/**
- * 解析配置
- */
-void RouterConfig::ParseBaseConfig()
+void RouterConfig::Initialize()
+{
+	memset(mIPAddr, 0, sizeof(mIPAddr));
+	mPort = 0;
+	mBacklog = 1024;
+	mWorkers = 1;
+	mDoc = new TiXmlDocument();
+	memcpy(mBaseConfFile, "../config/conf.xml", sizeof("../config/conf.xml"));
+	memcpy(mSvrConfFile, "../config/svr.xml", sizeof("../config/svr.xml"));
+}
+
+void RouterConfig::GetBaseConf()
 {
 	bool bLoadOK = mDoc->LoadFile(mBaseConfFile);
 	if (!bLoadOK)
@@ -87,7 +95,7 @@ void RouterConfig::ParseBaseConfig()
 	}
 }
 
-void RouterConfig::ParseSvrConfig()
+void RouterConfig::GetSvrConf()
 {
 	bool bLoadOK = mDoc->LoadFile(mSvrConfFile);
 	if (!bLoadOK)

@@ -26,7 +26,12 @@ class RouterConfig: public wConfig<RouterConfig>
 		unsigned int mBacklog;
 		unsigned int mWorkers;
 
-		void Final();
+	public:
+		RouterConfig()
+		{
+            Initialize();
+		}
+
 		virtual ~RouterConfig() 
 		{
 			Final();
@@ -34,37 +39,26 @@ class RouterConfig: public wConfig<RouterConfig>
 		}
 
 		//初始化
-		void Initialize()
-		{
-			memset(mIPAddr, 0, sizeof(mIPAddr));
-			mPort = 0;
-			mBacklog = 1024;
-			mWorkers = 1;
-			mDoc = new TiXmlDocument();
-			memcpy(mBaseConfFile, "../config/conf.xml", sizeof("../config/conf.xml"));
-			memcpy(mSvrConfFile, "../config/svr.xml", sizeof("../config/svr.xml"));
-		}
-
-		RouterConfig()
-		{
-            Initialize();
-		}
-
+		void Initialize();
+		
+		void Final();
+		
 		/**
 		 * 解析配置
 		 */
-		void ParseBaseConfig();
+		void GetBaseConf();
 		
 		/**
 		 *  解析Svr配置
 		 */
-		void ParseSvrConfig();
+		void GetSvrConf();
 		
 		bool IsModTime();
 		int SetModTime();
 		int GetModSvr(SvrNet_t* pBuffer);
 		int GetSvrAll(SvrNet_t* pBuffer);
 		int ReloadSvr(SvrNet_t* pBuffer);
+		
 	protected:
 		bool IsChangeSvr(const SvrNet_t* pR1, const SvrNet_t* pR2);
 		void FixContainer();
