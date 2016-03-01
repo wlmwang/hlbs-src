@@ -44,11 +44,9 @@ int main(int argc, const char *argv[])
 		exit(1);
 	}
 
-	if (pConfig->GetOption(argc, argv) < 0)
-	{
-		cout << "Get Option failed" << endl;
-		exit(1);
-	}
+	pConfig->ParseBaseConfig();
+	pConfig->ParseSvrConfig();
+	pConfig->GetOption(argc, argv);
 	
 	if (pConfig->mDaemon)
 	{
@@ -59,19 +57,11 @@ int main(int argc, const char *argv[])
 		}
 	}
 
-	pConfig->ParseBaseConfig();
-	pConfig->ParseRouterConfig();
-	
-	wMaster *pMaster = wMaster<wMaster>::Instance();
-	pMaster.CreatePidFile();
-	
-	pMaster->MasterStart();
-
 	//获取服务器实体
     AgentServer *pServer = AgentServer::Instance();
 	if(pServer == NULL) 
 	{
-		LOG_ERROR("error", "[startup] Get AgentServer instance failed");
+		LOG_ERROR(ELOG_KEY, "[startup] Get AgentServer instance failed");
 		exit(1);
 	}
 
@@ -86,7 +76,7 @@ int main(int argc, const char *argv[])
 	stSigUsr2.AddSignal(Sigusr2Func);
 	
 	//服务器开始运行
-	LOG_INFO("default", "[startup] AgentServer start succeed");
+	LOG_INFO(ELOG_KEY, "[startup] AgentServer start succeed");
 	pServer->Start();
 
 	LOG_SHUTDOWN_ALL;
