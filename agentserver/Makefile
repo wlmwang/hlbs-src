@@ -28,7 +28,8 @@ OBJECTS=./debug/AgentMain.o \
 		./debug/AgentConfig.o  \
 		./debug/AgentServer.o  \
 		./debug/AgentServerTask.o  \
-		./debug/wLog.o ./debug/wMisc.o  \
+		./debug/wLog.o \
+		./debug/wMisc.o  \
 		./debug/wTcpTask.o  \
 		./debug/wSocket.o \
 		./debug/wShm.o

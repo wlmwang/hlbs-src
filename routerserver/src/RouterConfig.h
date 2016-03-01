@@ -7,12 +7,8 @@
 #ifndef _ROUTER_CONFIG_H_
 #define _ROUTER_CONFIG_H_
 
-#include <unistd.h>
-#include <string.h>
-#include <string>
 #include <map>
 #include <vector>
-#include <sys/stat.h>
 
 #include "wType.h"
 #include "wConfig.h"

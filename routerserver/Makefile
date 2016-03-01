@@ -23,8 +23,23 @@ LIBS=-L./$(LIBPATH)/log4cpp/lib -llog4cpp -L./$(LIBPATH)/tinyxml -ltinyxml -lpth
 INCPATH=-I./$(BASEPATH) -I./$(LIBPATH)/log4cpp/include -I./$(LIBPATH)/tinyxml -I./$(COMMANDPATH)
 
 DIRS=./log ./bin ./debug
+
 TARGET=./bin/routersvrd
-OBJECTS=./debug/RouterMain.o ./debug/RouterConfig.o  ./debug/RouterServer.o  ./debug/RouterServerTask.o  ./debug/wLog.o ./debug/wMisc.o  ./debug/wTcpTask.o  ./debug/wSocket.o
+
+OBJECTS=./debug/RouterMain.o \
+		./debug/RouterMaster.o \
+		./debug/RouterWorker.o \
+		./debug/RouterConfig.o  \
+		./debug/RouterServer.o  \
+		./debug/RouterServerTask.o  \
+		./debug/wWorker.o \
+		./debug/wChannel.o \
+		./debug/wFile.o \
+		./debug/wMsgQueue.o \
+		./debug/wLog.o \
+		./debug/wMisc.o  \
+		./debug/wTcpTask.o  \
+		./debug/wSocket.o
 
 $(TARGET): $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $(TARGET) $(LIBS)
@@ -35,6 +50,12 @@ all: $(TARGET)
 ./debug/RouterMain.o: src/RouterMain.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
+./debug/RouterMaster.o: src/RouterMaster.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/RouterWorker.o: src/RouterWorker.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
 ./debug/RouterConfig.o: src/RouterConfig.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
@@ -42,6 +63,18 @@ all: $(TARGET)
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/RouterServerTask.o: src/RouterServerTask.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wWorker.o: $(BASEPATH)/wWorker.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wChannel.o: $(BASEPATH)/wChannel.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wFile.o: $(BASEPATH)/wFile.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wMsgQueue.o: $(BASEPATH)/wMsgQueue.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wLog.o: $(BASEPATH)/wLog.cpp

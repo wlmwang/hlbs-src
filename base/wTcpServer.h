@@ -110,6 +110,7 @@ class wTcpServer: public wSingleton<T>
 		
 		void CheckTimer();
 		virtual void CheckTimeout();
+		
 	protected:
         wTcpServer(string ServerName, int vInitFlag = true);
 		wTcpServer(const wTcpServer&);

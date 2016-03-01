@@ -4,54 +4,51 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#ifndef _W_MASTER_H_
-#define _W_MASTER_H_
+#ifndef _W_WORKER_H_
+#define _W_WORKER_H_
 
 #include <map>
 #include <vector>
 
 #include "wType.h"
 #include "wLog.h"
+#include "wChannel.h"
 #include "wNoncopyable.h"
-#include "wMaster.h"
 
 class wWorker : public wNoncopyable
 {
-	friend class wMaster;
+	//friend class wMaster;
 	public:
 		wWorker() 
 		{
 			Initialize();
 		}
+		
+		virtual void PrepareRun() {}
+		virtual void Run() {}
 
-		~wWorker() {}
-		void Initialize() 
-		{
-			mPid = -1;
-			mSlot = -1;
-			mExited = -1;
-			mData = NULL;
-			mRespawn = 0;
-		}
-
-		int InitWorker()
-		{
-			//
-		}
+		virtual ~wWorker() {}
+		void Initialize();
 
 		int InitChannel()
 		{
-			mCh.Open();
+			return mCh.Open();
 		}
+		
+		virtual int InitWorker(int type, void *data);
 
-		int PrepareStart() {}
+		int PrepareStart() 
+		{
+			PrepareRun();
+		}
 
 		int Start() 
 		{
-			//
+			Run();
 		}
 
-	private:
+	//private:
+	public:
 		wChannel mCh;	//worker进程channel
 		int mSlot;
 		pid_t mPid;

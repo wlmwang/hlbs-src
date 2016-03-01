@@ -28,7 +28,7 @@ class wSignal : private wNoncopyable
 		wSignal(__sighandler_t  func)
 		{
 			sigemptyset(&mSigAct.sa_mask);
-			mSigAct.sa_sigaction = func;
+			mSigAct.sa_handler = func;
 			mSigAct.sa_flags = 0;
 		}
 
