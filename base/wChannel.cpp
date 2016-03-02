@@ -11,6 +11,8 @@ wChannel::wChannel()
 	memset(mChannel, 0, sizeof(mChannel));
 }
 
+wChannel::~wChannel() {}
+
 int wChannel::Open()
 {
     int iRt = socketpair(AF_UNIX, SOCK_STREAM, 0, mChannel);

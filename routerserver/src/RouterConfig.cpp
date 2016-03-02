@@ -236,7 +236,7 @@ int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 int RouterConfig::ReloadSvr(SvrNet_t* pBuffer)
 {
 	Final();
-	ParseSvrConfig();
+	GetSvrConf();
 	return GetSvrAll(pBuffer);
 }
 

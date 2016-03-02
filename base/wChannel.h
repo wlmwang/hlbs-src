@@ -33,7 +33,7 @@ class wChannel : private wNoncopyable
 		};
 
 		wChannel();
-		virtual ~wChannel();
+		~wChannel();
 
 		/**
 		 * 创建非阻塞channel

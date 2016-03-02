@@ -68,7 +68,7 @@ class wSigSet : private wNoncopyable
 		//阻塞等待信号集事件发生
 		int Suspend()
 		{
-			return sigsuspend(&mSet)
+			return sigsuspend(&mSet);
 		}
 
 		virtual ~wSigSet() {}

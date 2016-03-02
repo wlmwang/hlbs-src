@@ -43,7 +43,7 @@ class wMaster : public wSingleton<T>
 		virtual ~wMaster();
 		void Initialize();
 		
-		int PrepareStart();
+		void PrepareStart();
 		void MasterStart();		//master-worker启动
 		void SingleStart();		//单进程启动
 		
@@ -95,13 +95,25 @@ wWorker* wMaster<T>::NewWorker(int iSlot)
 }
 
 template <typename T>
+void wMaster<T>::PrepareRun()
+{
+	//
+}
+
+template <typename T>
+void wMaster<T>::Run()
+{
+	//
+}
+
+template <typename T>
 void wMaster<T>::PrepareStart()
 {
 	PrepareRun();
 	if (mWorkerNum > MAX_PROCESSES)
 	{
 		LOG_ERROR(ELOG_KEY, "[runtime] no more than %d processes can be spawned:", mWorkerNum);
-		return -1;
+		return;
 	}
 
 	//初始化workerpool

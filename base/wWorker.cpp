@@ -18,7 +18,6 @@ void wWorker::Initialize()
 	mPid = -1;
 	mSlot = -1;
 	mExited = -1;
-	mData = NULL;
 	mRespawn = 0;
 }
 
@@ -42,7 +41,7 @@ void wWorker::Run()
 	mCh.Close();
 }
 
-int wWorker::PrepareStart(int type, void *data) 
+void wWorker::PrepareStart(int type, void *data) 
 {
 	PrepareRun();
 
@@ -54,7 +53,7 @@ int wWorker::PrepareStart(int type, void *data)
 	//setproctitle("worker process"); //设置进程名称
 }
 
-int wWorker::Start() 
+void wWorker::Start() 
 {
 	while(true)
 	{
