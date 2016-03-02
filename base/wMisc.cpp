@@ -88,6 +88,31 @@ u_char *Cpystrn(u_char *dst, u_char *src, size_t n)
     return dst;
 }
 
+int Gcd(int a, int b)
+{
+	if (a < b)
+	{
+		int tmp = a;
+		a = b;
+		b = tmp;
+	}
+
+	if (b == 0)
+	{
+		return a;
+	}
+	else
+	{
+		return Gcd(b, a % b);
+	}
+}
+
+int Ngcd(int *arr, int n)
+{
+	if (n == 1)  return *arr;
+	return Gcd(arr[n-1], Ngcd(arr, n-1));
+}
+
 int InitDaemon(const char *filename)
 {
 	//打开需要锁定的文件
@@ -142,29 +167,4 @@ int InitDaemon(const char *filename)
 	//TODO.
 	unlink(filename);
 	return 0;
-}
-
-int Gcd(int a, int b)
-{
-	if (a < b)
-	{
-		int tmp = a;
-		a = b;
-		b = tmp;
-	}
-
-	if (b == 0)
-	{
-		return a;
-	}
-	else
-	{
-		return Gcd(b, a % b);
-	}
-}
-
-int Ngcd(int *arr, int n)
-{
-	if (n == 1)  return *arr;
-	return Gcd(arr[n-1], Ngcd(arr, n-1));
 }

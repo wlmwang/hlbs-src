@@ -74,12 +74,12 @@ u_char *Cpystrn(u_char *dst, u_char *src, size_t n);
 //分隔字符串
 vector<string> Split(string sStr, string sPattern, bool bRepeat = true);
 
-//变为守护进程
-int InitDaemon(const char *filename);
-
 //两个数最大公约数
 int Gcd(int a, int b);
 //n个数最大公约数
 int Ngcd(int *arr, int n);
+
+//变为守护进程
+int InitDaemon(const char *filename);
 
 #endif

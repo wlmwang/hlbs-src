@@ -22,11 +22,11 @@
 class RouterWorker: public wWorker
 {
 	public:
-		RouterWorker() {}
-		~RouterWorker() {}
-		void Initialize() {}
+		RouterWorker();
+		~RouterWorker();
+		void Initialize();
 
-		virtual void PrepareRun() {}
+		virtual void PrepareRun();
 		virtual void Run();
 };
 

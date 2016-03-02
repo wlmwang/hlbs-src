@@ -20,8 +20,6 @@
 #include "wSigSet.h"
 #include "wSignal.h"
 
-//#include "wConfig.h"
-
 #define PROCESS_SINGLE     0 	//单独进程
 #define PROCESS_MASTER     1 	//主进程
 #define PROCESS_SIGNALLER  2 	//信号进程
@@ -188,7 +186,6 @@ void wMaster<T>::WorkerStart(int n, int type)
         //ch.fd = mWorkerPool[mSlot].mCh[0];
         //pass_open_channel(cycle, &ch);	//发送此ch[0]到所有一创建的worker进程。
 	}
-
 }
 
 template <typename T>

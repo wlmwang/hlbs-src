@@ -6,6 +6,28 @@
 
 #include "RouterWorker.h"
 
+RouterWorker::RouterWorker()
+{
+	//
+}
+
+RouterWorker:~RouterWorker()
+{
+	//
+}
+
+void RouterWorker::Initialize()
+{
+	//
+}
+
+void RouterWorker::PrepareRun()
+{
+	RouterConfig *pConfig = RouterConfig::Instance();
+
+	pConfig->mProcTitle->Setproctitle("worker process", "HLFS: ");
+}
+
 void RouterWorker::Run()
 {
 	RouterConfig *pConfig = RouterConfig::Instance();

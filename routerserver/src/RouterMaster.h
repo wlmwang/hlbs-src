@@ -14,6 +14,8 @@
 #include "wMaster.h"
 #include "RouterWorker.h"
 
+static char *master_process = "master process ";
+
 class RouterMaster : public wMaster<RouterMaster>
 {
 	public:
@@ -25,6 +27,9 @@ class RouterMaster : public wMaster<RouterMaster>
 		virtual void Run();
 		
 		virtual wWorker* NewWorker(int iSlot = 0);
+	
+	protected:
+		char *mTitle;
 };
 
 #endif

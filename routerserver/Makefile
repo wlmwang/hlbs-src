@@ -33,6 +33,7 @@ OBJECTS=./debug/RouterMain.o \
 		./debug/RouterServer.o  \
 		./debug/RouterServerTask.o  \
 		./debug/wWorker.o \
+		./debug/wProcTitle.o \
 		./debug/wChannel.o \
 		./debug/wFile.o \
 		./debug/wMsgQueue.o \
@@ -66,6 +67,9 @@ all: $(TARGET)
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wWorker.o: $(BASEPATH)/wWorker.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wProcTitle.o: $(BASEPATH)/wProcTitle.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wChannel.o: $(BASEPATH)/wChannel.cpp
