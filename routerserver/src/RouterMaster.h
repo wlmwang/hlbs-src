@@ -14,7 +14,7 @@
 #include "wMaster.h"
 #include "RouterWorker.h"
 
-static char *master_process = "master process ";
+static const char *master_process = "master process ";
 
 class RouterMaster : public wMaster<RouterMaster>
 {

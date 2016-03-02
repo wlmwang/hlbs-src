@@ -10,7 +10,7 @@ wProcTitle::wProcTitle(int argc, const char *argv[])
 {
 	mArgc = argc;
 	mOsArgv = (char **) argv;
-	mOsArgvLast = argv[0];
+	mOsArgvLast = (char *)argv[0];
 
 	Initialize();
 }

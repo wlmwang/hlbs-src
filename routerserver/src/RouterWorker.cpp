@@ -11,7 +11,7 @@ RouterWorker::RouterWorker()
 	//
 }
 
-RouterWorker:~RouterWorker()
+RouterWorker::~RouterWorker()
 {
 	//
 }

@@ -42,8 +42,7 @@ void RouterMaster::PrepareRun()
         exit(1);
     }
 
-    p = memcpy(mTitle, master_process, sizeof(master_process) - 1) + ( sizeof(master_process) - 1 );
-    p += ;
+    p = (u_char *)memcpy(mTitle, master_process, sizeof(master_process) - 1) + (sizeof(master_process) - 1);
 
     for (i = 0; i < pConfig->mProcTitle->mArgc; i++) 
     {

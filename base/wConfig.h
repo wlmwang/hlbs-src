@@ -52,7 +52,6 @@ wConfig<T>::wConfig()
 template <typename T>
 wConfig<T>::~wConfig() 
 {
-	SAFE_DELETE_VEC(mArgv);
 	SAFE_DELETE(mProcTitle);
 }
 
