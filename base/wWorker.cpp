@@ -37,12 +37,12 @@ void wWorker::Run() {}
 
 void wWorker::PrepareStart(int type, void *data) 
 {
-	PrepareRun();
-
 	mPid = getpid();
 	mSlot = *(int *) data;
-	mExited = 0;
 	mRespawn = type;
+	mExited = 0;
+	
+	PrepareRun();
 }
 
 void wWorker::Start() 

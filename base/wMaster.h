@@ -62,10 +62,10 @@ class wMaster : public wSingleton<T>
 		wFile mPidFile;
 		
 		int mNcpu;
-		pid_t mPid;	//master进程id
+		pid_t mPid;		//master进程id
 		int mWorkerNum;	//worker总数量
-		int mSlot;	//进程表分配到数量
-		wWorker **mWorkerPool;	//进程表
+		int mSlot;		//进程表分配到数量
+		wWorker **mWorkerPool;	//进程表，从0开始
 };
 
 template <typename T>
@@ -83,7 +83,7 @@ void wMaster<T>::Initialize()
 	mSlot = 0;
 	mWorkerPool = NULL;
 	mPid = getpid();
-	mWorkerNum = mNcpu = sysconf(_SC_NPROCESSORS_ONLN);
+	mNcpu = sysconf(_SC_NPROCESSORS_ONLN)
 }
 
 template <typename T>
@@ -107,33 +107,14 @@ void wMaster<T>::Run()
 template <typename T>
 void wMaster<T>::PrepareStart()
 {
-	PrepareRun();
-	if (mWorkerNum > MAX_PROCESSES)
-	{
-		LOG_ERROR(ELOG_KEY, "[runtime] no more than %d processes can be spawned:", mWorkerNum);
-		return;
-	}
-
-	//初始化workerpool
-	for(int i = 0; i < mWorkerNum; ++i)
-	{
-		mWorkerPool[i] = NewWorker(i);
-	}
-
-	CreatePidFile();	//pid文件
-}
-
-template <typename T>
-void wMaster<T>::MasterStart()
-{
-	struct itimerval   itv;
-
+	mWorkerNum = mNcpu;
+	mPid = getpid();
+	
 	wSigSet stSigset;
 	stSigset.AddSet(SIGCHLD);
 	stSigset.AddSet(SIGALRM);
 	stSigset.AddSet(SIGIO);
 	stSigset.AddSet(SIGINT);
-
 	stSigset.AddSet(SIGQUIT);
 	stSigset.AddSet(SIGTERM);
 	stSigset.AddSet(SIGHUP);	//RECONFIGURE
@@ -144,10 +125,30 @@ void wMaster<T>::MasterStart()
         LOG_ERROR(ELOG_KEY, "[runtime] sigprocmask() failed: %s", strerror(errno));
     }
 
-    stSigset.EmptySet();
+	//pid文件
+	CreatePidFile();
 
-    //设置标题
-    
+	PrepareRun();
+}
+
+template <typename T>
+void wMaster<T>::MasterStart()
+{
+	struct itimerval   itv;
+
+	wSigSet stSigset;
+
+    //初始化workerpool
+	if (mWorkerNum > MAX_PROCESSES)
+	{
+		LOG_ERROR(ELOG_KEY, "[runtime] no more than %d processes can be spawned:", mWorkerNum);
+		return;
+	}
+	for(int i = 0; i < mWorkerNum; ++i)
+	{
+		mWorkerPool[i] = NewWorker(i);
+	}
+
     //启动worker进程
     WorkerStart(mWorkerNum, PROCESS_RESPAWN);
 
@@ -163,7 +164,6 @@ void wMaster<T>::MasterStart()
 
         //SIGCHLD
         //异常重启
-
 	}
 }
 

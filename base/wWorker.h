@@ -32,7 +32,7 @@ class wWorker : public wNoncopyable
 
 		int InitChannel();
 
-	//private:
+	//protected:
 	public:
 		wChannel mCh;	//worker进程channel
 		

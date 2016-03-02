@@ -11,13 +11,13 @@
 #include <vector>
 
 #include "wType.h"
-//#include "wConfig.h"
-//#include "wLog.h"
-//#include "Svr.h"
+#include "wLog.h"
 #include "wWorker.h"
-#include "RouterMaster.h"
 #include "RouterServer.h"
 #include "RouterConfig.h"
+
+//#include "RouterMaster.h"
+//#include "Svr.h"
 
 class RouterWorker: public wWorker
 {
@@ -28,6 +28,12 @@ class RouterWorker: public wWorker
 
 		virtual void PrepareRun();
 		virtual void Run();
+
+	protected:
+		RouterConfig *mConfig;
+		RouterServer *mServer;
+
+		map<long long, string> mTimeEvent;
 };
 
 #endif

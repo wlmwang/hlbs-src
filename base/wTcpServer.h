@@ -33,6 +33,9 @@ template <typename T>
 class wTcpServer: public wSingleton<T>
 {
 	public:
+		wTcpServer(string ServerName, int vInitFlag = true);
+		virtual ~wTcpServer();
+
 		void Recv();
 		void Broadcast(const char *pCmd, int iLen);
 		
@@ -106,13 +109,10 @@ class wTcpServer: public wSingleton<T>
 		
 		void Final();
 		
-		virtual ~wTcpServer();
-		
 		void CheckTimer();
 		virtual void CheckTimeout();
 		
 	protected:
-        wTcpServer(string ServerName, int vInitFlag = true);
 		wTcpServer(const wTcpServer&);
 		
 		string mServerName;
@@ -225,19 +225,19 @@ void wTcpServer<T>::Broadcast(const char *pCmd, int iLen)
 template <typename T>
 void wTcpServer<T>::PrepareStart(string sIpAddr ,unsigned int nPort)
 {
-	LOG_INFO("default", "[startup] Server Prepare start succeed");
+	LOG_INFO(ELOG_KEY, "[startup] Server Prepare start succeed");
 	
 	//初始化epoll
 	if(InitEpoll() < 0)
 	{
-		LOG_ERROR("error", "[startup] InitEpoll failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[startup] InitEpoll failed: %s", strerror(errno));
 		exit(1);
 	}
 	
 	//初始化Listen Socket
 	if(InitListen(sIpAddr ,nPort) < 0)
 	{
-		LOG_ERROR("error", "[startup] InitListen failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[startup] InitListen failed: %s", strerror(errno));
 		exit(1);
 	}
 
@@ -260,7 +260,7 @@ int wTcpServer<T>::InitEpoll()
 	mEpollFD = epoll_create(512); //512
 	if(mEpollFD < 0)
 	{
-		LOG_ERROR("error", "[startup] epoll_create failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[startup] epoll_create failed: %s", strerror(errno));
 		return -1;
 	}
 	return mEpollFD;
@@ -272,7 +272,7 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	int iSocketFD = socket(AF_INET, SOCK_STREAM, 0); 
 	if(iSocketFD < 0)
 	{
-		LOG_ERROR("error", "[startup] Create socket failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[startup] Create socket failed: %s", strerror(errno));
 		return -1;
 	}
 	//setsockopt socket
@@ -291,7 +291,7 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	int iRet = bind(iSocketFD, (struct sockaddr *)&stSocketAddr, sizeof(stSocketAddr));
 	if(iRet < 0)
 	{
-		LOG_ERROR("error", "[startup] Socket bind failed");
+		LOG_ERROR(ELOG_KEY, "[startup] Socket bind failed");
 		close(iSocketFD);
 		return -1;
 	}
@@ -300,13 +300,13 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	int iOptVal = 0x400000;
 	if(setsockopt(iSocketFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) < -1)
 	{
-		LOG_ERROR("error", "[startup] Set send buffer size failed");
+		LOG_ERROR(ELOG_KEY, "[startup] Set send buffer size failed");
 		close(iSocketFD);
 		return -1;
 	}
 	if(getsockopt(iSocketFD, SOL_SOCKET, SO_SNDBUF, (void *)&iOptVal, (socklen_t *)&iOptLen) >= 0)
 	{
-		LOG_DEBUG("default", "[startup] Set send buffer to %d", iOptVal);
+		LOG_DEBUG(ELOG_KEY, "[startup] Set send buffer to %d", iOptVal);
 	}
 
 	//listen
@@ -314,7 +314,7 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	iRet = listen(iSocketFD, backlog);
 	if(iRet < 0)
 	{
-		LOG_ERROR("error", "[startup] listen failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[startup] listen failed: %s", strerror(errno));
 		return -1;
 	}
 	
@@ -332,7 +332,7 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 		mTcpTask->SetStatus(SOCKET_STATUS_RUNNING);
 		if(mTcpTask->Socket()->SetNonBlock() < 0) 
 		{
-			LOG_ERROR("error", "[startup] Set non block failed: %d, close it", iSocketFD);
+			LOG_ERROR(ELOG_KEY, "[startup] Set non block failed: %d, close it", iSocketFD);
 			SAFE_DELETE(mTcpTask);
 			return -1;
 		}
@@ -365,7 +365,7 @@ int wTcpServer<T>::AddToEpoll(wTcpTask* pTcpTask)
 	int iRet = epoll_ctl(mEpollFD, EPOLL_CTL_ADD, pTcpTask->Socket()->SocketFD(), &mEpollEvent);
 	if(iRet < 0)
 	{
-		LOG_ERROR("error", "[runtime] fd(%d) add into epoll failed: %s", pTcpTask->Socket()->SocketFD(), strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[runtime] fd(%d) add into epoll failed: %s", pTcpTask->Socket()->SocketFD(), strerror(errno));
 		return -1;
 	}
 	return 0;
@@ -384,7 +384,8 @@ int wTcpServer<T>::AddToTaskPool(wTcpTask* pTcpTask)
 	{
 		mEpollEventPool.reserve(mTaskCount * 2);
 	}
-	//LOG_INFO("default", "[runtime] fd(%d) add into task pool", pTcpTask->Socket()->SocketFD());
+	
+	LOG_DEBUG(ELOG_KEY, "[runtime] fd(%d) add into task pool", pTcpTask->Socket()->SocketFD());
 	return 0;
 }
 
@@ -392,12 +393,17 @@ template <typename T>
 void wTcpServer<T>::Start(bool bDaemon)
 {
 	mStatus = SERVER_STATUS_RUNNING;
-	LOG_INFO("default", "[startup] Server start succeed");
+	LOG_INFO(ELOG_KEY, "[startup] Server start succeed");
+	
 	//进入服务主循环
 	do {
+
 		Recv();
+
 		Run();
+
 		if(mIsCheckTimer) CheckTimer();
+
 	} while(IsRunning() && bDaemon);
 }
 
@@ -407,7 +413,7 @@ void wTcpServer<T>::Recv()
 	int iRet = epoll_wait(mEpollFD, &mEpollEventPool[0], mTaskCount, mTimeout /*10ms*/);
 	if(iRet < 0)
 	{
-		LOG_ERROR("error", "[runtime] epoll_wait failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[runtime] epoll_wait failed: %s", strerror(errno));
 		return;
 	}
 	for(int i = 0 ; i < iRet ; i++)
@@ -418,8 +424,8 @@ void wTcpServer<T>::Recv()
 
 		if(iSocketFD < 0)
 		{
-			LOG_ERROR("error", "[runtime] socketfd error fd(%d): %s, close it", iSocketFD, strerror(errno));
-			LOG_ERROR("client", "[disconnect] socketfd error(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
+			LOG_ERROR(ELOG_KEY, "[runtime] socketfd error fd(%d): %s, close it", iSocketFD, strerror(errno));
+			LOG_ERROR(ELOG_KEY, "[disconnect] socketfd error(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -428,8 +434,8 @@ void wTcpServer<T>::Recv()
 		}
 		if (!pTask->IsRunning())	//多数是超时设置
 		{
-			LOG_ERROR("error", "[runtime] task status is quit, fd(%d): %s, close it", iSocketFD, strerror(errno));
-			LOG_ERROR("client", "[disconnect] task status is quit(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
+			LOG_ERROR(ELOG_KEY, "[runtime] task status is quit, fd(%d): %s, close it", iSocketFD, strerror(errno));
+			LOG_ERROR(ELOG_KEY, "[disconnect] task status is quit(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -438,8 +444,8 @@ void wTcpServer<T>::Recv()
 		}
 		if (mEpollEventPool[i].events & (EPOLLERR | EPOLLPRI))	//出错
 		{
-			LOG_ERROR("error", "[runtime] epoll event recv error from fd(%d): %s, close it", iSocketFD, strerror(errno));
-			LOG_ERROR("client", "[disconnect] epoll event recv error(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
+			LOG_ERROR(ELOG_KEY, "[runtime] epoll event recv error from fd(%d): %s, close it", iSocketFD, strerror(errno));
+			LOG_ERROR(ELOG_KEY, "[disconnect] epoll event recv error(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -461,8 +467,8 @@ void wTcpServer<T>::Recv()
 				//套接口准备好了读取操作
 				if (pTask->ListeningRecv() <= 0)	//==0主动断开
 				{
-					LOG_ERROR("error", "[runtime] EPOLLIN(read) failed or socket closed: %s", strerror(errno));
-					LOG_ERROR("client", "[disconnect] EPOLLIN(read) failed or socket closed(%s):ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
+					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or socket closed: %s", strerror(errno));
+					LOG_ERROR(ELOG_KEY, "[disconnect] EPOLLIN(read) failed or socket closed(%s):ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
 					if (RemoveEpoll(pTask) >= 0)
 					{
 						RemoveTaskPool(pTask);
@@ -474,8 +480,8 @@ void wTcpServer<T>::Recv()
 				//套接口准备好了写入操作
 				if (pTask->ListeningSend() < 0)	//写入失败，半连接
 				{
-					LOG_ERROR("error", "[runtime] EPOLLOUT(write) failed: %s", strerror(errno));
-					LOG_ERROR("client", "[disconnect] EPOLLOUT(write) failed(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
+					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLOUT(write) failed: %s", strerror(errno));
+					LOG_ERROR(ELOG_KEY, "[disconnect] EPOLLOUT(write) failed(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
 					if (RemoveEpoll(pTask) >= 0)
 					{
 						RemoveTaskPool(pTask);
@@ -501,7 +507,7 @@ int wTcpServer<T>::AcceptConn()
 	int iNewSocketFD = accept(mSocket->SocketFD(), (struct sockaddr*)&stSockAddr, &iSockAddrSize);
 	if(iNewSocketFD < 0)
 	{
-		LOG_ERROR("error", "[runtime] client connect failed(%s)", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[runtime] client connect failed(%s)", strerror(errno));
 	    return -1;
     }
 	//setsockopt socket：设置发送缓冲大小3M
@@ -509,13 +515,13 @@ int wTcpServer<T>::AcceptConn()
 	int iOptVal = 0x300000;
 	if(setsockopt(iNewSocketFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) < -1)
 	{
-		LOG_DEBUG("error", "[runtime] set send buffer size failed");
+		LOG_DEBUG(ELOG_KEY, "[runtime] set send buffer size failed");
 	}
 	else
 	{
 		if(getsockopt(iNewSocketFD, SOL_SOCKET, SO_SNDBUF, (void *)&iOptVal, (socklen_t *)&iOptLen) >= 0 )
 		{
-			LOG_DEBUG("default", "[runtime] set send buffer to %d", iOptVal);
+			LOG_DEBUG(ELOG_KEY, "[runtime] set send buffer to %d", iOptVal);
 		}
 	}
 	
@@ -532,7 +538,7 @@ int wTcpServer<T>::AcceptConn()
 	{
 		if (mTcpTask->VerifyConn() < 0 || mTcpTask->Verify())
 		{
-			LOG_ERROR("error", "[runtime] connect illegal or verify timeout: %d, close it", iNewSocketFD);
+			LOG_ERROR(ELOG_KEY, "[runtime] connect illegal or verify timeout: %d, close it", iNewSocketFD);
 			SAFE_DELETE(mTcpTask);
 			return -1;
 		}
@@ -540,7 +546,7 @@ int wTcpServer<T>::AcceptConn()
 		mTcpTask->SetStatus(SOCKET_STATUS_RUNNING);
 		if(mTcpTask->Socket()->SetNonBlock() < 0) 
 		{
-			LOG_ERROR("error", "[runtime] set non block failed: %d, close it", iNewSocketFD);
+			LOG_ERROR(ELOG_KEY, "[runtime] set non block failed: %d, close it", iNewSocketFD);
 			SAFE_DELETE(mTcpTask);
 			return -1;
 		}
@@ -548,7 +554,7 @@ int wTcpServer<T>::AcceptConn()
 		{
 			AddToTaskPool(mTcpTask);
 		}
-		LOG_ERROR("client", "[connect] client connect succeed: ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
+		LOG_ERROR(ELOG_KEY, "[connect] client connect succeed: ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
 	}
 	return iNewSocketFD;
 }
@@ -560,7 +566,7 @@ int wTcpServer<T>::RemoveEpoll(wTcpTask* pTcpTask)
 	mEpollEvent.data.fd = iSocketFD;
 	if(epoll_ctl(mEpollFD, EPOLL_CTL_DEL, iSocketFD, &mEpollEvent) < 0)
 	{
-		LOG_ERROR("error", "[runtime] epoll remove socket fd(%d) error : %s", iSocketFD, strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[runtime] epoll remove socket fd(%d) error : %s", iSocketFD, strerror(errno));
 		return -1;
 	}
 	return 0;
@@ -627,8 +633,8 @@ void wTcpServer<T>::CheckTimeout()
 			{
 				if((*iter)->Heartbeat() < 0 && (*iter)->HeartbeatOutTimes())
 				{
-					LOG_ERROR("error", "[runtime] client ip(%s) fd(%d) heartbeat pass limit times, close it", (*iter)->Socket()->IPAddr().c_str(), (*iter)->Socket()->SocketFD());
-					LOG_ERROR("client", "[timeout] client heartbeat pass limit times: ip(%s) port(%d)", (*iter)->Socket()->IPAddr().c_str(), (*iter)->Socket()->Port());
+					LOG_ERROR(ELOG_KEY, "[runtime] client ip(%s) fd(%d) heartbeat pass limit times, close it", (*iter)->Socket()->IPAddr().c_str(), (*iter)->Socket()->SocketFD());
+					LOG_ERROR(ELOG_KEY, "[timeout] client heartbeat pass limit times: ip(%s) port(%d)", (*iter)->Socket()->IPAddr().c_str(), (*iter)->Socket()->Port());
 					if(RemoveEpoll(*iter) >= 0)
 					{
 						iter = RemoveTaskPool(*iter);
