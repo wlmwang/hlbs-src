@@ -75,7 +75,14 @@ wMaster<T>::wMaster()
 }
 
 template <typename T>
-wMaster<T>::~wMaster() {}
+wMaster<T>::~wMaster() 
+{
+	for (int i = 0; i < mWorkerNum; ++i)
+	{
+		SAFE_DELETE_VEC(mWorkerPool[i]);	//delete []mWorkerPool[i];
+	}
+	SAFE_DELETE_VEC(mWorkerPool);	//delete []mWorkerPool;
+}
 
 template <typename T>
 void wMaster<T>::Initialize()
@@ -83,7 +90,7 @@ void wMaster<T>::Initialize()
 	mSlot = 0;
 	mWorkerPool = NULL;
 	mPid = getpid();
-	mNcpu = sysconf(_SC_NPROCESSORS_ONLN)
+	mNcpu = sysconf(_SC_NPROCESSORS_ONLN);
 }
 
 template <typename T>
@@ -144,6 +151,8 @@ void wMaster<T>::MasterStart()
 		LOG_ERROR(ELOG_KEY, "[runtime] no more than %d processes can be spawned:", mWorkerNum);
 		return;
 	}
+
+	mWorkerPool = new wWorker*[mWorkerNum];
 	for(int i = 0; i < mWorkerNum; ++i)
 	{
 		mWorkerPool[i] = NewWorker(i);

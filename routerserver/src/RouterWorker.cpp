@@ -30,6 +30,9 @@ void RouterWorker::PrepareRun()
 		LOG_ERROR(ELOG_KEY, "[startup] Get RouterConfig instance failed");
 		exit(1);
 	}
+	//pConfig->GetBaseConf();
+	//pConfig->GetSvrConf();
+
 	mConfig->mProcTitle->Setproctitle("worker process", "HLFS: ");
 
 	mServer = RouterServer::Instance();
@@ -47,6 +50,6 @@ void RouterWorker::Run()
 
 	//服务器开始运行
 	LOG_DEBUG(ELOG_KEY, "[startup] RouterServer start succeed");
-	
+
 	mServer->Start();
 }

@@ -59,7 +59,7 @@ template <typename T>
 void wConfig<T>::Initialize()
 {
 	mShowVer = 0;
-	mDaemon = 1;
+	mDaemon = 0;
 	mHost = 0;
 	mPort = 0;
 	mSignal = NULL;
