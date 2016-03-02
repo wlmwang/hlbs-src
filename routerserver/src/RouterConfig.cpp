@@ -4,13 +4,18 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include <iostream>
-#include <algorithm>
-
-#include "wType.h"
-#include "wMisc.h"
-#include "tinyxml.h"	//lib tinyxml
 #include "RouterConfig.h"
+
+RouterConfig::RouterConfig()
+{
+	Initialize();
+}
+
+RouterConfig::~RouterConfig()
+{
+	Final();
+	SAFE_DELETE(mDoc);
+}
 
 void RouterConfig::Initialize()
 {
@@ -19,8 +24,8 @@ void RouterConfig::Initialize()
 	mBacklog = 1024;
 	mWorkers = 1;
 	mDoc = new TiXmlDocument();
-	memcpy(mBaseConfFile, "../config/conf.xml", sizeof("../config/conf.xml"));
-	memcpy(mSvrConfFile, "../config/svr.xml", sizeof("../config/svr.xml"));
+	memcpy(mBaseConfFile, CONF_XML, strlen(CONF_XML) + 1);
+	memcpy(mSvrConfFile, SVR_XML, strlen(SVR_XML) + 1);
 }
 
 void RouterConfig::GetBaseConf()
@@ -28,14 +33,14 @@ void RouterConfig::GetBaseConf()
 	bool bLoadOK = mDoc->LoadFile(mBaseConfFile);
 	if (!bLoadOK)
 	{
-		cout << "[startup] Load config file(conf.xml) failed" << endl;
+		LOG_ERROR(ELOG_KEY, "[startup] Load config file(conf.xml) failed");
 		exit(1);
 	}
 
 	TiXmlElement *pRoot = mDoc->FirstChildElement();
 	if (NULL == pRoot)
 	{
-		cout << "[startup] Read root from config file(conf.xml) failed" << endl;
+		LOG_ERROR(ELOG_KEY, "[startup] Read root from config file(conf.xml) failed");
 		exit(1);
 	}
 	
@@ -59,13 +64,13 @@ void RouterConfig::GetBaseConf()
 			}
 			else
 			{
-				cout << "[startup] Get log config from conf.xml error" << endl;
+				LOG_ERROR(ELOG_KEY, "[startup] Get log config from conf.xml error");
 			}
 		}
 	}
 	else
 	{
-		cout << "[startup] Get log config from conf.xml failed" << endl;
+		LOG_ERROR(ELOG_KEY, "[startup] Get log config from conf.xml failed");
 		exit(1);
 	}
 
@@ -83,14 +88,14 @@ void RouterConfig::GetBaseConf()
 		}
 		else
 		{
-			LOG_ERROR("error", "[startup] Get SERVER ip or port from conf.xml failed");
+			LOG_ERROR(ELOG_KEY, "[startup] Get SERVER ip or port from conf.xml failed");
 		}
 		mBacklog = szBacklog != NULL ? atoi(szBacklog): mBacklog;
 		mWorkers = szWorkers != NULL ? atoi(szWorkers): mWorkers;
 	}
 	else
 	{
-		LOG_ERROR("error", "[startup] Get SERVER node from conf.xml failed");
+		LOG_ERROR(ELOG_KEY, "[startup] Get SERVER node from conf.xml failed");
 		exit(1);
 	}
 }
@@ -100,7 +105,7 @@ void RouterConfig::GetSvrConf()
 	bool bLoadOK = mDoc->LoadFile(mSvrConfFile);
 	if (!bLoadOK)
 	{
-		LOG_ERROR("error", "[startup] Load config file(svr.xml) failed");
+		LOG_ERROR(ELOG_KEY, "[startup] Load config file(svr.xml) failed");
 		exit(1);
 	}
 
@@ -142,7 +147,7 @@ void RouterConfig::GetSvrConf()
 	}
 	else
 	{
-		LOG_ERROR("error", "[startup] Get SVRS node from svr.xml failed");
+		LOG_ERROR(ELOG_KEY, "[startup] Get SVRS node from svr.xml failed");
 		exit(1);
 	}
 
@@ -157,7 +162,7 @@ int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 	bool bLoadOK = mDoc->LoadFile(mSvrConfFile);
 	if (!bLoadOK)
 	{
-		LOG_ERROR("error", "[modify svr] Load config file(svr.xml) failed");
+		LOG_ERROR(ELOG_KEY, "[modify svr] Load config file(svr.xml) failed");
 		return -1;
 	}
 
@@ -222,7 +227,7 @@ int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 	}
 	else
 	{
-		LOG_ERROR("error", "[modify svr] Get SVRS node from svr.xml failed");
+		LOG_ERROR(ELOG_KEY, "[modify svr] Get SVRS node from svr.xml failed");
 		return -1;
 	}
 	return j;

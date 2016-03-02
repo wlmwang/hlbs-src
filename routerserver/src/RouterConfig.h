@@ -9,11 +9,16 @@
 
 #include <map>
 #include <vector>
+#include <algorithm>
 
 #include "wType.h"
-#include "wConfig.h"
+#include "wMisc.h"
 #include "wLog.h"
 #include "Svr.h"
+#include "wConfig.h"
+
+#define CONF_XML "../config/conf.xml"
+#define SVR_XML "../config/svr.xml"
 
 /**
  * 配置文件读取的数据结构
@@ -27,16 +32,9 @@ class RouterConfig: public wConfig<RouterConfig>
 		unsigned int mWorkers;
 
 	public:
-		RouterConfig()
-		{
-            Initialize();
-		}
+		RouterConfig();
 
-		virtual ~RouterConfig() 
-		{
-			Final();
-			SAFE_DELETE(mDoc);
-		}
+		virtual ~RouterConfig();
 
 		//初始化
 		void Initialize();

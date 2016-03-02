@@ -8,6 +8,7 @@
 #define _W_SIGNAL_H_
 
 #include <signal.h>		//typedef void (*sighandler_t)(int);
+
 #include "wType.h"
 #include "wLog.h"
 #include "wNoncopyable.h"

@@ -14,6 +14,8 @@
 #include <stdarg.h>
 #include <ostream>
 
+#include "wType.h"
+
 namespace W
 {
 	template <int size>

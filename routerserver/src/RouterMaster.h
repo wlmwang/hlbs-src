@@ -18,14 +18,13 @@ class RouterMaster : public wMaster<RouterMaster>
 {
 	public:
 		RouterMaster();
-		~RouterMaster();
-
+		virtual ~RouterMaster();
 		void Initialize();
 		
 		virtual void PrepareRun();
 		virtual void Run();
 		
-		virtual wWorker* NewWorker();
+		virtual wWorker* NewWorker(int iSlot = 0);
 };
 
 #endif

@@ -8,6 +8,8 @@
 #define _W_THREAD_H_
 
 #include <pthread.h>
+
+#include "wType.h"
 #include "wMutex.h"
 #include "wCond.h"
 #include "wNoncopyable.h"

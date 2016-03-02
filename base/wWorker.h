@@ -19,41 +19,26 @@ class wWorker : public wNoncopyable
 {
 	//friend class wMaster;
 	public:
-		wWorker() 
-		{
-			Initialize();
-		}
-		
-		virtual void PrepareRun() {}
-		virtual void Run() {}
-
-		virtual ~wWorker() {}
+		wWorker();
 		void Initialize();
+		virtual ~wWorker();
 
-		int InitChannel()
-		{
-			return mCh.Open();
-		}
-		
-		virtual int InitWorker(int type, void *data);
+		virtual void PrepareRun();
+		virtual void Run();
+		virtual void Close();
 
-		int PrepareStart() 
-		{
-			PrepareRun();
-		}
+		void PrepareStart(int type, void *data);
+		void Start();
 
-		int Start() 
-		{
-			Run();
-		}
+		int InitChannel();
 
 	//private:
 	public:
 		wChannel mCh;	//worker进程channel
+		
 		int mSlot;
 		pid_t mPid;
 		int mExited;
-		void *mData;
 		int mRespawn;	//退出是否重启
 };
 

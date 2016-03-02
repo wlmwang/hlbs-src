@@ -31,7 +31,7 @@ void RouterMaster::Run()
 	//
 }
 
-wWorker* RouterMaster::NewWorker()
+wWorker* RouterMaster::NewWorker(int iSlot)
 {
 	return new RouterWorker();
 }

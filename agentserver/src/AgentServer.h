@@ -21,7 +21,7 @@
 #include "wMsgQueue.h"
 #include "AgentServerTask.h"
 #include "AgentConfig.h"
-#include "SvrCommand.h"
+#include "SvrCmd.h"
 
 class AgentServer: public wTcpServer<AgentServer>
 {

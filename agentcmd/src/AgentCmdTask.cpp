@@ -9,7 +9,7 @@
 #include "AgentCmd.h"
 #include "AgentCmdTask.h"
 #include "AgentCmdConfig.h"
-#include "LoginCommand.h"
+#include "LoginCmd.h"
 
 AgentCmdTask::AgentCmdTask()
 {

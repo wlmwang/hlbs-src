@@ -16,7 +16,7 @@
 #include "wMisc.h"
 #include "wLog.h"
 #include "wSingleton.h"
-#include "SvrCommand.h"
+#include "SvrCmd.h"
 
 /**
  * 配置文件读取的数据结构

@@ -5,67 +5,11 @@
  */
 
 #include <sys/file.h>	//int flock(int fd,int operation);
-
 #include <signal.h>
 #include "wType.h"
 #include "wLog.h"
 
 #include "wMisc.h"
-
-
-//变为守护进程
-int InitDaemon(const char *filename)
-{
-	//打开需要锁定的文件
-	int lock_fd = open(filename, O_RDWR|O_CREAT, 0640);
-	if (lock_fd < 0) 
-	{
-		LOG_ERROR(ELOG_KEY, "[startup] Open lock file failed when init daemon");
-		return -1;
-	}
-	//独占式锁定文件，防止有相同程序的进程已经启动
-	int ret = flock(lock_fd, LOCK_EX | LOCK_NB);
-	if (ret < 0) 
-	{
-		LOG_ERROR(ELOG_KEY, "[startup] Lock file failed, server is already running");
-		return -1;
-	}
-
-	//获取当前的目录信息
-	char dir_path[256] = {0};
-	getcwd(dir_path, sizeof(dir_path));
-
-	pid_t pid;
-
-	//第一次fork
-	if ((pid = fork()) != 0) exit(0);
-
-	//将该进程设置一个新的进程组的首进程
-	setsid();
-
-	//忽略以下信号
-	signal(SIGINT,  SIG_IGN);
-	signal(SIGHUP,  SIG_IGN);
-	signal(SIGQUIT, SIG_IGN);
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGTTOU, SIG_IGN);
-	signal(SIGTTIN, SIG_IGN);
-	signal(SIGCHLD, SIG_IGN);
-	signal(SIGTERM, SIG_IGN);
-
-	//再次fork
-	if ((pid = fork()) != 0) exit(0);
-
-	if (chdir(dir_path)) 
-	{
-		LOG_ERROR(ELOG_KEY, "[startup] Can not change run dir to %s , init daemon failed: %s", dir_path, strerror(errno));
-		return -1;		
-	}
-	umask(0);
-	
-	unlink(filename);
-	return 0;
-}
 
 void itoa(unsigned long val, char *buf, unsigned radix) 
 {
@@ -100,6 +44,104 @@ void itoa(unsigned long val, char *buf, unsigned radix)
 		--p; 
 		++firstdig; /* advance to next two digits */ 
 	} while (firstdig < p); /* repeat until halfway */ 
+}
+
+vector<string> Split(string sStr, string sPattern, bool bRepeat)  
+{  
+    string::size_type iPos, iNextPos;
+    vector<string> vResult;
+    sStr += sPattern;  
+    int iSize = sStr.size();
+  
+    for(int i = 0; i < iSize; i++)  
+    {  
+        iPos = iNextPos = sStr.find(sPattern, i);
+        if(iPos < iSize)
+        {
+            string s = sStr.substr(i, iPos - i);
+            vResult.push_back(s);
+            i = iPos + sPattern.size() - 1;
+        }
+    }
+    return vResult;
+}
+
+u_char *Cpystrn(u_char *dst, u_char *src, size_t n)
+{
+    if (n == 0) 
+    {
+        return dst;
+    }
+
+    while (--n) 
+    {
+        *dst = *src;
+        if (*dst == '\0') 
+        {
+            return dst;
+        }
+        dst++;
+        src++;
+    }
+
+    *dst = '\0';
+    return dst;
+}
+
+int InitDaemon(const char *filename)
+{
+	//打开需要锁定的文件
+	int lock_fd = open(filename, O_RDWR|O_CREAT, 0640);
+	if (lock_fd < 0) 
+	{
+		LOG_ERROR(ELOG_KEY, "[startup] Open lock file failed when init daemon");
+		return -1;
+	}
+	//独占式锁定文件，防止有相同程序的进程已经启动
+	int ret = flock(lock_fd, LOCK_EX | LOCK_NB);
+	if (ret < 0) 
+	{
+		LOG_ERROR(ELOG_KEY, "[startup] Lock file failed, server is already running");
+		return -1;
+	}
+
+	//获取当前的目录信息
+	char dir_path[256] = {0};
+	getcwd(dir_path, sizeof(dir_path));
+
+	pid_t pid;
+
+	//第一次fork
+	if ((pid = fork()) != 0) exit(0);
+
+	//将该进程设置一个新的进程组的首进程
+	setsid();
+
+	//忽略以下信号
+	/*
+	signal(SIGINT,  SIG_IGN);
+	signal(SIGHUP,  SIG_IGN);
+	signal(SIGQUIT, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);
+	signal(SIGTTOU, SIG_IGN);
+	signal(SIGTTIN, SIG_IGN);
+	signal(SIGCHLD, SIG_IGN);
+	signal(SIGTERM, SIG_IGN);
+	*/
+
+	//再次fork
+	if ((pid = fork()) != 0) exit(0);
+
+	if (chdir(dir_path)) 
+	{
+		LOG_ERROR(ELOG_KEY, "[startup] Can not change run dir to %s , init daemon failed: %s", dir_path, strerror(errno));
+		return -1;		
+	}
+	umask(0);
+	
+	//TODO.
+	unlink(filename);
+	return 0;
 }
 
 int Gcd(int a, int b)

@@ -17,11 +17,9 @@
 class wFile : private wNoncopyable
 {
 	public:
-		wFile()
-		{
-			Initialize();
-		}
-
+		wFile();
+		~wFile();
+		
 		void Initialize();
 		
 		//成功则返回0, 失败返回-1, 错误原因存于mErrno

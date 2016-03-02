@@ -6,7 +6,7 @@
 
 #include "wType.h"
 #include "wLog.h"
-#include "BaseCommand.h"
+#include "BaseCmd.h"
 #include "RouterConfig.h"
 #include "RouterMaster.h"
 
@@ -16,12 +16,12 @@ int main(int argc, const char *argv[])
 	RouterConfig *pConfig = RouterConfig::Instance();
 	if(pConfig == NULL) 
 	{
-		cout << "Get RouterConfig instance failed" << endl;
+		cout << "[startup] Get RouterConfig instance failed" << endl;
 		exit(1);
 	}
 	if (pConfig->GetOption(argc, argv) < 0)
 	{
-		cout << "Get Option failed" << endl;
+		cout << "[startup] Get Option failed" << endl;
 		exit(1);
 	}
 	pConfig->GetBaseConf();
@@ -40,15 +40,7 @@ int main(int argc, const char *argv[])
 	//master
 	RouterMaster *pMaster = RouterMaster::Instance();
 
-	if (pMaster->InitMaster() == -1)
-	{
-		exit(1);
-	}
-	if (pMaster->CreatePidFile() == -1)
-	{
-		exit(1);
-	}
-	
+	pMaster->PrepareStart();
 	pMaster->MasterStart();
 
 	LOG_SHUTDOWN_ALL;

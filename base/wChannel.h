@@ -66,7 +66,7 @@ class wChannel : private wNoncopyable
 
 		int& operator[](int i);
 
-	private:
+	protected:
 		int	mChannel[2];
 };
 

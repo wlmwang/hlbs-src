@@ -19,7 +19,7 @@
 #include "AgentCmdTask.h"
 #include "ReadlineThread.h"
 #include "wMTcpClient.h"
-#include "SvrCommand.h"
+#include "SvrCmd.h"
 #include "wShm.h"
 #include "wMsgQueue.h"
 

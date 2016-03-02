@@ -7,7 +7,7 @@
 #include "wAssert.h"
 #include "RouterServerTask.h"
 #include "RouterConfig.h"
-#include "LoginCommand.h"
+#include "LoginCmd.h"
 
 RouterServerTask::RouterServerTask()
 {

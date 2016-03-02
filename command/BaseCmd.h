@@ -4,23 +4,23 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#ifndef _W_BASE_COMMAND_H_
-#define _W_BASE_COMMAND_H_
+#ifndef _W_BASE_CMD_H_
+#define _W_BASE_CMD_H_
 
+#include "wType.h"
+#include "wCommand.h"
+
+//define
 #define PREFIX  "/usr/local/disvr/"
-
 #define CONF_PREFIX  "conf/"
 
 #define PID_PATH  "log/disvr.pid"
-
 #define LOCK_PATH  "log/disvr.lock"
-
-#define USER  "nobody"			//默认用户名
-#define GROUP  "nobody"			//默认用户组
 
 #define IPC_SHM "/tmp/shm.ipc"
 
-#include "wCommand.h"
+#define USER  "nobody"
+#define GROUP  "nobody"
 
 #pragma pack(1)
 

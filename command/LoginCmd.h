@@ -4,11 +4,10 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#ifndef _W_LOGIN_COMMAND_H_
-#define _W_LOGIN_COMMAND_H_
+#ifndef _W_LOGIN_CMD_H_
+#define _W_LOGIN_CMD_H_
 
-#include <string.h>
-#include "BaseCommand.h"
+#include "BaseCmd.h"
 
 #pragma pack(1)
 

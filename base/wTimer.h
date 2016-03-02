@@ -9,6 +9,8 @@
 
 #define TIME_OF_KEEP_ALIVE 30000
 
+#include "wType.h"
+
 /**
  *  简单定时器，单位为毫秒
  */

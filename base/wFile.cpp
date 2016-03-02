@@ -6,6 +6,13 @@
 
 #include "wFile.h"
 
+wFile::wFile()
+{
+	Initialize();
+}
+
+wFile::~wFile() {}
+
 void wFile::Initialize()
 {
 	mFileName = "";

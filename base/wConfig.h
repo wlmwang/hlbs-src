@@ -21,6 +21,10 @@ class wConfig : public wSingleton<T>
 		
 		virtual ~wConfig();
 		
+		/**
+		 * 初始化基础日志对象
+		 * @return 
+		 */
 		int InitErrLog()
 		{
 			return INIT_ROLLINGFILE_LOG(ELOG_KEY, ELOG_FILE, ELOG_LEVEL, ELOG_FSIZE, ELOG_BACKUP);
@@ -70,7 +74,7 @@ wConfig<T>::wConfig()
 	mOsArgvLast = NULL;
 	mOsEnv = NULL;
 
-	InitErrLog();	//初始化日志
+	InitErrLog();
 }
 
 template <typename T>
@@ -207,7 +211,7 @@ int wConfig<T>::InitSetproctitle()
         size += strlen(environ[i]) + 1;		
     }
 
-    p = new char[size];
+    p = new u_char[size];
     if (p == NULL) 
     {
         return -1;
@@ -233,14 +237,14 @@ int wConfig<T>::InitSetproctitle()
             mOsArgvLast = environ[i] + size;
 
             Cpystrn(p, (u_char *) environ[i], size);
-            environ[i] = (char *) p;
+            environ[i] = (char *) p;	//转化成char
             p += size;
         }
     }
 
     mOsArgvLast--;     //是原始argv和environ的总体大小。去除结尾一个NULL字符
     mMoveEnv = 1;
-    return -1;
+    return 0;
 }
 
 template <typename T>

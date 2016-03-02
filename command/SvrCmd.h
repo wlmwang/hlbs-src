@@ -7,9 +7,7 @@
 #ifndef _W_ROUTER_COMMAND_H_
 #define _W_ROUTER_COMMAND_H_
 
-#include <string.h>
-
-#include "BaseCommand.h"
+#include "BaseCmd.h"
 #include "Svr.h"
 
 #pragma pack(1)

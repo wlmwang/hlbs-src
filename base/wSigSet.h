@@ -8,6 +8,7 @@
 #define _W_SIG_SET_H_
 
 #include <signal.h>
+
 #include "wType.h"
 #include "wLog.h"
 #include "wNoncopyable.h"

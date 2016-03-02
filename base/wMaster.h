@@ -15,9 +15,12 @@
 #include "wMisc.h"
 #include "wSingleton.h"
 #include "wFile.h"
-#include "wConfig.h"
 #include "wWorker.h"
 #include "wChannel.h"
+#include "wSigSet.h"
+#include "wSignal.h"
+
+//#include "wConfig.h"
 
 #define PROCESS_SINGLE     0 	//单独进程
 #define PROCESS_MASTER     1 	//主进程
@@ -36,40 +39,28 @@ template <typename T>
 class wMaster : public wSingleton<T>
 {
 	public:
-		wMaster()
-		{
-			Initialize();
-		}
-
+		wMaster();
+		virtual ~wMaster();
 		void Initialize();
-
-		virtual wWorker* NewWorker() { return 0; }
 		
-		virtual ~wMaster() {}
-
-		virtual void PrepareRun() {}
-		virtual void Run() {}
-
-		virtual int InitMaster();
+		int PrepareStart();
+		void MasterStart();		//master-worker启动
+		void SingleStart();		//单进程启动
 		
-		int PrepareStart() {}
+		void WorkerStart(int n, int type = PROCESS_RESPAWN);
 
-		//master-worker启动
-		void MasterStart();
+		virtual void PrepareRun();
+		virtual void Run();
 
-		pid_t SpawnWorker(int i, const char *title, int type);
+		pid_t SpawnWorker(int i, const char *title, int type = PROCESS_RESPAWN);
 
-		//单进程启动
-		void SingleStart()
-		{
-			//
-		}
+		virtual wWorker* NewWorker(int iSlot = 0);
 
 		int CreatePidFile();
 
 		void DeletePidFile();
 
-	private:
+	protected:
 		wFile mPidFile;
 		
 		int mNcpu;
@@ -80,35 +71,94 @@ class wMaster : public wSingleton<T>
 };
 
 template <typename T>
-void wMaster<T>::Initialize()
+wMaster<T>::wMaster()
 {
-	mNcpu = sysconf(_SC_NPROCESSORS_ONLN);
-	mPid = getpid();
-	mWorkerNum = mNcpu;
-	mSlot = 0;
+	Initialize();
 }
 
 template <typename T>
-int wMaster<T>::InitMaster()
+wMaster<T>::~wMaster() {}
+
+template <typename T>
+void wMaster<T>::Initialize()
+{
+	mSlot = 0;
+	mWorkerPool = NULL;
+	mPid = getpid();
+	mWorkerNum = mNcpu = sysconf(_SC_NPROCESSORS_ONLN);
+}
+
+template <typename T>
+wWorker* wMaster<T>::NewWorker(int iSlot) 
+{
+	return new wWorker(); 
+}
+
+template <typename T>
+void wMaster<T>::PrepareStart()
 {
 	PrepareRun();
-
 	if (mWorkerNum > MAX_PROCESSES)
 	{
 		LOG_ERROR(ELOG_KEY, "[runtime] no more than %d processes can be spawned:", mWorkerNum);
 		return -1;
 	}
+
 	//初始化workerpool
 	for(int i = 0; i < mWorkerNum; ++i)
 	{
-		mWorkerPool[i] = NewWorker();
+		mWorkerPool[i] = NewWorker(i);
 	}
 
-	return 0;
+	CreatePidFile();	//pid文件
 }
 
 template <typename T>
 void wMaster<T>::MasterStart()
+{
+	struct itimerval   itv;
+
+	wSigSet stSigset;
+	stSigset.AddSet(SIGCHLD);
+	stSigset.AddSet(SIGALRM);
+	stSigset.AddSet(SIGIO);
+	stSigset.AddSet(SIGINT);
+
+	stSigset.AddSet(SIGQUIT);
+	stSigset.AddSet(SIGTERM);
+	stSigset.AddSet(SIGHUP);	//RECONFIGURE
+	stSigset.AddSet(SIGUSR2);	//CHANGEBIN
+
+    if (stSigset.Procmask() == -1) 
+    {
+        LOG_ERROR(ELOG_KEY, "[runtime] sigprocmask() failed: %s", strerror(errno));
+    }
+
+    stSigset.EmptySet();
+
+    //设置标题
+    
+    //启动worker进程
+    WorkerStart(mWorkerNum, PROCESS_RESPAWN);
+
+	//信号处理
+	while (true)
+	{
+		Run();
+
+		//退出处理（严格的延时退出）
+		
+		//阻塞方式等待信号量。会被上面设置的定时器打断
+        stSigset.Suspend();
+
+        //SIGCHLD
+        //异常重启
+
+	}
+}
+
+template <typename T>
+void wMaster<T>::WorkerStart(int n, int type)
 {
 	pid_t pid;
 
@@ -119,7 +169,7 @@ void wMaster<T>::MasterStart()
 
 	for (int i = 0; i < mWorkerNum; ++i)
 	{
-		pid = SpawnWorker(i, "worker process", PROCESS_RESPAWN);
+		pid = SpawnWorker(i, "worker process", type);
 	
         //ch.pid = mWorkerPool[mSlot].mPid;
         //ch.slot = mSlot;
@@ -127,9 +177,6 @@ void wMaster<T>::MasterStart()
         //pass_open_channel(cycle, &ch);	//发送此ch[0]到所有一创建的worker进程。
 	}
 
-	Run();
-	//信号量
-	
 }
 
 template <typename T>
@@ -143,18 +190,22 @@ pid_t wMaster<T>::SpawnWorker(int i, const char *title, int type)
 			break;
 		}
 	}
-	mSlot = s;	//当前第几个
+	mSlot = s;	//当前进程索引
 
 	wWorker *pWorker = mWorkerPool[mSlot];	//取出进程表
 
-	pWorker->InitChannel();
+	if(pWorker->InitChannel() == -1)
+	{
+		LOG_ERROR(ELOG_KEY, "[runtime] socketpair() failed while spawning: %s", strerror(errno));
+		return -1;
+	}
 
 	//设置第一个描述符的异步IO通知机制（FIOASYNC现已被O_ASYNC标志位取代）
 	u_long on = 1;
     if (ioctl(pWorker->mCh[0], FIOASYNC, &on) == -1) 
     {
         LOG_ERROR(ELOG_KEY, "[runtime] ioctl(FIOASYNC) failed while spawning \"%s\":", title, strerror(errno));
-        pWorker->mCh.Close();
+        pWorker->Close();
         return -1;
     }
 
@@ -162,27 +213,25 @@ pid_t wMaster<T>::SpawnWorker(int i, const char *title, int type)
     if (fcntl(pWorker->mCh[0], F_SETOWN, mPid) == -1) 
     {
         LOG_ERROR(ELOG_KEY, "[runtime] fcntl(F_SETOWN) failed while spawning \"%s\":", title, strerror(errno));
-        pWorker->mCh.Close();
+        pWorker->Close();
         return -1;
     }
-    
-    pid_t pid = fork();
 
+    pid_t pid = fork();
     switch (pid) 
     {
-    case -1:
-        LOG_ERROR(ELOG_KEY, "[runtime] fork() failed while spawning \"%s\":", title, strerror(errno));
-        pWorker->mCh.Close();
-        return -1;
+	    case -1:
+	        LOG_ERROR(ELOG_KEY, "[runtime] fork() failed while spawning \"%s\":", title, strerror(errno));
+	        pWorker->Close();
+	        return -1;
+	    
+	    case 0:
+	        pWorker->PrepareStart(type, (void *) &mSlot);
+	        pWorker->Start();
+	        break;
 
-    case 0:
-    	pWorker->InitWorker(type, (void *) &mSlot);
-        pWorker->PrepareStart();
-        pWorker->Start();
-        break;
-
-    default:
-        break;
+	    default:
+	        break;
     }
 
     LOG_DEBUG(ELOG_KEY, "[runtime] start %s %P", title, pid);
