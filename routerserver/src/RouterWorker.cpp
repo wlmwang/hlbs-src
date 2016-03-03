@@ -13,7 +13,8 @@ RouterWorker::RouterWorker()
 
 RouterWorker::~RouterWorker()
 {
-	//
+	SAFE_DELETE(mConfig);
+    SAFE_DELETE(mServer);
 }
 
 void RouterWorker::Initialize()
