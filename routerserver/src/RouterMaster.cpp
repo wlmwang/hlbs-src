@@ -30,7 +30,7 @@ void RouterMaster::PrepareRun()
 	size_t size;
 	u_char *p;
 	int i;
-    const char *sProcessTitle = "master process";
+    const char *sProcessTitle = "master process(router)";
 
     //config、server对象
     mConfig = RouterConfig::Instance();

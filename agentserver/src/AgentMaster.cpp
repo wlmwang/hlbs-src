@@ -13,6 +13,7 @@ AgentMaster::AgentMaster()
 
 AgentMaster::~AgentMaster()
 {
+    SAFE_DELETE(mTitle);
 	SAFE_DELETE(mConfig);
     SAFE_DELETE(mServer);
 }
@@ -30,7 +31,7 @@ void AgentMaster::PrepareRun()
 	size_t size;
 	u_char *p;
 	int i;
-    const char *sProcessTitle = "master process";
+    const char *sProcessTitle = "master process(agent)";
 
     //config、server对象
     mConfig = AgentConfig::Instance();

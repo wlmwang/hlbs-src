@@ -12,9 +12,9 @@
 
 #include "wType.h"
 #include "wMaster.h"
+#include "BaseCmd.h"
 #include "AgentConfig.h"
 #include "AgentServer.h"
-#include "BaseCmd.h"
 
 class AgentMaster : public wMaster<AgentMaster>
 {
