@@ -15,6 +15,7 @@
 #include "wMisc.h"
 #include "wSingleton.h"
 #include "wFile.h"
+#include "wShm.h"
 #include "wWorker.h"
 #include "wChannel.h"
 #include "wSigSet.h"
@@ -66,6 +67,9 @@ class wMaster : public wSingleton<T>
 		int mWorkerNum;	//worker总数量
 		int mSlot;		//进程表分配到数量
 		wWorker **mWorkerPool;	//进程表，从0开始
+		
+		wShm *mShmAddr;
+		wShmtx mMutex;	//accept mutex
 };
 
 template <typename T>
@@ -82,6 +86,7 @@ wMaster<T>::~wMaster()
 		SAFE_DELETE_VEC(mWorkerPool[i]);	//delete []mWorkerPool[i];
 	}
 	SAFE_DELETE_VEC(mWorkerPool);	//delete []mWorkerPool;
+	SAFE_DELETE(mShmAddr);
 }
 
 template <typename T>
@@ -89,6 +94,7 @@ void wMaster<T>::Initialize()
 {
 	mSlot = 0;
 	mWorkerPool = NULL;
+	mShmAddr = NULL;
 	mPid = getpid();
 	mNcpu = sysconf(_SC_NPROCESSORS_ONLN);
 }
@@ -161,15 +167,17 @@ void wMaster<T>::MasterStart()
         LOG_ERROR(ELOG_KEY, "[runtime] sigprocmask() failed: %s", strerror(errno));
     }
     stSigset.EmptySet();
-
+	
+	//防敬群锁
+	mShmAddr = new wShm(IPC_SHM, 'a', sizeof(wShmtx));
+	mMutex.Create(mShmAddr);
+	
     //启动worker进程
     WorkerStart(mWorkerNum, PROCESS_RESPAWN);
 
 	//信号处理
 	while (true)
 	{
-		Run();
-
 		//退出处理（严格的延时退出）
 		
 		//阻塞方式等待信号量。会被上面设置的定时器打断
@@ -177,6 +185,8 @@ void wMaster<T>::MasterStart()
 
         //SIGCHLD
         //异常重启
+		
+		Run();
 	}
 }
 

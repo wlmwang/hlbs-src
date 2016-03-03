@@ -6,6 +6,16 @@
 
 #include "wShmtx.h"
 
+wShmtx::wShmtx()
+{
+	Initialize();
+}
+
+wShmtx::~wShmtx()
+{
+	//
+}
+
 void wShmtx::Initialize()
 {
 	mSem = NULL;
@@ -18,7 +28,7 @@ int wShmtx::Create(wShm *pShm, int iSpin)
 	if (pAddr == 0)
 	{
 		LOG_ERROR(ELOG_KEY, "shm alloc failed: %d", sizeof(wSem));
-		exit(-1);
+		return -1;
 	}
 	mSem = (wSem *) pAddr;
 	mSpin = iSpin;

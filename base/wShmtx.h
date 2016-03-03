@@ -20,9 +20,8 @@
 class wShmtx : private wNoncopyable
 {
 	public:
-		wShmtx() {}
-		virtual ~wShmtx() {}
-
+		wShmtx();
+		virtual ~wShmtx();
 		void Initialize();
 
 		/**
