@@ -37,7 +37,7 @@ class wProcTitle : private wNoncopyable
 		int mArgc;
 		char **mOsArgv;	//原生参数
 		char **mOsEnv;	//原生环境变量
-		string *mArgv;	//堆上参数（正常取该值）
+		char **mArgv;	//堆上参数（正常取该值）
 
 		char *mOsArgvLast;
 };

@@ -13,8 +13,8 @@
 #include "wType.h"
 #include "wMaster.h"
 #include "RouterWorker.h"
-
-static const char *master_process = "master process ";
+#include "RouterConfig.h"
+#include "RouterServer.h"
 
 class RouterMaster : public wMaster<RouterMaster>
 {
@@ -30,6 +30,9 @@ class RouterMaster : public wMaster<RouterMaster>
 	
 	protected:
 		char *mTitle;
+
+		RouterConfig *mConfig;
+		RouterServer *mServer;
 };
 
 #endif

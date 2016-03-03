@@ -51,6 +51,13 @@ class wTcpServer: public wSingleton<T>
 		void Start(bool bDaemon = true);
 		
 		/**
+		 * 准备|启动服务
+		 * 用户多进程架构，防止bind失败
+		 */		
+		void PrepareMaster(string sIpAddr ,unsigned int nPort);
+		void WorkerStart(bool bDaemon = true);
+
+		/**
 		 * epoll|socket相关
 		 */
 		int InitEpoll();
@@ -223,6 +230,22 @@ void wTcpServer<T>::Broadcast(const char *pCmd, int iLen)
 }
 
 template <typename T>
+void wTcpServer<T>::PrepareMaster(string sIpAddr ,unsigned int nPort)
+{
+	LOG_INFO(ELOG_KEY, "[startup] Master Prepare start succeed");
+
+	//初始化Listen Socket
+	if(InitListen(sIpAddr ,nPort) < 0)
+	{
+		LOG_ERROR(ELOG_KEY, "[startup] InitListen failed: %s", strerror(errno));
+		exit(1);
+	}
+
+	//运行前工作
+	PrepareRun();
+}
+
+template <typename T>
 void wTcpServer<T>::PrepareStart(string sIpAddr ,unsigned int nPort)
 {
 	LOG_INFO(ELOG_KEY, "[startup] Server Prepare start succeed");
@@ -240,9 +263,82 @@ void wTcpServer<T>::PrepareStart(string sIpAddr ,unsigned int nPort)
 		LOG_ERROR(ELOG_KEY, "[startup] InitListen failed: %s", strerror(errno));
 		exit(1);
 	}
-
+	else if(mSocket != NULL)
+	{
+		//Listen Socket 添加到epoll中
+		mTcpTask = NewTcpTask(mSocket);
+		if(NULL != mTcpTask)
+		{
+			mTcpTask->SetStatus(SOCKET_STATUS_RUNNING);
+			if(mTcpTask->Socket()->SetNonBlock() < 0) 
+			{
+				LOG_ERROR(ELOG_KEY, "[startup] Set non block failed: %d, close it", mTcpTask->Socket()->SocketFD());
+				SAFE_DELETE(mTcpTask);
+				return;
+			}
+			if (AddToEpoll(mTcpTask) >= 0)
+			{
+				AddToTaskPool(mTcpTask);
+			}
+		}
+	}
 	//运行前工作
 	PrepareRun();
+}
+
+template <typename T>
+void wTcpServer<T>::WorkerStart(bool bDaemon)
+{
+	mStatus = SERVER_STATUS_RUNNING;
+	LOG_INFO(ELOG_KEY, "[startup] Master start succeed");
+	
+	//初始化epoll
+	if(InitEpoll() < 0)
+	{
+		LOG_ERROR(ELOG_KEY, "[startup] InitEpoll failed: %s", strerror(errno));
+		exit(1);
+	}
+	
+	//Listen Socket 添加到epoll中
+	if (mSocket != NULL)
+	{
+		mTcpTask = NewTcpTask(mSocket);
+		if(NULL != mTcpTask)
+		{
+			mTcpTask->SetStatus(SOCKET_STATUS_RUNNING);
+			if(mTcpTask->Socket()->SetNonBlock() < 0) 
+			{
+				LOG_ERROR(ELOG_KEY, "[startup] Set non block failed: %d, close it", mTcpTask->Socket()->SocketFD());
+				SAFE_DELETE(mTcpTask);
+				return;
+			}
+			if (AddToEpoll(mTcpTask) >= 0)
+			{
+				AddToTaskPool(mTcpTask);
+			}
+		}
+	}
+
+	//进入服务主循环
+	do {
+		Recv();
+		Run();
+		if(mIsCheckTimer) CheckTimer();
+	} while(IsRunning() && bDaemon);
+}
+
+template <typename T>
+void wTcpServer<T>::Start(bool bDaemon)
+{
+	mStatus = SERVER_STATUS_RUNNING;
+	LOG_INFO(ELOG_KEY, "[startup] Server start succeed");
+	
+	//进入服务主循环
+	do {
+		Recv();
+		Run();
+		if(mIsCheckTimer) CheckTimer();
+	} while(IsRunning() && bDaemon);
 }
 
 template <typename T>
@@ -291,7 +387,7 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	int iRet = bind(iSocketFD, (struct sockaddr *)&stSocketAddr, sizeof(stSocketAddr));
 	if(iRet < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Socket bind failed");
+		LOG_ERROR(ELOG_KEY, "[startup] Socket bind failed：%s", strerror(errno));
 		close(iSocketFD);
 		return -1;
 	}
@@ -326,21 +422,6 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	mSocket->SocketType() = LISTEN_SOCKET;
 	mSocket->SocketFlag() = RECV_DATA;
 	
-	mTcpTask = NewTcpTask(mSocket);
-	if(NULL != mTcpTask)
-	{
-		mTcpTask->SetStatus(SOCKET_STATUS_RUNNING);
-		if(mTcpTask->Socket()->SetNonBlock() < 0) 
-		{
-			LOG_ERROR(ELOG_KEY, "[startup] Set non block failed: %d, close it", iSocketFD);
-			SAFE_DELETE(mTcpTask);
-			return -1;
-		}
-		if (AddToEpoll(mTcpTask) >= 0)
-		{
-			AddToTaskPool(mTcpTask);
-		}
-	}
 	return iSocketFD;
 }
 
@@ -387,24 +468,6 @@ int wTcpServer<T>::AddToTaskPool(wTcpTask* pTcpTask)
 	
 	LOG_DEBUG(ELOG_KEY, "[runtime] fd(%d) add into task pool", pTcpTask->Socket()->SocketFD());
 	return 0;
-}
-
-template <typename T>
-void wTcpServer<T>::Start(bool bDaemon)
-{
-	mStatus = SERVER_STATUS_RUNNING;
-	LOG_INFO(ELOG_KEY, "[startup] Server start succeed");
-	
-	//进入服务主循环
-	do {
-
-		Recv();
-
-		Run();
-
-		if(mIsCheckTimer) CheckTimer();
-
-	} while(IsRunning() && bDaemon);
 }
 
 template <typename T>

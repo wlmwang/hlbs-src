@@ -142,16 +142,15 @@ template <typename T>
 void wMaster<T>::MasterStart()
 {
 	struct itimerval   itv;
-
 	wSigSet stSigset;
 
-    //初始化workerpool
 	if (mWorkerNum > MAX_PROCESSES)
 	{
 		LOG_ERROR(ELOG_KEY, "[runtime] no more than %d processes can be spawned:", mWorkerNum);
 		return;
 	}
 
+	//初始化workerpool内存空间
 	mWorkerPool = new wWorker*[mWorkerNum];
 	for(int i = 0; i < mWorkerNum; ++i)
 	{
@@ -179,6 +178,7 @@ void wMaster<T>::MasterStart()
 template <typename T>
 void wMaster<T>::WorkerStart(int n, int type)
 {
+	const char *sProcessTitle = "worker process";
 	pid_t pid;
 
 	wChannel ch;
@@ -188,7 +188,7 @@ void wMaster<T>::WorkerStart(int n, int type)
 
 	for (int i = 0; i < mWorkerNum; ++i)
 	{
-		pid = SpawnWorker(i, "worker process", type);
+		pid = SpawnWorker(i, sProcessTitle, type);
 	
         //ch.pid = mWorkerPool[mSlot].mPid;
         //ch.slot = mSlot;

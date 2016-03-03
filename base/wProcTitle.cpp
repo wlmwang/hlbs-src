@@ -17,7 +17,11 @@ wProcTitle::wProcTitle(int argc, const char *argv[])
 
 wProcTitle::~wProcTitle()
 {
-	SAFE_DELETE_VEC(mArgv);
+    for (int i = 0; i < mArgc; ++i)
+    {
+        SAFE_DELETE_VEC(mArgv[i]);    //delete []mArgv[i];
+    }
+    SAFE_DELETE_VEC(mArgv);   //delete []mArgv;
 }
 
 void wProcTitle::Initialize()
@@ -28,12 +32,16 @@ void wProcTitle::Initialize()
 
 void wProcTitle::SaveArgv()
 {
-	//TODO argv堆上赋值
-	mArgv = new string[mArgc];
-	for(int i = 0; i < mArgc; i++)
-	{
-		mArgv[i] = mOsArgv[i];
-	}
+    size_t size = 0;
+    
+    //初始化argv内存空间
+    mArgv = new char*[mArgc];
+    for(int i = 0; i < mArgc; ++i)
+    {
+        size = strlen(mOsArgv[i]) + 1;  //包含\0结尾
+        mArgv[i] = new char[size];
+        memcpy(mArgv[i], mOsArgv[i], size);
+    }
 }
 
 int wProcTitle::InitSetproctitle()

@@ -13,11 +13,8 @@
 #include "wType.h"
 #include "wLog.h"
 #include "wWorker.h"
-#include "RouterServer.h"
 #include "RouterConfig.h"
-
-//#include "RouterMaster.h"
-//#include "Svr.h"
+#include "RouterServer.h"
 
 class RouterWorker: public wWorker
 {
