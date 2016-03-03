@@ -70,6 +70,9 @@ void RouterMaster::PrepareRun()
 
     //准备工作
     mServer->PrepareMaster(mConfig->mIPAddr, mConfig->mPort);
+
+    //pid文件
+    mPidFile.FileName() = LOCK_PATH;
 }
 
 void RouterMaster::Run()

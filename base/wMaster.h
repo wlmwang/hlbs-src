@@ -132,10 +132,8 @@ void wMaster<T>::PrepareStart()
         LOG_ERROR(ELOG_KEY, "[runtime] sigprocmask() failed: %s", strerror(errno));
     }
 
-	//pid文件
-	CreatePidFile();
-
 	PrepareRun();
+	CreatePidFile();
 }
 
 template <typename T>
@@ -193,7 +191,7 @@ void wMaster<T>::WorkerStart(int n, int type)
         //ch.pid = mWorkerPool[mSlot].mPid;
         //ch.slot = mSlot;
         //ch.fd = mWorkerPool[mSlot].mCh[0];
-        //pass_open_channel(cycle, &ch);	//发送此ch[0]到所有一创建的worker进程。
+        //pass_open_channel(cycle, &ch);	//发送此ch[0]到所有一创建的worker进程
 	}
 }
 
@@ -269,9 +267,7 @@ pid_t wMaster<T>::SpawnWorker(int i, const char *title, int type)
 template <typename T>
 int wMaster<T>::CreatePidFile()
 {
-	/*
-    mPidFile.Open(PID_PATH, O_RDWR| O_CREAT);
-    if (mPidFile.FD() == -1) 
+    if (mPidFile.Open(O_RDWR| O_CREAT) <= 0) 
     {
     	LOG_DEBUG(ELOG_KEY, "[runtime] create pid file failed");
     	return -1;
@@ -283,9 +279,7 @@ int wMaster<T>::CreatePidFile()
         return -1;
     }
     mPidFile.Close();
-	*/
     return 0;
-
 }
 
 template <typename T>

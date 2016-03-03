@@ -21,10 +21,14 @@ void wFile::Initialize()
 	memset(&mInfo, 0, sizeof(struct stat));
 }
 
-int wFile::Open(const char *pFilename, int flags, mode_t mode)
+int wFile::Open(int flags, mode_t mode)
 {
-	mFileName = pFilename;
-	mFD = open(pFilename, flags, mode);
+	if (mFileName.size() <= 0)
+	{
+		return -1;
+	}
+
+	mFD = open(mFileName.c_str(), flags, mode);
 	if (mFD == -1)
 	{
 		mErrno = errno;

@@ -23,7 +23,7 @@ class wFile : private wNoncopyable
 		void Initialize();
 		
 		//成功则返回0, 失败返回-1, 错误原因存于mErrno
-		int Open(const char *pFilename, int flags = O_RDWR| O_APPEND| O_EXCL, mode_t mode = 644);
+		int Open(int flags = O_RDWR| O_APPEND| O_EXCL, mode_t mode = 644);
 
 		//成功则返回0, 失败返回-1, 错误原因存于errno
 		int Close();
@@ -47,13 +47,8 @@ class wFile : private wNoncopyable
 		 * @return 成功时返回写的字节数.失败时返回-1（EINTR 说明由中断引起的失败；EPIPE表示网络连接出现了问题，如对方已经关闭了连接）
 		 */
 		ssize_t Write(const char *pBuf, size_t nbytes, off_t offset);
-
-		struct stat Stat()
-		{
-			return mInfo;
-		}
 		
-		string FileName()
+		string &FileName()
 		{
 			return mFileName;
 		}
@@ -61,6 +56,11 @@ class wFile : private wNoncopyable
 		int FD()
 		{
 			return mFD;
+		}
+
+		struct stat Stat()
+		{
+			return mInfo;
 		}
 
 		mode_t Mode()
