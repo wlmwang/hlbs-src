@@ -20,9 +20,6 @@
 #define CONF_XML "../config/conf.xml"
 #define SVR_XML "../config/svr.xml"
 
-/**
- * 配置文件读取的数据结构
- */
 class RouterConfig: public wConfig<RouterConfig>
 {
 	public:

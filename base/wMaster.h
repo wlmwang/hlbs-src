@@ -116,24 +116,15 @@ void wMaster<T>::PrepareStart()
 {
 	mWorkerNum = mNcpu;
 	mPid = getpid();
-	
-	wSigSet stSigset;
-	stSigset.AddSet(SIGCHLD);
-	stSigset.AddSet(SIGALRM);
-	stSigset.AddSet(SIGIO);
-	stSigset.AddSet(SIGINT);
-	stSigset.AddSet(SIGQUIT);
-	stSigset.AddSet(SIGTERM);
-	stSigset.AddSet(SIGHUP);	//RECONFIGURE
-	stSigset.AddSet(SIGUSR2);	//CHANGEBIN
-
-    if (stSigset.Procmask() == -1) 
-    {
-        LOG_ERROR(ELOG_KEY, "[runtime] sigprocmask() failed: %s", strerror(errno));
-    }
 
 	PrepareRun();
 	CreatePidFile();
+}
+
+template <typename T>
+void wMaster<T>::SingleStart()
+{
+	Run();
 }
 
 template <typename T>
@@ -154,6 +145,22 @@ void wMaster<T>::MasterStart()
 	{
 		mWorkerPool[i] = NewWorker(i);
 	}
+
+	//信号阻塞
+	stSigset.AddSet(SIGCHLD);
+	stSigset.AddSet(SIGALRM);
+	stSigset.AddSet(SIGIO);
+	stSigset.AddSet(SIGINT);
+	stSigset.AddSet(SIGQUIT);
+	stSigset.AddSet(SIGTERM);
+	stSigset.AddSet(SIGHUP);	//RECONFIGURE
+	stSigset.AddSet(SIGUSR2);	//CHANGEBIN
+
+    if (stSigset.Procmask() == -1) 
+    {
+        LOG_ERROR(ELOG_KEY, "[runtime] sigprocmask() failed: %s", strerror(errno));
+    }
+    stSigset.EmptySet();
 
     //启动worker进程
     WorkerStart(mWorkerNum, PROCESS_RESPAWN);
@@ -274,7 +281,7 @@ int wMaster<T>::CreatePidFile()
     }
 
 	string sPid = Itos((int) mPid);
-    if (mPidFile.Write(sPid.c_str(), s.size(), 0) == -1) 
+    if (mPidFile.Write(sPid.c_str(), sPid.size(), 0) == -1) 
     {
         return -1;
     }

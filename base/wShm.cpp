@@ -166,12 +166,12 @@ char *wShm::AttachShm()
 	return mShmhead->mUsedOff;
 }
 
-char *AllocShm(size_t iLen)
+char *wShm::AllocShm(size_t iLen)
 {
-	if(mShmhead.mUsedOff + iLen < mShmhead.mEnd)
+	if(mShmhead->mUsedOff + iLen < mShmhead->mEnd)
 	{
-		char *pAddr = mShmhead.mUsedOff;
-		mShmhead.mUsedOff += iLen;
+		char *pAddr = mShmhead->mUsedOff;
+		mShmhead->mUsedOff += iLen;
 		return pAddr;
 	}
 
@@ -181,15 +181,15 @@ char *AllocShm(size_t iLen)
 
 void wShm::FreeShm()
 {
-	if(mShmhead == 0 || mShmhead.mStart == 0)
+	if(mShmhead == 0 || mShmhead->mStart == 0)
 	{
 		return;
 	}
 
 	//对共享操作结束，分离该shmid_ds与该进程关联计数器
-    if (shmdt(mShmhead.mStart) == -1)
+    if (shmdt(mShmhead->mStart) == -1)
 	{
-		LOG_ERROR(ELOG_KEY, "shmdt(%d) failed", mShmhead.mStart);
+		LOG_ERROR(ELOG_KEY, "shmdt(%d) failed", mShmhead->mStart);
     }
 	
 	//删除该shmid_ds共享存储段

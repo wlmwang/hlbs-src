@@ -30,7 +30,7 @@ class AgentServer: public wTcpServer<AgentServer>
 		virtual ~AgentServer();
 		
 		void Initialize();
-		void InitShareMemory();
+		void InitShm();
 
 		virtual void PrepareRun();
 		

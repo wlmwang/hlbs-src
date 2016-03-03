@@ -7,7 +7,6 @@
 #ifndef _AGENT_CONFIG_H_
 #define _AGENT_CONFIG_H_
 
-#include <string.h>
 #include <vector>
 #include <map>
 
@@ -18,9 +17,9 @@
 #include "wSingleton.h"
 #include "SvrCmd.h"
 
-/**
- * 配置文件读取的数据结构
- */
+#define CONF_XML "../config/conf.xml"
+#define ROUTER_XML "../config/router.xml"
+
 class AgentConfig: public wConfig<AgentConfig>
 {
 	public:
@@ -59,20 +58,13 @@ class AgentConfig: public wConfig<AgentConfig>
 		//初始化
 		void Initialize();
 
-		AgentConfig()
-		{
-            Initialize();
-		}
+		AgentConfig();
 
 		void Final();
-		virtual ~AgentConfig() 
-		{
-			Final();
-			SAFE_DELETE(mDoc);
-		}
+		virtual ~AgentConfig();
 
-		void ParseBaseConfig();
-		void ParseRouterConfig();
+		void GetBaseConf();
+		void GetRouterConf();
 
 		int InitSvr(SvrNet_t *pSvr, int iLen = 0);
 		int ReloadSvr(SvrNet_t *pSvr, int iLen = 0);

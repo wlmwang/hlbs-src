@@ -39,11 +39,15 @@ int main(int argc, const char *argv[])
 	
 	//master
 	RouterMaster *pMaster = RouterMaster::Instance();
+	if(pMaster == NULL) 
+	{
+		LOG_ERROR(ELOG_KEY, "[startup] Get RouterMaster instance failed");
+		exit(1);
+	}
 
 	pMaster->PrepareStart();
 	pMaster->MasterStart();
 
 	LOG_SHUTDOWN_ALL;
-
 	return 0;
 }

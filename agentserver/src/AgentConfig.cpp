@@ -11,6 +11,17 @@
 #include "tinyxml.h"	//lib tinyxml
 #include "AgentConfig.h"
 
+AgentConfig::AgentConfig()
+{
+	Initialize();
+}
+
+AgentConfig::~AgentConfig()
+{
+	Final();
+	SAFE_DELETE(mDoc);
+}
+
 void AgentConfig::Initialize()
 {
 	mPort = 0;
@@ -21,19 +32,19 @@ void AgentConfig::Initialize()
 	mDoc = new TiXmlDocument();
 }
 
-void AgentConfig::ParseBaseConfig()
+void AgentConfig::GetBaseConf()
 {
-	bool bLoadOK = mDoc->LoadFile("../config/conf.xml");
+	bool bLoadOK = mDoc->LoadFile(CONF_XML);
 	if (!bLoadOK)
 	{
-		cout << "Load config file(../config/conf.xml) failed" << endl;
+		LOG_ERROR(ELOG_KEY, "[startup] Load config file(conf.xml) failed");
 		exit(1);
 	}
 
 	TiXmlElement *pRoot = mDoc->FirstChildElement();
 	if (NULL == pRoot)
 	{
-		cout << "Read root from config file(../config/conf.xml) failed" << endl;
+		LOG_ERROR(ELOG_KEY, "[startup] Read root from config file(conf.xml) failed");
 		exit(1);
 	}
 
@@ -58,13 +69,13 @@ void AgentConfig::ParseBaseConfig()
 			}
 			else
 			{
-				cout << "Warning: error log config" << endl;
+				LOG_ERROR(ELOG_KEY, "[startup] Get log config from conf.xml error");
 			}
 		}
 	}
 	else
 	{
-		cout << "Get log configure from config file failed" << endl;
+		LOG_ERROR(ELOG_KEY, "[startup] Get log config from conf.xml failed");
 		exit(1);
 	}
 
@@ -82,23 +93,23 @@ void AgentConfig::ParseBaseConfig()
 		}
 		else
 		{
-			LOG_ERROR("error", "error ip or port config");
+			LOG_ERROR(ELOG_KEY, "[startup] Get SERVER ip or port from conf.xml failed");
 		}
 		mBacklog = szBacklog != NULL ? atoi(szBacklog): mBacklog;
 		mWorkers = szWorkers != NULL ? atoi(szWorkers): mWorkers;
 	}
 	else
 	{
-		LOG_ERROR("error", "Get Server ip and port from config file failed");
+		LOG_ERROR(ELOG_KEY, "[startup] Get SERVER node from conf.xml failed");
 	}
 }
 
-void AgentConfig::ParseRouterConfig()
+void AgentConfig::GetRouterConf()
 {
-	bool bLoadOK = mDoc->LoadFile("../config/router.xml");
+	bool bLoadOK = mDoc->LoadFile(ROUTER_XML);
 	if (!bLoadOK)
 	{
-		LOG_ERROR("error", "Load config file(../config/router.xml) failed");
+		LOG_ERROR(ELOG_KEY, "[startup] Load config file(router.xml) failed");
 		exit(1);
 	}
 
@@ -123,14 +134,14 @@ void AgentConfig::ParseRouterConfig()
 			}
 			else
 			{
-				LOG_ERROR("default", "error server config: line(%d)!", i+1);
+				LOG_ERROR(ELOG_KEY, "[startup] error server config: line(%d)", i+1);
 			}
 			i++;
 		}
 	}
 	else
 	{
-		LOG_ERROR("error", "Get server from config file failed");
+		LOG_ERROR(ELOG_KEY, "[startup] Get ROUTERS node from router.xml failed");
 		exit(1);
 	}
 	FixContainer();

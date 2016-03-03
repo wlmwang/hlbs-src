@@ -47,11 +47,8 @@ void wWorker::PrepareStart(int type, void *data)
 
 void wWorker::Start() 
 {
-	while(true)
-	{
-		Run();
-	}
-
+	Run();
+	
 	//进程退出
 	exit(0);
 }

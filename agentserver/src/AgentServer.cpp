@@ -15,18 +15,16 @@
 #include "wMisc.h"
 #include "AgentServer.h"
 
-AgentServer::AgentServer():wTcpServer<AgentServer>("路由服务器")
+AgentServer::AgentServer() : wTcpServer<AgentServer>("路由服务器")
 {
-	if(mStatus == SERVER_STATUS_INIT)
-	{
-		mConfig = 0;
-		mRouterConn = 0;
-		mInShm = 0;
-		mOutShm = 0;
-		mInMsgQ = 0;
-		mOutMsgQ = 0;
-		Initialize();
-	}
+	mConfig = 0;
+	mRouterConn = 0;
+	mInShm = 0;
+	mOutShm = 0;
+	mInMsgQ = 0;
+	mOutMsgQ = 0;
+
+	Initialize();
 }
 
 AgentServer::~AgentServer() 
@@ -38,9 +36,6 @@ AgentServer::~AgentServer()
 	SAFE_DELETE(mOutMsgQ);
 }
 
-/**
- * 初始化
- */
 void AgentServer::Initialize()
 {
 	mTicker = GetTickCount();
@@ -48,31 +43,31 @@ void AgentServer::Initialize()
 
 	mRouterConn = new wMTcpClient<AgentServerTask>();
 	mConfig = AgentConfig::Instance();
-	InitShareMemory();
+	InitShm();
 }
 
-void AgentServer::InitShareMemory()
+void AgentServer::InitShm()
 {
 	mInShm = new wShm(IPC_SHM, 'i', MSG_QUEUE_LEN);
 	mOutShm = new wShm(IPC_SHM, 'o', MSG_QUEUE_LEN);
 	char *pAddr = NULL;
-	if((mInShm->CreateShm() != NULL) && ((pAddr = mInShm.AllocShm(MSG_QUEUE_LEN)) != NULL))
+	if((mInShm->CreateShm() != NULL) && ((pAddr = mInShm->AllocShm(MSG_QUEUE_LEN)) != NULL))
 	{
 		mInMsgQ = new wMsgQueue();
 		mInMsgQ->SetBuffer(pAddr, MSG_QUEUE_LEN);
 	}
 	else
 	{
-		LOG_ERROR("error","[startup] Create (In) Share Memory failed");
+		LOG_ERROR(ELOG_KEY, "[startup] Create (In) Share Memory failed");
 	}
-	if((mOutShm->CreateShm() != NULL) && ((pAddr = mOutShm.AllocShm(MSG_QUEUE_LEN)) != NULL))
+	if((mOutShm->CreateShm() != NULL) && ((pAddr = mOutShm->AllocShm(MSG_QUEUE_LEN)) != NULL))
 	{
 		mOutMsgQ = new wMsgQueue();
 		mOutMsgQ->SetBuffer(pAddr, MSG_QUEUE_LEN);
 	}
 	else
 	{
-		LOG_ERROR("error","[startup] Create (Out) Share Memory failed");
+		LOG_ERROR(ELOG_KEY, "[startup] Create (Out) Share Memory failed");
 	}
 }
 
@@ -87,7 +82,7 @@ void AgentServer::ConnectRouter()
 	AgentConfig::RouterConf_t* pRconf = mConfig->GetOneRouterConf();
 	if (pRconf == NULL)
 	{
-		LOG_ERROR("error", "[startup] Get RouterServer Config failed!");
+		LOG_ERROR(ELOG_KEY, "[startup] Get RouterServer Config failed");
 		exit(1);
 	}
 
@@ -95,11 +90,11 @@ void AgentServer::ConnectRouter()
 	bool bRet = mRouterConn->GenerateClient(SERVER_ROUTER, "RouterFromAgent", pRconf->mIPAddr, pRconf->mPort);
 	if (!bRet)
 	{
-		LOG_ERROR("error", "[startup] Connect to RouterServer failed");
+		LOG_ERROR(ELOG_KEY, "[startup] Connect to RouterServer failed");
 		exit(1);
 	}
 
-	LOG_ERROR("server", "[connect] Connect to RouterServer success ip(%s) port(%d)", pRconf->mIPAddr, pRconf->mPort);
+	//LOG_ERROR("server", "[connect] Connect to RouterServer success ip(%s) port(%d)", pRconf->mIPAddr, pRconf->mPort);
 	//发送初始化svr配置请求
 	InitSvrReq();
 }
@@ -173,14 +168,14 @@ void AgentServer::CheckQueue()
 		//取消息出错
 		if(iRet < 0) 
 		{
-			LOG_ERROR("error", "[runtime] get one message from msg queue failed: %d", iRet);
+			LOG_ERROR(ELOG_KEY, "[runtime] get one message from msg queue failed: %d", iRet);
 			return;
 		}
 
 		//如果消息大小不正确
 		if(iRet != iLen) 
 		{
-			LOG_ERROR("error", "[runtime] get a msg with invalid len %d from msg queue", iRet);
+			LOG_ERROR(ELOG_KEY, "[runtime] get a msg with invalid len %d from msg queue", iRet);
 			return;
 		}
 		

@@ -15,6 +15,7 @@
 #include "RouterWorker.h"
 #include "RouterConfig.h"
 #include "RouterServer.h"
+#include "BaseCmd.h"
 
 class RouterMaster : public wMaster<RouterMaster>
 {
