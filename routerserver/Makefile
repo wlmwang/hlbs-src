@@ -40,7 +40,10 @@ OBJECTS=./debug/RouterMain.o \
 		./debug/wLog.o \
 		./debug/wMisc.o  \
 		./debug/wTcpTask.o  \
-		./debug/wSocket.o
+		./debug/wSocket.o 	\
+		./debug/wSignal.o 	\
+		./debug/wShmtx.o 	\
+		./debug/wShm.o
 
 $(TARGET): $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $(TARGET) $(LIBS)
@@ -91,6 +94,15 @@ all: $(TARGET)
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wSocket.o: $(BASEPATH)/wSocket.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wSignal.o: $(BASEPATH)/wSignal.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wShmtx.o: $(BASEPATH)/wShmtx.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wShm.o: $(BASEPATH)/wShm.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 clean:

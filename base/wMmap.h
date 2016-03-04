@@ -4,8 +4,8 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#ifndef _W_SHM_H_
-#define _W_SHM_H_
+#ifndef _W_MMAP_H_
+#define _W_MMAP_H_
 
 #include <sys/mman.h>
 

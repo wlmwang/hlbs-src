@@ -36,7 +36,7 @@ class wSem : private wNoncopyable
 		
 		~wSem() 
 		{
-			sem_destroy(&mSem)
+			sem_destroy(&mSem);
 		}
 
 		/**

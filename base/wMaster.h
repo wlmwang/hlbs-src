@@ -16,6 +16,7 @@
 #include "wSingleton.h"
 #include "wFile.h"
 #include "wShm.h"
+#include "wShmtx.h"
 #include "wWorker.h"
 #include "wChannel.h"
 #include "wSigSet.h"
@@ -55,8 +56,8 @@ class wMaster : public wSingleton<T>
 
 		virtual wWorker* NewWorker(int iSlot = 0);
 
+		virtual void InitSignals();
 		int CreatePidFile();
-
 		void DeletePidFile();
 
 	protected:
@@ -67,7 +68,9 @@ class wMaster : public wSingleton<T>
 		int mWorkerNum;	//worker总数量
 		int mSlot;		//进程表分配到数量
 		wWorker **mWorkerPool;	//进程表，从0开始
-		
+		wSignal::signal_t *mSig_t[32];	//信号处理，最多可注册32个信号处理
+
+		int mUseMutex;
 		wShm *mShmAddr;
 		wShmtx mMutex;	//accept mutex
 };
@@ -86,6 +89,12 @@ wMaster<T>::~wMaster()
 		SAFE_DELETE_VEC(mWorkerPool[i]);	//delete []mWorkerPool[i];
 	}
 	SAFE_DELETE_VEC(mWorkerPool);	//delete []mWorkerPool;
+
+	for (int i = 0; i < 32; ++i)
+	{
+		SAFE_DELETE(mSig_t[i]);
+	}
+
 	SAFE_DELETE(mShmAddr);
 }
 
@@ -95,8 +104,11 @@ void wMaster<T>::Initialize()
 	mSlot = 0;
 	mWorkerPool = NULL;
 	mShmAddr = NULL;
+	mUseMutex = 1;
 	mPid = getpid();
 	mNcpu = sysconf(_SC_NPROCESSORS_ONLN);
+
+	memset(mSig_t, 0, 32 * sizeof(void *));
 }
 
 template <typename T>
@@ -124,7 +136,73 @@ void wMaster<T>::PrepareStart()
 	mPid = getpid();
 
 	PrepareRun();
+
+	InitSignals();
 	CreatePidFile();
+}
+
+template <typename T>
+void wMaster<T>::InitSignals()
+{
+	if (mSig_t == NULL)
+	{
+		return;
+	}
+
+	//初始化信号
+	wSignal stSignal;
+	wSignal::signal_t *pSig;
+
+	pSig = new wSignal::signal_t(SIGHUP, "SIGHUP", "reload", SignalHandler);
+	if(stSignal.AddSig_t(pSig) != -1)
+	{
+		mSig_t[0] = pSig;
+	}
+	pSig = new wSignal::signal_t(SIGTERM, "SIGTERM", "stop", SignalHandler);
+	if(stSignal.AddSig_t(pSig) != -1)
+	{
+		mSig_t[1] = pSig;
+	}
+	pSig = new wSignal::signal_t(SIGQUIT, "SIGQUIT", "quit", SignalHandler);
+	if(stSignal.AddSig_t(pSig) != -1)
+	{
+		mSig_t[2] = pSig;
+	}
+	pSig = new wSignal::signal_t(SIGUSR1, "SIGUSR1", "reopen", SignalHandler);
+	if(stSignal.AddSig_t(pSig) != -1)
+	{
+		mSig_t[3] = pSig;
+	}
+	pSig = new wSignal::signal_t(SIGALRM, "SIGALRM", "", SignalHandler);
+	if(stSignal.AddSig_t(pSig) != -1)
+	{
+		mSig_t[4] = pSig;
+	}
+	pSig = new wSignal::signal_t(SIGINT, "SIGINT", "", SignalHandler);
+	if(stSignal.AddSig_t(pSig) != -1)
+	{
+		mSig_t[5] = pSig;
+	}
+	pSig = new wSignal::signal_t(SIGIO, "SIGIO", "", SignalHandler);
+	if(stSignal.AddSig_t(pSig) != -1)
+	{
+		mSig_t[6] = pSig;
+	}
+	pSig = new wSignal::signal_t(SIGCHLD, "SIGCHLD", "", SignalHandler);
+	if(stSignal.AddSig_t(pSig) != -1)
+	{
+		mSig_t[7] = pSig;
+	}
+	pSig = new wSignal::signal_t(SIGSYS, "SIGSYS", "", SIG_IGN);
+	if(stSignal.AddSig_t(pSig) != -1)
+	{
+		mSig_t[8] = pSig;
+	}
+	pSig = new wSignal::signal_t(SIGPIPE, "SIGPIPE", "", SIG_IGN);
+	if(stSignal.AddSig_t(pSig) != -1)
+	{
+		mSig_t[9] = pSig;
+	}
 }
 
 template <typename T>
@@ -160,7 +238,7 @@ void wMaster<T>::MasterStart()
 	stSigset.AddSet(SIGQUIT);
 	stSigset.AddSet(SIGTERM);
 	stSigset.AddSet(SIGHUP);	//RECONFIGURE
-	stSigset.AddSet(SIGUSR2);	//CHANGEBIN
+	stSigset.AddSet(SIGUSR1);	//
 
     if (stSigset.Procmask() == -1) 
     {
@@ -169,7 +247,7 @@ void wMaster<T>::MasterStart()
     stSigset.EmptySet();
 	
 	//防敬群锁
-	mShmAddr = new wShm(IPC_SHM, 'a', sizeof(wShmtx));
+	mShmAddr = new wShm(WAIT_MUTEX, 'a', sizeof(wShmtx));
 	mMutex.Create(mShmAddr);
 	
     //启动worker进程

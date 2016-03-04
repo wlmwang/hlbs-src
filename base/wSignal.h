@@ -13,41 +13,41 @@
 #include "wLog.h"
 #include "wNoncopyable.h"
 
-/*
-typedef struct {
-    int     signo;
-    char   *signame;	//信号的字符串表现形式，如"SIGIO"
-    char   *name;		//信号的名称，如"stop"
-    void  (*handler)(int signo);//信号处理函数
-} signal_t;
-*/
+void SignalHandler(int signo);
 
 class wSignal : private wNoncopyable
 {
 	public:
-		//SIG_DFL(采用缺省的处理方式)，也可以为SIG_IGN
-		wSignal(__sighandler_t  func)
+		struct signal_t
 		{
-			sigemptyset(&mSigAct.sa_mask);
-			mSigAct.sa_handler = func;
-			mSigAct.sa_flags = 0;
-		}
+		    int     mSigno;
+		    char   *mSigname;	//信号的字符串表现形式，如"SIGIO"
+		    char   *mName;		//信号的名称，如"stop"
+		    __sighandler_t mHandler;
 
-		//添加屏蔽集
-		int AddMaskSet(int signo)
-		{
-			return sigaddset(&mSigAct.sa_mask, signo);
-		}
+		    signal_t(int signo, const char *signame, const char *name, __sighandler_t func)
+		    {
+		    	mSigno = signo;
+		    	mSigname = (char *) signame;
+		    	mName = (char *) name;
+		    	mHandler = func;
+		    }
+		};
+
+		virtual ~wSignal();
+		wSignal();
+		wSignal(__sighandler_t  func);	//SIG_DFL(采用缺省的处理方式)，也可以为SIG_IGN
+
+		int AddMaskSet(int signo);	//添加屏蔽集
+		
+		int AddHandler(__sighandler_t  func);
 
 		//添加信号处理
-		int AddSignal(int signo, struct sigaction *oact = NULL)
-		{
-			return sigaction(signo, &mSigAct, oact);
-		}
+		int AddSigno(int signo, struct sigaction *oact = NULL);
+		
+		int AddSig_t(const signal_t *pSig);
 
-		virtual ~wSignal() {}
-
-	private:
+	protected:
 		struct sigaction mSigAct;
 };
 

@@ -146,6 +146,8 @@ typedef signed long long int SLLWORD;
 
 #define SETPROCTITLE_PAD       '\0'
 
+#define WAIT_MUTEX "../wait_mutex.shm.ipc"
+
 extern char **environ;
 
 //命名空间

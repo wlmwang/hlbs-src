@@ -38,6 +38,7 @@ OBJECTS=./debug/AgentMain.o \
 		./debug/wMisc.o  \
 		./debug/wTcpTask.o  \
 		./debug/wSocket.o \
+		./debug/wSignal.o 	\
 		./debug/wShm.o
 
 $(TARGET): $(OBJECTS)
@@ -85,6 +86,9 @@ all: $(TARGET)
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wSocket.o: $(BASEPATH)/wSocket.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wSignal.o: $(BASEPATH)/wSignal.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wShm.o: $(BASEPATH)/wShm.cpp
