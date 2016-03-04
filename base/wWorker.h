@@ -12,15 +12,16 @@
 
 #include "wType.h"
 #include "wLog.h"
+#include "wSigSet.h"
 #include "wChannel.h"
 #include "wNoncopyable.h"
+#include "wMaster.h"
 
 class wWorker : public wNoncopyable
 {
-	//friend class wMaster;
 	public:
 		wWorker();
-		void Initialize();
+		void Initialize(int iWorkerNum = 0, wWorker **pWorkerPool = NULL, int iUseMutex = 1, wShm *pShmAddr = NULL, wShmtx *pMutex = NULL);
 		virtual ~wWorker();
 
 		virtual void PrepareRun();
@@ -31,13 +32,17 @@ class wWorker : public wNoncopyable
 		void Start();
 
 		int InitChannel();
-
-	//protected:
 	public:
 		wChannel mCh;	//worker进程channel
 		
-		int mSlot;
 		pid_t mPid;
+		int mSlot;
+		int mWorkerNum;
+		wWorker **mWorkerPool;	//进程表，从0开始
+		int mUseMutex;
+		wShm *mShmAddr;
+		wShmtx mMutex;	//accept mutex
+
 		int mExited;
 		int mRespawn;	//退出是否重启
 };

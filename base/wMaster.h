@@ -53,9 +53,9 @@ class wMaster : public wSingleton<T>
 		virtual void Run();
 
 		pid_t SpawnWorker(int i, const char *title, int type = PROCESS_RESPAWN);
-
 		virtual wWorker* NewWorker(int iSlot = 0);
 
+		void PassOpenChannel(wChannel::channel_t *ch);
 		virtual void InitSignals();
 		int CreatePidFile();
 		void DeletePidFile();
@@ -68,11 +68,10 @@ class wMaster : public wSingleton<T>
 		int mWorkerNum;	//worker总数量
 		int mSlot;		//进程表分配到数量
 		wWorker **mWorkerPool;	//进程表，从0开始
-		wSignal::signal_t *mSig_t[32];	//信号处理，最多可注册32个信号处理
 
 		int mUseMutex;
 		wShm *mShmAddr;
-		wShmtx mMutex;	//accept mutex
+		wShmtx *mMutex;	//accept mutex
 };
 
 template <typename T>
@@ -90,12 +89,8 @@ wMaster<T>::~wMaster()
 	}
 	SAFE_DELETE_VEC(mWorkerPool);	//delete []mWorkerPool;
 
-	for (int i = 0; i < 32; ++i)
-	{
-		SAFE_DELETE(mSig_t[i]);
-	}
-
 	SAFE_DELETE(mShmAddr);
+	SAFE_DELETE(mMutex);
 }
 
 template <typename T>
@@ -104,11 +99,10 @@ void wMaster<T>::Initialize()
 	mSlot = 0;
 	mWorkerPool = NULL;
 	mShmAddr = NULL;
+	mMutex = NULL;
 	mUseMutex = 1;
 	mPid = getpid();
 	mNcpu = sysconf(_SC_NPROCESSORS_ONLN);
-
-	memset(mSig_t, 0, 32 * sizeof(void *));
 }
 
 template <typename T>
@@ -137,71 +131,21 @@ void wMaster<T>::PrepareStart()
 
 	PrepareRun();
 
-	InitSignals();
+	//InitSignals();
 	CreatePidFile();
 }
 
 template <typename T>
 void wMaster<T>::InitSignals()
 {
-	if (mSig_t == NULL)
-	{
-		return;
-	}
-
-	//初始化信号
-	wSignal stSignal;
 	wSignal::signal_t *pSig;
-
-	pSig = new wSignal::signal_t(SIGHUP, "SIGHUP", "reload", SignalHandler);
-	if(stSignal.AddSig_t(pSig) != -1)
+	wSignal stSignal;
+	for (pSig = g_signals; pSig->mSigno != 0; ++pSig)
 	{
-		mSig_t[0] = pSig;
-	}
-	pSig = new wSignal::signal_t(SIGTERM, "SIGTERM", "stop", SignalHandler);
-	if(stSignal.AddSig_t(pSig) != -1)
-	{
-		mSig_t[1] = pSig;
-	}
-	pSig = new wSignal::signal_t(SIGQUIT, "SIGQUIT", "quit", SignalHandler);
-	if(stSignal.AddSig_t(pSig) != -1)
-	{
-		mSig_t[2] = pSig;
-	}
-	pSig = new wSignal::signal_t(SIGUSR1, "SIGUSR1", "reopen", SignalHandler);
-	if(stSignal.AddSig_t(pSig) != -1)
-	{
-		mSig_t[3] = pSig;
-	}
-	pSig = new wSignal::signal_t(SIGALRM, "SIGALRM", "", SignalHandler);
-	if(stSignal.AddSig_t(pSig) != -1)
-	{
-		mSig_t[4] = pSig;
-	}
-	pSig = new wSignal::signal_t(SIGINT, "SIGINT", "", SignalHandler);
-	if(stSignal.AddSig_t(pSig) != -1)
-	{
-		mSig_t[5] = pSig;
-	}
-	pSig = new wSignal::signal_t(SIGIO, "SIGIO", "", SignalHandler);
-	if(stSignal.AddSig_t(pSig) != -1)
-	{
-		mSig_t[6] = pSig;
-	}
-	pSig = new wSignal::signal_t(SIGCHLD, "SIGCHLD", "", SignalHandler);
-	if(stSignal.AddSig_t(pSig) != -1)
-	{
-		mSig_t[7] = pSig;
-	}
-	pSig = new wSignal::signal_t(SIGSYS, "SIGSYS", "", SIG_IGN);
-	if(stSignal.AddSig_t(pSig) != -1)
-	{
-		mSig_t[8] = pSig;
-	}
-	pSig = new wSignal::signal_t(SIGPIPE, "SIGPIPE", "", SIG_IGN);
-	if(stSignal.AddSig_t(pSig) != -1)
-	{
-		mSig_t[9] = pSig;
+		if(stSignal.AddSig_t(pSig) != -1)
+		{
+			LOG_ERROR(ELOG_KEY, "[runtime] sigaction(%s) failed, ignored", pSig->mSigname);
+		}
 	}
 }
 
@@ -248,22 +192,18 @@ void wMaster<T>::MasterStart()
 	
 	//防敬群锁
 	mShmAddr = new wShm(WAIT_MUTEX, 'a', sizeof(wShmtx));
-	mMutex.Create(mShmAddr);
+	mMutex = new wShmtx();
+	mMutex->Create(mShmAddr);
 	
     //启动worker进程
     WorkerStart(mWorkerNum, PROCESS_RESPAWN);
 
+    int delay = 0;
+    int live = 1;
+
 	//信号处理
 	while (true)
 	{
-		//退出处理（严格的延时退出）
-		
-		//阻塞方式等待信号量。会被上面设置的定时器打断
-        stSigset.Suspend();
-
-        //SIGCHLD
-        //异常重启
-		
 		Run();
 	}
 }
@@ -274,20 +214,39 @@ void wMaster<T>::WorkerStart(int n, int type)
 	const char *sProcessTitle = "worker process";
 	pid_t pid;
 
-	wChannel ch;
-	memset(&ch, 0, sizeof(wChannel));
+	wChannel::channel_t ch;
+	memset(&ch, 0, sizeof(wChannel::channel_t));
 
-	//ch.mCommand = CMD_OPEN_CHANNEL;	//打开channel，新的channel
+	ch.mCommand = CMD_OPEN_CHANNEL;	//打开channel，新的channel
 
 	for (int i = 0; i < mWorkerNum; ++i)
 	{
 		pid = SpawnWorker(i, sProcessTitle, type);
 	
-        //ch.pid = mWorkerPool[mSlot].mPid;
-        //ch.slot = mSlot;
-        //ch.fd = mWorkerPool[mSlot].mCh[0];
-        //pass_open_channel(cycle, &ch);	//发送此ch[0]到所有一创建的worker进程
+		ch.mSlot = mSlot;
+        ch.mPid = mWorkerPool[mSlot]->mPid;	//子进程pid
+        ch.mFD = mWorkerPool[mSlot]->mCh[0];//子进程channel
+
+        PassOpenChannel(&ch);	//发送此ch[0]给所有已创建的worker进程
 	}
+}
+
+template <typename T>
+void wMaster<T>::PassOpenChannel(wChannel::channel_t *ch)
+{
+    for (int i = 0; i < mWorkerNum; i++) 
+    {
+        if (i == mSlot || mWorkerPool[i]->mPid == -1 || mWorkerPool[i]->mCh[0] == -1)
+        {
+            continue;
+        }
+
+        LOG_DEBUG(ELOG_KEY, "[runtime] pass channel s:%d pid:%P fd:%d to s:%i pid:%P fd:%d", 
+        	ch->mSlot, ch->mPid, ch->mFD, i, mWorkerPool[i]->mPid, mWorkerPool[i]->mCh[0]);
+        
+        /* TODO: EAGAIN */
+        mWorkerPool[i]->mCh.Send(mWorkerPool[i]->mCh[0], ch, sizeof(wChannel::channel_t));
+    }
 }
 
 template <typename T>
@@ -337,6 +296,8 @@ pid_t wMaster<T>::SpawnWorker(int i, const char *title, int type)
 	        return -1;
 	    
 	    case 0:
+	    	//初始化
+	    	pWorker->Initialize(mWorkerNum, mWorkerPool, mUseMutex, mShmAddr, mMutex);
 	        pWorker->PrepareStart(type, (void *) &mSlot);
 	        pWorker->Start();
 	        break;

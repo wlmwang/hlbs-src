@@ -51,4 +51,15 @@ class wSignal : private wNoncopyable
 		struct sigaction mSigAct;
 };
 
+//信号集
+extern wSignal::signal_t g_signals[];
+
+extern int g_reopen;
+extern int g_terminate;
+extern int g_quit;
+extern int g_reconfigure;
+extern int g_sigalrm;
+extern int g_sigio;
+extern int g_reap;
+
 #endif
