@@ -91,14 +91,14 @@ void wWorker::PrepareStart(int type, void *data)
             continue;
         }
 
-        if (close(mWorkerPool[n].mCh[1]) == -1) 
+        if (close(mWorkerPool[n]->mCh[1]) == -1) 
         {
             LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed: %s", strerror(errno));
         }
     }
 
     //关闭属于该worker进程的channel[0]套接字描述符。这个描述符是由master进程所使用的
-    if (close(mWorkerPool[mSlot].mCh[0]) == -1) 
+    if (close(mWorkerPool[mSlot]->mCh[0]) == -1) 
     {
         LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed: %s", strerror(errno));
     }

@@ -12,10 +12,14 @@
 
 #include "wType.h"
 #include "wLog.h"
+#include "wMisc.h"
 #include "wSigSet.h"
+#include "wSignal.h"
+#include "wFile.h"
 #include "wChannel.h"
+#include "wShm.h"
+#include "wShmtx.h"
 #include "wNoncopyable.h"
-#include "wMaster.h"
 
 class wWorker : public wNoncopyable
 {
@@ -41,7 +45,7 @@ class wWorker : public wNoncopyable
 		wWorker **mWorkerPool;	//进程表，从0开始
 		int mUseMutex;
 		wShm *mShmAddr;
-		wShmtx mMutex;	//accept mutex
+		wShmtx *mMutex;	//accept mutex
 
 		int mExited;
 		int mRespawn;	//退出是否重启

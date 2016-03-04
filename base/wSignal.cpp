@@ -6,6 +6,14 @@
 
 #include "wSignal.h"
 
+int g_reopen;
+int g_terminate;
+int g_quit;
+int g_reconfigure;
+int g_sigalrm;
+int g_sigio;
+int g_reap;
+
 wSignal::wSignal() {}
 
 wSignal::wSignal(__sighandler_t  func)
