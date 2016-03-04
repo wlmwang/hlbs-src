@@ -131,7 +131,7 @@ void wMaster<T>::PrepareStart()
 
 	PrepareRun();
 
-	//InitSignals();
+	InitSignals();
 	CreatePidFile();
 }
 
