@@ -6,9 +6,9 @@
 
 #include "RouterWorker.h"
 
-RouterWorker::RouterWorker()
+RouterWorker::RouterWorker(int iSlot) : wWorker(iSlot)
 {
-	//
+	Initialize();
 }
 
 RouterWorker::~RouterWorker()
@@ -31,6 +31,11 @@ void RouterWorker::PrepareRun()
 		LOG_ERROR(ELOG_KEY, "[startup] Get RouterConfig instance failed");
 		exit(1);
 	}
+	//mConfig->mProcTitle->InitSetproctitle();
+	
+	pConfig->GetBaseConf();
+	pConfig->GetSvrConf();
+
 	mServer = RouterServer::Instance();
 	if(mServer == NULL) 
 	{
@@ -44,7 +49,7 @@ void RouterWorker::PrepareRun()
 void RouterWorker::Run()
 {
 	//服务器开始运行
-	LOG_DEBUG(ELOG_KEY, "[startup] RouterServer start succeed");
-
-	mServer->WorkerStart();
+	//LOG_DEBUG(ELOG_KEY, "[startup] RouterServer start succeed");
+	
+	mServer->WorkerStart(this);
 }

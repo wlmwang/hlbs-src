@@ -14,12 +14,12 @@
 #include "wCond.h"
 #include "wNoncopyable.h"
 
-enum eRunStatus
+enum PTHREAD_STATUS
 {
-	RT_INIT = 0,
-	RT_BLOCKED = 1,
-	RT_RUNNING = 2,
-	RT_STOPPED = 3
+	THREAD_INIT = 0,
+	THREAD_BLOCKED = 1,
+	THREAD_RUNNING = 2,
+	THREAD_STOPPED = 3
 };
 
 void* ThreadProc(void *pvArgs);

@@ -13,7 +13,9 @@
 #include "wNoncopyable.h"
 #include "wCond.h"
 
-//互斥锁
+/**
+ *  互斥锁
+ */
 class wMutex : private wNoncopyable
 {
 	friend class wCond;

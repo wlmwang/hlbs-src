@@ -6,7 +6,7 @@
 
 #include "wType.h"
 #include "wLog.h"
-#include "BaseCmd.h"
+#include "wBaseCmd.h"
 #include "AgentMaster.h"
 #include "AgentConfig.h"
 

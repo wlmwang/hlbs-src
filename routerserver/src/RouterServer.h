@@ -10,9 +10,12 @@
 #include <arpa/inet.h>
 
 #include "wType.h"
+#include "wMisc.h"
+#include "wLog.h"
 #include "wSingleton.h"
+#include "wTask.h"
+#include "wIO.h"
 #include "wTcpServer.h"
-#include "wTcpTask.h"
 
 class RouterServer: public wTcpServer<RouterServer>
 {
@@ -26,7 +29,8 @@ class RouterServer: public wTcpServer<RouterServer>
 		
 		virtual void Run();
 		
-		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
+		virtual wTask* NewTcpTask(wIO *pIO);
+		virtual wTask* NewChannelTask(wIO *pIO);
 
 		void CheckModSvr();	//检测配置文件是否修改
 };

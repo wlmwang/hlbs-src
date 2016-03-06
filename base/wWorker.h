@@ -24,7 +24,7 @@
 class wWorker : public wNoncopyable
 {
 	public:
-		wWorker();
+		wWorker(int iSlot = 0);
 		void Initialize(int iWorkerNum = 0, wWorker **pWorkerPool = NULL, int iUseMutex = 1, wShm *pShmAddr = NULL, wShmtx *pMutex = NULL);
 		virtual ~wWorker();
 
@@ -33,7 +33,7 @@ class wWorker : public wNoncopyable
 		virtual void Close();
 
 		void PrepareStart(int type, void *data);
-		void Start();
+		void Start(bool bDaemon = true);
 
 		int InitChannel();
 	public:
@@ -48,6 +48,7 @@ class wWorker : public wNoncopyable
 		wShmtx *mMutex;	//accept mutex
 
 		int mExited;
+		int mExiting;
 		int mRespawn;	//退出是否重启
 };
 

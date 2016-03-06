@@ -12,7 +12,7 @@
 
 #include "wType.h"
 #include "wMaster.h"
-#include "BaseCmd.h"
+#include "wBaseCmd.h"
 #include "AgentConfig.h"
 #include "AgentServer.h"
 

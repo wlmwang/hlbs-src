@@ -34,7 +34,7 @@ void* ThreadProc(void *pvArgs)
 
 wThread::wThread()
 {
-	mRunStatus = RT_BLOCKED;	//阻塞
+	mRunStatus = THREAD_BLOCKED;	//阻塞
 }
 
 wThread::~wThread() 
@@ -58,7 +58,7 @@ int wThread::StartThread(int join)
 		pthread_attr_setdetachstate(&mAttr, PTHREAD_CREATE_DETACHED);	//设置分离的线程
 	}
 	
-	mRunStatus = RT_RUNNING;
+	mRunStatus = THREAD_RUNNING;
 	pthread_create(&mTid, &mAttr, ThreadProc, (void *)this);
 	
 	pthread_attr_destry(&mAttr);
@@ -69,7 +69,7 @@ int wThread::StopThread()
 {
 	mMutex->Lock();
 
-	mRunStatus = RT_STOPPED;
+	mRunStatus = THREAD_STOPPED;
 	mCond->Signal();
 
 	mMutex->Unlock();
@@ -84,24 +84,24 @@ int wThread::CondBlock()
 {
 	mMutex->Lock();		//互斥锁
 
-	while(IsBlocked() || mRunStatus == RT_STOPPED)  //线程被阻塞或者停止
+	while(IsBlocked() || mRunStatus == THREAD_STOPPED)  //线程被阻塞或者停止
 	{
-		if(mRunStatus == RT_STOPPED)  //如果线程需要停止则终止线程
+		if(mRunStatus == THREAD_STOPPED)  //如果线程需要停止则终止线程
 		{
 			pthread_exit((void *)GetRetVal());
 		}
 		
-		mRunStatus = RT_BLOCKED;	//"blocked"
+		mRunStatus = THREAD_BLOCKED;	//"blocked"
 		
 		mCond->Wait(*mMutex);	//进入休眠状态
 	}
 
-	if(mRunStatus != RT_RUNNING)  
+	if(mRunStatus != THREAD_RUNNING)  
 	{
 		//"Thread waked up"
 	}
 	
-	mRunStatus = RT_RUNNING;  //线程状态变为RT_RUNNING
+	mRunStatus = THREAD_RUNNING;  //线程状态变为THREAD_RUNNING
 
 	mMutex->Unlock();	//该过程需要在线程锁内完成
 	return 0;

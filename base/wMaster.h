@@ -17,16 +17,16 @@
 #include "wFile.h"
 #include "wShm.h"
 #include "wShmtx.h"
-#include "wWorker.h"
 #include "wChannel.h"
 #include "wSigSet.h"
 #include "wSignal.h"
+#include "wWorker.h"
+#include "wCoreCmd.h"
 
 #define PROCESS_SINGLE     0 	//单独进程
 #define PROCESS_MASTER     1 	//主进程
 #define PROCESS_SIGNALLER  2 	//信号进程
 #define PROCESS_WORKER     3 	//工作进程
-//#define PROCESS_HELPER     4 	//辅助进程
 
 
 #define PROCESS_NORESPAWN     -1	//子进程退出时，父进程不再创建
@@ -44,31 +44,35 @@ class wMaster : public wSingleton<T>
 		void Initialize();
 		
 		void PrepareStart();
-		void MasterStart();		//master-worker启动
-		void SingleStart();		//单进程启动
+		void MasterStart();		//master-worker模式启动
+		void SingleStart();		//单进程模式启动
 		
 		void WorkerStart(int n, int type = PROCESS_RESPAWN);
-
+		pid_t SpawnWorker(int i, const char *title, int type = PROCESS_RESPAWN);
+		void PassOpenChannel(wChannel::channel_t *ch);
+		virtual wWorker* NewWorker(int iSlot = 0);
+		
 		virtual void PrepareRun();
 		virtual void Run();
-
-		pid_t SpawnWorker(int i, const char *title, int type = PROCESS_RESPAWN);
-		virtual wWorker* NewWorker(int iSlot = 0);
-
-		void PassOpenChannel(wChannel::channel_t *ch);
-		virtual void InitSignals();
+		
+		/**
+		 *  注册信号回调
+		 *  可重写全局变量g_signals，实现自定义信号处理
+		 */
+		void InitSignals();
+		
 		int CreatePidFile();
 		void DeletePidFile();
 
 	protected:
-		wFile mPidFile;
-		
-		int mNcpu;
+	
+		int mNcpu;		//cpu个数
 		pid_t mPid;		//master进程id
-		int mWorkerNum;	//worker总数量
 		int mSlot;		//进程表分配到数量
+		int mWorkerNum;	//worker总数量
 		wWorker **mWorkerPool;	//进程表，从0开始
-
+		wFile mPidFile;	//pid文件
+		
 		int mUseMutex;
 		wShm *mShmAddr;
 		wShmtx *mMutex;	//accept mutex
@@ -94,6 +98,12 @@ wMaster<T>::~wMaster()
 }
 
 template <typename T>
+wWorker* wMaster<T>::NewWorker(int iSlot) 
+{
+	return new wWorker(iSlot); 
+}
+
+template <typename T>
 void wMaster<T>::Initialize()
 {
 	mSlot = 0;
@@ -103,12 +113,6 @@ void wMaster<T>::Initialize()
 	mUseMutex = 1;
 	mPid = getpid();
 	mNcpu = sysconf(_SC_NPROCESSORS_ONLN);
-}
-
-template <typename T>
-wWorker* wMaster<T>::NewWorker(int iSlot) 
-{
-	return new wWorker(); 
 }
 
 template <typename T>
@@ -132,6 +136,7 @@ void wMaster<T>::PrepareStart()
 	PrepareRun();
 
 	InitSignals();
+	
 	CreatePidFile();
 }
 
@@ -158,9 +163,6 @@ void wMaster<T>::SingleStart()
 template <typename T>
 void wMaster<T>::MasterStart()
 {
-	struct itimerval   itv;
-	wSigSet stSigset;
-
 	if (mWorkerNum > MAX_PROCESSES)
 	{
 		LOG_ERROR(ELOG_KEY, "[runtime] no more than %d processes can be spawned:", mWorkerNum);
@@ -173,8 +175,9 @@ void wMaster<T>::MasterStart()
 	{
 		mWorkerPool[i] = NewWorker(i);
 	}
-
+	
 	//信号阻塞
+	wSigSet stSigset;
 	stSigset.AddSet(SIGCHLD);
 	stSigset.AddSet(SIGALRM);
 	stSigset.AddSet(SIGIO);
@@ -187,23 +190,30 @@ void wMaster<T>::MasterStart()
     if (stSigset.Procmask() == -1) 
     {
         LOG_ERROR(ELOG_KEY, "[runtime] sigprocmask() failed: %s", strerror(errno));
+		return;
     }
     stSigset.EmptySet();
 	
 	//防敬群锁
-	mShmAddr = new wShm(WAIT_MUTEX, 'a', sizeof(wShmtx));
-	mMutex = new wShmtx();
-	mMutex->Create(mShmAddr);
+	if(mUseMutex == 1)
+	{
+		mShmAddr = new wShm(WAIT_MUTEX, 'a', sizeof(wShmtx));
+		mMutex = new wShmtx();
+		mMutex->Create(mShmAddr);
+	}
 	
     //启动worker进程
     WorkerStart(mWorkerNum, PROCESS_RESPAWN);
 
+	struct itimerval itv;
     int delay = 0;
     int live = 1;
 
-	//信号处理
+	//master进程 信号处理
 	while (true)
 	{
+		//
+		stSigset.Suspend();
 		Run();
 	}
 }
@@ -213,46 +223,52 @@ void wMaster<T>::WorkerStart(int n, int type)
 {
 	const char *sProcessTitle = "worker process";
 	pid_t pid;
-
-	wChannel::channel_t ch;
-	memset(&ch, 0, sizeof(wChannel::channel_t));
-
-	ch.mCommand = CMD_OPEN_CHANNEL;	//打开channel，新的channel
-
+	
+	struct ChannelReqOpen_t stCh;
+	memset(&stCh, 0, sizeof(struct ChannelReqOpen_t));
+	
 	for (int i = 0; i < mWorkerNum; ++i)
 	{
+		//创建worker进程
 		pid = SpawnWorker(i, sProcessTitle, type);
 	
-		ch.mSlot = mSlot;
-        ch.mPid = mWorkerPool[mSlot]->mPid;	//子进程pid
-        ch.mFD = mWorkerPool[mSlot]->mCh[0];//子进程channel
+		stCh.mSlot = mSlot;
+        stCh.mPid = mWorkerPool[mSlot]->mPid;
+        stCh.mFD = mWorkerPool[mSlot]->mCh[0];
 
-        PassOpenChannel(&ch);	//发送此ch[0]给所有已创建的worker进程
+        PassOpenChannel(&stCh);	//发送此ch[0]给所有已创建的worker进程
 	}
 }
 
 template <typename T>
-void wMaster<T>::PassOpenChannel(wChannel::channel_t *ch)
+void wMaster<T>::PassOpenChannel(struct ChannelReqOpen_t* pCh)
 {
-    for (int i = 0; i < mWorkerNum; i++) 
+	int size = sizeof(struct ChannelReqOpen_t);
+	char *pBuf = new char[size + sizeof(int)];
+	*(int *)pBuf = size;
+	pBuf += sizeof(int);
+    
+	for (int i = 0; i < mWorkerNum; i++) 
     {
-        if (i == mSlot || mWorkerPool[i]->mPid == -1 || mWorkerPool[i]->mCh[0] == -1)
+		//当前分配到worker进程表项索引（无需发送给自己）
+        if (i == mSlot|| mWorkerPool[i]->mPid == -1|| mWorkerPool[i]->mCh[0] == FD_UNKNOWN)
         {
             continue;
         }
 
         LOG_DEBUG(ELOG_KEY, "[runtime] pass channel s:%d pid:%P fd:%d to s:%i pid:%P fd:%d", 
-        	ch->mSlot, ch->mPid, ch->mFD, i, mWorkerPool[i]->mPid, mWorkerPool[i]->mCh[0]);
+        	pCh->mSlot, pCh->mPid, pCh->mFD, i, mWorkerPool[i]->mPid, mWorkerPool[i]->mCh[0]);
         
         /* TODO: EAGAIN */
-        mWorkerPool[i]->mCh.Send(mWorkerPool[i]->mCh[0], ch, sizeof(wChannel::channel_t));
+		memcpy(pBuf, pCh, size);
+		mWorkerPool[i]->mCh.SendBytes(pBuf, size + sizeof(int));
     }
 }
 
 template <typename T>
 pid_t wMaster<T>::SpawnWorker(int i, const char *title, int type)
 {
-	int s = 0;
+	int s;
 	for (s = 0; s < mWorkerNum; ++s)
 	{
 		if(mWorkerPool[s]->mPid == -1)
@@ -279,7 +295,7 @@ pid_t wMaster<T>::SpawnWorker(int i, const char *title, int type)
         return -1;
     }
 
-    //设置将要在文件描述符channel[0]上接收SIGIO 或 SIGURG事件信号的进程或进程组的标识
+    //设置将要在文件描述符channel[0]上接收SIGIO 或 SIGURG事件信号的进程标识
     if (fcntl(pWorker->mCh[0], F_SETOWN, mPid) == -1) 
     {
         LOG_ERROR(ELOG_KEY, "[runtime] fcntl(F_SETOWN) failed while spawning \"%s\":", title, strerror(errno));
@@ -294,7 +310,7 @@ pid_t wMaster<T>::SpawnWorker(int i, const char *title, int type)
 	        LOG_ERROR(ELOG_KEY, "[runtime] fork() failed while spawning \"%s\":", title, strerror(errno));
 	        pWorker->Close();
 	        return -1;
-	    
+			
 	    case 0:
 	    	//初始化
 	    	pWorker->Initialize(mWorkerNum, mWorkerPool, mUseMutex, mShmAddr, mMutex);
@@ -311,7 +327,6 @@ pid_t wMaster<T>::SpawnWorker(int i, const char *title, int type)
     //更新进程表
     pWorker->mSlot = mSlot;
     pWorker->mPid = pid;
-    pWorker->mExited = 0;
     switch (type)
     {
     	case PROCESS_RESPAWN:
@@ -325,15 +340,16 @@ int wMaster<T>::CreatePidFile()
 {
     if (mPidFile.Open(O_RDWR| O_CREAT) <= 0) 
     {
-    	LOG_DEBUG(ELOG_KEY, "[runtime] create pid file failed");
+    	LOG_ERROR(ELOG_KEY, "[runtime] create pid file failed");
     	return -1;
     }
-
 	string sPid = Itos((int) mPid);
     if (mPidFile.Write(sPid.c_str(), sPid.size(), 0) == -1) 
     {
+		LOG_ERROR(ELOG_KEY, "[runtime] write process pid to file failed");
         return -1;
     }
+	
     mPidFile.Close();
     return 0;
 }
@@ -344,7 +360,9 @@ void wMaster<T>::DeletePidFile()
     if (mPidFile.Unlink() == -1) 
     {
     	LOG_ERROR(ELOG_KEY, "unlink \"%s\" failed", mPidFile.FileName().c_str());
+		return;
     }
+	return;
 }
 
 #endif

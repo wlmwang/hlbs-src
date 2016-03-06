@@ -4,16 +4,16 @@
  * Copyright (C) Disvr, Inc.
  */
 
-/**
- * 基于log4cpp的日志管理库
- * 日志系统开关
- */
-
 #ifndef _W_LOG_H_
 #define _W_LOG_H_
 
 #include <stdarg.h>
 #include "wType.h"
+
+/**
+ * 基于log4cpp的日志管理库
+ * 日志系统开关
+ */
 
 #ifdef USE_LOG4CPP
 #	define INIT_ROLLINGFILE_LOG		InitLog					//初始化一种日志类型（基于回卷文件)

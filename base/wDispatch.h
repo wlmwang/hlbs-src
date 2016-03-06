@@ -4,10 +4,6 @@
  * Copyright (C) Disvr, Inc.
  */
 
-/**
- * 每种回调Func_t（mFunc调用参数不同）需不同的wDispatch
- */
-
 #ifndef _W_DISPATCH_H_
 #define _W_DISPATCH_H_
 
@@ -17,6 +13,10 @@
 
 #include "wType.h"
 #include "wNoncopyable.h"
+
+/**
+ * 每种回调Func_t（mFunc调用参数不同）需不同的wDispatch
+ */
 
 template<typename T,typename IDX>
 class wDispatch : private wNoncopyable

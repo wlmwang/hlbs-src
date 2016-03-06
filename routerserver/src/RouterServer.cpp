@@ -4,26 +4,13 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include <errno.h>
-#include <time.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "wMisc.h"
-#include "wLog.h"
-
-#include "RouterConfig.h"
 #include "RouterServer.h"
 #include "RouterServerTask.h"
+#include "RouterConfig.h"
 
-RouterServer::RouterServer():wTcpServer<RouterServer>("路由服务器")
+RouterServer::RouterServer() : wTcpServer<RouterServer>("路由服务器")
 {
-	if(mStatus == SERVER_STATUS_INIT)
-	{
-		Initialize();
-	}
+	Initialize();
 }
 
 RouterServer::~RouterServer() 
@@ -36,10 +23,16 @@ void RouterServer::Initialize()
 	//...
 }
 
-wTcpTask* RouterServer::NewTcpTask(wSocket *pSocket)
+wTask* RouterServer::NewTcpTask(wIO *pIO)
 {
-	wTcpTask *pTcpTask = new RouterServerTask(pSocket);
-	return pTcpTask;
+	wTask *pTask = new RouterServerTask(wIO);
+	return pTask;
+}
+
+wTask* RouterServer::NewChannelTask(wIO *pIO)
+{
+	wTask *pTask = new RouterChannelTask(wIO);
+	return pTask;
 }
 
 //准备工作

@@ -17,19 +17,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sched.h>
+#include <stddef.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/resource.h>
+
+#include <sys/wait.h>
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
 
-//#include <pwd.h>
-//#include <grp.h>
+#include <pwd.h>
+#include <grp.h>
+
 //#include <dirent.h>
 
-//#include <sys/wait.h>
 //#include <sys/mman.h>
 
 //#include <sys/socket.h>
@@ -113,6 +117,8 @@ typedef signed long long int SLLWORD;
 #define MSG_QUEUE_LEN 16777216 /* 1024 * 1024 * 16 */
 #endif
 
+#define FD_UNKNOWN -1
+
 //主机名长度
 #ifndef MAXHOSTNAMELEN
 #define MAXHOSTNAMELEN  256
@@ -141,16 +147,12 @@ typedef signed long long int SLLWORD;
 
 #define CAST_CMD(x, y, t)	const t* x = (const t*)y;
 
-//计算数组中个体的个数
-#define CountV(arr) (sizeof(arr) / sizeof((arr)[0]))
-
-#define SETPROCTITLE_PAD       '\0'
-
-#define WAIT_MUTEX "../wait_mutex.shm.ipc"
+//命名空间
+using namespace std;
 
 extern char **environ;
 
-//命名空间
-using namespace std;
+#define SETPROCTITLE_PAD       '\0'
+#define WAIT_MUTEX "../wait_mutex.shm.ipc"
 
 #endif

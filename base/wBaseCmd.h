@@ -10,17 +10,16 @@
 #include "wType.h"
 #include "wCommand.h"
 
+#define USER  "nobody"
+#define GROUP  "nobody"
+
 //define
 #define PREFIX  "/usr/local/disvr/"
 #define CONF_PREFIX  "conf/"
-
 #define PID_PATH  "log/disvr.pid"
 #define LOCK_PATH  "log/disvr.lock"
 
 #define IPC_SHM "/tmp/shm.ipc"
-
-#define USER  "nobody"
-#define GROUP  "nobody"
 
 #pragma pack(1)
 

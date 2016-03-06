@@ -4,11 +4,12 @@
  * Copyright (C) Disvr, Inc.
  */
 
+#ifndef _W_COMMAND_H_
+#define _W_COMMAND_H_
+
 /**
  *  消息头
  */
-#ifndef _W_COMMAND_H_
-#define _W_COMMAND_H_
 
 #include "wType.h"
 

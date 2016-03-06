@@ -53,10 +53,6 @@ void RouterMaster::PrepareRun()
     }
 
     mTitle = new char[size];
-    if (mTitle == NULL) 
-    {
-        exit(1);
-    }
 
     p = (u_char *)memcpy(mTitle, sProcessTitle, strlen(sProcessTitle)) + strlen(sProcessTitle);     //不要\0结尾
 
@@ -68,11 +64,14 @@ void RouterMaster::PrepareRun()
 
 	mConfig->mProcTitle->Setproctitle(mTitle, "HLFS: ");
 
-    //准备工作
+    //pid文件名
+    mPidFile.FileName() = LOCK_PATH;
+	//worker进程个数
+	mWorkerNum = 4;
+	
+    //准备工作（创建、绑定服务器Listen Socket）
     mServer->PrepareMaster(mConfig->mIPAddr, mConfig->mPort);
 
-    //pid文件
-    mPidFile.FileName() = LOCK_PATH;
 }
 
 void RouterMaster::Run()
@@ -82,5 +81,5 @@ void RouterMaster::Run()
 
 wWorker* RouterMaster::NewWorker(int iSlot)
 {
-	return new RouterWorker();
+	return new RouterWorker(iSlot);
 }

@@ -11,14 +11,12 @@ wShm::wShm(const char *filename, int pipeid, size_t size)
 	Initialize();
 
 	mPipeId = pipeid;
-	mSize = size;
+	mSize = size + sizeof(struct shmhead_t);
 	if(mPagesize > 0)
 	{
-		mSize = ALIGN(size, mPagesize);
+		mSize = ALIGN(mSize, mPagesize);
 	}
 	
-	//加上头部长度
-	mSize += sizeof(shmhead_t);
 	memcpy(mFilename, filename, strlen(filename) +1);
 }
 
@@ -42,13 +40,13 @@ char *wShm::CreateShm()
 {
 	LOG_DEBUG(ELOG_KEY, "[runtime] try to alloc %lld bytes of share memory", mSize);
 	
-	int fd = open(mFilename, O_CREAT);
-	if (fd < 0)
+	int iFD = open(mFilename, O_CREAT);
+	if (iFD < 0)
 	{
 		LOG_ERROR(ELOG_KEY, "[runtime] open file(%s) failed: %s", mFilename, strerror(errno));
 		return NULL;
 	}
-	close(fd);
+	close(iFD);
 
 	mKey = ftok(mFilename, mPipeId);
 	if (mKey < 0) 
@@ -160,29 +158,30 @@ char *wShm::AttachShm()
 	
     //shm头
 	mShmhead = (struct shmhead_t*) pAddr;
-	mShmhead->mStart = pAddr;
-	mShmhead->mEnd = pAddr + mSize;
-	mShmhead->mUsedOff = pAddr + sizeof(struct shmhead_t);
 	return mShmhead->mUsedOff;
 }
 
-char *wShm::AllocShm(size_t iLen)
+char *wShm::AllocShm(size_t size)
 {
-	if(mShmhead->mUsedOff + iLen < mShmhead->mEnd)
+	if(mShmhead != NULL && mShmhead->mUsedOff + size < mShmhead->mEnd)
 	{
 		char *pAddr = mShmhead->mUsedOff;
-		mShmhead->mUsedOff += iLen;
+		mShmhead->mUsedOff += size;
+		memset(pAddr, 0, size);
 		return pAddr;
 	}
 
 	LOG_ERROR(ELOG_KEY, "alloc shm failed: shm space not enough");
-	return 0;
+	return NULL;
 }
 
 void wShm::FreeShm()
 {
-	if(mShmhead == 0 || mShmhead->mStart == 0)
+	LOG_DEBUG(ELOG_KEY, "[runtime] free %lld bytes of share memory", mSize);
+	
+	if(mShmhead == NULL || mShmhead->mStart == NULL)
 	{
+		LOG_ERROR(ELOG_KEY, "free shm failed: shm head illegal");
 		return;
 	}
 
@@ -192,7 +191,7 @@ void wShm::FreeShm()
 		LOG_ERROR(ELOG_KEY, "shmdt(%d) failed", mShmhead->mStart);
     }
 	
-	//删除该shmid_ds共享存储段
+	//删除该shmid_ds共享存储段（全部进程结束才会真正删除）
     if (shmctl(mShmId, IPC_RMID, NULL) == -1)
 	{
 		LOG_ERROR(ELOG_KEY, "remove share memory failed: %s", strerror(errno));

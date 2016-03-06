@@ -81,37 +81,101 @@ wSignal::signal_t g_signals[] = {
 
 void SignalHandler(int signo)
 {
-	LOG_DEBUG(ELOG_KEY, "[runtime] received signal: %d", signo);
+    char	*action;
+    int		ignore;
+    int		err;
+    wSignal::signal_t *sig;
 
-	switch(signo)
+    ignore = 0;
+    err = errno;
+
+    for (sig = g_signals; sig->mSigno != 0; sig++) 
 	{
-		case SIGHUP:
-			g_reopen = 1;
+        if (sig->mSigno == signo) 
+		{
+            break;
+        }
+    }
+
+    action = "";
+
+    switch (ngx_process) 
+	{
+		case PROCESS_MASTER:
+		case PROCESS_SINGLE:
+			switch (signo) 
+			{
+				case SIGQUIT:
+					g_quit = 1;
+					action = ", shutting down";
+					break;
+
+				case SIGTERM:
+				case SIGINT:
+					g_terminate = 1;
+					action = ", exiting";
+					break;
+
+				case SIGHUP:
+					g_reconfigure = 1;
+					action = ", reconfiguring";
+					break;
+
+				case SIGUSR1:
+					g_reopen = 1;
+					action = ", reopening logs";
+					break;
+
+				case SIGALRM:
+					g_sigalrm = 1;
+					break;
+
+				case SIGIO:
+					g_sigio = 1;
+					break;
+
+				case SIGCHLD:
+					g_reap = 1;
+					break;
+			}
 			break;
 
-		case SIGQUIT:
-			g_quit = 1;
-			break;
+		case PROCESS_WORKER:
+			switch (signo) 
+			{
+				case SIGQUIT:
+					g_quit = 1;
+					action = ", shutting down";
+					break;
 
-		case SIGINT:
-		case SIGTERM:
-			g_terminate = 1;
-			break;
+				case SIGTERM:
+				case SIGINT:
+					g_terminate = 1;
+					action = ", exiting";
+					break;
 
-		case SIGUSR1:
-			g_reconfigure = 1;
-			break;
+				case SIGUSR1:
+					g_reopen = 1;
+					action = ", reopening logs";
+					break;
 
-		case SIGALRM:
-			g_sigalrm = 1;
-			break;
+				case SIGHUP:
+				case USR2:	//升级
+				case SIGIO:
+					action = ", ignoring";
+					break;
+			}
 
-		case SIGIO:
-			g_sigio = 1;
 			break;
+    }
+	
+	LOG_DEBUG(ELOG_KEY, "signal %d (%s) received%s", signo, sig->mSigname, action);
 
-		case SIGCHLD:
-			g_reap = 1;	//重启
-			break;
-	}
+    if (signo == SIGCHLD) 
+	{
+        //GetProcessStatus();	//回收worker进程状态
+    }
+	
+    errno = err
 }
+

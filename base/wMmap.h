@@ -13,7 +13,9 @@
 #include "wLog.h"
 #include "wNoncopyable.h"
 
-//ÄÚ´æÓ³Éä
+/**
+ *  ÄÚ´æÓ³Éä
+ */
 class wMmap : private wNoncopyable
 {
 	public:
@@ -37,7 +39,7 @@ class wMmap : private wNoncopyable
 			}
 		}
 		
-		void * CreateMap()
+		void* CreateMap()
 		{
 			mStart = mmap(start, length, prot, flags, fd, offset);
 		}

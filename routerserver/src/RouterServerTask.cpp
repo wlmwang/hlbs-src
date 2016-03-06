@@ -14,7 +14,7 @@ RouterServerTask::RouterServerTask()
     Initialize();
 }
 
-RouterServerTask::RouterServerTask(wSocket *pSocket) : wTcpTask(pSocket)
+RouterServerTask::RouterServerTask(wIO *pIO) : wTcpTask(pIO)
 {
     Initialize();
 }

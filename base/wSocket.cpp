@@ -6,20 +6,39 @@
 
 #include "wSocket.h"
 
-int wSocket::SetNonBlock(bool bNonblock)
+wSocket::wSocket()
 {
-	if(mSocketFD < 0) 
+	Initialize();
+}
+
+wSocket::~wSocket() {}
+
+void wSocket::Initialize()
+{
+	mIPAddr = "";
+	mPort = 0;
+	mIOType = TYPE_SOCK;
+	mSockType = SOCK_UNKNOWN;
+	mSockStatus = STATUS_UNKNOWN;
+}
+
+int wSocket::Open()
+{
+	int iSocketFD = socket(AF_INET, SOCK_STREAM, 0); 
+	if(iSocketFD < 0)
 	{
+		LOG_ERROR(ELOG_KEY, "[startup] Create socket failed: %s", strerror(errno));
 		return -1;
 	}
+	mFD = iSocketFD;
 
-	int iFlags = fcntl(mSocketFD, F_GETFL, 0);
-	if( iFlags == -1 ) 
-	{
-		return -1;
-	}
-
-	return fcntl(mSocketFD, F_SETFL, (bNonblock == true ? iFlags | O_NONBLOCK : iFlags & ~O_NONBLOCK));
+	int iFlags = 1;
+	struct linger stLing = {0,0};
+	setsockopt(mFD, SOL_SOCKET, SO_REUSEADDR, &iFlags, sizeof(iFlags));
+	setsockopt(mFD, SOL_SOCKET, SO_KEEPALIVE, &iFlags, sizeof(iFlags));
+	setsockopt(mFD, SOL_SOCKET, SO_LINGER, &stLing, sizeof(stLing));
+	
+	return mFD;
 }
 
 int wSocket::SetTimeout(int iTimeout)
@@ -37,7 +56,7 @@ int wSocket::SetTimeout(int iTimeout)
 
 int wSocket::SetSendTimeout(int iTimeout)
 {
-	if(mSocketFD < 0) 
+	if(mFD == FD_UNKNOWN || mIOType != TYPE_SOCK) 
 	{
 		return -1;
 	}
@@ -45,8 +64,7 @@ int wSocket::SetSendTimeout(int iTimeout)
 	struct timeval stSendTimeval;
 	stSendTimeval.tv_sec = iTimeout<0 ? 0 : iTimeout;
 	stSendTimeval.tv_usec = 0;
-	
-	if(setsockopt(mSocketFD, SOL_SOCKET, SO_SNDTIMEO, &stSendTimeval, sizeof(stSendTimeval)) == -1)  
+	if(setsockopt(mFD, SOL_SOCKET, SO_SNDTIMEO, &stSendTimeval, sizeof(stSendTimeval)) == -1)  
     {
         return -1;  
     }
@@ -55,7 +73,7 @@ int wSocket::SetSendTimeout(int iTimeout)
 
 int wSocket::SetRecvTimeout(int iTimeout)
 {
-	if(mSocketFD < 0) 
+	if(mFD == FD_UNKNOWN || mIOType != TYPE_SOCK) 
 	{
 		return -1;
 	}
@@ -63,8 +81,7 @@ int wSocket::SetRecvTimeout(int iTimeout)
 	struct timeval stRecvTimeval;
 	stRecvTimeval.tv_sec = iTimeout<0 ? 0 : iTimeout;
 	stRecvTimeval.tv_usec = 0;
-	
-	if(setsockopt(mSocketFD, SOL_SOCKET, SO_RCVTIMEO, &stRecvTimeval, sizeof(stRecvTimeval)) == -1)  
+	if(setsockopt(mFD, SOL_SOCKET, SO_RCVTIMEO, &stRecvTimeval, sizeof(stRecvTimeval)) == -1)  
     {
         return -1;  
     }
@@ -73,15 +90,16 @@ int wSocket::SetRecvTimeout(int iTimeout)
 
 /**
  *  从客户端接收原始数据
- *  return ：<0 对端发生错误|消息超长 =0 对端关闭(FIN_WAIT1)  >0 接受字符
+ *  return ：<0 对端发生错误|消息超长 =0 对端关闭(FIN_WAIT1) >0 接受字符
  */
-int wSocket::RecvBytes(char *vArray, int vLen)
+ssize_t wSocket::RecvBytes(char *vArray, size_t vLen)
 {
 	mRecvTime = GetTickCount();
-	int iRecvLen;
-	while(1)
+	
+	ssize_t iRecvLen;
+	while(true)
 	{
-		iRecvLen = recv(mSocketFD, vArray, vLen, 0);
+		iRecvLen = recv(mFD, vArray, vLen, 0);
 		if(iRecvLen > 0)
 		{
 			return iRecvLen;
@@ -99,6 +117,8 @@ int wSocket::RecvBytes(char *vArray, int vLen)
 				usleep(100);
 				continue;
 			}
+			
+			LOG_ERROR(ELOG_KEY, "recv fd(%d) error: %s", mFD, strerror(errno));
 			return iRecvLen;
 		}
 	}
@@ -108,17 +128,17 @@ int wSocket::RecvBytes(char *vArray, int vLen)
  *  原始发送客户端数据
  *  return ：<0 对端发生错误 >=0 发送字符
  */
-int wSocket::SendBytes(char *vArray, int vLen)
+ssize_t wSocket::SendBytes(char *vArray, size_t vLen)
 {
 	mSendTime = GetTickCount();
-	int iSendLen;
-	int iLeftLen = vLen;
-	int iHaveSendLen = 0;
-
-	while(1)
+	
+	ssize_t iSendLen;
+	size_t iLeftLen = vLen;
+	size_t iHaveSendLen = 0;
+	while(true)
 	{
-		iSendLen = send(mSocketFD, vArray + iHaveSendLen, iLeftLen, 0);
-		if( iSendLen > 0 )
+		iSendLen = send(mFD, vArray + iHaveSendLen, iLeftLen, 0);
+		if(iSendLen > 0)
 		{
 			iLeftLen -= iSendLen;
 			iHaveSendLen += iSendLen;
@@ -140,7 +160,8 @@ int wSocket::SendBytes(char *vArray, int vLen)
 				usleep(100);
 				continue;
 			}
-			LOG_ERROR("default", "SendToClient fd(%d) error: %s", mSocketFD, strerror(errno));
+			
+			LOG_ERROR(ELOG_KEY, "send fd(%d) error: %s", mFD, strerror(errno));
 			return iSendLen;
 		}
 	}

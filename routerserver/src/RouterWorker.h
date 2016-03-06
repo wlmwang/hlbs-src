@@ -19,7 +19,7 @@
 class RouterWorker: public wWorker
 {
 	public:
-		RouterWorker();
+		RouterWorker(int iSlot = 0);
 		~RouterWorker();
 		void Initialize();
 

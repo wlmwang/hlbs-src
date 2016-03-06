@@ -4,9 +4,6 @@
  * Copyright (C) Disvr, Inc.
  */
 
-/**
- *  消息传递的共享内存队列
- */
 #ifndef _W_MSG_QUEUE_
 #define _W_MSG_QUEUE_
 
@@ -15,6 +12,10 @@
 #include "wShm.h"
 
 #define MSG_QUEUE_RESERVE_LEN 8
+
+/**
+ *  消息传递的共享内存队列
+ */
 
 class wMsgQueue
 {

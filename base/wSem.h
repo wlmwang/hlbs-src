@@ -16,7 +16,7 @@
 #include "wNoncopyable.h"
 
 /**
- * 信号量操作。主要应用在多进程间实现互斥锁
+ * 信号量操作。主要应用在多进程间互斥锁
  */
 class wSem : private wNoncopyable
 {
@@ -27,11 +27,20 @@ class wSem : private wNoncopyable
 		 */
 		wSem(int pshared = 0, int value = 0)
 		{
-			if(sem_init(&mSem, pshared, value) < 0)
+			mPshared = pshared;
+			mValue = value;
+			
+			Initialize();
+		}
+		
+		int Initialize()
+		{
+			int err = sem_init(&mSem, pshared, value);
+			if(err < 0)
 			{
 				LOG_ERROR(ELOG_KEY, "sem_init failed: %s", strerror(errno));
-				exit(-1);
 			}
+			return err;
 		}
 		
 		~wSem() 
@@ -69,8 +78,10 @@ class wSem : private wNoncopyable
 			return sem_post(&mSem);
 		}
 
-	private:
+	protected:
 		sem_t mSem;
+		int mPshared;
+		int mValue;
 };
 
 #endif
