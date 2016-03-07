@@ -36,8 +36,9 @@ class wMaster : public wSingleton<T>
 		void SingleStart();		//单进程模式启动
 		
 		void WorkerStart(int n, int type = PROCESS_RESPAWN);
-		pid_t SpawnWorker(int i, const char *title, int type = PROCESS_RESPAWN);
+		pid_t SpawnWorker(void* pData, const char *title, int type = PROCESS_RESPAWN);
 		void PassOpenChannel(struct ChannelReqOpen_t* pCh);
+		void PassCloseChannel(struct ChannelReqClose_t* pCh);
 		virtual wWorker* NewWorker(int iSlot = 0);
 		virtual void HandleSignal();
 
@@ -137,24 +138,6 @@ void wMaster<T>::PrepareStart()
 	mPid = getpid();
 
 	PrepareRun();	//初始化服务器
-
-	InitSignals();	//初始化信号处理
-	
-	CreatePidFile();//创建pid文件
-}
-
-template <typename T>
-void wMaster<T>::InitSignals()
-{
-	wSignal::signal_t *pSig;
-	wSignal stSignal;
-	for (pSig = g_signals; pSig->mSigno != 0; ++pSig)
-	{
-		if(stSignal.AddSig_t(pSig) != -1)
-		{
-			LOG_ERROR(ELOG_KEY, "[runtime] sigaction(%s) failed, ignored", pSig->mSigname);
-		}
-	}
 }
 
 template <typename T>
@@ -173,7 +156,11 @@ void wMaster<T>::MasterStart()
 		LOG_ERROR(ELOG_KEY, "[runtime] no more than %d processes can be spawned:", mWorkerNum);
 		return;
 	}
-
+	
+	InitSignals();
+	
+	CreatePidFile();
+	
 	//初始化workerpool内存空间
 	mWorkerPool = new wWorker*[mWorkerNum];
 	for(int i = 0; i < mWorkerNum; ++i)
@@ -212,7 +199,6 @@ void wMaster<T>::MasterStart()
 
 	struct itimerval itv;
     int delay = 0;
-    int live = 1;
 
 	//master进程 信号处理
 	while (true)
@@ -227,34 +213,141 @@ void wMaster<T>::MasterStart()
 }
 
 template <typename T>
+void wMaster<T>::InitSignals()
+{
+	wSignal::signal_t *pSig;
+	wSignal stSignal;
+	for (pSig = g_signals; pSig->mSigno != 0; ++pSig)
+	{
+		if(stSignal.AddSig_t(pSig) != -1)
+		{
+			LOG_ERROR(ELOG_KEY, "[runtime] sigaction(%s) failed, ignored", pSig->mSigname);
+		}
+	}
+}
+
+template <typename T>
 void wMaster<T>::HandleSignal()
 {
-		if(g_reap)
-		{
-			g_reap = 0;
-			//
-		}
+	int iLive = 1;
+	
+	//SIGCHLD 有worker退出
+	if(g_reap)
+	{
+		g_reap = 0;
+		
+		LOG_ERROR(ELOG_KEY, "[runtime] reap children");
+		
+		iLive = ReapChildren(cycle);
+	}
+	
+	//worker都退出了
+	if (!iLive && (g_terminate || g_quit)) 
+	{
+		//ngx_master_process_exit(cycle);
+	}
+	
+	if(g_terminate)
+	{
+		//
+	}
 
-		if(g_terminate)
-		{
-			//
-		}
+	if(g_quit)
+	{
+		SignalWorker(SIGQUIT);
+		
+		//关闭所有监听socket
+		
+		continue;
+	}
+	
+	if(g_restart)
+	{
+		g_restart = 0;
+		
+		WorkerStart(mWorkerNum, PROCESS_RESPAWN);
+		
+		iLive = 1;
+	}
+	
+	if (g_reconfigure)
+	{
+		//
+	}
 
-		if(g_quit)
-		{
-			//
-		}
+	//收到SIGUSR1信号，重新打开log文件
+	if (g_reopen)
+	{
+		//
+	}
+}
 
-		if (g_reconfigure)
-		{
-			//
+template <typename T>
+int wMaster<T>::ReapChildren()
+{
+	const char *sProcessTitle = "worker process";
+	pid_t pid;
+	
+	int iLive = 0;
+	for (int i = 0; i < mWorkerNum; i++) 
+    {
+		//当前分配到worker进程表项索引（无需发送给自己）
+        if (mWorkerPool[i]->mPid == -1)
+        {
+            continue;
+        }
+		
+		if(mWorkerPool[i]->mExited)	//已退出
+		{	
+			//非分离 同步文件描述符
+			if(!mWorkerPool[i]->mDetached)
+			{
+				mWorkerPool[i]->mCh.Close();
+				
+				struct ChannelReqClose_t stCh;
+				memset(&stCh, 0, sizeof(struct ChannelReqClose_t));
+				stCh.mFD = -1;
+				
+				stCh.mPid = mWorkerPool[i]->mPid;
+				stCh.slot = i;
+				PassCloseChannel(stCh);
+			}
+			
+			//重启
+			if(mWorkerPool[i]->mRespawn || !mWorkerPool[i]->mExiting
+				|| !g_terminate || !g_quit)
+			{
+				pid = SpawnWorker(mWorkerPool[i]->mData, sProcessTitle, i);
+				if(pid == -1)
+				{
+					LOG_ERROR(ELOG_KEY, "[runtime] could not respawn %d", i);
+					continue;
+				}
+				
+				struct ChannelReqOpen_t stCh;
+				memset(&stCh, 0, sizeof(struct ChannelReqOpen_t));
+				
+				stCh.mSlot = mSlot;
+				stCh.mPid = mWorkerPool[mSlot]->mPid;
+				stCh.mFD = mWorkerPool[mSlot]->mCh[0];
+				PassOpenChannel(&stCh);
+				
+				iLive = 1;
+				continue;
+			}
+			
+            if (i != mWorkerNum - 1) 
+			{
+                ngx_processes[i].pid = -1;
+            }
 		}
-
-		//收到SIGUSR1信号，重新打开log文件
-		if (g_reopen)
+		else if (mWorkerPool[i]->mExiting || !mWorkerPool[i]->mDetached) 
 		{
-			//
+			iLive = 1;
 		}
+    }
+	
+	return iLive;
 }
 
 template <typename T>
@@ -270,13 +363,79 @@ void wMaster<T>::WorkerStart(int n, int type)
 	for (int i = 0; i < mWorkerNum; ++i)
 	{
 		//创建worker进程
-		pid = SpawnWorker(i, sProcessTitle, type);
+		pid = SpawnWorker((void *) i, sProcessTitle, type);
 	
 		stCh.mSlot = mSlot;
         stCh.mPid = mWorkerPool[mSlot]->mPid;
         stCh.mFD = mWorkerPool[mSlot]->mCh[0];
         PassOpenChannel(&stCh);
 	}
+}
+
+void SignalWorker(int iSigno)
+{
+	int other = 0;
+	int size = 0;
+	int err;
+	struct ChannelReqCmd_s* pCh
+	switch(iSigno)
+	{
+		case SIGQUIT:
+			struct ChannelReqQuit_t stCh;
+			pCh = &stCh;
+			size = sizeof(struct ChannelReqQuit_t);
+			break;
+			
+		case SIGTERMINATE:
+			struct ChannelReqTerminate_t stCh;
+			pCh = &stCh;
+			size = sizeof(struct ChannelReqTerminate_t);
+			break;
+			
+		default:
+			other = 1;
+	}
+	pCh->mFD = -1;
+	
+	char *pBuf = new char[size + sizeof(int)];
+	*(int *)pBuf = size;	//消息长度
+	pBuf += sizeof(int);
+	
+	for (int i = 0; i < mWorkerNum; i++) 
+    {
+        if (mWorkerPool[i]->mDetached || mWorkerPool[i]->mPid == -1) 
+		{
+            continue;
+        }
+        
+		if (mWorkerPool[i]->mExiting && iSigno == SIGQUIT)
+        {
+            continue;
+        }
+		
+        if(other)
+		{
+			memcpy(pBuf, (char *)pCh, size);
+			mWorkerPool[i]->mCh.SendBytes(pBuf, size + sizeof(int));
+		}
+					   
+		LOG_ERROR(ELOG_KEY, "[runtime] kill (%P, %d)", mWorkerPool[i]->mPid, iSigno);
+		
+        if (kill(mWorkerPool[i]->mPid, iSigno) == -1) 
+		{
+            err = errno;
+			
+			LOG_ERROR(ELOG_KEY, "[runtime] kill(%P, %d) failed:%s", mWorkerPool[i]->mPid, iSigno,strerror(err));
+            if (err == ESRCH) 
+			{
+                mWorkerPool[i]->mExited = 1;
+                mWorkerPool[i].mExiting = 0;
+				
+                g_reap = 1;
+            }
+            continue;
+        }
+    }
 }
 
 template <typename T>
@@ -307,17 +466,51 @@ void wMaster<T>::PassOpenChannel(struct ChannelReqOpen_t* pCh)
 }
 
 template <typename T>
-pid_t wMaster<T>::SpawnWorker(int i, const char *title, int type)
+void wMaster<T>::PassCloseChannel(struct ChannelReqClose_t* pCh)
+{
+	int size = sizeof(struct ChannelReqClose_t);
+	char *pBuf = new char[size + sizeof(int)];
+	*(int *)pBuf = size;	//消息长度
+	pBuf += sizeof(int);
+    
+	for (int i = 0; i < mWorkerNum; i++) 
+    {
+		if (mWorkerPool[n]->mExited || mWorkerPool[n]->mPid == -1|| mWorkerPool[n]->mCh[0] == FD_UNKNOWN)
+		{
+			continue;
+		}
+
+        LOG_DEBUG(ELOG_KEY, "[runtime] pass close channel s:%i pid:%P to:%P", 
+        	pCh->mSlot, pCh->mPid, mWorkerPool[i]->mPid);
+        
+        /* TODO: EAGAIN */
+		memcpy(pBuf, (char *)pCh, size);
+		mWorkerPool[i]->mCh.SendBytes(pBuf, size + sizeof(int));
+    }
+	
+    SAFE_DELETE(pBuf);
+}
+
+template <typename T>
+pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
 {
 	int s;
-	for (s = 0; s < mWorkerNum; ++s)
+	if(type >= 0)
 	{
-		if(mWorkerPool[s]->mPid == -1)
+		s = type;
+	}
+	else
+	{
+		for (s = 0; s < mWorkerNum; ++s)
 		{
-			break;
+			if(mWorkerPool[s]->mPid == -1)
+			{
+				break;
+			}
 		}
 	}
-	mSlot = s;	//当前已分配索引
+
+	mSlot = s;
 
 	wWorker *pWorker = mWorkerPool[mSlot];
 	if(pWorker->InitChannel() < 0)
@@ -354,10 +547,9 @@ pid_t wMaster<T>::SpawnWorker(int i, const char *title, int type)
 	    case 0:
 	    	//worker进程
 	        pWorker->InitWorker(mWorkerNum, mWorkerPool, mUseMutex, mShmAddr, mMutex, mDelay);
-	        pWorker->PrepareStart(type, (void *) &mSlot);
+	        pWorker->PrepareStart(mSlot, type, pData);
 	        pWorker->Start();
 	        _exit(0);	//TODO 进程退出
-
 	        break;
 
 	    default:
@@ -369,6 +561,12 @@ pid_t wMaster<T>::SpawnWorker(int i, const char *title, int type)
     //更新进程表
     pWorker->mSlot = mSlot;
     pWorker->mPid = pid;
+	
+	if(type >= 0)
+	{
+		return pid;
+	}
+	
     switch (type)
     {
     	case PROCESS_NORESPAWN:

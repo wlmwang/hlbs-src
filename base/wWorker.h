@@ -37,7 +37,7 @@ class wWorker : public wNoncopyable
 		virtual void Close();
 
 		void InitWorker(int iWorkerNum = 0, wWorker **pWorkerPool = NULL, int iUseMutex = 1, wShm *pShmAddr = NULL, wShmtx *pMutex = NULL, int iDelay = 500);
-		void PrepareStart(int iType, void *pData);
+		void PrepareStart(int iSlot, int iType, void *pData);
 		void Start(bool bDaemon = true);
 
 		int InitChannel();

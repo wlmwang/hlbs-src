@@ -101,7 +101,7 @@ void SignalHandler(int signo)
 
     action = "";
 
-    switch (ngx_process) 
+    switch (process) 
 	{
 		case PROCESS_MASTER:
 		case PROCESS_SINGLE:

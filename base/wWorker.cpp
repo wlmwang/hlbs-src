@@ -63,11 +63,11 @@ void wWorker::InitWorker(int iWorkerNum, wWorker **pWorkerPool, int iUseMutex, w
 	mDelay = iDelay;
 }
 
-void wWorker::PrepareStart(int iType, void *pData) 
+void wWorker::PrepareStart(int iSlot, int iType, void *pData) 
 {
-	//mSlot = *(int *) pData;
-	mData = pData;
+	mSlot = iSlot;
 	mRespawn = iType;
+	mData = pData;
 	mPid = getpid();
 	
 	/**
