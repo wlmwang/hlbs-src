@@ -5,6 +5,7 @@
  */
 
 #include "wChannel.h"
+#include "wCoreCmd.h"
 
 wChannel::wChannel() 
 {
@@ -39,7 +40,6 @@ int &wChannel::operator[](int i)
 	if (i > 1)
 	{
 		LOG_ERROR(ELOG_KEY, "[runtime] leap the pale channel");
-		return FD_UNKNOWN;
 	}
 	return mCh[i];
 }
@@ -203,12 +203,6 @@ ssize_t wChannel::RecvBytes(char *vArray, size_t vLen)
         return -1;
     }
 
-    if ((size_t) n < sizeof(channel_t)) 
-    {
-		LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() returned not enough data: %d", n);
-        return -1;
-    }
-	
 	//获取文件描述符
 	ChannelReqCmd_s *pChannel = (ChannelReqCmd_s*) (vArray + sizeof(int));
     if (pChannel->GetCmd() == CMD_CHANNEL_REQ)	//channel请求 

@@ -73,7 +73,7 @@ int RouterChannelTask::ChannelOpen(char *pBuffer, int iLen)
 	ChannelReqOpen_t *pCh = (struct ChannelReqOpen_t* )pBuffer;
 	if(pMaster->mWorkerPool != NULL && pMaster->mWorkerPool[pCh->mSlot])
 	{	
-		LOG_DEBUG(ELOG_KEY, "[runtime] get channel s:%i pid:%P fd:%d",pCh->mSolt, pCh->mPid, pCh->mFD);
+		LOG_DEBUG(ELOG_KEY, "[runtime] get channel s:%i pid:%P fd:%d",pCh->mSlot, pCh->mPid, pCh->mFD);
 		
 		pMaster->mWorkerPool[pCh->mSlot]->mPid = pCh->mPid;
 		pMaster->mWorkerPool[pCh->mSlot]->mCh[0] = pCh->mFD;
@@ -90,7 +90,7 @@ int RouterChannelTask::ChannelClose(char *pBuffer, int iLen)
 	if(pMaster->mWorkerPool != NULL && pMaster->mWorkerPool[pCh->mSlot])
 	{
 		LOG_DEBUG(ELOG_KEY, "[runtime] close channel s:%i pid:%P our:%P fd:%d",
-				pCh->mSolt, pCh->mPid, pMaster->mWorkerPool[pCh->mSlot]->mPid,
+				pCh->mSlot, pCh->mPid, pMaster->mWorkerPool[pCh->mSlot]->mPid,
 				pMaster->mWorkerPool[pCh->mSlot]->mCh[0]);
 		
 		if (close(pMaster->mWorkerPool[pCh->mSlot]->mCh[0]) == -1) 

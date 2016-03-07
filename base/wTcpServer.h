@@ -22,13 +22,8 @@
 #include "wTask.h"
 #include "wWorker.h"
 #include "wMaster.h"
-
-enum SERVER_STATUS
-{
-	SERVER_INIT = -1,	//服务器的初始化状态
-	SERVER_QUIT,	 	//服务器进入关闭状态
-	SERVER_RUNNING	 	//正常运行状态模式
-};
+#include "wTcpTask.h"
+#include "wChannelTask.h"
 
 template <typename T>
 class wTcpServer: public wSingleton<T>
@@ -73,7 +68,7 @@ class wTcpServer: public wSingleton<T>
 		 * @param  pTask [wTask*]
 		 * @return       [是否出错]
 		 */
-		int AddToEpoll(wTask* pTask);
+		int AddToEpoll(wTask* pTask, int iEvent = EPOLLIN|EPOLLERR|EPOLLHUP);
         int RemoveEpoll(wTask* pTask);
 		
 		/**
@@ -179,7 +174,6 @@ void wTcpServer<T>::Final()
 	CleanEpoll();
 	CleanTaskPool();
 
-	SAFE_DELETE(mChannelSock);
 	SAFE_DELETE(mListenSock);
 }
 
@@ -278,7 +272,7 @@ void wTcpServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 		
 		if(mWorker->mWorkerPool != NULL)
 		{
-			mChannelSock = mWorker->mWorkerPool[mWorker->mSlot]->mCh;	//当前worker进程表项
+			mChannelSock = &mWorker->mWorkerPool[mWorker->mSlot]->mCh;	//当前worker进程表项
 			if(mChannelSock != NULL)
 			{
 				//new unix task
@@ -298,7 +292,7 @@ void wTcpServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 			else
 			{
 				LOG_ERROR(ELOG_KEY, "[startup] worker pool slot(%d) illegal", mWorker->mSlot);
-				eixt(1);
+				exit(1);
 			}
 		}
 	}
@@ -401,7 +395,7 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	{
 		return -1;
 	}
-	mListenSock->IPAddr() = sIpAddr;
+	mListenSock->Host() = sIpAddr;
 	mListenSock->Port() = nPort;
 	mListenSock->SockType() = SOCK_LISTEN;
 	mListenSock->IOFlag() = FLAG_RECV;
@@ -464,7 +458,7 @@ wTask* wTcpServer<T>::NewChannelTask(wIO *pIO)
 }
 
 template <typename T>
-int wTcpServer<T>::AddToEpoll(wTask* pTask, int iEvent = EPOLLIN|EPOLLERR|EPOLLHUP)
+int wTcpServer<T>::AddToEpoll(wTask* pTask, int iEvent)
 {
 	mEpollEvent.events = iEvent;
 	mEpollEvent.data.fd = pTask->IO()->FD();
@@ -618,11 +612,11 @@ void wTcpServer<T>::Recv()
 template <typename T>
 int wTcpServer<T>::AcceptConn()
 {
-	if(mListenSock == NULL || mListenSock->IO()->FD() == FD_UNKNOWN)
+	if(mListenSock == NULL || mListenSock->FD() == FD_UNKNOWN)
 	{
 		return -1;
 	}
-	int iFD = mListenSock->IO()->FD();
+	int iFD = mListenSock->FD();
 	
 	struct sockaddr_in stSockAddr;
 	socklen_t iSockAddrSize = sizeof(stSockAddr);
@@ -643,7 +637,7 @@ int wTcpServer<T>::AcceptConn()
 	//new tcp task
 	wSocket *pSocket = new wSocket();
 	pSocket->FD() = iNewFD;
-	pSocket->IPAddr() = inet_ntoa(stSockAddr.sin_addr);
+	pSocket->Host() = inet_ntoa(stSockAddr.sin_addr);
 	pSocket->Port() = stSockAddr.sin_port;
 	pSocket->SockType() = SOCK_CONNECT;
 	pSocket->IOFlag() = FLAG_RVSD;
@@ -669,7 +663,7 @@ int wTcpServer<T>::AcceptConn()
 		{
 			AddToTaskPool(mTask);
 		}
-		LOG_ERROR(ELOG_KEY, "[connect] client connect succeed: ip(%s) port(%d)", pSocket->IPAddr().c_str(), pSocket->Port());
+		LOG_ERROR(ELOG_KEY, "[connect] client connect succeed: ip(%s) port(%d)", pSocket->Host().c_str(), pSocket->Port());
 	}
 	return iNewFD;
 }

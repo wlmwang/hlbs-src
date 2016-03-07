@@ -16,6 +16,7 @@
 #include "wTask.h"
 #include "wChannelTask.h"
 #include "wDispatch.h"
+#include "CommonCmd.h"
 
 #define CHANNEL_REG_DISP(cmdid, paraid, func) mDispatch.Register("RouterChannelTask", CMD_ID(cmdid, paraid), REG_FUNC(CMD_ID(cmdid, paraid), func));
 

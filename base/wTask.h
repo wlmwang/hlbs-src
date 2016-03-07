@@ -13,13 +13,6 @@
 #include "wLog.h"
 #include "wMisc.h"
 
-enum TASK_STATUS
-{
-	TASK_INIT = -1,
-	TASK_QUIT,
-	TASK_RUNNING
-};
-
 class wTask
 {
 	public:

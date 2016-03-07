@@ -9,6 +9,7 @@
 wWorker::wWorker(int iSlot) 
 {
 	Initialize();
+	mSlot = iSlot;
 }
 
 wWorker::~wWorker() {}
@@ -44,7 +45,6 @@ void wWorker::Initialize()
 	mRespawn = PROCESS_NORESPAWN;
 	mData = NULL;
 
-	mSlot = iSlot;
 	mWorkerNum = 0;
 	mWorkerPool = NULL;
 	mUseMutex = 0;
@@ -87,6 +87,7 @@ void wWorker::PrepareStart(int iType, void *pData)
 	 */
     if(mRlimitCore != -1) 
 	{
+		struct rlimit rlmt;
         rlmt.rlim_cur = (rlim_t) mRlimitCore;
         rlmt.rlim_max = (rlim_t) mRlimitCore;
         if (setrlimit(RLIMIT_NOFILE, &rlmt) == -1) 

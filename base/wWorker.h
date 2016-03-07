@@ -20,16 +20,8 @@
 #include "wShm.h"
 #include "wShmtx.h"
 #include "wNoncopyable.h"
-#include "wMaster.h"
+#include "wBaseCmd.h"
 
-enum WORKER_STATUS
-{
-	WORKER_INIT = -1;
-	WORKER_RUNNING,
-	WORKER_HUP,
-	WORKER_EXITING,
-	WORKER_EXITED
-};
 class wWorker : public wNoncopyable
 {
 	public:

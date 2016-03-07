@@ -41,11 +41,11 @@ int RouterServerTask::VerifyConn()
 		LoginReqToken_t *pLoginRes = (LoginReqToken_t*) pBuffer;
 		if (strcmp(pLoginRes->mToken, "Anny") == 0)
 		{
-			LOG_ERROR("client", "[verify] receive client and verify success from ip(%s) port(%d) with token(%s)", Socket()->IPAddr().c_str(), Socket()->Port(), pLoginRes->mToken);
+			LOG_ERROR("client", "[verify] receive client and verify success from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
 			mConnType = pLoginRes->mConnType;
 			return 0;
 		}
-		LOG_ERROR("client", "[verify] receive client and verify failed from ip(%s) port(%d) with token(%s)", Socket()->IPAddr().c_str(), Socket()->Port(), pLoginRes->mToken);
+		//LOG_ERROR("client", "[verify] receive client and verify failed from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
 	}
 	return -1;
 }
@@ -89,7 +89,7 @@ int RouterServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer,
 		}
 		else
 		{
-			LOG_DEBUG("default", "[runtime] client fd(%d) send a invalid msg id(%u)", mSocket->SocketFD(), pCommand->GetId());
+			LOG_DEBUG("default", "[runtime] client fd(%d) send a invalid msg id(%u)", mIO->FD(), pCommand->GetId());
 		}
 	}
 	return 0;

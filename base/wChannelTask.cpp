@@ -6,7 +6,7 @@
 
 #include "wChannelTask.h"
 
-wChannelTask(wIO *pIO) : wTask(pIO)
+wChannelTask::wChannelTask(wIO *pIO) : wTask(pIO)
 {
 	Initialize();
 }

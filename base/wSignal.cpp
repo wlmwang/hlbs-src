@@ -82,6 +82,7 @@ wSignal::signal_t g_signals[] = {
 
 void SignalHandler(int signo)
 {
+	/*
     char	*action;
     int		ignore;
     int		err;
@@ -177,6 +178,7 @@ void SignalHandler(int signo)
         //GetProcessStatus();	//回收worker进程状态
     }
 	
-    errno = err
+    errno = err;
+    */
 }
 

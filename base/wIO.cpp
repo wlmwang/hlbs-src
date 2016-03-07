@@ -23,13 +23,15 @@ void wIO::Initialize()
 	mIOFlag = FLAG_UNKNOWN;
 	mSockStatus = STATUS_UNKNOWN;
 	mSockType = SOCK_UNKNOWN;
-	
+
+	mHost = "";
+	mPort = 0;	
 	mRecvTime = 0;
 	mSendTime = 0;
 	mCreateTime = GetTickCount();
 }
 
-int wSocket::SetNonBlock(bool bNonblock)
+int wIO::SetNonBlock(bool bNonblock)
 {
 	if(mFD == FD_UNKNOWN) 
 	{
@@ -38,6 +40,11 @@ int wSocket::SetNonBlock(bool bNonblock)
 	
 	int iFlags = fcntl(mFD, F_GETFL, 0);
 	return fcntl(mFD, F_SETFL, (bNonblock == true ? iFlags | O_NONBLOCK : iFlags & ~O_NONBLOCK));
+}
+
+int wIO::Open()
+{
+	//
 }
 
 void wIO::Close()

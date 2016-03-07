@@ -24,12 +24,6 @@ class wSocket : public wIO
 		wSocket();
 		void Initialize();
 		virtual ~wSocket();
-
-		string &IPAddr() { return mIPAddr; }
-		unsigned short &Port() { return mPort; }
-		
-		//int & SocketFD() { return mSocketFD; }		
-		//int & SocketFlag() { return mSocketFlag; }
 		
 		virtual int SetTimeout(int iTimeout = 30);	//单位：秒
 		virtual int SetSendTimeout(int iTimeout = 30);
@@ -38,10 +32,6 @@ class wSocket : public wIO
 		virtual int Open();
 		virtual ssize_t RecvBytes(char *vArray, size_t vLen);
 		virtual ssize_t SendBytes(char *vArray, size_t vLen);
-		
-	protected:
-		string mIPAddr;				//需要连接或者需要绑定的IP地址
-		unsigned short mPort;		//需要连接或者需要绑定的端口
 };
 
 #endif

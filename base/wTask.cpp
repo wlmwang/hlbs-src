@@ -68,7 +68,7 @@ int wTask::TaskRecv()
 		//判断消息长度
 		if(iMsgLen < MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN )
 		{
-			LOG_ERROR(ELOG_KEY, "recv message invalid len: %d , fd(%d)", iMsgLen, mIO->IOFD());
+			LOG_ERROR(ELOG_KEY, "recv message invalid len: %d , fd(%d)", iMsgLen, mIO->FD());
 			return -1;
 		}
 
@@ -99,7 +99,7 @@ int wTask::TaskRecv()
 		//判断剩余的长度
 		if(iBuffMsgLen < 0)
 		{
-			LOG_ERROR(ELOG_KEY, "the last msg len %d is impossible fd(%d)", iBuffMsgLen, mIO->IOFD());
+			LOG_ERROR(ELOG_KEY, "the last msg len %d is impossible fd(%d)", iBuffMsgLen, mIO->FD());
 			return -1;
 		}
 		
@@ -133,7 +133,7 @@ int wTask::TaskSend()
 			continue;
 		}
 		
-		LOG_DEBUG(ELOG_KEY, "send message len: %d, fd(%d)", iMsgLen, mIO->IOFD());
+		LOG_DEBUG(ELOG_KEY, "send message len: %d, fd(%d)", iMsgLen, mIO->FD());
 	}
 	
 	int iSendLen = mSendBytes;
@@ -151,7 +151,7 @@ int wTask::WriteToSendBuf(const char *pCmd, int iLen)
 	//判断消息长度
 	if(iLen <= MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN )
 	{
-		LOG_ERROR(ELOG_KEY, "write message invalid len %d, fd(%d)", iLen, mIO->IOFD());
+		LOG_ERROR(ELOG_KEY, "write message invalid len %d, fd(%d)", iLen, mIO->FD());
 		return -1;
 	}
 	
@@ -177,7 +177,7 @@ int wTask::SyncSend(const char *pCmd, int iLen)
 	//判断消息长度
 	if(iLen < MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN )
 	{
-		LOG_ERROR(ELOG_KEY, "send message invalid len %d, fd(%d)", iLen, mIO->IOFD());
+		LOG_ERROR(ELOG_KEY, "send message invalid len %d, fd(%d)", iLen, mIO->FD());
 		return -1;
 	}
 	
@@ -197,7 +197,7 @@ int wTask::SyncRecv(char *pCmd, int iLen)
 		iRecvLen = mIO->RecvBytes(mTmpRecvMsgBuff, iLen + sizeof(int));
 		if(iRecvLen <= 0)
 		{
-			LOG_ERROR(ELOG_KEY, "recv data invalid len:%d ,fd(%d)", iRecvLen, mIO->IOFD());
+			LOG_ERROR(ELOG_KEY, "recv data invalid len:%d ,fd(%d)", iRecvLen, mIO->FD());
 			return iRecvLen;	
 		}
 		//过滤掉心跳
@@ -207,7 +207,7 @@ int wTask::SyncRecv(char *pCmd, int iLen)
 	iMsgLen = *(int *)mTmpRecvMsgBuff;
 	if(iMsgLen < MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN)
 	{
-		LOG_ERROR(ELOG_KEY, "get message invalid len: %d, fd(%d)", iMsgLen, mIO->IOFD());
+		LOG_ERROR(ELOG_KEY, "get message invalid len: %d, fd(%d)", iMsgLen, mIO->FD());
 		return -1;
 	}
 

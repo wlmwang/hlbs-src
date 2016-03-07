@@ -26,13 +26,13 @@ void RouterServer::Initialize()
 
 wTask* RouterServer::NewTcpTask(wIO *pIO)
 {
-	wTask *pTask = new RouterServerTask(wIO);
+	wTask *pTask = new RouterServerTask(pIO);
 	return pTask;
 }
 
 wTask* RouterServer::NewChannelTask(wIO *pIO)
 {
-	wTask *pTask = new RouterChannelTask(wIO);
+	wTask *pTask = new RouterChannelTask(pIO);
 	return pTask;
 }
 

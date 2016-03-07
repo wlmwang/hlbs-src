@@ -33,18 +33,18 @@ OBJECTS=./debug/RouterMain.o \
 		./debug/RouterServer.o  \
 		./debug/RouterServerTask.o  \
 		./debug/RouterChannelTask.o  \
+		./debug/wSignal.o 	\
 		./debug/wWorker.o \
 		./debug/wProcTitle.o \
+		./debug/wTcpTask.o  \
 		./debug/wChannel.o \
 		./debug/wChannelTask.o \
-		./debug/wSignal.o 	\
 		./debug/wTask.o \
 		./debug/wIO.o \
 		./debug/wFile.o \
 		./debug/wMsgQueue.o \
 		./debug/wLog.o \
 		./debug/wMisc.o  \
-		./debug/wTcpTask.o  \
 		./debug/wSocket.o 	\
 		./debug/wShmtx.o 	\
 		./debug/wShm.o

@@ -15,8 +15,6 @@ wSocket::~wSocket() {}
 
 void wSocket::Initialize()
 {
-	mIPAddr = "";
-	mPort = 0;
 	mIOType = TYPE_SOCK;
 	mSockType = SOCK_UNKNOWN;
 	mSockStatus = STATUS_UNKNOWN;

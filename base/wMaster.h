@@ -23,31 +23,6 @@
 #include "wWorker.h"
 #include "wCoreCmd.h"
 
-#define PROCESS_SINGLE     0 	//单独进程
-#define PROCESS_MASTER     1 	//主进程
-//#define PROCESS_SIGNALLER  2 	//信号进程
-#define PROCESS_WORKER     3 	//工作进程
-
-
-#define PROCESS_NORESPAWN     -1	//子进程退出时，父进程不再创建
-
-//#define PROCESS_JUST_SPAWN    -2	//正在重启
-
-#define PROCESS_RESPAWN       -3	//子进程异常退出时，master会重新创建它。如当worker或cache manager异常退出时，父进程会重新创建它
-
-#define PROCESS_DETACHED	  -5	//热代码替换? TODO
-
-#define MAX_PROCESSES         1024
-
-enum MASTER_STATUS
-{
-	MASTER_INIT = -1;
-	MASTER_RUNNING,
-	MASTER_HUP,
-	MASTER_EXITING,
-	MASTER_EXITED
-};
-
 template <typename T>
 class wMaster : public wSingleton<T>
 {
@@ -62,7 +37,7 @@ class wMaster : public wSingleton<T>
 		
 		void WorkerStart(int n, int type = PROCESS_RESPAWN);
 		pid_t SpawnWorker(int i, const char *title, int type = PROCESS_RESPAWN);
-		void PassOpenChannel(wChannel::channel_t *ch);
+		void PassOpenChannel(struct ChannelReqOpen_t* pCh);
 		virtual wWorker* NewWorker(int iSlot = 0);
 		virtual void HandleSignal();
 
@@ -86,7 +61,7 @@ class wMaster : public wSingleton<T>
 		int CreatePidFile();
 		void DeletePidFile();
 
-	protected:
+	public:
 		MASTER_STATUS mStatus;
 		int mProcess;
 		int mNcpu;		//cpu个数

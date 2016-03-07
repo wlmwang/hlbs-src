@@ -12,6 +12,14 @@
 #include "wMisc.h"
 #include "wNoncopyable.h"
 
+enum SOCK_STATUS
+{
+	STATUS_UNKNOWN = -1,
+	STATUS_UNCONNECT,	//关闭状态
+	STATUS_CONNECTED,	//已经建立连接
+	STATUS_LISTEN		//已经处于监听状态
+};
+
 //套接字
 enum SOCK_TYPE
 {
@@ -19,13 +27,6 @@ enum SOCK_TYPE
 	SOCK_LISTEN = 0,
 	SOCK_CONNECT,
 	SOCK_UNIX,
-};
-enum SOCK_STATUS
-{
-	STATUS_UNKNOWN = -1,
-	STATUS_UNCONNECT,	//关闭状态
-	STATUS_CONNECTED,	//已经建立连接
-	STATUS_LISTEN		//已经处于监听状态
 };
 
 enum IO_TYPE
@@ -63,6 +64,9 @@ class wIO : private wNoncopyable
 		unsigned long long &SendTime() { return mSendTime; }
 		unsigned long long &CreateTime() { return mCreateTime; }
 
+		virtual string &Host() { return mHost; }
+		virtual unsigned short &Port() { return mPort; }
+
 		//30s
 		virtual int SetTimeout(int iTimeout = 30) {}
 		virtual int SetSendTimeout(int iTimeout = 30) {} 
@@ -83,6 +87,9 @@ class wIO : private wNoncopyable
 		
 		SOCK_TYPE mSockType;
 		SOCK_STATUS mSockStatus;
+
+		string mHost;
+		unsigned short mPort;
 		
 		unsigned long long mRecvTime;	//最后接收到数据包的时间戳，毫秒
 		unsigned long long mSendTime;	//最后发送数据包时间戳（主要用户心跳检测），毫秒

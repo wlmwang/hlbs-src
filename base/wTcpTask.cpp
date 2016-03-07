@@ -6,7 +6,7 @@
 
 #include "wTcpTask.h"
 
-wTcpTask(wIO *pIO) : wTask(pIO)
+wTcpTask::wTcpTask(wIO *pIO) : wTask(pIO)
 {
 	Initialize();
 }
