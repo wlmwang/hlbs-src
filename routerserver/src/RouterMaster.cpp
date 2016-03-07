@@ -14,8 +14,6 @@ RouterMaster::RouterMaster()
 RouterMaster::~RouterMaster()
 {
     SAFE_DELETE(mTitle);
-    SAFE_DELETE(mConfig);
-    SAFE_DELETE(mServer);
 }
 
 void RouterMaster::Initialize()

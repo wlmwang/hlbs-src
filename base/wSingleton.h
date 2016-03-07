@@ -29,7 +29,7 @@ class wSingleton
 		static T *mSingletonPtr;
 
 		//赋值操作符号，没有实现，禁用掉了
-		const wSingleton & operator= (const wSingleton &);
+		const wSingleton &operator= (const wSingleton &);
 	
 	protected:
 		wSingleton() {}
@@ -37,21 +37,7 @@ class wSingleton
 	public:
 		virtual ~wSingleton() 
 		{
-			if (mSingletonPtr != NULL)
-			{
-				delete mSingletonPtr;
-				mSingletonPtr = NULL;
-			}
-		}
-		
-		//可以在子类的destoryMe中被调用
-		static void DelMe(void)
-		{
-			if (mSingletonPtr)
-			{
-				delete mSingletonPtr;
-				mSingletonPtr = NULL;
-			}
+			SAFE_DELETE(mSingletonPtr);
 		}
 
 		static T* Instance()
