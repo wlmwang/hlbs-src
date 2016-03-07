@@ -9,24 +9,13 @@
 wWorker::wWorker(int iSlot) 
 {
 	Initialize();
-	
-	mSlot = iSlot;
-	mPid = -1;
-	mExited = -1;
-	mExiting = -1;
-	mRespawn = PROCESS_NORESPAWN;
 }
 
 wWorker::~wWorker() {}
 
-void wWorker::Initialize(int iWorkerNum, wWorker **pWorkerPool, int iUseMutex, wShm *pShmAddr, wShmtx *pMutex) 
-{	
-	mWorkerNum = iWorkerNum > 0? iWorkerNum : 0;
-	mWorkerPool = pWorkerPool != NULL? pWorkerPool : NULL;
-	mUseMutex = iUseMutex > 0? iUseMutex : 0;
-	mShmAddr = pShmAddr != NULL ? pShmAddr : NULL;
-	mMutex = pMutex != NULL ? pMutex : NULL;
-}
+void wWorker::PrepareRun() {}
+
+void wWorker::Run() {}
 
 int wWorker::InitChannel()
 {
@@ -38,41 +27,71 @@ void wWorker::Close()
 	mCh.Close();
 }
 
-void wWorker::PrepareRun() {}
-
-void wWorker::Run() {}
-
-void wWorker::PrepareStart(int type, void *data) 
+void wWorker::Initialize() 
 {
-	mSlot = *(int *) data;
-	mRespawn = type;
+	mProcess = PROCESS_WORKER;
+	mStatus = WORKER_INIT;
+	mPid = -1;	//此时worker还未生成
+	mUid = 0;
+	mGid = 0;
+	mPriority = 0;
+	mRlimitCore = 1024;
+	memcpy(mWorkingDir, PREFIX, strlen(PREFIX)+1);
+
+	mDetached = 0;
+	mExited = 0;
+	mExiting = 0;
+	mRespawn = PROCESS_NORESPAWN;
+	mData = NULL;
+
+	mSlot = iSlot;
+	mWorkerNum = 0;
+	mWorkerPool = NULL;
+	mUseMutex = 0;
+	mShmAddr = NULL;
+	mMutex = NULL;
+	mMutexHeld = 0;
+}
+
+void wWorker::InitWorker(int iWorkerNum, wWorker **pWorkerPool, int iUseMutex, wShm *pShmAddr, wShmtx *pMutex, int iDelay) 
+{
+	mWorkerNum = iWorkerNum;
+	mWorkerPool = pWorkerPool;
+	mUseMutex = iUseMutex;
+	mShmAddr = pShmAddr;
+	mMutex = pMutex;
+	mDelay = iDelay;
+}
+
+void wWorker::PrepareStart(int iType, void *pData) 
+{
+	//mSlot = *(int *) pData;
+	mData = pData;
+	mRespawn = iType;
 	mPid = getpid();
 	
 	/**
 	 *  设置当前进程优先级。进程默认优先级为0
 	 *  -20 -> 20 高 -> 低。只有root可提高优先级，即可减少priority值
 	 */
-	int priority = 0;
-	if (mSlot >= 0 && /*priority != 0*/) 
+	if(mSlot >= 0 && mPriority != 0)
 	{
-        if (setpriority(PRIO_PROCESS, 0, priority) == -1) 
+        if (setpriority(PRIO_PROCESS, 0, mPriority) == -1) 
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] setpriority(%d) failed: %s", priority, strerror(errno));
+			LOG_ERROR(ELOG_KEY, "[runtime] setpriority(%d) failed: %s", mPriority, strerror(errno));
         }
     }
 	
 	/**
-	 *  设置进程的最大文件描述符，内核默认是1024
+	 *  设置进程的最大文件描述符
 	 */
-	int rlimit_nofile = 65535;
-    if (rlimit_nofile != -1) 
+    if(mRlimitCore != -1) 
 	{
-        rlmt.rlim_cur = (rlim_t) rlimit_nofile;
-        rlmt.rlim_max = (rlim_t) rlimit_nofile;
-		
+        rlmt.rlim_cur = (rlim_t) mRlimitCore;
+        rlmt.rlim_max = (rlim_t) mRlimitCore;
         if (setrlimit(RLIMIT_NOFILE, &rlmt) == -1) 
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] setrlimit(RLIMIT_NOFILE, %i) failed: %s", rlimit_nofile, strerror(errno));
+			LOG_ERROR(ELOG_KEY, "[runtime] setrlimit(RLIMIT_NOFILE, %i) failed: %s", mRlimitCore, strerror(errno));
         }
     }
 	
@@ -105,28 +124,21 @@ void wWorker::PrepareStart(int type, void *data)
 	*/
 	
     //切换工作目录
-    if (strlen(PREFIX) > 0) 
+    if (strlen(mWorkingDir) > 0) 
 	{
-        if (chdir((char *) PREFIX) == -1) 
+        if (chdir((char *)mWorkingDir) == -1) 
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] chdir(\"%s\") failed: %s", PREFIX, strerror(errno));                        
+			LOG_ERROR(ELOG_KEY, "[runtime] chdir(\"%s\") failed: %s", mWorkingDir, strerror(errno));                        
 			exit(2);
         }
     }
 	
-	//worker进程中不阻塞所有信号
-	wSigSet mSigSet;
-	if(mSigSet.Procmask(SIG_SETMASK))
-	{
-		LOG_ERROR(ELOG_KEY, "[runtime] sigprocmask() failed: %s", strerror(errno));
-	}
-	
 	srandom((mPid << 16) ^ time(NULL));  //设置种子值，进程ID+时间
 	
 	//将其他进程的channel[1]关闭，自己的除外
-    for (int n = 0; n < mWorkerNum; n++) 
+    for(int n = 0; n < mWorkerNum; n++) 
     {
-        if (mWorkerPool[n]->mPid == -1|| mWorkerPool[n]->mCh[1] == -1|| n == mSlot) 
+        if(n == mSlot ||mWorkerPool[n]->mPid == -1|| mWorkerPool[n]->mCh[1] == FD_UNKNOWN) 
         {
             continue;
         }
@@ -137,21 +149,24 @@ void wWorker::PrepareStart(int type, void *data)
         }
     }
 
-    //关闭属于该worker进程的channel[0]套接字描述符。这个描述符是由master进程所使用的
+    //关闭该进程worker进程的ch[0]描述符
     if (close(mWorkerPool[mSlot]->mCh[0]) == -1) 
     {
         LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed: %s", strerror(errno));
     }
-   
+	
+	//worker进程中不阻塞所有信号
+	wSigSet mSigSet;
+	if(mSigSet.Procmask(SIG_SETMASK))
+	{
+		LOG_ERROR(ELOG_KEY, "[runtime] sigprocmask() failed: %s", strerror(errno));
+	}
+
 	PrepareRun();
 }
 
 void wWorker::Start(bool bDaemon) 
 {
+	mStatus = WORKER_RUNNING;
 	Run();
-	
-	//TODO 信号处理
-	//
-	//进程退出
-	exit(0);
 }

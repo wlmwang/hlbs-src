@@ -40,6 +40,9 @@ class wTcpServer: public wSingleton<T>
 
 		void Final();
 		
+		/**
+		 * 事件读写主调函数
+		 */
 		void Recv();
 		void Broadcast(const char *pCmd, int iLen);
 		
@@ -57,6 +60,8 @@ class wTcpServer: public wSingleton<T>
 		 */		
 		void PrepareMaster(string sIpAddr ,unsigned int nPort);	
 		void WorkerStart(wWorker *pWorker = NULL, bool bDaemon = true);
+		int AcceptMutex();
+		virtual void HandleSignal();
 
 		/**
 		 * epoll event
@@ -150,19 +155,20 @@ wTcpServer<T>::~wTcpServer()
 template <typename T>
 void wTcpServer<T>::Initialize()
 {
+	mTimeout = 10;
+	mServerName = "";
+
 	mLastTicker = GetTickCount();
 	mCheckTimer = wTimer(KEEPALIVE_TIME);
 	mIsCheckTimer = true;
-	mServerName = "";
-	
-	mTimeout = 10;
+
 	mEpollFD = FD_UNKNOWN;
 	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
 	mTaskCount = 0;
 	mEpollEventPool.reserve(512);	//容量
 	mTask = NULL;
+
 	mListenSock = NULL;
-	
 	mChannelSock = NULL;
 	mWorker = NULL;
 }
@@ -172,6 +178,8 @@ void wTcpServer<T>::Final()
 {
 	CleanEpoll();
 	CleanTaskPool();
+
+	SAFE_DELETE(mChannelSock);
 	SAFE_DELETE(mListenSock);
 }
 
@@ -219,7 +227,7 @@ void wTcpServer<T>::Broadcast(const char *pCmd, int iLen)
 }
 
 template <typename T>
-void wTcpServer<T>::PrepareMaster(string sIpAddr ,unsigned int nPort)
+void wTcpServer<T>::PrepareMaster(string sIpAddr, unsigned int nPort)
 {
 	LOG_INFO(ELOG_KEY, "[startup] Master Prepare start succeed");
 
@@ -248,19 +256,21 @@ void wTcpServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 	}
 	
 	//Listen Socket 添加到epoll中
-	if (mListenSock != NULL)
+	if (mListenSock == NULL)
 	{
-		mTask = NewTcpTask(mListenSock);
-		if(NULL != mTask)
+		LOG_ERROR(ELOG_KEY, "[startup] listen socket illegal");
+		exit(1);
+	}
+	mTask = NewTcpTask(mListenSock);
+	if(NULL != mTask)
+	{
+		mTask->Status() = TASK_RUNNING;
+		if (AddToEpoll(mTask) >= 0)
 		{
-			mTask->Status() = TASK_RUNNING;
-			if (AddToEpoll(mTask) >= 0)
-			{
-				AddToTaskPool(mTask);
-			}
+			AddToTaskPool(mTask);
 		}
 	}
-	
+
 	//Unix Socket 添加到epoll中（worker自身channel[1]被监听）
 	if(pWorker != NULL)
 	{
@@ -297,8 +307,15 @@ void wTcpServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 	do {
 		Recv();
 		Run();
+		HandleSignal();
 		if(mIsCheckTimer) CheckTimer();
 	} while(IsRunning() && bDaemon);
+}
+
+template <typename T>
+void wTcpServer<T>::HandleSignal()
+{
+	//
 }
 
 template <typename T>
@@ -319,17 +336,20 @@ void wTcpServer<T>::PrepareStart(string sIpAddr ,unsigned int nPort)
 		LOG_ERROR(ELOG_KEY, "[startup] InitListen failed: %s", strerror(errno));
 		exit(1);
 	}
-	else if(mListenSock != NULL)
+
+	//Listen Socket 添加到epoll中
+	if (mListenSock == NULL)
 	{
-		//Listen Socket 添加到epoll中
-		mTask = NewTcpTask(mListenSock);
-		if(NULL != mTask)
+		LOG_ERROR(ELOG_KEY, "[startup] listen socket illegal");
+		exit(1);
+	}
+	mTask = NewTcpTask(mListenSock);
+	if(NULL != mTask)
+	{
+		mTask->Status() = TASK_RUNNING;
+		if (AddToEpoll(mTask) >= 0)
 		{
-			mTask->Status() = TASK_RUNNING;
-			if (AddToEpoll(mTask) >= 0)
-			{
-				AddToTaskPool(mTask);
-			}
+			AddToTaskPool(mTask);
 		}
 	}
 	
@@ -476,8 +496,22 @@ int wTcpServer<T>::AddToTaskPool(wTask* pTask)
 }
 
 template <typename T>
+int wTcpServer<T>::AcceptMutex()
+{
+	return 0;
+}
+
+template <typename T>
 void wTcpServer<T>::Recv()
 {
+	/**
+	 * 惊群锁
+	 */
+	if(AcceptMutex() != 0)
+	{
+		return;
+	}
+
 	int iRet = epoll_wait(mEpollFD, &mEpollEventPool[0], mTaskCount, mTimeout /*10ms*/);
 	if(iRet < 0)
 	{
@@ -486,12 +520,17 @@ void wTcpServer<T>::Recv()
 	}
 	
 	wTask *pTask = NULL;
+	int iFD = FD_UNKNOWN;
+	SOCK_TYPE sockType;
+	SOCK_STATUS sockStatus;
+	IO_FLAG iOFlag;
 	for(int i = 0 ; i < iRet ; i++)
 	{
 		pTask = (wTask *)mEpollEventPool[i].data.ptr;
-		
-		int iFD = pTask->IO()->FD();
-		SOCK_TYPE sockType = pTask->IO()->SockType();
+		iFD = pTask->IO()->FD();
+		sockType = pTask->IO()->SockType();
+		sockStatus = pTask->IO()->SockStatus();
+		iOFlag = pTask->IO()->IOFlag();
 
 		if(iFD < 0)
 		{
@@ -521,14 +560,14 @@ void wTcpServer<T>::Recv()
 			continue;
 		}
 		
-		if(sockType == SOCK_LISTEN)
+		if(sockType == SOCK_LISTEN && sockStatus == STATUS_LISTEN)
 		{
 			if (mEpollEventPool[i].events & EPOLLIN)
 			{
 				AcceptConn();	//accept connect
 			}
 		}
-		else if(sockType == SOCK_CONNECT)
+		else if(sockType == SOCK_CONNECT && sockStatus == STATUS_CONNECTED)
 		{
 			if (mEpollEventPool[i].events & EPOLLIN)
 			{
@@ -555,7 +594,7 @@ void wTcpServer<T>::Recv()
 				}
 			}
 		}
-		else if(sockType == SOCK_UNIX)
+		else if(sockType == SOCK_UNIX && sockStatus == STATUS_LISTEN)
 		{
 			if (mEpollEventPool[i].events & EPOLLIN)
 			{

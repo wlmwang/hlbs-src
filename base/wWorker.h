@@ -20,36 +20,66 @@
 #include "wShm.h"
 #include "wShmtx.h"
 #include "wNoncopyable.h"
+#include "wMaster.h"
 
+enum WORKER_STATUS
+{
+	WORKER_INIT = -1;
+	WORKER_RUNNING,
+	WORKER_HUP,
+	WORKER_EXITING,
+	WORKER_EXITED
+};
 class wWorker : public wNoncopyable
 {
 	public:
 		wWorker(int iSlot = 0);
-		void Initialize(int iWorkerNum = 0, wWorker **pWorkerPool = NULL, int iUseMutex = 1, wShm *pShmAddr = NULL, wShmtx *pMutex = NULL);
+		void Initialize();
 		virtual ~wWorker();
 
+		/**
+		 * 设置进程标题
+		 */
 		virtual void PrepareRun();
 		virtual void Run();
 		virtual void Close();
 
-		void PrepareStart(int type, void *data);
+		void InitWorker(int iWorkerNum = 0, wWorker **pWorkerPool = NULL, int iUseMutex = 1, wShm *pShmAddr = NULL, wShmtx *pMutex = NULL, int iDelay = 500);
+		void PrepareStart(int iType, void *pData);
 		void Start(bool bDaemon = true);
 
 		int InitChannel();
+	
 	public:
-		wChannel mCh;	//worker进程channel
-		
+		int mProcess;
 		pid_t mPid;
+		uid_t mUid;
+		gid_t mGid;
+		int mPriority;			//进程优先级
+		int mRlimitCore;		//连接限制
+		char mWorkingDir[255];	//工作目录
+		
+		void* mData;	//进程参数
+		int mDetached;	//是否已分离
+		int mExited;	//已退出
+		int mExiting;	//正在退出
+		int mRespawn;	//worker启动模式。退出是否重启
+
+		WORKER_STATUS mStatus;
+
+		//进程表相关，对应 wMaster 相关属性
 		int mSlot;
 		int mWorkerNum;
-		wWorker **mWorkerPool;	//进程表，从0开始
+		wWorker **mWorkerPool;
+
+		//惊群锁相关，对应 wMaster 相关属性
 		int mUseMutex;
 		wShm *mShmAddr;
-		wShmtx *mMutex;	//accept mutex
+		wShmtx *mMutex;
+		int mDelay;
+		int mMutexHeld;
 
-		int mExited;
-		int mExiting;
-		int mRespawn;	//退出是否重启
+		wChannel mCh;	//worker进程channel
 };
 
 #endif

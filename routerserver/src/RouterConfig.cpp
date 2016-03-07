@@ -13,8 +13,8 @@ RouterConfig::RouterConfig()
 
 RouterConfig::~RouterConfig()
 {
-	Final();
 	SAFE_DELETE(mDoc);
+	Final();
 }
 
 void RouterConfig::Initialize()
@@ -26,6 +26,22 @@ void RouterConfig::Initialize()
 	mDoc = new TiXmlDocument();
 	memcpy(mBaseConfFile, CONF_XML, strlen(CONF_XML) + 1);
 	memcpy(mSvrConfFile, SVR_XML, strlen(SVR_XML) + 1);
+}
+
+void RouterConfig::Final()
+{
+	DelContainer();
+	for(vector<Svr_t*>::iterator it = mSvr.begin(); it != mSvr.end(); it++)
+	{
+		SAFE_DELETE(*it);
+	}
+	mSvr.clear();
+}
+
+void RouterConfig::DelContainer()
+{
+	mSvrByGid.clear();
+	mSvrByGXid.clear();
 }
 
 void RouterConfig::GetBaseConf()
@@ -276,22 +292,6 @@ void RouterConfig::FixContainer()
 	}
 }
 
-void RouterConfig::DelContainer()
-{
-	mSvrByGid.clear();
-	mSvrByGXid.clear();
-}
-
-void RouterConfig::Final()
-{
-	DelContainer();
-	for(vector<Svr_t*>::iterator it = mSvr.begin(); it != mSvr.end(); it++)
-	{
-		SAFE_DELETE(*it);
-	}
-	mSvr.clear();
-}
-
 int RouterConfig::SetModTime()
 {
 	struct stat stBuf;
@@ -330,7 +330,7 @@ vector<Svr_t*>::iterator RouterConfig::GetItFromV(Svr_t* pSvr)
 
 bool RouterConfig::IsChangeSvr(const SvrNet_t* pR1, const SvrNet_t* pR2)
 {
-	if (pR1->mVersion!=pR2->mVersion || pR1->mGid!=pR2->mGid || pR1->mXid!=pR2->mXid || pR1->mSWeight!=pR2->mSWeight || pR1->mPort!=pR2->mPort || strncmp(pR1->mIp,pR2->mIp,MAX_SVR_IP_LEN)!=0)
+	if (pR1->mVersion!=pR2->mVersion|| pR1->mGid!=pR2->mGid|| pR1->mXid!=pR2->mXid|| pR1->mSWeight!=pR2->mSWeight|| pR1->mPort!=pR2->mPort|| strncmp(pR1->mIp,pR2->mIp,MAX_SVR_IP_LEN)!=0)
 	{
 		return true;
 	}

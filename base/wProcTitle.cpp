@@ -92,10 +92,9 @@ int wProcTitle::InitSetproctitle()
 void wProcTitle::Setproctitle(const char *title, const char *pretitle)
 {
     u_char *p;
-	u_char pre[255];
+	u_char pre[512];   //标题，最长512字节
 
     mOsArgv[1] = NULL;
-
 
     if (pretitle == NULL)
     {
@@ -107,7 +106,6 @@ void wProcTitle::Setproctitle(const char *title, const char *pretitle)
     }
 
     p = Cpystrn((u_char *) mOsArgv[0], pre, mOsArgvLast - mOsArgv[0]);
-
     p = Cpystrn(p, (u_char *) title, mOsArgvLast - (char *) p);
 
     //在原始argv和environ的连续内存中，将修改了的进程名字之外的内存全部清零

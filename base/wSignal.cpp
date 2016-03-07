@@ -13,6 +13,7 @@ int g_reconfigure;
 int g_sigalrm;
 int g_sigio;
 int g_reap;
+int g_restart;
 
 wSignal::wSignal() {}
 

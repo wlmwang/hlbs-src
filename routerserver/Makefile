@@ -32,16 +32,20 @@ OBJECTS=./debug/RouterMain.o \
 		./debug/RouterConfig.o  \
 		./debug/RouterServer.o  \
 		./debug/RouterServerTask.o  \
+		./debug/RouterChannelTask.o  \
 		./debug/wWorker.o \
 		./debug/wProcTitle.o \
 		./debug/wChannel.o \
+		./debug/wChannelTask.o \
+		./debug/wSignal.o 	\
+		./debug/wTask.o \
+		./debug/wIO.o \
 		./debug/wFile.o \
 		./debug/wMsgQueue.o \
 		./debug/wLog.o \
 		./debug/wMisc.o  \
 		./debug/wTcpTask.o  \
 		./debug/wSocket.o 	\
-		./debug/wSignal.o 	\
 		./debug/wShmtx.o 	\
 		./debug/wShm.o
 
@@ -69,6 +73,9 @@ all: $(TARGET)
 ./debug/RouterServerTask.o: src/RouterServerTask.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
+./debug/RouterChannelTask.o: src/RouterChannelTask.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
 ./debug/wWorker.o: $(BASEPATH)/wWorker.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
@@ -79,6 +86,15 @@ all: $(TARGET)
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wFile.o: $(BASEPATH)/wFile.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wIO.o: $(BASEPATH)/wIO.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wTask.o: $(BASEPATH)/wTask.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wChannelTask.o: $(BASEPATH)/wChannelTask.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wMsgQueue.o: $(BASEPATH)/wMsgQueue.cpp

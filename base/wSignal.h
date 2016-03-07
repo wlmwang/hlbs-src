@@ -61,5 +61,6 @@ extern int g_reconfigure;
 extern int g_sigalrm;
 extern int g_sigio;
 extern int g_reap;
+extern int g_restart;
 
 #endif

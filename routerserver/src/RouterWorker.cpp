@@ -13,8 +13,7 @@ RouterWorker::RouterWorker(int iSlot) : wWorker(iSlot)
 
 RouterWorker::~RouterWorker()
 {
-	SAFE_DELETE(mConfig);
-    SAFE_DELETE(mServer);
+	//
 }
 
 void RouterWorker::Initialize()
@@ -31,10 +30,8 @@ void RouterWorker::PrepareRun()
 		LOG_ERROR(ELOG_KEY, "[startup] Get RouterConfig instance failed");
 		exit(1);
 	}
-	//mConfig->mProcTitle->InitSetproctitle();
-	
-	pConfig->GetBaseConf();
-	pConfig->GetSvrConf();
+	//pConfig->GetBaseConf();
+	//pConfig->GetSvrConf();
 
 	mServer = RouterServer::Instance();
 	if(mServer == NULL) 
@@ -49,7 +46,7 @@ void RouterWorker::PrepareRun()
 void RouterWorker::Run()
 {
 	//服务器开始运行
-	//LOG_DEBUG(ELOG_KEY, "[startup] RouterServer start succeed");
+	LOG_DEBUG(ELOG_KEY, "[startup] RouterServer start succeed");
 	
 	mServer->WorkerStart(this);
 }

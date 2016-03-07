@@ -44,7 +44,6 @@ int main(int argc, const char *argv[])
 		LOG_ERROR(ELOG_KEY, "[startup] Get RouterMaster instance failed");
 		exit(1);
 	}
-
 	pMaster->PrepareStart();
 	pMaster->MasterStart();
 

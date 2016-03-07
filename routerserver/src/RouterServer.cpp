@@ -4,9 +4,10 @@
  * Copyright (C) Disvr, Inc.
  */
 
+#include "RouterConfig.h"
 #include "RouterServer.h"
 #include "RouterServerTask.h"
-#include "RouterConfig.h"
+#include "RouterChannelTask.h"
 
 RouterServer::RouterServer() : wTcpServer<RouterServer>("路由服务器")
 {
