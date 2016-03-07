@@ -117,16 +117,6 @@ typedef signed long long int SLLWORD;
 #define MSG_QUEUE_LEN 16777216 /* 1024 * 1024 * 16 */
 #endif
 
-#define FD_UNKNOWN -1
-
-//主机名长度
-#ifndef MAXHOSTNAMELEN
-#define MAXHOSTNAMELEN  256
-#endif
-
-//listen socket backlog长度
-#define LISTEN_BACKLOG        511
-
 //对齐
 #define ALIGNMENT	sizeof(unsigned long)    /* platform word */
 
@@ -140,33 +130,25 @@ typedef signed long long int SLLWORD;
 //释放对象
 #define SAFE_DELETE(x) { if(x) { delete(x); (x) = NULL; } }
 #define SAFE_DELETE_VEC(x) { if(x) { delete [] (x); (x) = NULL; } }
-
 #define SAFE_FREE(x) { if(x) { free(x); (x) = NULL; } }
 
-#define SAFE_SUB(x, y) ((x) > (y) ? (x) - (y) : 0)
-
-#define CAST_CMD(x, y, t)	const t* x = (const t*)y;
-
-//命名空间
-using namespace std;
-
-extern char **environ;
+//主机名长度
+#ifndef MAXHOSTNAMELEN
+#define MAXHOSTNAMELEN  256
+#endif
 
 #define SETPROCTITLE_PAD       '\0'
-#define WAIT_MUTEX "../wait_mutex.shm.ipc"
+
+extern char **environ;
 
 #define PROCESS_SINGLE     0 	//单独进程
 #define PROCESS_MASTER     1 	//主进程
 //#define PROCESS_SIGNALLER  2 	//信号进程
 #define PROCESS_WORKER     3 	//工作进程
 
-
 #define PROCESS_NORESPAWN     -1	//子进程退出时，父进程不再创建
-
 //#define PROCESS_JUST_SPAWN    -2	//正在重启
-
 #define PROCESS_RESPAWN       -3	//子进程异常退出时，master会重新创建它。如当worker或cache manager异常退出时，父进程会重新创建它
-
 #define PROCESS_DETACHED	  -5	//热代码替换? TODO
 
 #define MAX_PROCESSES         1024
@@ -202,5 +184,12 @@ enum TASK_STATUS
 	TASK_QUIT,
 	TASK_RUNNING
 };
+
+#define FD_UNKNOWN	-1
+#define WAIT_MUTEX	"../wait_mutex.shm.ipc"
+#define LISTEN_BACKLOG	511
+
+//命名空间
+using namespace std;
 
 #endif
