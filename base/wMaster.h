@@ -222,9 +222,8 @@ void wMaster<T>::InitSignals()
 	wSignal stSignal;
 	for (pSig = g_signals; pSig->mSigno != 0; ++pSig)
 	{
-		if(stSignal.AddSig_t(pSig) != -1)
+		if((mErr = stSignal.AddSig_t(pSig)) <= 0)
 		{
-			mErr = errno;
 			LOG_ERROR(ELOG_KEY, "[runtime] sigaction(%s) failed(ignored):(%s)", pSig->mSigname, strerror(mErr));
 		}
 	}
