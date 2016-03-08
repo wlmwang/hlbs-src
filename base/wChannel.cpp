@@ -159,7 +159,8 @@ ssize_t wChannel::SendBytes(char *vArray, size_t vLen)
 		LOG_ERROR(ELOG_KEY, "[runtime] sendmsg() failed:%s", strerror(mErr));
         return -1;
     }
-	
+
+	LOG_DEBUG(ELOG_KEY, "[runtime] sendmsg() success, data len: %d, real send len %d", n, vLen);
     return n;
 }
 
@@ -208,6 +209,8 @@ ssize_t wChannel::RecvBytes(char *vArray, size_t vLen)
 		LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() returned zero");
         return -1;
     }
+
+    LOG_DEBUG(ELOG_KEY, "[runtime] recvmsg() success, buf len %d, real reveive len %d, head len %d", vLen , n, *(int*)vArray);
 
 	//获取文件描述符
 	ChannelReqCmd_s *pChannel = (ChannelReqCmd_s*) (vArray + sizeof(int));

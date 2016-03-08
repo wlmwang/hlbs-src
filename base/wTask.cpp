@@ -89,6 +89,7 @@ int wTask::TaskRecv()
 		}
 		
 		//业务逻辑
+		LOG_DEBUG(ELOG_KEY, "[runtime] HandleRecvMessage start");
 		HandleRecvMessage(pBuffer - iMsgLen, iMsgLen);	//去除4字节消息长度标识位
 	}
 

@@ -17,11 +17,11 @@
 #define PREFIX  "/home/hlfs/disvr/routerserver/"
 #define CONF_PREFIX  "/home/hlfs/disvr/routerserver/conf/"
  
-#define PID_PATH  "/home/hlfs/disvr/routerserver/log/disvr.pid"
-#define LOCK_PATH  "/home/hlfs/disvr/routerserver/log/disvr.lock"
+#define PID_PATH  "/home/hlfs/disvr/routerserver/bin/disvr.pid"
+#define LOCK_PATH  "/home/hlfs/disvr/routerserver/bin/disvr.lock"
+#define WAIT_MUTEX	"/home/hlfs/disvr/routerserver/bin/wait_mutex.shm.ipc"
 
 #define IPC_SHM "/home/hlfs/disvr/agent_cmd.shm.ipc"
-#define WAIT_MUTEX	"/home/hlfs/disvr/wait_mutex.shm.ipc"
 
 #pragma pack(1)
 

@@ -52,6 +52,8 @@ int RouterChannelTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer
 	}
 	else
 	{
+		LOG_DEBUG(ELOG_KEY, "[runtime] unix message, diapath cmd(%d) parm(%d)", pCommand->GetCmd(), pCommand->GetPara());
+
 		auto pF = mDispatch.GetFuncT("RouterChannelTask", pCommand->GetId());
 
 		if (pF != NULL)
@@ -60,7 +62,7 @@ int RouterChannelTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer
 		}
 		else
 		{
-			LOG_DEBUG("default", "[runtime] client fd(%d) send a invalid msg id(%u)", mIO->FD(), pCommand->GetId());
+			LOG_ERROR("default", "[runtime] client fd(%d) send a invalid msg id(%u)", mIO->FD(), pCommand->GetId());
 		}
 	}
 	return 0;
@@ -73,7 +75,7 @@ int RouterChannelTask::ChannelOpen(char *pBuffer, int iLen)
 	ChannelReqOpen_t *pCh = (struct ChannelReqOpen_t* )pBuffer;
 	if(pMaster->mWorkerPool != NULL && pMaster->mWorkerPool[pCh->mSlot])
 	{	
-		LOG_DEBUG(ELOG_KEY, "[runtime] get channel s:%i pid:%P fd:%d",pCh->mSlot, pCh->mPid, pCh->mFD);
+		LOG_DEBUG(ELOG_KEY, "[runtime] get channel s:%i pid:%d fd:%d",pCh->mSlot, pCh->mPid, pCh->mFD);
 		
 		pMaster->mWorkerPool[pCh->mSlot]->mPid = pCh->mPid;
 		pMaster->mWorkerPool[pCh->mSlot]->mCh[0] = pCh->mFD;
