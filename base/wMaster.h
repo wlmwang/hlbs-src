@@ -41,6 +41,8 @@ class wMaster : public wSingleton<T>
 		void PassCloseChannel(struct ChannelReqClose_t* pCh);
 		virtual wWorker* NewWorker(int iSlot = 0);
 		virtual void HandleSignal();
+		int ReapChildren();
+		void SignalWorker(int iSigno);
 
 		/**
 		 * master-worker工作模式主要做一下事情：
@@ -158,7 +160,6 @@ void wMaster<T>::MasterStart()
 	}
 	
 	InitSignals();
-	
 	CreatePidFile();
 	
 	//初始化workerpool内存空间
@@ -203,7 +204,6 @@ void wMaster<T>::MasterStart()
 	//master进程 信号处理
 	while (true)
 	{
-		//
 		stSigset.Suspend();
 
 		HandleSignal();
@@ -221,7 +221,7 @@ void wMaster<T>::InitSignals()
 	{
 		if(stSignal.AddSig_t(pSig) != -1)
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] sigaction(%s) failed, ignored", pSig->mSigname);
+			LOG_ERROR(ELOG_KEY, "[runtime] sigaction(%s) failed: (%s), ignored", strerror(errno), pSig->mSigname);
 		}
 	}
 }
@@ -238,7 +238,7 @@ void wMaster<T>::HandleSignal()
 		
 		LOG_ERROR(ELOG_KEY, "[runtime] reap children");
 		
-		iLive = ReapChildren(cycle);
+		iLive = ReapChildren();
 	}
 	
 	//worker都退出了
@@ -258,7 +258,7 @@ void wMaster<T>::HandleSignal()
 		
 		//关闭所有监听socket
 		
-		continue;
+		return;
 	}
 	
 	if(g_restart)
@@ -309,8 +309,8 @@ int wMaster<T>::ReapChildren()
 				stCh.mFD = -1;
 				
 				stCh.mPid = mWorkerPool[i]->mPid;
-				stCh.slot = i;
-				PassCloseChannel(stCh);
+				stCh.mSlot = i;
+				PassCloseChannel(&stCh);
 			}
 			
 			//重启
@@ -338,7 +338,7 @@ int wMaster<T>::ReapChildren()
 			
             if (i != mWorkerNum - 1) 
 			{
-                ngx_processes[i].pid = -1;
+                mWorkerPool[i]->mPid = -1;
             }
 		}
 		else if (mWorkerPool[i]->mExiting || !mWorkerPool[i]->mDetached) 
@@ -363,7 +363,7 @@ void wMaster<T>::WorkerStart(int n, int type)
 	for (int i = 0; i < mWorkerNum; ++i)
 	{
 		//创建worker进程
-		pid = SpawnWorker((void *) i, sProcessTitle, type);
+		pid = SpawnWorker((void *) &i, sProcessTitle, type);
 	
 		stCh.mSlot = mSlot;
         stCh.mPid = mWorkerPool[mSlot]->mPid;
@@ -372,23 +372,25 @@ void wMaster<T>::WorkerStart(int n, int type)
 	}
 }
 
-void SignalWorker(int iSigno)
+template <typename T>
+void wMaster<T>::SignalWorker(int iSigno)
 {
 	int other = 0;
 	int size = 0;
 	int err;
-	struct ChannelReqCmd_s* pCh
+	
+	struct ChannelReqCmd_s* pCh;
+	struct ChannelReqQuit_t stChOpen;
+	struct ChannelReqTerminate_t stChClose;
 	switch(iSigno)
 	{
 		case SIGQUIT:
-			struct ChannelReqQuit_t stCh;
-			pCh = &stCh;
+			pCh = &stChOpen;
 			size = sizeof(struct ChannelReqQuit_t);
 			break;
 			
-		case SIGTERMINATE:
-			struct ChannelReqTerminate_t stCh;
-			pCh = &stCh;
+		case SIGTERM:
+			pCh = &stChClose;
 			size = sizeof(struct ChannelReqTerminate_t);
 			break;
 			
@@ -397,9 +399,10 @@ void SignalWorker(int iSigno)
 	}
 	pCh->mFD = -1;
 	
-	char *pBuf = new char[size + sizeof(int)];
-	*(int *)pBuf = size;	//消息长度
-	pBuf += sizeof(int);
+	char *pStart = new char[size + sizeof(int)];
+	char *pOffset = pStart;
+	*(int *)pOffset = size;
+	pOffset += sizeof(int);
 	
 	for (int i = 0; i < mWorkerNum; i++) 
     {
@@ -415,8 +418,8 @@ void SignalWorker(int iSigno)
 		
         if(other)
 		{
-			memcpy(pBuf, (char *)pCh, size);
-			mWorkerPool[i]->mCh.SendBytes(pBuf, size + sizeof(int));
+			memcpy(pOffset, (char *)pCh, size);
+			mWorkerPool[i]->mCh.SendBytes(pOffset, size + sizeof(int));
 		}
 					   
 		LOG_ERROR(ELOG_KEY, "[runtime] kill (%P, %d)", mWorkerPool[i]->mPid, iSigno);
@@ -429,23 +432,27 @@ void SignalWorker(int iSigno)
             if (err == ESRCH) 
 			{
                 mWorkerPool[i]->mExited = 1;
-                mWorkerPool[i].mExiting = 0;
+                mWorkerPool[i]->mExiting = 0;
 				
                 g_reap = 1;
             }
             continue;
         }
     }
+    
+    SAFE_DELETE_VEC(pStart);
 }
 
 template <typename T>
 void wMaster<T>::PassOpenChannel(struct ChannelReqOpen_t* pCh)
 {
 	int size = sizeof(struct ChannelReqOpen_t);
-	char *pBuf = new char[size + sizeof(int)];
-	*(int *)pBuf = size;	//消息长度
-	pBuf += sizeof(int);
-    
+	
+	char *pStart = new char[size + sizeof(int)];
+	char *pOffset = pStart;
+	*(int *)pOffset = size;
+	pOffset += sizeof(int);
+
 	for (int i = 0; i < mWorkerNum; i++) 
     {
 		//当前分配到worker进程表项索引（无需发送给自己）
@@ -458,24 +465,26 @@ void wMaster<T>::PassOpenChannel(struct ChannelReqOpen_t* pCh)
         	pCh->mSlot, pCh->mPid, pCh->mFD, i, mWorkerPool[i]->mPid, mWorkerPool[i]->mCh[0]);
         
         /* TODO: EAGAIN */
-		memcpy(pBuf, (char *)pCh, size);
-		mWorkerPool[i]->mCh.SendBytes(pBuf, size + sizeof(int));
+		memcpy(pOffset, (char *)pCh, size);
+		mWorkerPool[i]->mCh.SendBytes(pOffset, size + sizeof(int));
     }
 
-    SAFE_DELETE(pBuf);
+    SAFE_DELETE_VEC(pStart);
 }
 
 template <typename T>
 void wMaster<T>::PassCloseChannel(struct ChannelReqClose_t* pCh)
 {
 	int size = sizeof(struct ChannelReqClose_t);
-	char *pBuf = new char[size + sizeof(int)];
-	*(int *)pBuf = size;	//消息长度
-	pBuf += sizeof(int);
+
+	char *pStart = new char[size + sizeof(int)];
+	char *pOffset = pStart;
+	*(int *)pOffset = size;
+	pOffset += sizeof(int);
     
 	for (int i = 0; i < mWorkerNum; i++) 
     {
-		if (mWorkerPool[n]->mExited || mWorkerPool[n]->mPid == -1|| mWorkerPool[n]->mCh[0] == FD_UNKNOWN)
+		if (mWorkerPool[i]->mExited || mWorkerPool[i]->mPid == -1|| mWorkerPool[i]->mCh[0] == FD_UNKNOWN)
 		{
 			continue;
 		}
@@ -484,11 +493,11 @@ void wMaster<T>::PassCloseChannel(struct ChannelReqClose_t* pCh)
         	pCh->mSlot, pCh->mPid, mWorkerPool[i]->mPid);
         
         /* TODO: EAGAIN */
-		memcpy(pBuf, (char *)pCh, size);
-		mWorkerPool[i]->mCh.SendBytes(pBuf, size + sizeof(int));
+		memcpy(pOffset, (char *)pCh, size);
+		mWorkerPool[i]->mCh.SendBytes(pOffset, size + sizeof(int));
     }
 	
-    SAFE_DELETE(pBuf);
+    SAFE_DELETE_VEC(pStart);
 }
 
 template <typename T>
@@ -594,13 +603,13 @@ int wMaster<T>::CreatePidFile()
 	}
     if (mPidFile.Open(O_RDWR| O_CREAT) <= 0) 
     {
-    	LOG_ERROR(ELOG_KEY, "[runtime] create pid file failed");
+    	LOG_ERROR(ELOG_KEY, "[runtime] create pid file failed: %s", strerror(errno));
     	return -1;
     }
 	string sPid = Itos((int) mPid);
     if (mPidFile.Write(sPid.c_str(), sPid.size(), 0) == -1) 
     {
-		LOG_ERROR(ELOG_KEY, "[runtime] write process pid to file failed");
+		LOG_ERROR(ELOG_KEY, "[runtime] write process pid to file failed: %s", strerror(errno));
         return -1;
     }
 	

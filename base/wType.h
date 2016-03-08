@@ -186,7 +186,6 @@ enum TASK_STATUS
 };
 
 #define FD_UNKNOWN	-1
-#define WAIT_MUTEX	"../wait_mutex.shm.ipc"
 #define LISTEN_BACKLOG	511
 
 //命名空间

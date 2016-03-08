@@ -80,11 +80,11 @@ class wTcpServer: public wSingleton<T>
 		 *  accept接受连接
 		 */
 		int AcceptConn();
-		
 		int AddToTaskPool(wTask *pTask);
 		void CleanTaskPool();
 	    std::vector<wTask*>::iterator RemoveTaskPool(wTask *pTask);
-		
+		int PoolNum() { return mTaskPool.size();}
+
 		/**
 		 * 新建客户端
 		 */
@@ -173,8 +173,6 @@ void wTcpServer<T>::Final()
 {
 	CleanEpoll();
 	CleanTaskPool();
-
-	SAFE_DELETE(mListenSock);
 }
 
 template <typename T>
@@ -393,6 +391,7 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	int iFD = mListenSock->Open();
 	if (iFD == -1)
 	{
+		SAFE_DELETE(mListenSock);
 		return -1;
 	}
 	mListenSock->Host() = sIpAddr;
@@ -688,6 +687,10 @@ std::vector<wTask*>::iterator wTcpServer<T>::RemoveTaskPool(wTask* pTask)
     std::vector<wTask*>::iterator it = std::find(mTaskPool.begin(), mTaskPool.end(), pTask);
     if(it != mTaskPool.end())
     {
+    	if ((*it)->IO()->SockType() != SOCK_UNIX)
+    	{
+    		(*it)->DeleteIO();
+    	}
     	SAFE_DELETE(*it);
         it = mTaskPool.erase(it);
     }

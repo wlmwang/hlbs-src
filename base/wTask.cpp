@@ -29,9 +29,11 @@ void wTask::Initialize()
 	memset(&mRecvMsgBuff, 0, sizeof(mRecvMsgBuff));
 }
 
-wTask::~wTask()
+wTask::~wTask() {}
+
+void wTask::DeleteIO()
 {
-	SAFE_DELETE(mIO);
+	SAFE_DELETE(mIO);	//mIO建立在堆上
 }
 
 void wTask::CloseTask(int iReason)

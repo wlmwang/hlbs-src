@@ -14,12 +14,14 @@
 #define GROUP  "nobody"
 
 //define
-#define PREFIX  "/usr/local/disvr/"
-#define CONF_PREFIX  "conf/"
-#define PID_PATH  "log/disvr.pid"
-#define LOCK_PATH  "log/disvr.lock"
+#define PREFIX  "/home/hlfs/disvr/routerserver/"
+#define CONF_PREFIX  "/home/hlfs/disvr/routerserver/conf/"
+ 
+#define PID_PATH  "/home/hlfs/disvr/routerserver/log/disvr.pid"
+#define LOCK_PATH  "/home/hlfs/disvr/routerserver/log/disvr.lock"
 
-#define IPC_SHM "/tmp/shm.ipc"
+#define IPC_SHM "/home/hlfs/disvr/agent_cmd.shm.ipc"
+#define WAIT_MUTEX	"/home/hlfs/disvr/wait_mutex.shm.ipc"
 
 #pragma pack(1)
 

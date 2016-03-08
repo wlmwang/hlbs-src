@@ -22,6 +22,7 @@ class wTask
 		virtual ~wTask();
 		
 		wIO *IO() { return mIO; }
+		void DeleteIO();
 		TASK_STATUS &Status() { return mStatus; }
 		bool IsRunning() { return mStatus == TASK_RUNNING; }
 		
