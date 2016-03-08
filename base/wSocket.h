@@ -32,6 +32,9 @@ class wSocket : public wIO
 		virtual int Open();
 		virtual ssize_t RecvBytes(char *vArray, size_t vLen);
 		virtual ssize_t SendBytes(char *vArray, size_t vLen);
+
+	protected:
+		int mErr;
 };
 
 #endif

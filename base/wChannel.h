@@ -56,6 +56,7 @@ class wChannel : public wIO
 
 	protected:
 		int	mCh[2];
+		int mErr;
 };
 
 #endif

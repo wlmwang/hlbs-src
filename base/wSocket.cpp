@@ -25,7 +25,8 @@ int wSocket::Open()
 	int iSocketFD = socket(AF_INET, SOCK_STREAM, 0); 
 	if(iSocketFD < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Create socket failed: %s", strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[startup] Create socket failed: %s", strerror(mErr));
 		return -1;
 	}
 	mFD = iSocketFD;
@@ -104,11 +105,12 @@ ssize_t wSocket::RecvBytes(char *vArray, size_t vLen)
 		}
 		else
 		{
-			if(iRecvLen < 0 && errno == EINTR)	//中断
+			mErr = errno;
+			if(iRecvLen < 0 && mErr == EINTR)	//中断
 			{
 				continue;
 			}
-			if(iRecvLen < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))	//缓冲区满|超时
+			if(iRecvLen < 0 && (mErr == EAGAIN || mErr == EWOULDBLOCK))	//缓冲区满|超时
 			{
 				//可读事件准备(tcptask)
 				//waitread
@@ -116,7 +118,7 @@ ssize_t wSocket::RecvBytes(char *vArray, size_t vLen)
 				continue;
 			}
 			
-			LOG_ERROR(ELOG_KEY, "recv fd(%d) error: %s", mFD, strerror(errno));
+			LOG_ERROR(ELOG_KEY, "recv fd(%d) error: %s", mFD, strerror(mErr));
 			return iRecvLen;
 		}
 	}
@@ -147,11 +149,12 @@ ssize_t wSocket::SendBytes(char *vArray, size_t vLen)
 		}
 		else
 		{
-			if(errno == EINTR) //中断
+			mErr = errno;
+			if(mErr == EINTR) //中断
 			{
 				continue;
 			}
-			if(iSendLen < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))	//缓冲区满|超时
+			if(iSendLen < 0 && (mErr == EAGAIN || mErr == EWOULDBLOCK))	//缓冲区满|超时
 			{
 				//可写事件准备(tcptask)
 				//waitwrite
@@ -159,7 +162,7 @@ ssize_t wSocket::SendBytes(char *vArray, size_t vLen)
 				continue;
 			}
 			
-			LOG_ERROR(ELOG_KEY, "send fd(%d) error: %s", mFD, strerror(errno));
+			LOG_ERROR(ELOG_KEY, "send fd(%d) error: %s", mFD, strerror(mErr));
 			return iSendLen;
 		}
 	}

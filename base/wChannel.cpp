@@ -26,11 +26,13 @@ void wChannel::Close()
 {
     if (mCh[0] == FD_UNKNOWN || close(mCh[0]) == -1) 
     {
-		LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed");
+        mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed:%s", strerror(mErr));
     }
     if (mCh[1] == FD_UNKNOWN || close(mCh[1]) == -1) 
     {
-		LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed");
+        mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed:%s", strerror(mErr));
     }
 	mFD = FD_UNKNOWN;
 }
@@ -46,23 +48,25 @@ int &wChannel::operator[](int i)
 
 int wChannel::Open()
 {
-    int iRt = socketpair(AF_UNIX, SOCK_STREAM, 0, mCh);
-    if (iRt == -1)
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, mCh) == -1)
     {
-		LOG_ERROR(ELOG_KEY, "[runtime] socketpair failed");
+        mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] socketpair failed:%s", strerror(mErr));
     	return -1;
     }
 	
 	//noblock
     if (fcntl(mCh[0], F_SETFL, fcntl(mCh[0], F_GETFL) | O_NONBLOCK) == -1)
     {
-    	LOG_ERROR(ELOG_KEY, "[runtime] fcntl(O_NONBLOCK) failed");
+        mErr = errno;
+    	LOG_ERROR(ELOG_KEY, "[runtime] fcntl(O_NONBLOCK) failed:%s", strerror(mErr));
     	Close();
     	return -1;
     }
     if (fcntl(mCh[1], F_SETFL, fcntl(mCh[1], F_GETFL) | O_NONBLOCK) == -1)
     {
-    	LOG_ERROR(ELOG_KEY, "[runtime] fcntl(O_NONBLOCK) failed");
+        mErr = errno;
+    	LOG_ERROR(ELOG_KEY, "[runtime] fcntl(O_NONBLOCK) failed:%s", strerror(mErr));
     	Close();
     	return -1;
     }
@@ -70,11 +74,13 @@ int wChannel::Open()
 	//cloexec
     if (fcntl(mCh[0], F_SETFD, FD_CLOEXEC) == -1) 
     {
-		LOG_ERROR(ELOG_KEY, "[runtime] fcntl(FD_CLOEXEC) failed");
+        mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] fcntl(FD_CLOEXEC) failed:%s", strerror(mErr));
     }
     if (fcntl(mCh[1], F_SETFD, FD_CLOEXEC) == -1) 
     {
-		LOG_ERROR(ELOG_KEY, "[runtime] fcntl(FD_CLOEXEC) failed");
+        mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] fcntl(FD_CLOEXEC) failed:%s", strerror(mErr));
     }
 	
 	mFD = mCh[1];	//ch[1]被监听（可读事件）
@@ -144,13 +150,13 @@ ssize_t wChannel::SendBytes(char *vArray, size_t vLen)
 
     if (n == -1) 
     {
-        int err = errno;
-        if (err == EAGAIN) 
+        mErr = errno;
+        if (mErr == EAGAIN) 
         {
             return EAGAIN;
         }
 		
-		LOG_ERROR(ELOG_KEY, "[runtime] sendmsg() failed");
+		LOG_ERROR(ELOG_KEY, "[runtime] sendmsg() failed:%s", strerror(mErr));
         return -1;
     }
 	
@@ -187,13 +193,13 @@ ssize_t wChannel::RecvBytes(char *vArray, size_t vLen)
 
     if (n == -1)
     {
-        int err = errno;
-        if (err == EAGAIN) 
+        mErr = errno;
+        if (mErr == EAGAIN) 
         {
             return EAGAIN;
         }
 		
-		LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() failed");
+		LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() failed:%s", strerror(mErr));
         return -1;
     }
 

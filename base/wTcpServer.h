@@ -129,6 +129,8 @@ class wTcpServer: public wSingleton<T>
 		//worker
 		wWorker *mWorker;	//对应worker对象，worker与server一对一（single进程模式无worker进程）
 		wChannel *mChannelSock;	//Unix Socket(进程间通信)
+
+		int mErr;
 };
 
 /** 模板函数实现 */
@@ -226,7 +228,8 @@ void wTcpServer<T>::PrepareMaster(string sIpAddr, unsigned int nPort)
 	//初始化Listen Socket
 	if(InitListen(sIpAddr ,nPort) < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] InitListen failed: %s", strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[startup] InitListen failed:%s", strerror(mErr));
 		exit(1);
 	}
 
@@ -243,7 +246,8 @@ void wTcpServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 	//初始化epoll
 	if(InitEpoll() < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] InitEpoll failed: %s", strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[startup] InitEpoll failed:%s", strerror(mErr));
 		exit(1);
 	}
 	
@@ -318,14 +322,16 @@ void wTcpServer<T>::PrepareStart(string sIpAddr ,unsigned int nPort)
 	//初始化epoll
 	if(InitEpoll() < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] InitEpoll failed: %s", strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[startup] InitEpoll failed: %s", strerror(mErr));
 		exit(1);
 	}
 	
 	//初始化Listen Socket
 	if(InitListen(sIpAddr ,nPort) < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] InitListen failed: %s", strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[startup] InitListen failed: %s", strerror(mErr));
 		exit(1);
 	}
 
@@ -378,7 +384,8 @@ int wTcpServer<T>::InitEpoll()
 	mEpollFD = epoll_create(512); //512
 	if(mEpollFD < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] epoll_create failed: %s", strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[startup] epoll_create failed:%s", strerror(mErr));
 		return -1;
 	}
 	return mEpollFD;
@@ -407,7 +414,8 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	int iRet = bind(iFD, (struct sockaddr *)&stSocketAddr, sizeof(stSocketAddr));
 	if(iRet < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Socket bind failed：%s", strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[startup] Socket bind failed%s", strerror(mErr));
 		SAFE_DELETE(mListenSock);
 		return -1;
 	}
@@ -416,7 +424,8 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	int iOptVal = 0x400000;
 	if(setsockopt(iFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) < -1)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Set send buffer size failed");
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[startup] Set send buffer size failed:%s",strerror(mErr));
 		SAFE_DELETE(mListenSock);
 		return -1;
 	}
@@ -425,7 +434,8 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	iRet = listen(iFD, LISTEN_BACKLOG);
 	if(iRet < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] listen failed: %s", strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[startup] listen failed: %s", strerror(mErr));
 		SAFE_DELETE(mListenSock);
 		return -1;
 	}
@@ -465,7 +475,8 @@ int wTcpServer<T>::AddToEpoll(wTask* pTask, int iEvent)
 	int iRet = epoll_ctl(mEpollFD, EPOLL_CTL_ADD, pTask->IO()->FD(), &mEpollEvent);
 	if(iRet < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] fd(%d) add into epoll failed: %s", pTask->IO()->FD(), strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] fd(%d) add into epoll failed: %s", pTask->IO()->FD(), strerror(mErr));
 		return -1;
 	}
 	return 0;
@@ -508,7 +519,8 @@ void wTcpServer<T>::Recv()
 	int iRet = epoll_wait(mEpollFD, &mEpollEventPool[0], mTaskCount, mTimeout /*10ms*/);
 	if(iRet < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] epoll_wait failed: %s", strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] epoll_wait failed: %s", strerror(mErr));
 		return;
 	}
 	
@@ -527,7 +539,8 @@ void wTcpServer<T>::Recv()
 
 		if(iFD < 0)
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] socketfd error fd(%d): %s, close it", iFD, strerror(errno));
+			mErr = errno;
+			LOG_ERROR(ELOG_KEY, "[runtime] socketfd error fd(%d), close it: %s", iFD, strerror(mErr));
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -536,7 +549,7 @@ void wTcpServer<T>::Recv()
 		}
 		if (!pTask->IsRunning())	//多数是超时设置
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] task status is quit, fd(%d): %s, close it", iFD, strerror(errno));
+			LOG_ERROR(ELOG_KEY, "[runtime] task status is quit, fd(%d), close it", iFD);
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -545,7 +558,8 @@ void wTcpServer<T>::Recv()
 		}
 		if (mEpollEventPool[i].events & (EPOLLERR | EPOLLPRI))	//出错
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] epoll event recv error from fd(%d): %s, close it", iFD, strerror(errno));
+			mErr = errno;
+			LOG_ERROR(ELOG_KEY, "[runtime] epoll event recv error from fd(%d), close it: %s", iFD, strerror(mErr));
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -567,7 +581,8 @@ void wTcpServer<T>::Recv()
 				//套接口准备好了读取操作
 				if (pTask->TaskRecv() <= 0)	//==0主动断开
 				{
-					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or socket closed: %s", strerror(errno));
+					mErr = errno;
+					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or socket closed: %s", strerror(mErr));
 					if (RemoveEpoll(pTask) >= 0)
 					{
 						RemoveTaskPool(pTask);
@@ -579,7 +594,8 @@ void wTcpServer<T>::Recv()
 				//套接口准备好了写入操作
 				if (pTask->TaskSend() < 0)	//写入失败，半连接
 				{
-					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLOUT(write) failed: %s", strerror(errno));
+					mErr = errno;
+					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLOUT(write) failed: %s", strerror(mErr));
 					if (RemoveEpoll(pTask) >= 0)
 					{
 						RemoveTaskPool(pTask);
@@ -594,7 +610,8 @@ void wTcpServer<T>::Recv()
 				//channel准备好了读取操作
 				if (pTask->TaskRecv() <= 0)	//==0主动断开
 				{
-					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or socket closed: %s", strerror(errno));
+					mErr = errno;
+					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or socket closed: %s", strerror(mErr));
 					if (RemoveEpoll(pTask) >= 0)
 					{
 						RemoveTaskPool(pTask);
@@ -622,7 +639,8 @@ int wTcpServer<T>::AcceptConn()
 	int iNewFD = accept(iFD, (struct sockaddr*)&stSockAddr, &iSockAddrSize);
 	if(iNewFD < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] client connect failed(%s)", strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] client connect failed:%s", strerror(mErr));
 	    return -1;
     }
 	//setsockopt socket：设置发送缓冲大小3M
@@ -630,7 +648,8 @@ int wTcpServer<T>::AcceptConn()
 	int iOptVal = 0x300000;
 	if(setsockopt(iNewFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) < -1)
 	{
-		LOG_DEBUG(ELOG_KEY, "[runtime] set send buffer size failed");
+		mErr = errno;
+		LOG_DEBUG(ELOG_KEY, "[runtime] set send buffer size failed:%s",strerror(mErr));
 	}
 		
 	//new tcp task
@@ -674,7 +693,8 @@ int wTcpServer<T>::RemoveEpoll(wTask* pTask)
 	mEpollEvent.data.fd = iFD;
 	if(epoll_ctl(mEpollFD, EPOLL_CTL_DEL, iFD, &mEpollEvent) < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] epoll remove socket fd(%d) error : %s", iFD, strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] epoll remove socket fd(%d) error : %s", iFD, strerror(mErr));
 		return -1;
 	}
 	return 0;

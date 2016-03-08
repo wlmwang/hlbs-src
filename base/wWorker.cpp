@@ -78,7 +78,8 @@ void wWorker::PrepareStart(int iSlot, int iType, void *pData)
 	{
         if (setpriority(PRIO_PROCESS, 0, mPriority) == -1) 
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] setpriority(%d) failed: %s", mPriority, strerror(errno));
+			mErr = errno;
+			LOG_ERROR(ELOG_KEY, "[runtime] setpriority(%d) failed: %s", mPriority, strerror(mErr));
         }
     }
 	
@@ -92,7 +93,8 @@ void wWorker::PrepareStart(int iSlot, int iType, void *pData)
         rlmt.rlim_max = (rlim_t) mRlimitCore;
         if (setrlimit(RLIMIT_NOFILE, &rlmt) == -1) 
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] setrlimit(RLIMIT_NOFILE, %i) failed: %s", mRlimitCore, strerror(errno));
+			mErr = errno;
+			LOG_ERROR(ELOG_KEY, "[runtime] setrlimit(RLIMIT_NOFILE, %i) failed: %s", mRlimitCore, strerror(mErr));
         }
     }
 	
@@ -105,20 +107,23 @@ void wWorker::PrepareStart(int iSlot, int iType, void *pData)
 	{
         if (setgid(GROUP) == -1) 
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] setgid(%d) failed: %s", GROUP, strerror(errno));
+			mErr = errno;
+			LOG_ERROR(ELOG_KEY, "[runtime] setgid(%d) failed: %s", GROUP, strerror(mErr));
             exit(2);
         }
 
         //附加组ID
         if (initgroups(USER, GROUP) == -1) 
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] initgroups(%s, %d) failed: %s", USER, GROUP, strerror(errno));
+			mErr = errno;
+			LOG_ERROR(ELOG_KEY, "[runtime] initgroups(%s, %d) failed: %s", USER, GROUP, strerror(mErr));
         }
 
         //用户ID
         if (setuid(USER) == -1) 
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] setuid(%d) failed: %s", USER, strerror(errno));            
+			mErr = errno;
+			LOG_ERROR(ELOG_KEY, "[runtime] setuid(%d) failed: %s", USER, strerror(mErr));            
 			exit(2);
         }
     }
@@ -127,9 +132,11 @@ void wWorker::PrepareStart(int iSlot, int iType, void *pData)
     //切换工作目录
     if (strlen(mWorkingDir) > 0) 
 	{
+		LOG_DEBUG(ELOG_KEY, "[runtime] chdir(\"%s\")", mWorkingDir);
         if (chdir((char *)mWorkingDir) == -1) 
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] chdir(\"%s\") failed: %s", mWorkingDir, strerror(errno));                        
+			mErr = errno;
+			LOG_ERROR(ELOG_KEY, "[runtime] chdir(\"%s\") failed: %s", mWorkingDir, strerror(mErr));
 			exit(2);
         }
     }
@@ -146,21 +153,24 @@ void wWorker::PrepareStart(int iSlot, int iType, void *pData)
 
         if (close(mWorkerPool[n]->mCh[1]) == -1) 
         {
-            LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed: %s", strerror(errno));
+        	mErr = errno;
+            LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed: %s", strerror(mErr));
         }
     }
 
     //关闭该进程worker进程的ch[0]描述符
     if (close(mWorkerPool[mSlot]->mCh[0]) == -1) 
     {
-        LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed: %s", strerror(errno));
+    	mErr = errno;
+        LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed: %s", strerror(mErr));
     }
 	
 	//worker进程中不阻塞所有信号
 	wSigSet mSigSet;
 	if(mSigSet.Procmask(SIG_SETMASK))
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] sigprocmask() failed: %s", strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] sigprocmask() failed: %s", strerror(mErr));
 	}
 
 	PrepareRun();

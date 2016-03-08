@@ -35,12 +35,12 @@ class wSem : private wNoncopyable
 		
 		int Initialize()
 		{
-			int err = sem_init(&mSem, mPshared, mValue);
-			if(err < 0)
+			mErr = sem_init(&mSem, mPshared, mValue);
+			if(mErr < 0)
 			{
-				LOG_ERROR(ELOG_KEY, "sem_init failed: %s", strerror(errno));
+				LOG_ERROR(ELOG_KEY, "sem_init failed: %s", strerror(mErr));
 			}
-			return err;
+			return mErr;
 		}
 		
 		~wSem() 
@@ -82,6 +82,7 @@ class wSem : private wNoncopyable
 		sem_t mSem;
 		int mPshared;
 		int mValue;
+		int mErr;
 };
 
 #endif

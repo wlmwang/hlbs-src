@@ -159,7 +159,8 @@ int InitDaemon(const char *filename)
 
 	if (chdir(dir_path)) 
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Can not change run dir to %s , init daemon failed: %s", dir_path, strerror(errno));
+		int err = errno;
+		LOG_ERROR(ELOG_KEY, "[startup] Can not change run dir to %s , init daemon failed: %s", dir_path, strerror(err));
 		return -1;		
 	}
 	umask(0);

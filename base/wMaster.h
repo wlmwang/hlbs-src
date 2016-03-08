@@ -79,6 +79,8 @@ class wMaster : public wSingleton<T>
 		int mDelay;		//延时时间。默认500ms
 		wShm *mShmAddr;	//共享内存
 		wShmtx *mMutex;	//accept mutex
+
+		int mErr;
 };
 
 template <typename T>
@@ -182,7 +184,8 @@ void wMaster<T>::MasterStart()
 
     if (stSigset.Procmask() == -1) 
     {
-        LOG_ERROR(ELOG_KEY, "[runtime] sigprocmask() failed: %s", strerror(errno));
+    	mErr = errno;
+        LOG_ERROR(ELOG_KEY, "[runtime] sigprocmask() failed:%s", strerror(mErr));
 		return;
     }
     stSigset.EmptySet();
@@ -221,7 +224,8 @@ void wMaster<T>::InitSignals()
 	{
 		if(stSignal.AddSig_t(pSig) != -1)
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] sigaction(%s) failed: (%s), ignored", strerror(errno), pSig->mSigname);
+			mErr = errno;
+			LOG_ERROR(ELOG_KEY, "[runtime] sigaction(%s) failed(ignored):(%s)", pSig->mSigname, strerror(mErr));
 		}
 	}
 }
@@ -377,7 +381,6 @@ void wMaster<T>::SignalWorker(int iSigno)
 {
 	int other = 0;
 	int size = 0;
-	int err;
 	
 	struct ChannelReqCmd_s* pCh;
 	struct ChannelReqQuit_t stChOpen;
@@ -426,10 +429,10 @@ void wMaster<T>::SignalWorker(int iSigno)
 		
         if (kill(mWorkerPool[i]->mPid, iSigno) == -1) 
 		{
-            err = errno;
+            mErr = errno;
 			
-			LOG_ERROR(ELOG_KEY, "[runtime] kill(%P, %d) failed:%s", mWorkerPool[i]->mPid, iSigno,strerror(err));
-            if (err == ESRCH) 
+			LOG_ERROR(ELOG_KEY, "[runtime] kill(%P, %d) failed:%s", mWorkerPool[i]->mPid, iSigno, strerror(mErr));
+            if (mErr == ESRCH) 
 			{
                 mWorkerPool[i]->mExited = 1;
                 mWorkerPool[i]->mExiting = 0;
@@ -461,7 +464,7 @@ void wMaster<T>::PassOpenChannel(struct ChannelReqOpen_t* pCh)
             continue;
         }
 
-        LOG_DEBUG(ELOG_KEY, "[runtime] pass channel s:%d pid:%P fd:%d to s:%i pid:%P fd:%d", 
+        LOG_DEBUG(ELOG_KEY, "[runtime] pass channel s:%d pid:%d fd:%d to s:%i pid:%d fd:%d", 
         	pCh->mSlot, pCh->mPid, pCh->mFD, i, mWorkerPool[i]->mPid, mWorkerPool[i]->mCh[0]);
         
         /* TODO: EAGAIN */
@@ -524,7 +527,8 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
 	wWorker *pWorker = mWorkerPool[mSlot];
 	if(pWorker->InitChannel() < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] socketpair() failed while spawning: %s", strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] socketpair() failed while spawning: %s", strerror(mErr));
 		return -1;
 	}
 
@@ -532,7 +536,8 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
 	u_long on = 1;
     if (ioctl(pWorker->mCh[0], FIOASYNC, &on) == -1) 
     {
-        LOG_ERROR(ELOG_KEY, "[runtime] ioctl(FIOASYNC) failed while spawning \"%s\":", title, strerror(errno));
+    	mErr = errno;
+        LOG_ERROR(ELOG_KEY, "[runtime] ioctl(FIOASYNC) failed while spawning %s:%s", title, strerror(mErr));
         pWorker->Close();
         return -1;
     }
@@ -540,7 +545,8 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
     //设置将要在文件描述符channel[0]上接收SIGIO 或 SIGURG事件信号的进程标识
     if (fcntl(pWorker->mCh[0], F_SETOWN, mPid) == -1) 
     {
-        LOG_ERROR(ELOG_KEY, "[runtime] fcntl(F_SETOWN) failed while spawning \"%s\":", title, strerror(errno));
+    	mErr = errno;
+        LOG_ERROR(ELOG_KEY, "[runtime] fcntl(F_SETOWN) failed while spawning %s:%s", title, strerror(mErr));
         pWorker->Close();
         return -1;
     }
@@ -549,7 +555,8 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
     switch (pid) 
     {
 	    case -1:
-	        LOG_ERROR(ELOG_KEY, "[runtime] fork() failed while spawning \"%s\":", title, strerror(errno));
+	    	mErr = errno;
+	        LOG_ERROR(ELOG_KEY, "[runtime] fork() failed while spawning %s:%s", title, strerror(mErr));
 	        pWorker->Close();
 	        return -1;
 			
@@ -603,13 +610,15 @@ int wMaster<T>::CreatePidFile()
 	}
     if (mPidFile.Open(O_RDWR| O_CREAT) <= 0) 
     {
-    	LOG_ERROR(ELOG_KEY, "[runtime] create pid file failed: %s", strerror(errno));
+    	mErr = errno;
+    	LOG_ERROR(ELOG_KEY, "[runtime] create pid(%s) file failed: %s", mPidFile.FileName().c_str(), strerror(mErr));
     	return -1;
     }
 	string sPid = Itos((int) mPid);
     if (mPidFile.Write(sPid.c_str(), sPid.size(), 0) == -1) 
     {
-		LOG_ERROR(ELOG_KEY, "[runtime] write process pid to file failed: %s", strerror(errno));
+    	mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] write process pid to file failed: %s", strerror(mErr));
         return -1;
     }
 	
@@ -622,7 +631,8 @@ void wMaster<T>::DeletePidFile()
 {
     if (mPidFile.Unlink() == -1) 
     {
-    	LOG_ERROR(ELOG_KEY, "unlink \"%s\" failed", mPidFile.FileName().c_str());
+    	mErr = errno;
+    	LOG_ERROR(ELOG_KEY, "unlink %s failed:%s", mPidFile.FileName().c_str(), strerror(mErr));
 		return;
     }
 	return;

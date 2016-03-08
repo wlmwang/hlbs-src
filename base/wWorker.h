@@ -72,6 +72,8 @@ class wWorker : public wNoncopyable
 		int mMutexHeld;
 
 		wChannel mCh;	//worker进程channel
+
+		int mErr;
 };
 
 #endif

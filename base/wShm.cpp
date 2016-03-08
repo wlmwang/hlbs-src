@@ -137,7 +137,7 @@ char *wShm::AttachShm()
 	mKey = ftok(mFilename, mPipeId);
 	if (mKey < 0) 
 	{
-		LOG_ERROR(ELOG_KEY, "create memory (ftok) failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[runtime] create memory (ftok) failed: %s", strerror(errno));
 		return 0;
 	}
 
@@ -145,14 +145,14 @@ char *wShm::AttachShm()
 	int mShmId = shmget(mKey, mSize, 0666);
 	if(mShmId < 0) 
 	{
-		LOG_ERROR(ELOG_KEY, "attach to share memory failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[runtime] attach to share memory failed: %s", strerror(errno));
 		return 0;
 	}
 	
 	char *pAddr = (char *)shmat(mShmId, NULL, 0);
     if (pAddr == (char *) -1) 
 	{
-		LOG_ERROR(ELOG_KEY, "shmat() failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[runtime] shmat() failed: %s", strerror(errno));
 		return 0;
     }
 	
@@ -171,7 +171,7 @@ char *wShm::AllocShm(size_t size)
 		return pAddr;
 	}
 
-	LOG_ERROR(ELOG_KEY, "alloc shm failed: shm space not enough");
+	LOG_ERROR(ELOG_KEY, "[runtime] alloc(%d) shm failed:shm space not enough, free(%d)", size, mShmhead->mEnd - mShmhead->mUsedOff);
 	return NULL;
 }
 
@@ -181,20 +181,20 @@ void wShm::FreeShm()
 	
 	if(mShmhead == NULL || mShmhead->mStart == NULL)
 	{
-		LOG_ERROR(ELOG_KEY, "free shm failed: shm head illegal");
+		LOG_ERROR(ELOG_KEY, "[runtime] free shm failed: shm head illegal");
 		return;
 	}
 
 	//对共享操作结束，分离该shmid_ds与该进程关联计数器
     if (shmdt(mShmhead->mStart) == -1)
 	{
-		LOG_ERROR(ELOG_KEY, "shmdt(%d) failed", mShmhead->mStart);
+		LOG_ERROR(ELOG_KEY, "[runtime] shmdt(%d) failed", mShmhead->mStart);
     }
 	
 	//删除该shmid_ds共享存储段（全部进程结束才会真正删除）
     if (shmctl(mShmId, IPC_RMID, NULL) == -1)
 	{
-		LOG_ERROR(ELOG_KEY, "remove share memory failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[runtime] remove share memory failed: %s", strerror(errno));
     }
 	//unlink(mFilename);
 }

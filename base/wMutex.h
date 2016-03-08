@@ -35,7 +35,8 @@ class wMutex : private wNoncopyable
 			pthread_mutexattr_setpshared(&mAttr, pshared);
 			if (pthread_mutex_init(&mMutex, &mAttr) < 0)
 			{
-				LOG_ERROR(ELOG_KEY, "pthread_mutex_init failed: %s", strerror(errno));
+				mErr = errno;
+				LOG_ERROR(ELOG_KEY, "pthread_mutex_init failed:%s", strerror(mErr));
 				exit(-1);
 			}
 		}
@@ -84,6 +85,7 @@ class wMutex : private wNoncopyable
 	protected:
 		pthread_mutex_t mMutex;
 		pthread_mutexattr_t mAttr;
+		int mErr;
 };
 
 //读写锁
