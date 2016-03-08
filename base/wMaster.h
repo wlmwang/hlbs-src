@@ -194,6 +194,8 @@ void wMaster<T>::MasterStart()
 	if(mUseMutex == 1)
 	{
 		mShmAddr = new wShm(WAIT_MUTEX, 'a', sizeof(wShmtx));
+		mShmAddr->CreateShm();
+
 		mMutex = new wShmtx();
 		mMutex->Create(mShmAddr);
 	}
@@ -222,8 +224,9 @@ void wMaster<T>::InitSignals()
 	wSignal stSignal;
 	for (pSig = g_signals; pSig->mSigno != 0; ++pSig)
 	{
-		if((mErr = stSignal.AddSig_t(pSig)) <= 0)
+		if(stSignal.AddSig_t(pSig) == -1)
 		{
+			mErr = errno;
 			LOG_ERROR(ELOG_KEY, "[runtime] sigaction(%s) failed(ignored):(%s)", pSig->mSigname, strerror(mErr));
 		}
 	}
@@ -571,7 +574,7 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
 	        break;
     }
 
-    LOG_DEBUG(ELOG_KEY, "[runtime] start %s %P", title, pid);
+    LOG_DEBUG(ELOG_KEY, "[runtime] start %s %d", title, pid);
     
     //更新进程表
     pWorker->mSlot = mSlot;
@@ -607,7 +610,7 @@ int wMaster<T>::CreatePidFile()
 	{
 		mPidFile.FileName() = "master.pid";
 	}
-    if (mPidFile.Open(O_RDWR| O_CREAT) <= 0) 
+    if (mPidFile.Open(O_RDWR| O_CREAT) < 0) 
     {
     	mErr = errno;
     	LOG_ERROR(ELOG_KEY, "[runtime] create pid(%s) file failed: %s", mPidFile.FileName().c_str(), strerror(mErr));

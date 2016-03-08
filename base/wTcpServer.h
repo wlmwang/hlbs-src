@@ -226,6 +226,7 @@ void wTcpServer<T>::PrepareMaster(string sIpAddr, unsigned int nPort)
 	LOG_INFO(ELOG_KEY, "[startup] Master Prepare start succeed");
 
 	//初始化Listen Socket
+	LOG_DEBUG(ELOG_KEY, "[startup] listen socket on ip(%s) port(%d)", sIpAddr.c_str(), nPort);
 	if(InitListen(sIpAddr ,nPort) < 0)
 	{
 		mErr = errno;
@@ -582,7 +583,7 @@ void wTcpServer<T>::Recv()
 				if (pTask->TaskRecv() <= 0)	//==0主动断开
 				{
 					mErr = errno;
-					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or socket closed: %s", strerror(mErr));
+					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or tcp socket closed: %s", strerror(mErr));
 					if (RemoveEpoll(pTask) >= 0)
 					{
 						RemoveTaskPool(pTask);
@@ -595,7 +596,7 @@ void wTcpServer<T>::Recv()
 				if (pTask->TaskSend() < 0)	//写入失败，半连接
 				{
 					mErr = errno;
-					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLOUT(write) failed: %s", strerror(mErr));
+					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLOUT(write) failed or tcp socket closed: %s", strerror(mErr));
 					if (RemoveEpoll(pTask) >= 0)
 					{
 						RemoveTaskPool(pTask);
@@ -610,8 +611,7 @@ void wTcpServer<T>::Recv()
 				//channel准备好了读取操作
 				if (pTask->TaskRecv() <= 0)	//==0主动断开
 				{
-					mErr = errno;
-					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or socket closed: %s", strerror(mErr));
+					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or unix socket closed");
 					if (RemoveEpoll(pTask) >= 0)
 					{
 						RemoveTaskPool(pTask);

@@ -163,6 +163,12 @@ char *wShm::AttachShm()
 
 char *wShm::AllocShm(size_t size)
 {
+	if (mShmhead == NULL)
+	{
+		LOG_ERROR(ELOG_KEY, "[runtime] shm need exec function CreateShm or AttachShm first");
+		return NULL;
+	}
+
 	if(mShmhead != NULL && mShmhead->mUsedOff + size < mShmhead->mEnd)
 	{
 		char *pAddr = mShmhead->mUsedOff;
@@ -170,8 +176,7 @@ char *wShm::AllocShm(size_t size)
 		memset(pAddr, 0, size);
 		return pAddr;
 	}
-
-	LOG_ERROR(ELOG_KEY, "[runtime] alloc(%d) shm failed:shm space not enough, free(%d)", size, mShmhead->mEnd - mShmhead->mUsedOff);
+	LOG_ERROR(ELOG_KEY, "[runtime] alloc(%d) shm failed,shm space not enough, real free(%d)", size, mShmhead->mEnd - mShmhead->mUsedOff);
 	return NULL;
 }
 
