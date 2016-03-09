@@ -37,8 +37,8 @@ class wMaster : public wSingleton<T>
 		
 		void WorkerStart(int n, int type = PROCESS_RESPAWN);
 		pid_t SpawnWorker(void* pData, const char *title, int type = PROCESS_RESPAWN);
-		void PassOpenChannel(struct ChannelReqOpen_t pCh);
-		void PassCloseChannel(struct ChannelReqClose_t pCh);
+		void PassOpenChannel(struct ChannelReqOpen_t *pCh);
+		void PassCloseChannel(struct ChannelReqClose_t *pCh);
 		virtual wWorker* NewWorker(int iSlot = 0);
 		virtual void HandleSignal();
 		int ReapChildren();
@@ -316,7 +316,7 @@ int wMaster<T>::ReapChildren()
 				
 				stCh.mPid = mWorkerPool[i]->mPid;
 				stCh.mSlot = i;
-				PassCloseChannel(stCh);
+				PassCloseChannel(&stCh);
 			}
 			
 			//重启
@@ -336,7 +336,7 @@ int wMaster<T>::ReapChildren()
 				stCh.mSlot = mSlot;
 				stCh.mPid = mWorkerPool[mSlot]->mPid;
 				stCh.mFD = mWorkerPool[mSlot]->mCh[0];
-				PassOpenChannel(stCh);
+				PassOpenChannel(&stCh);
 				
 				iLive = 1;
 				continue;
@@ -374,7 +374,7 @@ void wMaster<T>::WorkerStart(int n, int type)
 		stCh.mSlot = mSlot;
         stCh.mPid = mWorkerPool[mSlot]->mPid;
         stCh.mFD = mWorkerPool[mSlot]->mCh[0];
-        PassOpenChannel(stCh);
+        PassOpenChannel(&stCh);
 	}
 }
 
@@ -429,13 +429,13 @@ void wMaster<T>::SignalWorker(int iSigno)
 			mWorkerPool[i]->mCh.SendBytes(pStart, size + sizeof(int));
 		}
 					   
-		LOG_ERROR(ELOG_KEY, "[runtime] kill (%P, %d)", mWorkerPool[i]->mPid, iSigno);
+		LOG_ERROR(ELOG_KEY, "[runtime] kill (%d, %d)", mWorkerPool[i]->mPid, iSigno);
 		
         if (kill(mWorkerPool[i]->mPid, iSigno) == -1) 
 		{
             mErr = errno;
 			
-			LOG_ERROR(ELOG_KEY, "[runtime] kill(%P, %d) failed:%s", mWorkerPool[i]->mPid, iSigno, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[runtime] kill(%d, %d) failed:%s", mWorkerPool[i]->mPid, iSigno, strerror(mErr));
             if (mErr == ESRCH) 
 			{
                 mWorkerPool[i]->mExited = 1;
@@ -451,7 +451,7 @@ void wMaster<T>::SignalWorker(int iSigno)
 }
 
 template <typename T>
-void wMaster<T>::PassOpenChannel(struct ChannelReqOpen_t pCh)
+void wMaster<T>::PassOpenChannel(struct ChannelReqOpen_t *pCh)
 {
 	int size = sizeof(struct ChannelReqOpen_t);
 	
@@ -467,11 +467,11 @@ void wMaster<T>::PassOpenChannel(struct ChannelReqOpen_t pCh)
         }
 
         LOG_DEBUG(ELOG_KEY, "[runtime] pass open channel s:%d pid:%d fd:%d to s:%i pid:%d fd:%d", 
-        	pCh.mSlot, pCh.mPid, pCh.mFD, i, mWorkerPool[i]->mPid, mWorkerPool[i]->mCh[0]);
+        	pCh->mSlot, pCh->mPid, pCh->mFD, i, mWorkerPool[i]->mPid, mWorkerPool[i]->mCh[0]);
         
         /* TODO: EAGAIN */
 
-		memcpy(pStart + sizeof(int), (char*)&pCh, size);
+		memcpy(pStart + sizeof(int), (char*) pCh, size);
 		mWorkerPool[i]->mCh.SendBytes(pStart, size + sizeof(int));
     }
 
@@ -479,7 +479,7 @@ void wMaster<T>::PassOpenChannel(struct ChannelReqOpen_t pCh)
 }
 
 template <typename T>
-void wMaster<T>::PassCloseChannel(struct ChannelReqClose_t pCh)
+void wMaster<T>::PassCloseChannel(struct ChannelReqClose_t *pCh)
 {
 	int size = sizeof(struct ChannelReqClose_t);
 
@@ -493,11 +493,11 @@ void wMaster<T>::PassCloseChannel(struct ChannelReqClose_t pCh)
 			continue;
 		}
 
-        LOG_DEBUG(ELOG_KEY, "[runtime] pass close channel s:%i pid:%P to:%P", 
-        	pCh.mSlot, pCh.mPid, mWorkerPool[i]->mPid);
+        LOG_DEBUG(ELOG_KEY, "[runtime] pass close channel s:%i pid:%d to:%d", 
+        	pCh->mSlot, pCh->mPid, mWorkerPool[i]->mPid);
         
         /* TODO: EAGAIN */
-		memcpy(pStart + sizeof(int), (char *)&pCh, size);
+		memcpy(pStart + sizeof(int), (char *)pCh, size);
 		mWorkerPool[i]->mCh.SendBytes(pStart, size + sizeof(int));
     }
 	
