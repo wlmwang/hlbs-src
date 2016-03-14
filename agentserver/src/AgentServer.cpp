@@ -4,13 +4,6 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include <errno.h>
-#include <time.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "wLog.h"
 #include "wMisc.h"
 #include "AgentServer.h"
@@ -39,9 +32,10 @@ AgentServer::~AgentServer()
 void AgentServer::Initialize()
 {
 	mTicker = GetTickCount();
-	mReportTimer = wTimer(REPORT_TIME_TICK);
+	mReportTimer = wTimer(REPORT_TIME_TICK);	//5min
 
 	mRouterConn = new wMTcpClient<AgentServerTask>();
+	
 	mConfig = AgentConfig::Instance();
 	InitShm();
 }

@@ -33,22 +33,17 @@ class AgentServer: public wTcpServer<AgentServer>
 		void InitShm();
 
 		virtual void PrepareRun();
-		
 		virtual void Run();
 		
 		void CheckTimer();
 		void CheckQueue();
-		
-		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
 
 		void ConnectRouter();
 		int InitSvrReq();
 		int ReloadSvrReq();
 		
-		wMTcpClient<AgentServerTask>* RouterConn()
-		{
-			return mRouterConn;
-		}
+		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
+		wMTcpClient<AgentServerTask>* RouterConn() { return mRouterConn; }
 		
 	private:
 		wMTcpClient<AgentServerTask> *mRouterConn;	//连接router

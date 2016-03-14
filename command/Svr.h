@@ -13,7 +13,7 @@
 #define MAX_SVR_NUM 255
 #define ZOOM_WEIGHT 100
 #define ERR_RATE_THRESHOLD 0.5
-#define REPORT_TIME_TICK 300000
+#define REPORT_TIME_TICK 300000		//5min
 
 /**
  * 定义Svr_t

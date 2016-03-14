@@ -14,8 +14,6 @@ AgentMaster::AgentMaster()
 AgentMaster::~AgentMaster()
 {
     SAFE_DELETE(mTitle);
-	SAFE_DELETE(mConfig);
-    SAFE_DELETE(mServer);
 }
 
 void AgentMaster::Initialize()
@@ -71,9 +69,6 @@ void AgentMaster::PrepareRun()
 
     //准备工作
     mServer->PrepareStart(mConfig->mIPAddr, mConfig->mPort);
-
-    //pid文件
-    //mPidFile.FileName() = LOCK_PATH;
 }
 
 void AgentMaster::Run()

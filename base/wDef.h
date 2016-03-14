@@ -94,6 +94,13 @@ enum SERVER_STATUS
 	SERVER_RUNNING	 	//正常运行状态模式
 };
 
+enum CLIENT_STATUS
+{
+	CLIENT_INIT = -1,
+	CLIENT_QUIT,	
+	CLIENT_RUNNING
+};
+
 enum TASK_STATUS
 {
 	TASK_INIT = -1,
@@ -105,11 +112,11 @@ enum TASK_STATUS
 #define GROUP  "nobody"
 
 //define
-#define PREFIX  "/home/hlfs/disvr/routerserver/"
-#define CONF_PREFIX  "/home/hlfs/disvr/routerserver/conf/"
- 
-#define PID_PATH  "/home/hlfs/disvr/routerserver/bin/disvr.pid"
-#define LOCK_PATH  "/home/hlfs/disvr/routerserver/bin/disvr.lock"
-#define WAIT_MUTEX	"/home/hlfs/disvr/routerserver/bin/wait_mutex.shm.ipc"
+#define PREFIX  "/usr/local/disvr/server"
+#define CONF_PREFIX  "../config/" 
+#define PID_PATH  "../log/disvr.pid"
+#define LOCK_PATH  "../log/disvr.lock"
+
+#define WAIT_MUTEX	"../log/wait_mutex.shm.ipc"	//共享锁
 
 #endif

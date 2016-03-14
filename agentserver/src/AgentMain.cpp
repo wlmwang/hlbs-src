@@ -6,8 +6,8 @@
 
 #include "wCore.h"
 #include "wLog.h"
-#include "AgentMaster.h"
 #include "AgentConfig.h"
+#include "AgentMaster.h"
 
 int main(int argc, const char *argv[])
 {
