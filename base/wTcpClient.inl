@@ -8,8 +8,6 @@ template <typename T>
 wTcpClient<T>::wTcpClient(int iType, string sClientName)
 {
 	Initialize();
-	
-	mStatus = CLIENT_INIT;
 	mType = iType;
 	mClientName = sClientName;
 }
@@ -17,6 +15,7 @@ wTcpClient<T>::wTcpClient(int iType, string sClientName)
 template <typename T>
 void wTcpClient<T>::Initialize()
 {
+	mStatus = CLIENT_INIT;
 	mLastTicker = GetTickCount();
 	mReconnectTimer = wTimer(KEEPALIVE_TIME);
 	mIsCheckTimer = true;
@@ -35,7 +34,7 @@ wTcpClient<T>::~wTcpClient()
 template <typename T>
 void wTcpClient<T>::Final()
 {
-	SetStatus();
+	mStatus = CLIENT_QUIT;
 	SAFE_DELETE(mTcpTask);
 }
 
@@ -56,23 +55,18 @@ int wTcpClient<T>::ReConnectToServer()
 template <typename T>
 int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 {
-	if(vIPAddress == NULL) 
+	if(vIPAddress == NULL || vPort == 0) 
 	{
 		return -1;
 	}
-
-	if(mTcpTask != NULL)
-	{
-		SAFE_DELETE(mTcpTask);
-	}
+	SAFE_DELETE(mTcpTask);
 	
 	int iSocketFD = socket(AF_INET, SOCK_STREAM, 0);
-	if( iSocketFD < 0 )
+	if(iSocketFD < 0)
 	{
-		LOG_ERROR("error", "[runtime] create socket failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[runtime] create socket failed: %s", strerror(errno));
 		return -1;
 	}
-
 	sockaddr_in stSockAddr;
 	memset(&stSockAddr, 0, sizeof(sockaddr_in));
 	stSockAddr.sin_family = AF_INET;
@@ -81,48 +75,46 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 
 	socklen_t iOptVal = 100*1024;
 	socklen_t iOptLen = sizeof(int);
-
 	if(setsockopt(iSocketFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) != 0)
 	{
-		LOG_ERROR("error", "[runtime] set send buffer size to %d failed: %s", iOptVal, strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[runtime] set send buffer size to %d failed: %s", iOptVal, strerror(errno));
 		return -1;
 	}
-
 	if(getsockopt(iSocketFD, SOL_SOCKET, SO_SNDBUF, (void *)&iOptVal, &iOptLen) == 0)
 	{
-		LOG_INFO("default", "[runtime] set send buffer of socket is %d", iOptVal);
+		LOG_DEBUG(ELOG_KEY, "[runtime] set send buffer of socket is %d", iOptVal);
 	}
 	
 	int iRet = connect(iSocketFD, (const struct sockaddr *)&stSockAddr, sizeof(stSockAddr));
 	if( iRet < 0 )
 	{
-		LOG_ERROR("error", "[runtime] connect to server port(%d) failed: %s", vPort, strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[runtime] connect to server port(%d) failed: %s", vPort, strerror(errno));
 		return -1;
 	}
 
-	LOG_INFO("default", "[runtime] connect to %s:%d successfully", inet_ntoa(stSockAddr.sin_addr), vPort);
-	//LOG_INFO("server", "[connect] connect to %s:%d successfully", inet_ntoa(stSockAddr.sin_addr), vPort);
+	LOG_DEBUG(ELOG_KEY, "[runtime] connect to %s:%d successfully", inet_ntoa(stSockAddr.sin_addr), vPort);
 
 	wSocket* pSocket = new wSocket();
-	pSocket->SocketFD() = iSocketFD;
-	pSocket->IPAddr() = vIPAddress;
+	pSocket->FD() = iSocketFD;
+	pSocket->Host() = vIPAddress;
 	pSocket->Port() = vPort;
-	pSocket->SocketType() = CONNECT_SOCKET;
-	pSocket->SocketFlag() = RECV_DATA;
+	pSocket->SockType() = SOCK_CONNECT;
+	pSocket->IOFlag() = FLAG_RECV;
 	
 	mTcpTask = NewTcpTask(pSocket);
 	if(NULL != mTcpTask)
 	{
 		if (mTcpTask->Verify() < 0 || mTcpTask->VerifyConn() < 0)
 		{
-			LOG_ERROR("error", "[runtime] connect illegal or verify timeout: %d, close it", iSocketFD);
+			LOG_ERROR(ELOG_KEY, "[runtime] connect illegal or verify timeout: %d, close it", iSocketFD);
 			SAFE_DELETE(mTcpTask);
 			return -1;
 		}
 		
-		if(mTcpTask->Socket()->SetNonBlock() < 0) 
+		if(mTcpTask->IO()->SetNonBlock() < 0) 
 		{
-			LOG_ERROR("error", "[runtime] set non block failed: %d, close it", iSocketFD);
+			LOG_ERROR(ELOG_KEY, "[runtime] set non block failed: %d, close it", iSocketFD);
+			SAFE_DELETE(mTcpTask);
 			return -1;
 		}
 		return 0;
@@ -133,7 +125,7 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 template <typename T>
 void wTcpClient<T>::PrepareStart()
 {
-	SetStatus(CLIENT_STATUS_RUNNING);
+	mStatus = CLIENT_RUNNING;
 }
 
 template <typename T>
@@ -165,13 +157,14 @@ void wTcpClient<T>::CheckReconnect()
 {
 	unsigned long long iNowTime = GetTickCount();
 	unsigned long long iIntervalTime;
-
-	if (mTcpTask == NULL || mTcpTask->Socket()->SocketType() != CONNECT_SOCKET)
+	SOCK_TYPE sockType = pTask->IO()->SockType();
+	
+	if (mTcpTask == NULL || sockType != SOCK_CONNECT)
 	{
 		return;
 	}
 	//心跳检测
-	iIntervalTime = iNowTime - mTcpTask->Socket()->SendTime();	//上一次发送心跳时间间隔
+	iIntervalTime = iNowTime - mTcpTask->IO()->SendTime();	//上一次发送心跳时间间隔
 	if (iIntervalTime >= CHECK_CLIENT_TIME)
 	{
 		if(mTcpTask->Heartbeat() < 0 && mTcpTask->HeartbeatOutTimes())
@@ -180,32 +173,32 @@ void wTcpClient<T>::CheckReconnect()
 			LOG_INFO("error", "[runtime] disconnect server : out of heartbeat times");
 			LOG_ERROR("server", "[timeout] disconnect server : out of heartbeat times: ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
 		}
-		else if(mTcpTask->Socket() != NULL && mTcpTask->Socket()->SocketFD() < 0)
+		else if(mTcpTask->IO() != NULL && mTcpTask->IO()->FD() < 0)
 		{
 			if (ReConnectToServer() == 0)
 			{
-				LOG_ERROR("server", "[reconnect] success to reconnect : ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
+				//LOG_ERROR("server", "[reconnect] success to reconnect : ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
 			}
 			else
 			{
-				LOG_ERROR("server", "[reconnect] failed to reconnect : ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
+				//LOG_ERROR("server", "[reconnect] failed to reconnect : ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
 			}
 		}
 	}
 }
 
 template <typename T>
-wTcpTask* wTcpClient<T>::NewTcpTask(wSocket *pSocket)
+wTcpTask* wTcpClient<T>::NewTcpTask(wIO *pIO)
 {
 	wTcpTask *pTcpTask = NULL;
 	try
 	{
-		T* pT = new T(pSocket);
+		T* pT = new T(pIO);
 		pTcpTask = dynamic_cast<wTcpTask *>(pT);
 	}
 	catch(std::bad_cast& vBc)
 	{
-		LOG_ERROR("error", "[runtime] bad_cast caught: : %s", vBc.what());
+		LOG_ERROR(ELOG_KEY, "[runtime] bad_cast caught: : %s", vBc.what());
 	}
 	return pTcpTask;
 }

@@ -25,7 +25,7 @@ AgentConfig::~AgentConfig()
 void AgentConfig::Initialize()
 {
 	mPort = 0;
-	mBacklog = 1024;
+	mBacklog = LISTEN_BACKLOG;
 	mWorkers = 1;
 	memset(mIPAddr, 0, sizeof(mIPAddr));
 	memset(mRouterConf, 0, sizeof(mRouterConf));
@@ -144,7 +144,7 @@ void AgentConfig::GetRouterConf()
 		LOG_ERROR(ELOG_KEY, "[startup] Get ROUTERS node from router.xml failed");
 		exit(1);
 	}
-	FixContainer();
+	//FixContainer();
 }
 
 int AgentConfig::InitSvr(SvrNet_t* pSvr, int iNum)

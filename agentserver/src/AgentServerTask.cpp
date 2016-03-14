@@ -15,7 +15,7 @@ AgentServerTask::AgentServerTask()
     Initialize();
 }
 
-AgentServerTask::AgentServerTask(wSocket *pSocket):wTcpTask(pSocket)
+AgentServerTask::AgentServerTask(wIO *pIO) : wTcpTask(pIO)
 {
     Initialize();
 }

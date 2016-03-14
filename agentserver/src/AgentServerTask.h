@@ -14,11 +14,8 @@
 #include "wLog.h"
 #include "wTcpTask.h"
 #include "wDispatch.h"
+#include "Common.h"
 #include "SvrCmd.h"
-
-#define REG_FUNC(ActIdx, vFunc) wDispatch<function<int(char*, int)>, int>::Func_t {ActIdx, std::bind(vFunc, this, std::placeholders::_1, std::placeholders::_2)}
-#define DEC_DISP(dispatch) wDispatch<function<int(char*, int)>, int> dispatch
-#define DEC_FUNC(func) int func(char *pBuffer, int iLen)
 
 #define AGENT_REG_DISP(cmdid, paraid, func) mDispatch.Register("AgentServerTask", CMD_ID(cmdid, paraid), REG_FUNC(CMD_ID(cmdid, paraid), func));
 
@@ -26,7 +23,7 @@ class AgentServerTask : public wTcpTask
 {
 	public:
 		AgentServerTask();
-		AgentServerTask(wSocket *pSocket);
+		AgentServerTask(wIO *pIO);
 		~AgentServerTask();
 		
 		void Initialize();

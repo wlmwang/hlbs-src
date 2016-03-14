@@ -33,12 +33,32 @@ void AgentServer::Initialize()
 {
 	mTicker = GetTickCount();
 	mReportTimer = wTimer(REPORT_TIME_TICK);	//5min
-
-	mRouterConn = new wMTcpClient<AgentServerTask>();
 	
+	InitShm();	//初始化共享内存。与agentcmd进程通信
 	mConfig = AgentConfig::Instance();
-	InitShm();
+	mRouterConn = new wMTcpClient<AgentServerTask>();
 }
+
+//准备工作
+void AgentServer::PrepareRun()
+{
+	mRouterConn->PrepareStart();
+	ConnectRouter(); //连接Router服务
+}
+
+void AgentServer::Run()
+{
+	mRouterConn->Start(false);
+	CheckQueue();	//读取共享内存
+	CheckTimer();	//统计weight结果
+}
+
+wTask* AgentServer::NewTcpTask(wIO *pIO)
+{
+	wTask *pTask = new AgentServerTask(pIO);
+	return pTask;
+}
+
 
 void AgentServer::InitShm()
 {
@@ -65,12 +85,6 @@ void AgentServer::InitShm()
 	}
 }
 
-wTcpTask* AgentServer::NewTcpTask(wSocket *pSocket)
-{
-	wTcpTask *pTcpTask = new AgentServerTask(pSocket);
-	return pTcpTask;
-}
-
 void AgentServer::ConnectRouter()
 {
 	AgentConfig::RouterConf_t* pRconf = mConfig->GetOneRouterConf();
@@ -81,14 +95,14 @@ void AgentServer::ConnectRouter()
 	}
 
 	//mRouterConn
-	bool bRet = mRouterConn->GenerateClient(SERVER_ROUTER, "RouterFromAgent", pRconf->mIPAddr, pRconf->mPort);
+	bool bRet = mRouterConn->GenerateClient(SERVER_ROUTER, "ROUTER SERVER", pRconf->mIPAddr, pRconf->mPort);
 	if (!bRet)
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Connect to RouterServer failed");
 		exit(1);
 	}
-
-	//LOG_ERROR("server", "[connect] Connect to RouterServer success ip(%s) port(%d)", pRconf->mIPAddr, pRconf->mPort);
+	LOG_DEBUG(ELOG_KEY, "[startup] Connect to RouterServer success, ip(%s) port(%d)", pRconf->mIPAddr, pRconf->mPort);
+	
 	//发送初始化svr配置请求
 	InitSvrReq();
 }
@@ -123,20 +137,6 @@ int AgentServer::ReloadSvrReq()
 		return pClient->TcpTask()->SyncSend((char *)&stSvr, sizeof(stSvr));
 	}
 	return -1;
-}
-
-//准备工作
-void AgentServer::PrepareRun()
-{
-	mRouterConn->PrepareStart();
-	ConnectRouter(); //连接Router服务
-}
-
-void AgentServer::Run()
-{
-	mRouterConn->Start(false);
-	CheckQueue();	//读取共享内存
-	CheckTimer();	//统计weight结果
 }
 
 /**

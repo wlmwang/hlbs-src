@@ -21,6 +21,7 @@
 #include "wMsgQueue.h"
 #include "AgentServerTask.h"
 #include "AgentConfig.h"
+#include "Common.h"
 #include "SvrCmd.h"
 
 class AgentServer: public wTcpServer<AgentServer>
@@ -42,7 +43,8 @@ class AgentServer: public wTcpServer<AgentServer>
 		int InitSvrReq();
 		int ReloadSvrReq();
 		
-		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
+		virtual wTask* NewTcpTask(wIO *pIO);
+		
 		wMTcpClient<AgentServerTask>* RouterConn() { return mRouterConn; }
 		
 	private:

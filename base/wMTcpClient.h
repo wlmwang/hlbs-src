@@ -27,13 +27,14 @@ class wMTcpClient : public wNoncopyable
 {
 	public:
 		wMTcpClient();
-		~wMTcpClient();
-		
-		void Final();
+		virtual ~wMTcpClient();
 		void Initialize();
+		void Final();
 		
+		/**
+		 *  连接服务器
+		 */
 		bool GenerateClient(int iType, string sClientName, char *vIPAddress, unsigned short vPort);
-		
 		bool RemoveTcpClientPool(int iType, wTcpClient<TASK> *pTcpClient = NULL);
 		void CleanTcpClientPool();
 		int ResetTcpClientCount();
@@ -43,7 +44,7 @@ class wMTcpClient : public wNoncopyable
 		 */
 		int InitEpoll();
 		void CleanEpoll();
-		int AddToEpoll(wTcpClient<TASK> *pTcpClient);
+		int AddToEpoll(wTcpClient<TASK> *pTcpClient, int iEvent = EPOLLIN | EPOLLERR | EPOLLHUP);
         int RemoveEpoll(wTcpClient<TASK> *pTcpClient);
 		
 		void PrepareStart();
@@ -56,19 +57,12 @@ class wMTcpClient : public wNoncopyable
 		void Recv();
 		void Send();
 		
-		bool IsRunning() { return CLIENT_RUNNING == mStatus; }
-		
-		void SetStatus(CLIENT_STATUS eStatus = CLIENT_QUIT) { mStatus = eStatus; }
-		CLIENT_STATUS GetStatus() { return mStatus; }
-
 		vector<wTcpClient<TASK>*> TcpClients(int iType);
 		wTcpClient<TASK>* OneTcpClient(int iType);
 		
 	protected:
 		wTcpClient<TASK>* CreateClient(int iType, string sClientName, char *vIPAddress, unsigned short vPort);
 		bool AddTcpClientPool(int iType, wTcpClient<TASK> *pTcpClient);
-		
-		CLIENT_STATUS mStatus;	//服务器当前状态
 
 		//epoll
 		int mEpollFD;
@@ -85,6 +79,7 @@ class wMTcpClient : public wNoncopyable
 		bool mIsCheckTimer;
         
 		std::map<int, vector<wTcpClient<TASK>*> > mTcpClientPool;	//每种类型客户端，可挂载多个连接
+		int mErr;
 };
 
 #include "wMTcpClient.inl"

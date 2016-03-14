@@ -16,42 +16,36 @@
 #include "wMisc.h"
 #include "wLog.h"
 #include "wSocket.h"
+#include "wIO.h"
+#include "wTask.h"
 #include "wTcpTask.h"
 
 template <typename T>
 class wTcpClient
 {
 	public:
-		virtual ~wTcpClient();
-		
         wTcpClient(int iType, string sClientName);
-	    	
 		wTcpClient(const wTcpClient&);
-		
+		virtual ~wTcpClient();
 		void Initialize();
-		
-		int ConnectToServer(const char *vIPAddress, unsigned short vPort);
-
-		int ReConnectToServer();
-		
-		int GetType() { return mType; }
-		
 		void Final();
-		
-		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
 
 		virtual void PrepareStart();
 		virtual void Start(bool bDaemon = true);
 
+		int ConnectToServer(const char *vIPAddress, unsigned short vPort);
+		int ReConnectToServer();
+		
 		void CheckTimer();
 		void CheckReconnect();
-
+		
+		string &ClientName() { return mClientName; }
 		bool IsRunning() { return mStatus = CLIENT_RUNNING; }
-		void SetStatus(CLIENT_STATUS eStatus = CLIENT_QUIT) { mStatus = eStatus; }
-		CLIENT_STATUS GetStatus() { return mStatus; }
-		string &GetClientName() { return mClientName; }
+		CLIENT_STATUS &Status() { return mStatus; }
+		int Type() { return mType; }
 		
 		wTcpTask* TcpTask() { return mTcpTask; }
+		virtual wTcpTask* NewTcpTask(wIO *pIO);
 		
 	protected:
 		int mType;

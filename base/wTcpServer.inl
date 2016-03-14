@@ -32,7 +32,7 @@ void wTcpServer<T>::Initialize()
 	mEpollFD = FD_UNKNOWN;
 	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
 	mTaskCount = 0;
-	mEpollEventPool.reserve(512);	//容量
+	mEpollEventPool.reserve(LISTEN_BACKLOG);	//容量
 	mTask = NULL;
 
 	mListenSock = NULL;
@@ -252,7 +252,7 @@ void wTcpServer<T>::PrepareRun()
 template <typename T>
 int wTcpServer<T>::InitEpoll()
 {
-	mEpollFD = epoll_create(512); //512
+	mEpollFD = epoll_create(LISTEN_BACKLOG); //511
 	if(mEpollFD < 0)
 	{
 		mErr = errno;
