@@ -4,10 +4,11 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#ifndef _W_CORE_CMD_H_
-#define _W_CORE_CMD_H_
+#ifndef _W_CHANNEL_CMD_H_
+#define _W_CHANNEL_CMD_H_
 
-#include "wBaseCmd.h"
+#include "wCore.h"
+#include "wCommand.h"
 
 #pragma pack(1)
 

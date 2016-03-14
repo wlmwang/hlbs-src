@@ -11,7 +11,7 @@
 #include <sys/sem.h>
 #include <semaphore.h>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wLog.h"
 #include "wNoncopyable.h"
 

@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "wConfig.h"
-#include "wType.h"
+#include "wCore.h"
 #include "wLog.h"
 #include "wSingleton.h"
 #include "AgentCmd.h"

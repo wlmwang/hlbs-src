@@ -14,7 +14,7 @@
 #include <stdarg.h>
 #include <ostream>
 
-#include "wType.h"
+#include "wCore.h"
 
 namespace W
 {

@@ -12,7 +12,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wCommand.h"
 
 inline const char* IP2Text(long ip)

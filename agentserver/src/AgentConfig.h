@@ -10,8 +10,8 @@
 #include <vector>
 #include <map>
 
+#include "wCore.h"
 #include "wConfig.h"
-#include "wType.h"
 #include "wMisc.h"
 #include "wLog.h"
 #include "wSingleton.h"

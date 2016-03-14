@@ -17,7 +17,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wMisc.h"
 #include "wLog.h"
 #include "AgentCmd.h"

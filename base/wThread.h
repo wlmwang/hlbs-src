@@ -9,7 +9,7 @@
 
 #include <pthread.h>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wMutex.h"
 #include "wCond.h"
 #include "wNoncopyable.h"

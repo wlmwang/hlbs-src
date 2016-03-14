@@ -10,7 +10,7 @@
 #include <map>
 #include <vector>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wLog.h"
 #include "wMisc.h"
 #include "wSingleton.h"
@@ -21,7 +21,7 @@
 #include "wSigSet.h"
 #include "wSignal.h"
 #include "wWorker.h"
-#include "wCoreCmd.h"
+#include "wChannelCmd.h"
 
 template <typename T>
 class wMaster : public wSingleton<T>

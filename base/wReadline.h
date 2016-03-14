@@ -10,7 +10,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#include "wType.h"
+#include "wCore.h"
 
 class wReadline
 {

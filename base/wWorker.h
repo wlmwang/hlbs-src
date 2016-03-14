@@ -10,7 +10,7 @@
 #include <map>
 #include <vector>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wLog.h"
 #include "wMisc.h"
 #include "wSigSet.h"
@@ -20,7 +20,7 @@
 #include "wShm.h"
 #include "wShmtx.h"
 #include "wNoncopyable.h"
-#include "wBaseCmd.h"
+#include "wChannelCmd.h"
 
 class wWorker : public wNoncopyable
 {

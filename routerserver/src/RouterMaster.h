@@ -10,8 +10,7 @@
 #include <map>
 #include <vector>
 
-#include "wType.h"
-#include "wBaseCmd.h"
+#include "wCore.h"
 #include "wMaster.h"
 #include "RouterWorker.h"
 #include "RouterConfig.h"

@@ -10,7 +10,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wLog.h"
 #include "wNoncopyable.h"
 

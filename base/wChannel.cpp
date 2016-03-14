@@ -5,7 +5,7 @@
  */
 
 #include "wChannel.h"
-#include "wCoreCmd.h"
+#include "wChannelCmd.h"
 
 wChannel::wChannel() 
 {

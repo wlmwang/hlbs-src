@@ -11,7 +11,7 @@
 #include <vector>
 #include <functional>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wNoncopyable.h"
 
 /**

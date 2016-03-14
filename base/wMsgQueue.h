@@ -7,7 +7,7 @@
 #ifndef _W_MSG_QUEUE_
 #define _W_MSG_QUEUE_
 
-#include "wType.h"
+#include "wCore.h"
 #include "wAssert.h"
 #include "wShm.h"
 

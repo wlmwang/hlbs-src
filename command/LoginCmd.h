@@ -7,8 +7,8 @@
 #ifndef _LOGIN_CMD_H_
 #define _LOGIN_CMD_H_
 
-#include "wBaseCmd.h"
-#include "CommonCmd.h"
+#include "wCore.h"
+#include "Common.h"
 
 #pragma pack(1)
 

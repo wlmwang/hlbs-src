@@ -4,9 +4,8 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include "wType.h"
+#include "wCore.h"
 #include "wLog.h"
-#include "wBaseCmd.h"
 #include "AgentMaster.h"
 #include "AgentConfig.h"
 

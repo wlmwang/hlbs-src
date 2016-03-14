@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <functional>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wLog.h"
 #include "wIO.h"
 #include "wTcpTask.h"

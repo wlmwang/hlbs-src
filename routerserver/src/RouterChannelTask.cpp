@@ -6,7 +6,7 @@
 
 #include "RouterChannelTask.h"
 #include "RouterMaster.h"
-#include "wCoreCmd.h"
+#include "wChannelCmd.h"
 
 RouterChannelTask::RouterChannelTask()
 {

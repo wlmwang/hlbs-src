@@ -8,7 +8,7 @@
 #define _W_LOG_H_
 
 #include <stdarg.h>
-#include "wType.h"
+#include "wCore.h"
 
 /**
  * 基于log4cpp的日志管理库

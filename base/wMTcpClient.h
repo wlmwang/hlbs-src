@@ -15,7 +15,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wTimer.h"
 #include "wMisc.h"
 #include "wLog.h"

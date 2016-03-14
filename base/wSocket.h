@@ -10,7 +10,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wIO.h"
 #include "wLog.h"
 #include "wMisc.h"

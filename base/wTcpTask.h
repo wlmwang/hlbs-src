@@ -7,7 +7,7 @@
 #ifndef _W_TCP_TASK_H_
 #define _W_TCP_TASK_H_
 
-#include "wType.h"
+#include "wCore.h"
 #include "wTask.h"
 #include "wSocket.h"
 #include "wLog.h"

@@ -11,7 +11,7 @@
  *  消息头
  */
 
-#include "wType.h"
+#include "wCore.h"
 
 #define CMD_ID(cmd, para) ((para)<<8 | (cmd))
 

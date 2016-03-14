@@ -7,8 +7,7 @@
 #ifndef _SVR_H_
 #define _SVR_H_
 
-#include <string.h>
-#include "wType.h"
+#include "wCore.h"
 
 #define MAX_SVR_IP_LEN 16
 #define MAX_SVR_NUM 255

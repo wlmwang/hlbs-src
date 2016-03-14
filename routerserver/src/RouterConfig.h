@@ -11,7 +11,7 @@
 #include <vector>
 #include <algorithm>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wMisc.h"
 #include "wLog.h"
 #include "Svr.h"

@@ -10,7 +10,7 @@
 #include <map>
 #include <vector>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wLog.h"
 #include "wWorker.h"
 #include "RouterConfig.h"

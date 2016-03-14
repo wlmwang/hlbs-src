@@ -7,7 +7,7 @@
 #ifndef _W_SINGLETON_H_
 #define _W_SINGLETON_H_
 
-#include "wType.h"
+#include "wCore.h"
 
 /**
  * 实现单例，该类是所有单例类的父类

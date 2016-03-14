@@ -7,7 +7,7 @@
 #ifndef _READLINE_THREAD_H_
 #define _READLINE_THREAD_H_
 
-#include "wType.h"
+#include "wCore.h"
 #include "wThread.h"
 #include "wReadline.h"
 

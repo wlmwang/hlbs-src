@@ -7,7 +7,7 @@
 #ifndef _W_CHANNEL_TASK_H_
 #define _W_CHANNEL_TASK_H_
 
-#include "wType.h"
+#include "wCore.h"
 #include "wTask.h"
 #include "wChannel.h"
 #include "wLog.h"

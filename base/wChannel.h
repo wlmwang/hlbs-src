@@ -11,7 +11,7 @@
 #include <sys/un.h>
 #include <sys/uio.h>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wIO.h"
 #include "wLog.h"
 #include "wMisc.h"

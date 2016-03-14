@@ -7,7 +7,7 @@
 #ifndef _W_IO_H_
 #define _W_IO_H_
 
-#include "wType.h"
+#include "wCore.h"
 #include "wLog.h"
 #include "wMisc.h"
 #include "wNoncopyable.h"

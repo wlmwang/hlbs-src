@@ -10,7 +10,7 @@
 #include <arpa/inet.h>
 #include <vector>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wSingleton.h"
 #include "wTimer.h"
 #include "wTcpServer.h"

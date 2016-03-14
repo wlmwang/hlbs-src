@@ -7,7 +7,7 @@
 #ifndef _W_CONFIG_H_
 #define _W_CONFIG_H_
 
-#include "wType.h"
+#include "wCore.h"
 #include "wLog.h"
 #include "wMisc.h"
 #include "wSingleton.h"

@@ -11,7 +11,7 @@
 #include <vector>
 #include <sys/epoll.h>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wAssert.h"
 #include "wMisc.h"
 #include "wLog.h"

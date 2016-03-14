@@ -7,7 +7,7 @@
 #ifndef _W_SHMTX_H_
 #define _W_SHMTX_H_
 
-#include "wType.h"
+#include "wCore.h"
 #include "wLog.h"
 #include "wNoncopyable.h"
 #include "wShm.h"

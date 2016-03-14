@@ -7,8 +7,8 @@
 #ifndef _SVR_CMD_H_
 #define _SVR_CMD_H_
 
-#include "wBaseCmd.h"
-#include "CommonCmd.h"
+#include "wCore.h"
+#include "Common.h"
 #include "Svr.h"
 
 #pragma pack(1)

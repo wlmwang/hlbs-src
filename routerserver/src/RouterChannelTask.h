@@ -9,14 +9,14 @@
 
 #include <functional>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wAssert.h"
 #include "wLog.h"
 #include "wIO.h"
 #include "wTask.h"
 #include "wChannelTask.h"
 #include "wDispatch.h"
-#include "CommonCmd.h"
+#include "Common.h"
 
 #define CHANNEL_REG_DISP(cmdid, paraid, func) mDispatch.Register("RouterChannelTask", CMD_ID(cmdid, paraid), REG_FUNC(CMD_ID(cmdid, paraid), func));
 

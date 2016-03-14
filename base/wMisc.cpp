@@ -6,7 +6,7 @@
 
 #include <sys/file.h>	//int flock(int fd,int operation);
 #include <signal.h>
-#include "wType.h"
+#include "wCore.h"
 #include "wLog.h"
 
 #include "wMisc.h"

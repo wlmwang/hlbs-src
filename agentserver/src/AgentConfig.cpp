@@ -7,7 +7,7 @@
 #include <iostream>
 #include <algorithm>
 
-#include "wType.h"
+#include "wCore.h"
 #include "tinyxml.h"	//lib tinyxml
 #include "AgentConfig.h"
 

@@ -7,7 +7,7 @@
 #ifndef _W_TASK_H_
 #define _W_TASK_H_
 
-#include "wType.h"
+#include "wCore.h"
 #include "wCommand.h"
 #include "wIO.h"
 #include "wLog.h"

@@ -10,9 +10,8 @@
 #include <map>
 #include <vector>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wMaster.h"
-#include "wBaseCmd.h"
 #include "AgentConfig.h"
 #include "AgentServer.h"
 

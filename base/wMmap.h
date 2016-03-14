@@ -9,7 +9,7 @@
 
 #include <sys/mman.h>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wLog.h"
 #include "wNoncopyable.h"
 

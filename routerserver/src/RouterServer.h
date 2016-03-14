@@ -9,7 +9,7 @@
 
 #include <arpa/inet.h>
 
-#include "wType.h"
+#include "wCore.h"
 #include "wMisc.h"
 #include "wLog.h"
 #include "wSingleton.h"
