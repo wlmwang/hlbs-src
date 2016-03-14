@@ -54,13 +54,13 @@ class wSignal : private wNoncopyable
 //信号集
 extern wSignal::signal_t g_signals[];
 
-extern int g_reopen;
-extern int g_terminate;
-extern int g_quit;
-extern int g_reconfigure;
-extern int g_sigalrm;
-extern int g_sigio;
-extern int g_reap;
-extern int g_restart;
+extern volatile int g_reopen;
+extern volatile int g_terminate;
+extern volatile int g_quit;
+extern volatile int g_reconfigure;
+extern volatile int g_sigalrm;
+extern volatile int g_sigio;
+extern volatile int g_reap;
+extern volatile int g_restart;
 
 #endif
