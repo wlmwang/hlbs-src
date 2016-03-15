@@ -41,7 +41,11 @@ class AgentServer: public wTcpServer<AgentServer>
 		void CheckQueue();
 
 		void ConnectRouter();
+
+		//连接router成功后，发送初始化svr请求
 		int InitSvrReq();
+
+		//可运行时发送重载svr请求
 		int ReloadSvrReq();
 		wMTcpClient<AgentClientTask>* RouterConn() { return mRouterConn; }
 

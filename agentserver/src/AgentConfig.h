@@ -56,26 +56,26 @@ class AgentConfig: public wConfig<AgentConfig>
 			}
 			return NULL;
 		}
-		
-		//初始化
-		void Initialize();
-
 		AgentConfig();
-
-		void Final();
+		void Initialize();
 		virtual ~AgentConfig();
+		void Final();
 
 		void GetBaseConf();
 		void GetRouterConf();
 
+		//初始化svr
 		int InitSvr(SvrNet_t *pSvr, int iLen = 0);
 		int ReloadSvr(SvrNet_t *pSvr, int iLen = 0);
 		int SyncSvr(SvrNet_t *pSvr, int iLen = 0);
 		
+		//CGI获取所有svr
 		int GetSvrAll(SvrNet_t* pBuffer);
+		//CGI获取一个路由
 		int GetSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid);
 		
-		void ReportSvr(SvrReportReqId_t *pReportSvr);	//上报结果
+		//接受上报数据
+		void ReportSvr(SvrReportReqId_t *pReportSvr);
 		void Statistics();
 		
 		int GXidWRRSvr(SvrNet_t* pBuffer, string sKey, vector<Svr_t*> vSvr);
@@ -97,7 +97,7 @@ class AgentConfig: public wConfig<AgentConfig>
 			}
 		};
 
-		void FixContainer();
+		void SvrRebuild();
 		void DelContainer();
 		vector<Svr_t*>::iterator GetItFromV(Svr_t* pSvr);
 		vector<Svr_t*>::iterator GetItById(int iId);
@@ -117,11 +117,16 @@ class AgentConfig: public wConfig<AgentConfig>
 		void ReleaseConn(Svr_t* stSvr);
 		int GetSumConn(Svr_t* stSvr);
 
+		TiXmlDocument* mDoc;
+		
 		vector<Svr_t*> mSvr;
 		map<string, vector<Svr_t*> > mSvrByGXid;
 		map<string, StatcsGXid_t*> mStatcsGXid;
 
-		TiXmlDocument* mDoc;
+		//阈值配置
+		SvrReqCfg_t mSvrReqCfg;
+		SvrListCfg_t mSvrListCfg;
+		SvrDownCfg_t mSvrDownCfg;
 };
 
 #endif

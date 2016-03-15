@@ -35,12 +35,7 @@ class AgentClientTask : public wTcpTask
 		virtual int HandleRecvMessage(char * pBuffer, int nLen);
 		
 		int ParseRecvMessage(struct wCommand* pCommand ,char *pBuffer,int iLen);
-		
-		DEC_FUNC(ReloadSvrReq);
-		DEC_FUNC(GetSvrAll);
-		DEC_FUNC(GetSvrByGXid);
-		
-		DEC_FUNC(SyncSvrReq);		
+			
 		DEC_FUNC(SyncSvrRes);
 		DEC_FUNC(ReloadSvrRes);
 		DEC_FUNC(InitSvrRes);

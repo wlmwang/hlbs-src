@@ -172,7 +172,6 @@ void AgentServer::CheckQueue()
 			LOG_ERROR(ELOG_KEY, "[runtime] get one message from msg queue failed: %d", iRet);
 			return;
 		}
-
 		//如果消息大小不正确
 		if(iRet != iLen) 
 		{

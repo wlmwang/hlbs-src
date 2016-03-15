@@ -56,7 +56,7 @@ class RouterConfig: public wConfig<RouterConfig>
 		
 	protected:
 		bool IsChangeSvr(const SvrNet_t* pR1, const SvrNet_t* pR2);
-		void FixContainer();
+		void SvrRebuild();
 		void DelContainer();
 		vector<Svr_t*>::iterator GetItFromV(Svr_t* pSvr);
 		

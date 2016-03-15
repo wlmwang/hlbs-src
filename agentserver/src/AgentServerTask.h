@@ -38,11 +38,8 @@ class AgentServerTask : public wTcpTask
 		DEC_FUNC(ReloadSvrReq);
 		DEC_FUNC(GetSvrAll);
 		DEC_FUNC(GetSvrByGXid);
+		DEC_FUNC(SyncSvrReq);
 		
-		DEC_FUNC(SyncSvrReq);		
-		DEC_FUNC(SyncSvrRes);
-		DEC_FUNC(ReloadSvrRes);
-		DEC_FUNC(InitSvrRes);
 	protected:
 		DEC_DISP(mDispatch);
 };

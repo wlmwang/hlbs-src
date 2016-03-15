@@ -4,7 +4,6 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include <iostream>
 #include <algorithm>
 
 #include "wCore.h"
@@ -144,7 +143,7 @@ void AgentConfig::GetRouterConf()
 		LOG_ERROR(ELOG_KEY, "[startup] Get ROUTERS node from router.xml failed");
 		exit(1);
 	}
-	//FixContainer();
+	//SvrRebuild();
 }
 
 int AgentConfig::InitSvr(SvrNet_t* pSvr, int iNum)
@@ -153,14 +152,26 @@ int AgentConfig::InitSvr(SvrNet_t* pSvr, int iNum)
 	{
 		return -1;
 	}
-
 	Final();
+
+	Svr_t *pTmpSvr;
 	for(int i = 0; i < iNum ; i++)
 	{
-		Svr_t *pTmpSvr = new Svr_t(pSvr[i]);
+		if (pSvr[i] == NULL)
+		{
+			continue;
+		}
+
+		pTmpSvr = new Svr_t(pSvr[i]);	//SvrNet -> Svr
+		if (pTmpSvr == NULL)
+		{
+			LOG_ERROR(ELOG_KEY, "[runtime] init id(%d) svr failed", pSvr[i]->mId);
+			continue;
+		}
 		mSvr.push_back(pTmpSvr);
 	}
-	FixContainer();
+
+	SvrRebuild();
 	return 0;
 }
 
@@ -178,6 +189,7 @@ int AgentConfig::SyncSvr(SvrNet_t *pSvr, int iNum)
 	}
 
 	int j = 0;
+	Svr_t *pTmpSvr;
 	for(int i = 0; i < iNum ; i++)
 	{
 		vector<Svr_t*>::iterator it = GetItById((pSvr+i)->mId);
@@ -188,7 +200,12 @@ int AgentConfig::SyncSvr(SvrNet_t *pSvr, int iNum)
 				//更新配置
 				SAFE_DELETE(*it);
 				mSvr.erase(it);
-				Svr_t *pTmpSvr = new Svr_t(pSvr[i]);
+				pTmpSvr = new Svr_t(pSvr[i]);	//SvrNet -> Svr
+				if (pTmpSvr == NULL)
+				{
+					LOG_ERROR(ELOG_KEY, "[runtime] init id(%d) svr failed", pSvr[i]->mId);
+					continue;
+				}
 				mSvr.push_back(pTmpSvr);
 				j++;
 			}
@@ -196,18 +213,28 @@ int AgentConfig::SyncSvr(SvrNet_t *pSvr, int iNum)
 		else
 		{
 			//添加新配置
-			Svr_t *pTmpSvr = new Svr_t(pSvr[i]);
+			pTmpSvr = new Svr_t(pSvr[i]);
+			if (pTmpSvr == NULL)
+			{
+				LOG_ERROR(ELOG_KEY, "[runtime] init id(%d) svr failed", pSvr[i]->mId);
+				continue;
+			}
 			mSvr.push_back(pTmpSvr);
 			j++;
 		}
 	}
-	FixContainer();	
+	SvrRebuild();	
 	return j;
 }
 
 int AgentConfig::GetSvrAll(SvrNet_t* pBuffer)
 {
 	vector<Svr_t*>::iterator it = mSvr.begin();
+	if (mSvr.size() < 1)
+	{
+		return 0;
+	}
+
 	for(int i = 0; it != mSvr.end(); i++, it++)
 	{
 		pBuffer[i] = ((struct SvrNet_t)**it);   //Svr_t => SvrNet_t
@@ -270,9 +297,9 @@ int AgentConfig::GXidWRRSvr(SvrNet_t* pBuffer, string sKey, vector<Svr_t*> vSvr)
 	int iLoop = iLen;
 	StatcsGXid_t *pStatcs = mn->second;
 
-	cout << "init id" << pStatcs->mIdx << endl;
-	cout << "init cur" << pStatcs->mCur << endl;
-	cout << "init gcd" << pStatcs->mGcd << endl;	
+	LOG_DEBUG(ELOG_KEY, "[runtime] WRR init id,%d", pStatcs->mIdx);
+	LOG_DEBUG(ELOG_KEY, "[runtime] WRR init cur,%d", pStatcs->mCur);
+	LOG_DEBUG(ELOG_KEY, "[runtime] WRR init gcd,%d", pStatcs->mGcd);
 
 	while(iLoop-- >= 0)
 	{
@@ -313,11 +340,6 @@ int AgentConfig::GXidWRRSvr(SvrNet_t* pBuffer, string sKey, vector<Svr_t*> vSvr)
 				pStatcs->mSumConn++;
 				vSvr[pStatcs->mIdx]->mUsedNum++;
 				
-				//cout << "id" << pStatcs->mIdx << endl;
-				//cout << "cur" << pStatcs->mCur << endl;
-				//cout << "gcd" << pStatcs->mGcd << endl;
-				//cout << "mWeight" << vSvr[pStatcs->mIdx]->mWeight << endl;
-				
 				*pBuffer = (struct SvrNet_t) *vSvr[pStatcs->mIdx];	//Svr_t => SvrNet_t
 				return vSvr[pStatcs->mIdx]->mId;
 			}
@@ -326,25 +348,26 @@ int AgentConfig::GXidWRRSvr(SvrNet_t* pBuffer, string sKey, vector<Svr_t*> vSvr)
 	return -1;
 }
 
-//使用私有结构
+//接受上报数据
 void AgentConfig::ReportSvr(SvrReportReqId_t *pReportSvr)
 {
 	vector<Svr_t*>::iterator it = GetItById(pReportSvr->mId);
-	if (it != mSvr.end() && pReportSvr->mDelay != 0 && pReportSvr->mStu != 0)
+	if (it != mSvr.end() && pReportSvr->mDelay != 0 && pReportSvr->mStu != SVR_UNKNOWN)
 	{
 		SetGXDirty((*it), 1);	//设置同组所有Svr更新位(重新设置对应权值、错误率)
 		(*it)->mDelay = pReportSvr->mDelay;
-		if (pReportSvr->mStu == 1)	//成功
+		if (pReportSvr->mStu == SVR_SUC)	//成功
 		{
-			(*it)->mOkNum++;
+			//(*it)->mOkNum++;
 		}
-		else if(pReportSvr->mStu == -1)	//失败
+		else if(pReportSvr->mStu == SVR_ERR)	//失败
 		{
-			(*it)->mErrNum++;
+			//(*it)->mErrNum++;
 		}
+
 		//释放连接
 		ReleaseConn(*it);
-		LOG_DEBUG("default","[runtime] recvive a report message(shm), Ok(%d),Err(%d)", (*it)->mOkNum, (*it)->mErrNum);
+		LOG_DEBUG(ELOG_KEY,"[runtime] recvive a report message(shm), Ok(%d),Err(%d)", (*it)->mOkNum, (*it)->mErrNum);
 	}
 }
 
@@ -370,8 +393,8 @@ void AgentConfig::Statistics()
 			(*it)->ClearStatistics();	//清除统计数据
 		}
 	}
-	FixContainer();
-	LOG_DEBUG("default","[runtime] statistics svr success");
+	SvrRebuild();
+	LOG_DEBUG(ELOG_KEY,"[runtime] statistics svr success");
 }
 
 short AgentConfig::CalcPre(Svr_t* stSvr)
@@ -508,7 +531,7 @@ void AgentConfig::Final()
 }
 
 //整理容器 & 同步其他容器
-void AgentConfig::FixContainer()
+void AgentConfig::SvrRebuild()
 {
 	if(mSvr.size() <= 0) return;
 	sort(mSvr.begin(), mSvr.end(), GreaterSvr);	//降序排序

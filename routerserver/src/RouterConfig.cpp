@@ -167,7 +167,7 @@ void RouterConfig::GetSvrConf()
 		exit(1);
 	}
 
-	FixContainer();
+	SvrRebuild();
 	SetModTime();
 }
 
@@ -238,7 +238,7 @@ int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 			}
 		}
 		//重新整理容器
-		FixContainer();
+		SvrRebuild();
 		SetModTime();
 	}
 	else
@@ -266,7 +266,7 @@ int RouterConfig::GetSvrAll(SvrNet_t* pBuffer)
 	return mSvr.size();
 }
 
-void RouterConfig::FixContainer()
+void RouterConfig::SvrRebuild()
 {
 	if(mSvr.size() <= 0) return;
 	sort(mSvr.begin(), mSvr.end(), GreaterSvr);//降序排序

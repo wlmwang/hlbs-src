@@ -30,10 +30,6 @@ void AgentServerTask::Initialize()
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_RELOAD, &AgentServerTask::ReloadSvrReq);
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_ALL, &AgentServerTask::GetSvrAll);
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_GXID, &AgentServerTask::GetSvrByGXid);
-
-	AGENT_REG_DISP(CMD_SVR_RES, SVR_RES_INIT, &AgentServerTask::InitSvrRes);
-	AGENT_REG_DISP(CMD_SVR_RES, SVR_RES_RELOAD, &AgentServerTask::ReloadSvrRes);
-	AGENT_REG_DISP(CMD_SVR_RES, SVR_RES_SYNC, &AgentServerTask::SyncSvrRes);
 }
 
 int AgentServerTask::VerifyConn()
@@ -99,36 +95,6 @@ int AgentServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, 
 	return 0;
 }
 
-//router发来init相响应
-int AgentServerTask::InitSvrRes(char *pBuffer, int iLen)
-{
-	AgentConfig *pConfig = AgentConfig::Instance();
-	SvrResInit_t *pCmd = (struct SvrResInit_t* )pBuffer;
-
-	if (pCmd->mNum > 0) pConfig->InitSvr(pCmd->mSvr, pCmd->mNum);
-	return 0;
-}
-
-//router发来reload响应
-int AgentServerTask::ReloadSvrRes(char *pBuffer, int iLen)
-{
-	AgentConfig *pConfig = AgentConfig::Instance();
-	SvrResReload_t *pCmd = (struct SvrResReload_t* )pBuffer;
-
-	if (pCmd->mNum > 0) pConfig->ReloadSvr(pCmd->mSvr, pCmd->mNum);
-	return 0;
-}
-
-//router发来sync响应
-int AgentServerTask::SyncSvrRes(char *pBuffer, int iLen)
-{
-	AgentConfig *pConfig = AgentConfig::Instance();
-	SvrResSync_t *pCmd = (struct SvrResSync_t* )pBuffer;
-
-	if (pCmd->mNum > 0) pConfig->SyncSvr(pCmd->mSvr, pCmd->mNum);
-	return 0;
-}
-
 //agentcmd发来请求，(正常由router主动下发，而非请求下发)
 int AgentServerTask::SyncSvrReq(char *pBuffer, int iLen)
 {
@@ -137,7 +103,7 @@ int AgentServerTask::SyncSvrReq(char *pBuffer, int iLen)
 	return 0;
 }
 
-//agentcmd发来请求  。需同步reload router
+//agentcmd发来请求。需同步 reload router
 int AgentServerTask::ReloadSvrReq(char *pBuffer, int iLen)
 {
 	AgentServer *pServer = AgentServer::Instance();
