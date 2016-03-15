@@ -60,6 +60,10 @@ class wMaster : public wSingleton<T>
 		 *  可重写全局变量g_signals，实现自定义信号处理
 		 */
 		void InitSignals();
+		/**
+		 *  获取子进程退出状态
+		 */
+		void ProcessGetStatus();
 		
 		int CreatePidFile();
 		void DeletePidFile();

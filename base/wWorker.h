@@ -51,12 +51,14 @@ class wWorker : public wNoncopyable
 		int mRlimitCore;		//连接限制
 		char mWorkingDir[255];	//工作目录
 		
+		char *mName;	//进程名
 		void* mData;	//进程参数
 		int mDetached;	//是否已分离
-		int mExited;	//已退出
+		int mExited;	//已退出 进程表mWorkerPool已回收
 		int mExiting;	//正在退出
 		int mRespawn;	//worker启动模式。退出是否重启
-
+		int mStat;		//waitpid子进程退出状态
+		
 		WORKER_STATUS mStatus;
 
 		//进程表相关，对应 wMaster 相关属性

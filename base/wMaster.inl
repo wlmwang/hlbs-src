@@ -124,46 +124,54 @@ void wMaster<T>::MasterStart()
     //启动worker进程
     WorkerStart(mWorkerNum, PROCESS_RESPAWN);
 
-	struct itimerval itv;
-    int delay = 0;
-
 	//master进程 信号处理
 	while (true)
-	{
-		stSigset.Suspend();
-
+	{	
 		HandleSignal();
-
 		Run();
-	}
-}
-
-template <typename T>
-void wMaster<T>::InitSignals()
-{
-	wSignal::signal_t *pSig;
-	wSignal stSignal;
-	for (pSig = g_signals; pSig->mSigno != 0; ++pSig)
-	{
-		if(stSignal.AddSig_t(pSig) == -1)
-		{
-			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[runtime] sigaction(%s) failed(ignored):(%s)", pSig->mSigname, strerror(mErr));
-		}
 	}
 }
 
 template <typename T>
 void wMaster<T>::HandleSignal()
 {
+	struct itimerval itv;
+    int delay = 0;
+	int sigio = 0;
 	int iLive = 1;
+
+	if(delay) 
+	{
+		if(g_sigalrm) 
+		{
+			sigio = 0;
+			delay *= 2;
+			g_sigalrm = 0;
+		}
+		
+		LOG_ERROR(ELOG_KEY, "[runtime] termination cycle: %d", delay);
+
+		itv.it_interval.tv_sec = 0;
+		itv.it_interval.tv_usec = 0;
+		itv.it_value.tv_sec = delay / 1000;
+		itv.it_value.tv_usec = (delay % 1000 ) * 1000;
+
+		//设置定时器，以系统真实时间来计算，送出SIGALRM信号
+		if(setitimer(ITIMER_REAL, &itv, NULL) == -1) 
+		{
+			mErr = errno;
+			LOG_ERROR(ELOG_KEY, "[runtime] setitimer() failed: %s", strerror(mErr));
+		}
+	}
+		
+	stSigset.Suspend();
 	
-	//SIGCHLD 有worker退出
+	//SIGCHLD有worker退出
 	if(g_reap)
 	{
 		g_reap = 0;
-		
 		LOG_ERROR(ELOG_KEY, "[runtime] reap children");
+		ProcessGetStatus();	//回收退出进程状态（waitpid以防僵尸进程）
 		
 		iLive = ReapChildren();
 	}
@@ -172,11 +180,37 @@ void wMaster<T>::HandleSignal()
 	if (!iLive && (g_terminate || g_quit)) 
 	{
 		//ngx_master_process_exit(cycle);
+		//MasterProcessExit();
 	}
 	
 	if(g_terminate)
 	{
-		//
+		if(delay == 0) 
+		{
+			delay = 50;     //设置延时
+		}
+
+		if (sigio) 
+		{
+			sigio--;
+			return;
+		}
+
+		sigio = mWorkerNum + 2 /* cache processes */;
+
+		if (delay > 1000) 
+		{
+			//延时已到，给所有worker发送SIGKILL信号，强制杀死worker
+			//ngx_signal_worker_processes(cycle, SIGKILL);
+			SignalWorker(SIGKILL);
+		} 
+		else 
+		{
+			//给所有worker发送SIGTERM信号，通知worker退出
+			//ngx_signal_worker_processes(cycle,ngx_signal_value(NGX_TERMINATE_SIGNAL));
+			SignalWorker(SIGTERM);
+		}
+		return;
 	}
 
 	if(g_quit)
@@ -184,28 +218,34 @@ void wMaster<T>::HandleSignal()
 		SignalWorker(SIGQUIT);
 		
 		//关闭所有监听socket
-		
+		//close();
 		return;
 	}
 	
-	if(g_restart)
+	//收到SIGHUP信号
+	if (g_reconfigure) 
 	{
-		g_restart = 0;
+		g_reconfigure = 0;
+		LOG_DEBUG(ELOG_KEY, "[runtime] reconfiguring");
 		
-		WorkerStart(mWorkerNum, PROCESS_RESPAWN);
+		//重新初始化配置
+		/*
+		cycle = ngx_init_cycle(cycle);
+		if (cycle == NULL) 
+		{
+			cycle = (ngx_cycle_t *) ngx_cycle;
+			continue;
+		}
+		*/
 		
-		iLive = 1;
-	}
-	
-	if (g_reconfigure)
-	{
-		//
-	}
+		//重启worker
+		WorkerStart(mWorkerNum, NGX_PROCESS_JUST_RESPAWN);
+		
+		/* allow new processes to start */
+		msleep(100);
 
-	//收到SIGUSR1信号，重新打开log文件
-	if (g_reopen)
-	{
-		//
+		live = 1;
+		SignalWorker(SIGTERM);
 	}
 }
 
@@ -443,7 +483,6 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
 			}
 		}
 	}
-
 	mSlot = s;
 
 	wWorker *pWorker = mWorkerPool[mSlot];
@@ -518,8 +557,7 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
     	case PROCESS_DETACHED:
     		pWorker->mDetached = 1;
     }
-
-    //
+	
     return pid;
 }
 
@@ -558,4 +596,91 @@ void wMaster<T>::DeletePidFile()
 		return;
     }
 	return;
+}
+
+template <typename T>
+void wMaster<T>::InitSignals()
+{
+	wSignal::signal_t *pSig;
+	wSignal stSignal;
+	for (pSig = g_signals; pSig->mSigno != 0; ++pSig)
+	{
+		if(stSignal.AddSig_t(pSig) == -1)
+		{
+			mErr = errno;
+			LOG_ERROR(ELOG_KEY, "[runtime] sigaction(%s) failed(ignored):(%s)", pSig->mSigname, strerror(mErr));
+		}
+	}
+}
+
+template <typename T>
+void wMaster<T>::ProcessGetStatus()
+{    
+	const char *process = "unknown process";
+    
+	int one = 0;
+	pid_t	pid;
+	int status;
+    while(true)
+	{
+        pid = waitpid(-1, &status, WNOHANG);
+
+        if(pid == 0) 
+		{
+            return;
+        }
+		
+        if(pid == -1) 
+		{
+            mErr = errno;
+			
+            if(mErr == EINTR) 
+			{
+                continue;
+            }
+
+            if(mErr == ECHILD && one) 
+			{
+                return;
+            }
+
+            if(err == ECHILD) 
+			{
+				LOG_ERROR(ELOG_KEY, "[runtime] waitpid() failed:%s", strerror(mErr));
+                return;
+            }
+			
+			LOG_ERROR(ELOG_KEY, "[runtime] waitpid() failed:%s", strerror(mErr));
+            return;
+        }
+		
+        one = 1;
+		int i;
+		for(i = 0; i < mWorkerNum; ++i)
+		{
+			if (mWorkerPool[i]->mPid == pid)
+			{
+                mWorkerPool[i]->mStat = status;
+                mWorkerPool[i]->mExited = 1;
+                process = mWorkerPool[i]->mName;
+                break;
+			}
+		}
+		
+        if(WTERMSIG(status)) 
+		{
+			LOG_ERROR(ELOG_KEY, "[runtime] %s %d exited on signal %d%s", process, pid, WTERMSIG(status), WCOREDUMP(status) ? " (core dumped)" : "");
+        }
+		else
+		{
+			LOG_ERROR(ELOG_KEY, "[runtime] %s %d exited with code %d", process, pid, WTERMSIG(status));
+        }
+		
+		//退出后不重启
+        if(WEXITSTATUS(status) == 2 && mWorkerPool[i]->mRespawn) 
+		{
+			LOG_ERROR(ELOG_KEY, "[runtime] %s %d exited with fatal code %d and cannot be respawned", process, pid, WTERMSIG(status));			
+            mWorkerPool[i]->mRespawn = 0;
+        }
+    }
 }
