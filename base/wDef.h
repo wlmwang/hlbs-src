@@ -7,25 +7,26 @@
 #ifndef _W_DEF_H_
 #define _W_DEF_H_
 
-//名字的最大长度
-#define MAX_NAME_LEN 32
+//主机名长度
+#ifndef MAXHOSTNAMELEN
+#define MAXHOSTNAMELEN  256
+#endif
 
-//最长的IP地址字符串长度
-#define MAX_IP_LEN 16
+#define MAX_NAME_LEN 32	//名字的最大长度
+#define MAX_IP_LEN 16	//最长的IP地址字符串长度
 
-//消息缓冲区大小(每条信息消息主体最大长度)
 #define MAX_PACKAGE_LEN 131072	/* 128k */
 
-//客户端消息的最长长度
+//客户端消息主体大小限制
 #define MAX_CLIENT_MSG_LEN MAX_PACKAGE_LEN
-
-//客户端消息主体最短长度(一字节消息类型)
 #define MIN_CLIENT_MSG_LEN 1
 
-//每一个服务器之间的发送接收缓冲区的大小
+//服务器之间的发送接收缓冲区大小限制
 #define MAX_SEND_BUFFER_LEN 524288 /* 512k */
-
 #define MAX_RECV_BUFFER_LEN 261120 /* 255k */
+
+//shm消息队列的长度
+#define MSG_QUEUE_LEN 16777216 /* 16m */
 
 //心跳包间隔时间
 #define KEEPALIVE_TIME 3000 /* 3*1000 */
@@ -36,18 +37,10 @@
 //超时时间
 #define WAITRES_TIME 30000 /* 30*1000 */
 
-//消息队列的长度
-#define MSG_QUEUE_LEN 16777216 /* 16m */
-
 #define LISTEN_BACKLOG	511
-
-//主机名长度
-#ifndef MAXHOSTNAMELEN
-#define MAXHOSTNAMELEN  256
-#endif
-
 #define FD_UNKNOWN	-1
 #define SETPROCTITLE_PAD '\0'
+
 #define LF (u_char) '\n'
 #define CR (u_char) '\r'
 #define CRLF "\r\n"
@@ -111,7 +104,6 @@ enum TASK_STATUS
 #define USER  "nobody"
 #define GROUP  "nobody"
 
-//define
 #define PREFIX  "/usr/local/disvr/server"
 #define CONF_PREFIX  "../config/" 
 #define PID_PATH  "../log/disvr.pid"

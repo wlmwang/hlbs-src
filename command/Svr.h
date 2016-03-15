@@ -9,7 +9,7 @@
 
 #include "wCore.h"
 
-#define MAX_SVR_IP_LEN 16
+#define MAX_SVR_IP_LEN 255
 #define MAX_SVR_NUM 255
 #define REPORT_TIME_TICK 3000		//3s 重建时间svr
 
@@ -26,6 +26,16 @@ enum SVR_STATUS
 	SVR_UNKNOWN = -1,
 	SVR_ERR,
 	SVR_SUC,	
+};
+
+enum STAT_ID
+{
+	STAT_REQ_ALL,		//总的请求量
+	STAT_REQ_SUC,		//成功数
+	STAT_REQ_REJ,		//过载数
+	STAT_REQ_ERR,		//失败数
+	STAT_REQ_ERRTM,		//超时失败数
+	STAT_OVER
 };
 
 //访问量的配置信息
@@ -209,6 +219,7 @@ struct Svr_t : public SvrNet_t
 	}
 	*/
 
+	//gettimeofday(&mBuildTm,NULL);
 	struct timeval mBuildTm;		//统计信息开始时间, 每个节点 rebuild 时刻的绝对时间
 	int			mReqAll;			//总的请求数
 	int			mReqRej;			//被拒绝的请求数

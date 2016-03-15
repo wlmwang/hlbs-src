@@ -47,7 +47,7 @@ class AgentConfig: public wConfig<AgentConfig>
 
 		RouterConf_t* GetOneRouterConf()
 		{
-			for(int i = 0; i < MAX_ROUTER_NUM ; i++)
+			for(int i = 0; i < MAX_ROUTER_NUM; i++)
 			{
 				if (mRouterConf[i].mPort != 0 && mRouterConf[i].mDisabled == 0 && strlen(mRouterConf[i].mIPAddr) != 0)
 				{
