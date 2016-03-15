@@ -17,6 +17,8 @@
 #include "wSingleton.h"
 #include "SvrCmd.h"
 
+#define MAX_ROUTER_NUM 32
+
 #define CONF_XML "../config/conf.xml"
 #define ROUTER_XML "../config/router.xml"
 
@@ -36,7 +38,7 @@ class AgentConfig: public wConfig<AgentConfig>
 				mDisabled = 0;
 			}
 		};
-		RouterConf_t mRouterConf[32];
+		RouterConf_t mRouterConf[MAX_ROUTER_NUM];
 
 		char mIPAddr[MAX_IP_LEN];
 		unsigned int mPort;
@@ -45,14 +47,14 @@ class AgentConfig: public wConfig<AgentConfig>
 
 		RouterConf_t* GetOneRouterConf()
 		{
-			for(int i = 0; i < 32 ; i++)
+			for(int i = 0; i < MAX_ROUTER_NUM ; i++)
 			{
 				if (mRouterConf[i].mPort != 0 && mRouterConf[i].mDisabled == 0 && strlen(mRouterConf[i].mIPAddr) != 0)
 				{
 					return &mRouterConf[i];
 				}
-				return NULL;
 			}
+			return NULL;
 		}
 		
 		//初始化
@@ -77,6 +79,7 @@ class AgentConfig: public wConfig<AgentConfig>
 		void Statistics();
 		
 		int GXidWRRSvr(SvrNet_t* pBuffer, string sKey, vector<Svr_t*> vSvr);
+
 	protected:
 		struct StatcsGXid_t
 		{

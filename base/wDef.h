@@ -117,6 +117,6 @@ enum TASK_STATUS
 #define PID_PATH  "../log/disvr.pid"
 #define LOCK_PATH  "../log/disvr.lock"
 
-#define WAIT_MUTEX	"../log/wait_mutex.shm.ipc"	//共享锁
+#define WAIT_MUTEX	"../log/wait_mutex.bin"	//共享锁
 
 #endif

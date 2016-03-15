@@ -20,6 +20,7 @@
 #include "wShm.h"
 #include "wMsgQueue.h"
 #include "AgentServerTask.h"
+#include "AgentClientTask.h"
 #include "AgentConfig.h"
 #include "Common.h"
 #include "SvrCmd.h"
@@ -42,17 +43,17 @@ class AgentServer: public wTcpServer<AgentServer>
 		void ConnectRouter();
 		int InitSvrReq();
 		int ReloadSvrReq();
-		
+		wMTcpClient<AgentClientTask>* RouterConn() { return mRouterConn; }
+
 		virtual wTask* NewTcpTask(wIO *pIO);
 		
-		wMTcpClient<AgentServerTask>* RouterConn() { return mRouterConn; }
-		
 	private:
-		wMTcpClient<AgentServerTask> *mRouterConn;	//连接router
-		AgentConfig *mConfig;
-
 		unsigned long long mTicker;
 		wTimer mReportTimer;
+
+		wMTcpClient<AgentClientTask> *mRouterConn;	//连接router
+		
+		AgentConfig *mConfig;
 
 		wShm *mInShm;	//输入的消息队列的缓冲区位置
 		wShm *mOutShm; //输出的消息队列的缓冲区位置

@@ -12,13 +12,13 @@
 #define DEC_DISP(dispatch) wDispatch<function<int(char*, int)>, int> dispatch
 #define DEC_FUNC(func) int func(char *pBuffer, int iLen)
 
-enum
+enum CLIENT_TYPE
 {
 	CLIENT_USER = 2,
 	SERVER_ROUTER,
 	SERVER_AGENT,
 	SERVER_CMD,
 };
-#define IPC_SHM "/home/hlfs/disvr/agent_cmd.shm.ipc"
+#define IPC_SHM "/tmp/agent-cmd.bin"
 
 #endif

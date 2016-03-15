@@ -10,23 +10,23 @@
 
 AgentServer::AgentServer() : wTcpServer<AgentServer>("路由服务器")
 {
-	mConfig = 0;
-	mRouterConn = 0;
-	mInShm = 0;
-	mOutShm = 0;
-	mInMsgQ = 0;
-	mOutMsgQ = 0;
+	mConfig = NULL;
+	mInShm = NULL;
+	mOutShm = NULL;
+	mInMsgQ = NULL;
+	mOutMsgQ = NULL;
+	mRouterConn = NULL;
 
 	Initialize();
 }
 
 AgentServer::~AgentServer() 
 {
-	SAFE_DELETE(mRouterConn);
 	SAFE_DELETE(mInShm);
 	SAFE_DELETE(mOutShm);
 	SAFE_DELETE(mInMsgQ);
 	SAFE_DELETE(mOutMsgQ);
+	SAFE_DELETE(mRouterConn);
 }
 
 void AgentServer::Initialize()
@@ -34,21 +34,25 @@ void AgentServer::Initialize()
 	mTicker = GetTickCount();
 	mReportTimer = wTimer(REPORT_TIME_TICK);	//5min
 	
-	InitShm();	//初始化共享内存。与agentcmd进程通信
 	mConfig = AgentConfig::Instance();
-	mRouterConn = new wMTcpClient<AgentServerTask>();
+
+	InitShm();	//初始化共享内存。与agentcmd进程通信
+	
+	mRouterConn = new wMTcpClient<AgentClientTask>();
 }
 
 //准备工作
 void AgentServer::PrepareRun()
 {
 	mRouterConn->PrepareStart();
+
 	ConnectRouter(); //连接Router服务
 }
 
 void AgentServer::Run()
 {
 	mRouterConn->Start(false);
+
 	CheckQueue();	//读取共享内存
 	CheckTimer();	//统计weight结果
 }
@@ -62,9 +66,9 @@ wTask* AgentServer::NewTcpTask(wIO *pIO)
 
 void AgentServer::InitShm()
 {
-	mInShm = new wShm(IPC_SHM, 'i', MSG_QUEUE_LEN);
-	mOutShm = new wShm(IPC_SHM, 'o', MSG_QUEUE_LEN);
 	char *pAddr = NULL;
+
+	mInShm = new wShm(IPC_SHM, 'i', MSG_QUEUE_LEN);
 	if((mInShm->CreateShm() != NULL) && ((pAddr = mInShm->AllocShm(MSG_QUEUE_LEN)) != NULL))
 	{
 		mInMsgQ = new wMsgQueue();
@@ -74,6 +78,8 @@ void AgentServer::InitShm()
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Create (In) Share Memory failed");
 	}
+
+	mOutShm = new wShm(IPC_SHM, 'o', MSG_QUEUE_LEN);
 	if((mOutShm->CreateShm() != NULL) && ((pAddr = mOutShm->AllocShm(MSG_QUEUE_LEN)) != NULL))
 	{
 		mOutMsgQ = new wMsgQueue();
@@ -87,7 +93,7 @@ void AgentServer::InitShm()
 
 void AgentServer::ConnectRouter()
 {
-	AgentConfig::RouterConf_t* pRconf = mConfig->GetOneRouterConf();
+	AgentConfig::RouterConf_t* pRconf = mConfig->GetOneRouterConf();	//获取一个合法Router服务器配置
 	if (pRconf == NULL)
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Get RouterServer Config failed");
@@ -109,12 +115,13 @@ void AgentServer::ConnectRouter()
 
 int AgentServer::InitSvrReq()
 {
-	wMTcpClient<AgentServerTask>* pRouterConn = RouterConn();
+	wMTcpClient<AgentClientTask>* pRouterConn = RouterConn();	//客户端连接
 	if(pRouterConn == NULL)
 	{
 		return -1;
 	}
-	wTcpClient<AgentServerTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
+
+	wTcpClient<AgentClientTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
 	if(pClient != NULL && pClient->TcpTask())
 	{
 		SvrReqInit_t stSvr;
@@ -125,12 +132,12 @@ int AgentServer::InitSvrReq()
 
 int AgentServer::ReloadSvrReq()
 {
-	wMTcpClient<AgentServerTask>* pRouterConn = RouterConn();
+	wMTcpClient<AgentClientTask>* pRouterConn = RouterConn();
 	if(pRouterConn == NULL)
 	{
 		return -1;
 	}
-	wTcpClient<AgentServerTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
+	wTcpClient<AgentClientTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
 	if(pClient != NULL && pClient->TcpTask())
 	{
 		SvrReqReload_t stSvr;
@@ -140,7 +147,7 @@ int AgentServer::ReloadSvrReq()
 }
 
 /**
- * 此队列解析不具通用性  Time is up...
+ * 此队列解析不具通用性  Time is up!
  */
 void AgentServer::CheckQueue()
 {
@@ -149,7 +156,7 @@ void AgentServer::CheckQueue()
 	memset(szBuff, 0, sizeof(szBuff));
 
 	int iRet;
-	while(1)
+	while(true)
 	{
 		iRet = mInMsgQ->Pop(szBuff, iLen);	//取出数据
 		

@@ -34,18 +34,17 @@ wTcpClient<T>::~wTcpClient()
 template <typename T>
 void wTcpClient<T>::Final()
 {
-	mStatus = CLIENT_QUIT;
 	SAFE_DELETE(mTcpTask);
 }
 
 template <typename T>
 int wTcpClient<T>::ReConnectToServer()
 {
-	if (mTcpTask != NULL && mTcpTask->Socket() != NULL)
+	if (mTcpTask != NULL && mTcpTask->IO() != NULL)
 	{
-		if (mTcpTask->Socket()->SocketFD() < 0)
+		if (mTcpTask->IO()->FD() < 0)
 		{
-			return ConnectToServer(mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
+			return ConnectToServer(mTcpTask->IO()->Host().c_str(), mTcpTask->IO()->Port());
 		}
 		return 0;
 	}
@@ -64,7 +63,8 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 	int iSocketFD = socket(AF_INET, SOCK_STREAM, 0);
 	if(iSocketFD < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] create socket failed: %s", strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] create socket failed: %s", strerror(mErr));
 		return -1;
 	}
 	sockaddr_in stSockAddr;
@@ -74,10 +74,11 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 	stSockAddr.sin_addr.s_addr = inet_addr(vIPAddress);;
 
 	socklen_t iOptVal = 100*1024;
-	socklen_t iOptLen = sizeof(int);
+	socklen_t iOptLen = sizeof(socklen_t);
 	if(setsockopt(iSocketFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) != 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] set send buffer size to %d failed: %s", iOptVal, strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] set send buffer size to %d failed: %s", iOptVal, strerror(mErr));
 		return -1;
 	}
 	if(getsockopt(iSocketFD, SOL_SOCKET, SO_SNDBUF, (void *)&iOptVal, &iOptLen) == 0)
@@ -86,9 +87,10 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 	}
 	
 	int iRet = connect(iSocketFD, (const struct sockaddr *)&stSockAddr, sizeof(stSockAddr));
-	if( iRet < 0 )
+	if(iRet < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] connect to server port(%d) failed: %s", vPort, strerror(errno));
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] connect to server port(%d) failed: %s", vPort, strerror(mErr));
 		return -1;
 	}
 
@@ -98,6 +100,7 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 	pSocket->FD() = iSocketFD;
 	pSocket->Host() = vIPAddress;
 	pSocket->Port() = vPort;
+	pSocket->SockStatus() = STATUS_CONNECTED;
 	pSocket->SockType() = SOCK_CONNECT;
 	pSocket->IOFlag() = FLAG_RECV;
 	
@@ -110,7 +113,7 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 			SAFE_DELETE(mTcpTask);
 			return -1;
 		}
-		
+		mTcpTask->Status() = TASK_RUNNING;
 		if(mTcpTask->IO()->SetNonBlock() < 0) 
 		{
 			LOG_ERROR(ELOG_KEY, "[runtime] set non block failed: %d, close it", iSocketFD);
@@ -157,21 +160,25 @@ void wTcpClient<T>::CheckReconnect()
 {
 	unsigned long long iNowTime = GetTickCount();
 	unsigned long long iIntervalTime;
-	SOCK_TYPE sockType = pTask->IO()->SockType();
-	
-	if (mTcpTask == NULL || sockType != SOCK_CONNECT)
+	if (mTcpTask == NULL)
 	{
 		return;
 	}
+	SOCK_TYPE sockType = mTcpTask->IO()->SockType();
+	if (sockType != SOCK_CONNECT)
+	{
+		return;
+	}
+	
 	//心跳检测
 	iIntervalTime = iNowTime - mTcpTask->IO()->SendTime();	//上一次发送心跳时间间隔
 	if (iIntervalTime >= CHECK_CLIENT_TIME)
 	{
 		if(mTcpTask->Heartbeat() < 0 && mTcpTask->HeartbeatOutTimes())
 		{
-			SetStatus();
-			LOG_INFO("error", "[runtime] disconnect server : out of heartbeat times");
-			LOG_ERROR("server", "[timeout] disconnect server : out of heartbeat times: ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
+			mStatus = CLIENT_QUIT;
+			LOG_INFO(ELOG_KEY, "[runtime] disconnect server : out of heartbeat times");
+			//LOG_ERROR("server", "[timeout] disconnect server : out of heartbeat times: ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
 		}
 		else if(mTcpTask->IO() != NULL && mTcpTask->IO()->FD() < 0)
 		{

@@ -7,7 +7,6 @@
 template <typename TASK>
 wMTcpClient<TASK>::wMTcpClient()
 {
-	//mStatus = CLIENT_INIT;
 	Initialize();
 }
 
@@ -20,7 +19,7 @@ void wMTcpClient<TASK>::Initialize()
 	mTimeout = 10;
 	mEpollFD = -1;
 	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
-	mEpollEventPool.reserve(LISTEN_BACKLOG);	//容量
+	mEpollEventPool.reserve(LISTEN_BACKLOG);
 }
 
 template <typename TASK>
@@ -42,8 +41,8 @@ void wMTcpClient<TASK>::CleanEpoll()
 	if(mEpollFD != -1)
 	{
 		close(mEpollFD);
+		mEpollFD = -1;
 	}
-	mEpollFD = -1;
 	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
 	mEpollEventPool.clear();
 }
@@ -56,7 +55,7 @@ void wMTcpClient<TASK>::CleanTcpClientPool()
 	{
 		vector<wTcpClient<TASK>* > vTcpClient = mt->second;
         typename vector<wTcpClient<TASK>*>::iterator vIt = vTcpClient.begin();
-		for(vIt ; vIt != vTcpClient.end() ; vIt++)
+		for(vIt; vIt != vTcpClient.end() ; vIt++)
 		{
 			SAFE_DELETE(*vIt);
 		}
@@ -68,11 +67,8 @@ void wMTcpClient<TASK>::CleanTcpClientPool()
 template <typename TASK>
 void wMTcpClient<TASK>::PrepareStart()
 {
-	//mStatus = CLIENT_RUNNING;
 	if(InitEpoll() < 0)
 	{
-		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[startup] InitEpoll failed:%s", strerror(mErr));
 		exit(1);
 	}
 	PrepareRun();
@@ -92,6 +88,12 @@ void wMTcpClient<TASK>::Start(bool bDaemon)
 
 template <typename TASK>
 void wMTcpClient<TASK>::PrepareRun()
+{
+	//...
+}
+
+template <typename TASK>
+void wMTcpClient<TASK>::Run()
 {
 	//...
 }
@@ -131,7 +133,7 @@ wTcpClient<TASK>* wMTcpClient<TASK>::CreateClient(int iType, string sClientName,
 	int iRet = pTcpClient->ConnectToServer(vIPAddress, vPort);
 	if(iRet >= 0)
 	{
-		pTcpClient->PrepareStart();
+		pTcpClient->PrepareStart();	//准备启动
 		return pTcpClient;
 	}
 	LOG_DEBUG(ELOG_KEY, "[startup] connect to (%s)server faild!",sClientName.c_str());
@@ -156,6 +158,7 @@ bool wMTcpClient<TASK>::AddTcpClientPool(int iType, wTcpClient<TASK> *pTcpClient
 	vTcpClient.push_back(pTcpClient);
 	mTcpClientPool.insert(pair<int, vector<wTcpClient<TASK>*> >(iType, vTcpClient));
 	
+	//客户端总数量
 	ResetTcpClientCount();
 	return true;
 }
@@ -176,6 +179,7 @@ int wMTcpClient<TASK>::ResetTcpClientCount()
 		}
 	}
 	
+	//重置容量
 	if (mTcpClientCount > mEpollEventPool.capacity())
 	{
 		mEpollEventPool.reserve(mTcpClientCount * 2);
@@ -237,39 +241,50 @@ void wMTcpClient<TASK>::Recv()
 		return;
 	}
 	
-	//wTcpTask* pTask;
-	wTask *pTask = NULL;
+	wTcpClient<TASK> *pClient = NULL;
+	wTcpTask *pTask = NULL;
+	int iType = 0;
+
 	int iFD = FD_UNKNOWN;
 	SOCK_TYPE sockType;
 	SOCK_STATUS sockStatus;
 	IO_FLAG iOFlag;
 	for(int i = 0 ; i < iRet ; i++)
 	{
-		wTcpClient<TASK> *pClient = (wTcpClient<TASK> *)mEpollEventPool[i].data.ptr;
-		int iType = pClient->Type();
-		
+		pClient = (wTcpClient<TASK>*) mEpollEventPool[i].data.ptr;
 		pTask = pClient->TcpTask();
+		iType = pClient->Type();
+		
 		iFD = pTask->IO()->FD();
 		sockType = pTask->IO()->SockType();
 		sockStatus = pTask->IO()->SockStatus();
 		iOFlag = pTask->IO()->IOFlag();
-
 		if(iFD < 0)
 		{
 			mErr = errno;
 			LOG_ERROR(ELOG_KEY, "[runtime] socketfd error fd(%d): %s, close it", iFD, strerror(mErr));
-			//LOG_ERROR("server", "[disconnect] socketfd error(%s): ip(%s) port(%d)", strerror(mErr), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
+			//LOG_ERROR("server", "[disconnect] socketfd error(%s): ip(%s) port(%d)", strerror(mErr), pTask->IO()->Host().c_str(), pTask->IO()->Port());
 			if (RemoveEpoll(pClient) >= 0)
 			{
 				RemoveTcpClientPool(iType, pClient);
 			}
 			continue;
 		}
+		if (!pClient->IsRunning() || !pTask->IsRunning())	//多数是超时设置
+		{
+			LOG_ERROR(ELOG_KEY, "[runtime] task status is quit, fd(%d), close it", iFD);
+			if (RemoveEpoll(pClient) >= 0)
+			{
+				RemoveTcpClientPool(iType, pClient);
+			}
+			continue;
+		}
+
 		if (mEpollEventPool[i].events & (EPOLLERR | EPOLLPRI))
 		{
 			mErr = errno;
 			LOG_ERROR(ELOG_KEY, "[runtime] epoll event recv error from fd(%d): %s, close it", iFD, strerror(mErr));
-			//LOG_ERROR("server", "[disconnect] epoll event recv error(%s): ip(%s) port(%d)", strerror(mErr), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
+			//LOG_ERROR("server", "[disconnect] epoll event recv error(%s): ip(%s) port(%d)", strerror(mErr), pTask->IO()->Host().c_str(), pTask->IO()->Port());
 			if (RemoveEpoll(pClient) >= 0)
 			{
 				RemoveTcpClientPool(iType, pClient);
@@ -286,7 +301,7 @@ void wMTcpClient<TASK>::Recv()
 				{
 					mErr = errno;
 					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or server-socket closed: %s", strerror(mErr));
-					//LOG_ERROR("server", "[disconnect] EPOLLIN(read) failed or socket closed(%s):ip(%s) port(%d)", strerror(mErr), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
+					//LOG_ERROR("server", "[disconnect] EPOLLIN(read) failed or socket closed(%s):ip(%s) port(%d)", strerror(mErr), pTask->IO()->Host().c_str(), pTask->IO()->Port());
 					if (RemoveEpoll(pClient) >= 0)
 					{
 						RemoveTcpClientPool(iType, pClient);
@@ -300,7 +315,7 @@ void wMTcpClient<TASK>::Recv()
 				{
 					mErr = errno;
 					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLOUT(write) failed: %s", strerror(mErr));
-					//LOG_ERROR("server", "[disconnect] EPOLLOUT(write) failed(%s): ip(%s) port(%d)", strerror(errno), pTask->Socket()->IPAddr().c_str(), pTask->Socket()->Port());
+					//LOG_ERROR("server", "[disconnect] EPOLLOUT(write) failed(%s): ip(%s) port(%d)", strerror(mErr), pTask->IO()->Host().c_str(), pTask->IO()->Port());
 					if (RemoveEpoll(pClient) >= 0)
 					{
 						RemoveTcpClientPool(iType, pClient);
@@ -359,12 +374,6 @@ bool wMTcpClient<TASK>::RemoveTcpClientPool(int iType, wTcpClient<TASK> *pTcpCli
 }
 
 template <typename TASK>
-void wMTcpClient<TASK>::Run()
-{
-	//...
-}
-
-template <typename TASK>
 vector<wTcpClient<TASK>*> wMTcpClient<TASK>::TcpClients(int iType)
 {
 	vector<wTcpClient<TASK>*> vTcpClient;
@@ -384,7 +393,7 @@ wTcpClient<TASK>* wMTcpClient<TASK>::OneTcpClient(int iType)
 	if(mt != mTcpClientPool.end())
 	{
 		vTcpClient = mt->second;
-		return vTcpClient[0];
+		return vTcpClient[0];	//第一个连接
 	}
 	return NULL;
 }

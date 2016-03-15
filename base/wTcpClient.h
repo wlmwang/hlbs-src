@@ -44,19 +44,21 @@ class wTcpClient
 		CLIENT_STATUS &Status() { return mStatus; }
 		int Type() { return mType; }
 		
-		wTcpTask* TcpTask() { return mTcpTask; }
 		virtual wTcpTask* NewTcpTask(wIO *pIO);
+		wTcpTask* TcpTask() { return mTcpTask; }
 		
 	protected:
-		int mType;
+		int mType;	//服务器类型(CLIENT_TYPE)
 		string mClientName;		
-		wTcpTask* mTcpTask;
+		wTcpTask* mTcpTask;	//每个客户端只对应一个task
 		CLIENT_STATUS mStatus;
 
 		unsigned long long mLastTicker;
 		wTimer mReconnectTimer;
 		int mReconnectTimes;
 		bool mIsCheckTimer;
+
+		int mErr;
 };
 
 #include "wTcpClient.inl"

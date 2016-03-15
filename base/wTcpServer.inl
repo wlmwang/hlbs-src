@@ -93,14 +93,11 @@ void wTcpServer<T>::Broadcast(const char *pCmd, int iLen)
 template <typename T>
 void wTcpServer<T>::PrepareMaster(string sIpAddr, unsigned int nPort)
 {
-	LOG_INFO(ELOG_KEY, "[startup] Master Prepare start succeed");
-
-	//初始化Listen Socket
 	LOG_DEBUG(ELOG_KEY, "[startup] listen socket on ip(%s) port(%d)", sIpAddr.c_str(), nPort);
+	
+	//初始化Listen Socket
 	if(InitListen(sIpAddr ,nPort) < 0)
 	{
-		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[startup] InitListen failed:%s", strerror(mErr));
 		exit(1);
 	}
 
@@ -117,15 +114,12 @@ void wTcpServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 	//初始化epoll
 	if(InitEpoll() < 0)
 	{
-		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[startup] InitEpoll failed:%s", strerror(mErr));
 		exit(1);
 	}
 	
 	//Listen Socket 添加到epoll中
 	if (mListenSock == NULL)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] listen socket illegal");
 		exit(1);
 	}
 	mTask = NewTcpTask(mListenSock);
@@ -193,23 +187,18 @@ void wTcpServer<T>::PrepareStart(string sIpAddr ,unsigned int nPort)
 	//初始化epoll
 	if(InitEpoll() < 0)
 	{
-		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[startup] InitEpoll failed: %s", strerror(mErr));
 		exit(1);
 	}
 	
 	//初始化Listen Socket
 	if(InitListen(sIpAddr ,nPort) < 0)
 	{
-		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[startup] InitListen failed: %s", strerror(mErr));
 		exit(1);
 	}
 
 	//Listen Socket 添加到epoll中
 	if (mListenSock == NULL)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] listen socket illegal");
 		exit(1);
 	}
 	mTask = NewTcpTask(mListenSock);
@@ -269,6 +258,7 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	int iFD = mListenSock->Open();
 	if (iFD == -1)
 	{
+		LOG_ERROR(ELOG_KEY, "[startup] listen socket open failed");
 		SAFE_DELETE(mListenSock);
 		return -1;
 	}

@@ -24,8 +24,8 @@ enum SOCK_STATUS
 enum SOCK_TYPE
 {
 	SOCK_UNKNOWN = -1,
-	SOCK_LISTEN = 0,
-	SOCK_CONNECT,
+	SOCK_LISTEN = 0,	//服务端
+	SOCK_CONNECT,	//客户端
 	SOCK_UNIX,
 };
 

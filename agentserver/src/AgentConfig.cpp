@@ -126,7 +126,7 @@ void AgentConfig::GetRouterConf()
 			const char *szIPAddr = pChildElm->Attribute("IPADDRESS");
 			const char *szPort = pChildElm->Attribute("PORT");
 			const char *szDisabled = pChildElm->Attribute("DISABLED");
-			if (szIPAddr != NULL && szPort != NULL && i < 32)
+			if (szIPAddr != NULL && szPort != NULL && i < MAX_ROUTER_NUM)
 			{
 				mRouterConf[i].mPort = atoi(szPort);
 				memcpy(mRouterConf[i].mIPAddr, szIPAddr, MAX_IP_LEN);

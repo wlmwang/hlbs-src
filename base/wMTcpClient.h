@@ -57,6 +57,9 @@ class wMTcpClient : public wNoncopyable
 		void Recv();
 		void Send();
 		
+		/**
+		 * 获取客户端连接
+		 */
 		vector<wTcpClient<TASK>*> TcpClients(int iType);
 		wTcpClient<TASK>* OneTcpClient(int iType);
 		

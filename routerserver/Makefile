@@ -29,11 +29,11 @@ TARGET=./bin/routersvrd
 OBJECTS=./debug/RouterMain.o \
 		./debug/RouterMaster.o \
 		./debug/RouterWorker.o \
-		./debug/RouterConfig.o  \
-		./debug/RouterServer.o  \
-		./debug/RouterServerTask.o  \
-		./debug/RouterChannelTask.o  \
-		./debug/wSignal.o 	\
+		./debug/RouterConfig.o \
+		./debug/RouterServer.o \
+		./debug/RouterServerTask.o \
+		./debug/RouterChannelTask.o \
+		./debug/wSignal.o \
 		./debug/wWorker.o \
 		./debug/wProcTitle.o \
 		./debug/wTcpTask.o  \
@@ -44,9 +44,9 @@ OBJECTS=./debug/RouterMain.o \
 		./debug/wFile.o \
 		./debug/wMsgQueue.o \
 		./debug/wLog.o \
-		./debug/wMisc.o  \
-		./debug/wSocket.o 	\
-		./debug/wShmtx.o 	\
+		./debug/wMisc.o \
+		./debug/wSocket.o \
+		./debug/wShmtx.o \
 		./debug/wShm.o
 
 $(TARGET): $(OBJECTS)
