@@ -14,8 +14,8 @@
 #include "wCore.h"
 #include "wMisc.h"
 #include "wLog.h"
-#include "Svr.h"
 #include "wConfig.h"
+#include "SvrQos.h"
 
 #define CONF_XML "../config/conf.xml"
 #define SVR_XML "../config/svr.xml"
@@ -30,31 +30,30 @@ class RouterConfig: public wConfig<RouterConfig>
 
 	public:
 		RouterConfig();
-
 		virtual ~RouterConfig();
-
-		//初始化
 		void Initialize();
-		
 		void Final();
 		
-		/**
-		 * 解析配置
-		 */
 		void GetBaseConf();
-		
-		/**
-		 *  解析Svr配置
-		 */
 		void GetSvrConf();
-		
+
+		/*
 		bool IsModTime();
 		int SetModTime();
 		int GetModSvr(SvrNet_t* pBuffer);
 		int GetSvrAll(SvrNet_t* pBuffer);
 		int ReloadSvr(SvrNet_t* pBuffer);
-		
+		*/
+	
 	protected:
+		TiXmlDocument* mDoc;
+		char mSvrConfFile[255];
+		char mBaseConfFile[255];
+		time_t mMtime;	//svr.xml修改时间
+
+		SvrQos *mSvrQos;
+
+		/*
 		bool IsChangeSvr(const SvrNet_t* pR1, const SvrNet_t* pR2);
 		void SvrRebuild();
 		void DelContainer();
@@ -63,12 +62,7 @@ class RouterConfig: public wConfig<RouterConfig>
 		vector<Svr_t*> mSvr;
 		map<int, vector<Svr_t*> > mSvrByGid;
 		map<string, vector<Svr_t*> > mSvrByGXid;
-
-		time_t mMtime;	//svr.xml 修改时间
-		TiXmlDocument* mDoc;
-
-		char mSvrConfFile[32];
-		char mBaseConfFile[32];
+		*/
 };
 
 #endif

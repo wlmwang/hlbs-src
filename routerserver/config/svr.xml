@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ROOT>
 	<SVRS>
-		<SVR ID="1" GID="1" XID="1" IPADDRESS="192.168.8.13" PORT="3306" WEIGHT="1" VERSION="0" NAME="mysql" /> <!--master-->
-		<SVR ID="2" GID="1" XID="2" IPADDRESS="192.168.8.14" PORT="3306" WEIGHT="1" VERSION="0" NAME="mysql" /> <!--slave-->
-		<SVR ID="3" GID="1" XID="2" IPADDRESS="192.168.8.15" PORT="3306" WEIGHT="1" VERSION="0" NAME="mysql" /> <!--slave-->
-		<SVR ID="4" GID="2" XID="1" IPADDRESS="192.168.8.14" PORT="6379" WEIGHT="1" VERSION="0" NAME="redis" />
-		<SVR ID="5" GID="2" XID="1" IPADDRESS="192.168.8.15" PORT="6379" WEIGHT="1" VERSION="0" NAME="redis" />
+		<SVR GID="1" XID="1" HOST="192.168.8.13" PORT="3306" WEIGHT="1" VERSION="0" NAME="mysql" /> <!--master-->
+		<SVR GID="1" XID="2" HOST="192.168.8.14" PORT="3306" WEIGHT="1" VERSION="0" NAME="mysql" /> <!--slave-->
+		<SVR GID="1" XID="2" HOST="192.168.8.15" PORT="3306" WEIGHT="1" VERSION="0" NAME="mysql" /> <!--slave-->
+		<SVR GID="2" XID="1" HOST="192.168.8.14" PORT="6379" WEIGHT="1" VERSION="0" NAME="redis" />
+		<SVR GID="2" XID="1" HOST="192.168.8.15" PORT="6379" WEIGHT="1" VERSION="0" NAME="redis" />
 	</SVRS>
 </ROOT>

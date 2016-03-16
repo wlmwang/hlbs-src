@@ -180,7 +180,7 @@ void AgentServer::CheckQueue()
 		}
 		
 		SvrReportReqId_t *pReportSvr = (SvrReportReqId_t*) szBuff;
-		mConfig->ReportSvr(pReportSvr);
+		//mConfig->ReportSvr(pReportSvr);
 	}
 }
 
@@ -199,6 +199,6 @@ void AgentServer::CheckTimer()
 	//检测客户端超时
 	if(mReportTimer.CheckTimer(iInterval))
 	{
-		mConfig->Statistics();	//统计上报svr的weight值
+		//mConfig->Statistics();	//统计上报svr的weight值
 	}
 }

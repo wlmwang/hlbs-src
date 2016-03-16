@@ -14,7 +14,7 @@ RouterConfig::RouterConfig()
 RouterConfig::~RouterConfig()
 {
 	SAFE_DELETE(mDoc);
-	Final();
+	SAFE_DELETE(mSvrQos);
 }
 
 void RouterConfig::Initialize()
@@ -26,22 +26,8 @@ void RouterConfig::Initialize()
 	mDoc = new TiXmlDocument();
 	memcpy(mBaseConfFile, CONF_XML, strlen(CONF_XML) + 1);
 	memcpy(mSvrConfFile, SVR_XML, strlen(SVR_XML) + 1);
-}
 
-void RouterConfig::Final()
-{
-	DelContainer();
-	for(vector<Svr_t*>::iterator it = mSvr.begin(); it != mSvr.end(); it++)
-	{
-		SAFE_DELETE(*it);
-	}
-	mSvr.clear();
-}
-
-void RouterConfig::DelContainer()
-{
-	mSvrByGid.clear();
-	mSvrByGXid.clear();
+	mSvrQos = SvrQos::Instance();
 }
 
 void RouterConfig::GetBaseConf()
@@ -136,24 +122,24 @@ void RouterConfig::GetSvrConf()
 		for(pChildElm = pElement->FirstChildElement(); pChildElm != NULL ; pChildElm = pChildElm->NextSiblingElement())
 		{
 			i++;
-			const char *szId = pChildElm->Attribute("ID");
 			const char *szGid = pChildElm->Attribute("GID");
 			const char *szXid = pChildElm->Attribute("XID");
-			const char *szIPAddr = pChildElm->Attribute("IPADDRESS");
+			const char *szHost = pChildElm->Attribute("HOST");
 			const char *szPort = pChildElm->Attribute("PORT");
 			const char *szWeight = pChildElm->Attribute("WEIGHT");
 			const char *szVersion = pChildElm->Attribute("VERSION");
-			if (szId != NULL && szGid != NULL && szXid != NULL && szIPAddr != NULL && szPort != NULL)
+			if (szGid != NULL && szXid != NULL && szHost != NULL && szPort != NULL)
 			{
-				Svr_t *pSvr = new Svr_t();
-				pSvr->mId = atoi(szId);
-				pSvr->mGid = atoi(szGid);
-				pSvr->mXid = atoi(szXid);
-				pSvr->mPort = atoi(szPort);
-				memcpy(pSvr->mIp, szIPAddr, MAX_SVR_IP_LEN);
-				pSvr->mSWeight = szWeight != NULL ? atoi(szWeight): pSvr->mSWeight;
-				pSvr->mVersion = szVersion != NULL ? atoi(szVersion): pSvr->mVersion;
-				mSvr.push_back(pSvr);
+				struct SvrNet_t stSvr;
+
+				stSvr.mGid = atoi(szGid);
+				stSvr.mXid = atoi(szXid);
+				stSvr.mPort = atoi(szPort);
+				memcpy(stSvr.mHost, szHost, MAX_SVR_HOST);
+				stSvr.mWeight = szWeight != NULL ? atoi(szWeight): stSvr.mWeight;
+				stSvr.mVersion = szVersion != NULL ? atoi(szVersion): stSvr.mVersion;
+				
+				mSvrQos.AddNode(stSvr);
 			}
 			else
 			{
@@ -167,8 +153,30 @@ void RouterConfig::GetSvrConf()
 		exit(1);
 	}
 
-	SvrRebuild();
 	SetModTime();
+}
+
+int RouterConfig::SetModTime()
+{
+	struct stat stBuf;
+	int iRet = stat(mSvrConfFile, &stBuf);
+	if (iRet == 0)
+	{
+		mMtime = stBuf.st_mtime;
+		return mMtime;
+	}
+	return iRet; //-1
+}
+
+bool RouterConfig::IsModTime()
+{
+	struct stat stBuf;
+	int iRet = stat(mSvrConfFile, &stBuf);
+	if (iRet == 0 && stBuf.st_mtime > mMtime)
+	{
+		return true;
+	}
+	return false;
 }
 
 //获取修改的svr
@@ -237,8 +245,7 @@ int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 				LOG_ERROR("svr", "[modify svr] Parse svr config from svr.xml occur error: line(%d)!", i);
 			}
 		}
-		//重新整理容器
-		SvrRebuild();
+
 		SetModTime();
 	}
 	else
@@ -247,6 +254,22 @@ int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 		return -1;
 	}
 	return j;
+}
+
+void RouterConfig::Final()
+{
+	DelContainer();
+	for(vector<Svr_t*>::iterator it = mSvr.begin(); it != mSvr.end(); it++)
+	{
+		SAFE_DELETE(*it);
+	}
+	mSvr.clear();
+}
+
+void RouterConfig::DelContainer()
+{
+	mSvrByGid.clear();
+	mSvrByGXid.clear();
 }
 
 int RouterConfig::ReloadSvr(SvrNet_t* pBuffer)
@@ -290,29 +313,6 @@ void RouterConfig::SvrRebuild()
 		vSvr.push_back(*it);
 		mSvrByGXid.insert(pair<string, vector<Svr_t*> >(sGXid, vSvr));
 	}
-}
-
-int RouterConfig::SetModTime()
-{
-	struct stat stBuf;
-	int iRet = stat(mSvrConfFile, &stBuf);
-	if (iRet == 0)
-	{
-		mMtime = stBuf.st_mtime;
-		return mMtime;
-	}
-	return iRet; //-1
-}
-
-bool RouterConfig::IsModTime()
-{
-	struct stat stBuf;
-	int iRet = stat(mSvrConfFile, &stBuf);
-	if (iRet == 0 && stBuf.st_mtime > mMtime)
-	{
-		return true;
-	}
-	return false;
 }
 
 vector<Svr_t*>::iterator RouterConfig::GetItFromV(Svr_t* pSvr)

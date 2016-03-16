@@ -9,33 +9,19 @@
 
 #include "wCore.h"
 
-#define MAX_SVR_IP_LEN 255
-#define MAX_SVR_NUM 255
-#define REPORT_TIME_TICK 3000		//3s 重建时间svr
-
-#define ZOOM_WEIGHT 100
-#define ERR_RATE_THRESHOLD 0.5
+#define REPORT_TIME_TICK 3000	//3s重建时间svr
+#define MAX_SVR_HOST 255
+#define MAX_SVR_NUM 255			//每次请求svr最多个数
 
 #define INIT_WEIGHT     100      //默认权重值 
 #define MAX_WEIGHT      1000     //最大权重值
+#define DELAY_MAX 100000000		//最大延时值 100s
 
-#define DELAY_MAX 100000000	//最大延时值 100s
-
-enum SVR_STATUS
+enum RET_STATUS
 {
 	SVR_UNKNOWN = -1,
 	SVR_ERR,
 	SVR_SUC,	
-};
-
-enum STAT_ID
-{
-	STAT_REQ_ALL,		//总的请求量
-	STAT_REQ_SUC,		//成功数
-	STAT_REQ_REJ,		//过载数
-	STAT_REQ_ERR,		//失败数
-	STAT_REQ_ERRTM,		//超时失败数
-	STAT_OVER
 };
 
 //访问量的配置信息
@@ -48,10 +34,6 @@ struct SvrReqCfg_t
 	float		mReqErrMin;			//错误的最小阀值[小于这个值认为是无错]    <1
 	float		mReqExtendRate;		//无错误的时候的阀值扩张率    (0.001,101)
 	int         RebuildTm;        	//配置的 rebuild 的时间间隔
-
-	//int 		mPreTime;          	//2(不能大于route重建时间的一半)
-	//int 		mBatchTime;        	//批量获取被调时，每次取多长时间所需的被调
-	
 	SvrCfg_t()
 	{
 		mReqLimit = 0;
@@ -61,7 +43,6 @@ struct SvrReqCfg_t
 		mReqErrMin = 0.0;
 		mReqExtendRate = 0.0;
 		RebuildTm = 3;
-		//mPreTime=0;
 	};
 };
 
@@ -74,7 +55,6 @@ struct SvrListCfg_t
 	int			mListCount;		//并发量控制的实际值
 	float		mListErrMin;	//并发的最小阀值[小于这个值认为是无错]
 	float		mListExtendRate;//并发无错误的时候的阀值扩张率
-
 	SvrListCfg_t()
 	{
 		mListLimit = 0;
@@ -114,112 +94,9 @@ struct SvrDownCfg_t
     }
 };
 
-/**
- * 定义Svr_t
- */
-#pragma pack(1)
 
-/*Svr 基础属性 && 通信结构*/
-
-/**
- * mSWeight ：静态权重，类似动态权重比例的系数。
- * 不要配太高(0~10)，否则会弱化Svr动态负载均衡效果，能表示各个Svr处理能力即可。0为禁用此Svr。
- * 建议设为1，让动态权重感知各Svr性能
- */
-struct SvrNet_t
+struct SvrInfo_t
 {
-	int		mId;
-	int		mGid;
-	int		mXid;
-	int		mSWeight;	//静态权重
-	int 	mWeight;	//权重
-	int		mPort;
-	char	mIp[MAX_SVR_IP_LEN];
-	short	mVersion;
-	int 	mDelay;		//延时信息
-	//int 	mPre;
-	//int 	mExpired;
-	
-	SvrNet_t()
-	{
-		mId = 0;
-		mGid = 0;
-		mXid = 0;
-		mSWeight = 1;
-		mWeight = INIT_WEIGHT;
-		mPort = 0;
-		mVersion = 0;
-		memset(mIp, 0, MAX_SVR_IP_LEN);
-	}
-
-	SvrNet_t(const SvrNet_t &svr)
-	{
-		mId = svr.mId;
-		mGid = svr.mGid;
-		mXid = svr.mXid;
-		mSWeight = svr.mSWeight;
-		mWeight = svr.mWeight;
-		mPort = svr.mPort;
-		mVersion = svr.mVersion;
-		memcpy(mIp, svr.mIp, MAX_SVR_IP_LEN);
-	}
-
-	SvrNet_t& operator=(const SvrNet_t &svr)
-	{
-		mId = svr.mId;
-		mGid = svr.mGid;
-		mXid = svr.mXid;
-		mSWeight = svr.mSWeight;
-		mWeight = svr.mWeight;
-		mPort = svr.mPort;
-		mVersion = svr.mVersion;
-		memcpy(mIp, svr.mIp, MAX_SVR_IP_LEN);
-		return *this;
-	}
-};
-
-#pragma pack()
-
-/** svr 统计数据结构 */
-struct Svr_t : public SvrNet_t
-{
-	/*
-	long	mUsedNum;	//已被分配数量（返回给某CGI次数），0未知
-	int		mWeight;	//动态权重值(经放大因子 动态计算 时延率、成功率得出)
-	short	mPreNum;	//预取数，默认为1
-	short 	mShutdown;	//非压力故障造成当机，需人工介入修复
-
-	//当前(5min)周期数据统计
-	short	mDirty;		//是否要更新本svr（本周期有上报数据）
-	short	mOverLoad;	//是否过载
-	long	mOkNum;		//成功数量，0未知
-	long	mErrNum;	//失败数量，
-	long	mRfuNum;	//拒绝数
-	int		mDelay;		//延时时间。0未知，>0具体延时（只保留周期内最小延时）
-
-	//统计结果：每周期结束(5min)，由上周期统计数据计算得出
-	float	mOkRate;	//成功率 0-1，0未知
-	float	mErrRate;	//失败率 0-1
-	float	mRfuRate;	//拒绝率率 0-1
-	void Initialize()
-	{
-		mOkRate = 0.0;
-		mErrRate = 0.0;
-		mRfuRate = 0.0;
-		mDirty = 0;
-		mOkNum = 0;
-		mErrNum = 0;
-		mRfuNum = 0;
-		mDelay = 0;
-		mOverLoad = 0;
-		mUsedNum = 0;
-		mShutdown = 0;
-		mPreNum = 1;
-		mWeight = ZOOM_WEIGHT * mSWeight;	//静态权重 * 放大系数
-	}
-	*/
-
-	//gettimeofday(&mBuildTm,NULL);
 	struct timeval mBuildTm;		//统计信息开始时间, 每个节点 rebuild 时刻的绝对时间
 	int			mReqAll;			//总的请求数
 	int			mReqRej;			//被拒绝的请求数
@@ -227,17 +104,16 @@ struct Svr_t : public SvrNet_t
 	int			mReqErrRet;			//失败的请求数
 	int			mReqErrTm;			//超时的请求数
 
-	float       mLoadX;				//负载总乘数，权重的倒数
+	float       mLoadX;				//负载总乘数 (mOkLoad*mDelayLoad)*(max<mWeight>)/mWeight  系数
 	float       mOkLoad;			//成功率乘数
 	float       mDelayLoad;			//时延乘数
     float       mDelayLoadAmplify;	//时延放大
-
-	float       mOkRate;			//上一周期成功率
+	float       mOkRate;			//上一周期成功率 0-1
 	unsigned int mAvgTm;			//上一周期成功请求平均时延，微秒  mTotalUsec/mReqSuc
-
 	long long   mTotalUsec; 		//请求总微秒数
-	float 		mAvgErrRate;
+	float 		mAvgErrRate;		//平均错误率
 
+	/** 上一周期统计数据 */
 	int 		mLastReqAll;
 	int 		mLastReqRej;
 	int 		mLastReqErrRet;
@@ -248,59 +124,19 @@ struct Svr_t : public SvrNet_t
 	int 		mLastAlarmSucReq;
 	int 		mPreAll;
 
-	int mContinuousErrCount; //连续失败次数累积
+	int 		mCityId;	//被调所属城市id
+	int 		mOffSide;	//被调节点与主调异地标志，默认为0， 1标为异地
+	int mContinuousErrCount;//连续失败次数累积
 
 	int			mSReqAll;			//总的请求数(统计用)
 	int			mSReqRej;			//被拒绝的请求数(统计用)
 	int			mSReqSuc;			//成功的请求数(统计用)
 	int			mSReqErrRet;		//失败的请求数(统计用)
 	int			mSReqRrrTm;			//超时的请求数(统计用)
-
     int         mSPreAll;
 
-	/*
-	void ClearStatistics()
-	{
-		mDirty = 0;
-		mOkNum = 0;
-		mErrNum = 0;
-		mRfuNum = 0;
-		mOverLoad = 0;
-	}
-	*/
-
-	Svr_t()
-	{
-		Initialize();
-	}
-
-	//由SvrNet_t 复制构造 Svr_t
-	Svr_t(const SvrNet_t &svr) : SvrNet_t(svr) 
-	{
-		Initialize();
-	}
-	
-	Svr_t(const Svr_t &svr) : SvrNet_t(svr)
-	{
-		/*
-		mDirty = svr.mDirty;
-		mOkNum = svr.mOkNum;
-		mErrNum = svr.mErrNum;
-		mRfuNum = svr.mRfuNum;
-		mUsedNum = svr.mUsedNum;
-		mDelay = svr.mDelay;
-		mOkRate = svr.mOkRate;
-		mErrRate = svr.mErrRate;
-		mRfuRate = svr.mRfuRate;
-		mPreNum = svr.mPreNum;
-		mOverLoad = svr.mOverLoad;
-		mShutdown = svr.mShutdown;
-		mWeight = svr.mWeight;
-		*/
-	}
-
-	void Initialize()
-	{
+    SvrInfo_t()
+    {
 		mBuildTm.tv_sec = mBuildTm.tv_usec = 0;
 		mReqAll = 0;
 		mReqRej = 0;
@@ -332,24 +168,264 @@ struct Svr_t : public SvrNet_t
 		mSReqErrRet = 0;
 		mSReqRrrTm  = 0;
         mSPreAll = 0;
-	}
+    }
 
-	bool operator==(const Svr_t &svr) const
-	{
-		return this->mId == svr.mId;
-	}
+    void InitInfo(struct SvrNet_t& stSvr)
+    {
 
-	bool operator>(const Svr_t& svr)  const	//降序
-	{
-		return mWeight > svr.mWeight; 
-	}
+    }
+};
+
+//svr统计结构
+struct SvrStat_t
+{
+	SvrReqCfg_t		mReqCfg;	//访问量配置
+	SvrListCfg_t	mListCfg;	//并发量配置
+	SvrInfo_t		mInfo;		//统计信息
+
+	SvrStat_t() {}
 	
-	bool operator<(const Svr_t& svr)  const	//升序
+	void Reset()
 	{
-		return mWeight < svr.mWeight;
+		mInfo.mReqAll = 0;
+		mInfo.mReqSuc = 0;
+		mInfo.mReqRej = 0;
+		mInfo.mReqErrRet = 0;
+		mInfo.mReqErrTm = 0;
+		mInfo.mTotalUsec = 0;
+		mInfo.mPreAll = 0;
+		mInfo.mContinuousErrCount = 0;
+	}
+
+	void AddStatistic()
+	{
+		mInfo.mSReqAll += mInfo.mReqAll;
+		mInfo.mSReqSuc += mInfo.mReqSuc;
+		mInfo.mSReqRej += mInfo.mReqRej;
+		mInfo.mSReqErrRet += mInfo.mReqErrRet;
+		mInfo.mLastReqErrTm += mInfo.mReqErrTm;
+		mInfo.mSPreAll += mInfo.mPreAll;
+	}
+
+	void ResetStatistic()
+	{
+		mInfo.mSReqAll = 0;
+		mInfo.mSReqSuc = 0;
+		mInfo.mSReqRej = 0;
+		mInfo.mSReqErrRet = 0;
+		mInfo.mLastReqErrTm = 0;
+		mInfo.mSPreAll = 0;
 	}
 };
 
+//由mGid、mXid组成的一类svr
+struct SvrKind_t
+{
+	int		mGid;
+	int		mXid;
+	int 	mOverload;
+    float 	mPtotalErrRate;  //错误率总和
+    int 	mPsubCycCount;
+    int 	mPtm; 			//rebuild 时刻的绝对时间
+    int 	mRebuildTm; 	//rebuild 的时间间隔
+	float 	mWeightSum;
+
+	int mIdx;	//当前分配到索引号
+	int mCur;	//当前weight。初始化为最大值
+	int mGcd;	//weight最大公约数
+	
+	SvrKind_t()
+	{
+		mGid = 0;
+		mXid = 0;
+        mPtotalErrRate = 0;
+        mPsubCycCount = 0;
+        mRebuildTm = 3;
+        mWeightSum = 0.0f;
+        mOverload = 0;
+        mPtm = time(NULL);
+
+		mIdx = -1;
+		mCur = 0;
+		mGcd = 0;
+		mSumConn = 0;
+	}
+
+	SvrKind_t(const SvrNet_t& node)
+	{
+		mGid = node.mGid;
+		mXid = node.mXid;
+        mPtotalErrRate = 0;
+        mPsubCycCount = 0;
+        mRebuildTm = 3;
+        mWeightSum = 0.0f;
+        mOverload = 0;
+        mPtm = time(NULL);
+
+		mIdx = -1;
+		mCur = 0;
+		mGcd = 0;
+		mSumConn = 0;
+	}
+
+    bool operator<(SvrKind_t const &other) const
+    {
+        if (mGid < other.mGid)
+        {
+            return true;
+        }
+        else if(mGid > other.mGid)
+        {
+            return false;
+        }
+        else if(mXid < other.mXid)
+        {
+            return true;
+        }
+        else if (mXid > other.mXid)
+        {
+            return false;
+        }
+        return false;
+    }
+
+    bool operator==(route_kind const &other) const
+    {
+        if (mGid != other.mGid)
+        {
+            return false;
+        }
+        else if(mXid != other.mXid)
+        {
+            return false;
+        }
+        return true;
+    }
+};
+
+//svr节点信息
+struct SvrNode_t
+{
+	SvrNet_t mNet;
+	SvrStat_t *mStat;
+
+	//关键值，初始化为 mInfo.mLoadX=1
+	float mKey;
+	
+	//当机记录信息
+	int mStopTime;
+	int mReqAllAfterDown;	//当机以来所有请求数量
+
+	SvrNode_t(const SvrNet_t& nt, const SvrStat_t* stat)
+	{
+        if (!stat)
+        {
+            mKey = 1;
+        }
+        else
+        {
+            mKey = stat->mInfo.mLoadX;
+        }
+        mNet = nt;
+        mStat = stat;
+		mStopTime = 0;
+		mReqAllAfterDown = 0;
+	}
+};
+
+
+#pragma pack(1)
+
+/**
+ * mWeight ：静态权重，动态权重比例的系数
+ * 不要配太高(0~10)，否则会弱化Svr动态负载均衡效果，能表示各个Svr处理能力即可。0为禁用此Svr。
+ */
+/*Svr 基础属性 && 通信结构*/
+struct SvrNet_t
+{
+	int		mGid;
+	int		mXid;
+	int 	mWeight;
+	short	mVersion;
+	int		mPort;
+	char	mHost[MAX_SVR_HOST];
+
+	SvrNet_t()
+	{
+		mGid = 0;
+		mXid = 0;
+		mWeight = INIT_WEIGHT;
+		mPort = 0;
+		mVersion = 0;
+		memset(mHost, 0, MAX_SVR_HOST);
+	}
+
+	SvrNet_t(const SvrNet_t &svr)
+	{
+		mGid = svr.mGid;
+		mXid = svr.mXid;
+		mWeight = svr.mWeight;
+		mPort = svr.mPort;
+		mVersion = svr.mVersion;
+		memcpy(mHost, svr.mHost, MAX_SVR_HOST);
+	}
+
+	SvrNet_t& operator=(const SvrNet_t &svr)
+	{
+		mGid = svr.mGid;
+		mXid = svr.mXid;
+		mWeight = svr.mWeight;
+		mPort = svr.mPort;
+		mVersion = svr.mVersion;
+		memcpy(mHost, svr.mHost, MAX_SVR_HOST);
+		return *this;
+	}
+	
+	bool operator<(const SvrNet_t &other) const
+	{
+        if (mGid < other.mGid )
+        {
+            return true;
+        }
+        else if(mGid > other.mGid)
+        {
+        	return false;
+        }
+        else if(mXid < other.mXid)
+        {
+            return true;
+        }
+        else if(mXid > other.mXid)
+        {
+            return false;
+        }
+        else if(mPort < other.mPort)
+        {
+            return true;
+        }
+        else if(mPort > other.mPort)
+        {
+            return false;
+        }
+        else
+        {
+            int cmp = strcmp(mHost, other.mHost);
+            if(cmp < 0)
+        	{
+				return true;
+        	}
+            else if(cmp > 0)
+            {
+            	return false;
+            }
+        }
+        return false;
+	}
+};
+
+#pragma pack()
+
+/*
 inline bool GreaterSvr(const Svr_t* pR1, const Svr_t* pR2)
 {
 	return   pR1->mWeight > pR2->mWeight;
@@ -359,5 +435,6 @@ inline bool LessSvr(const Svr_t* pR1, const Svr_t* pR2)
 {
 	return   pR1->mWeight < pR2->mWeight;
 }
+*/
 
 #endif
