@@ -163,51 +163,51 @@ void wMaster<T>::HandleSignal()
 			LOG_ERROR(ELOG_KEY, "[runtime] setitimer() failed: %s", strerror(mErr));
 		}
 	}
-		
+	
+	//阻塞方式等待信号量
 	stSigset.Suspend();
 	
 	//SIGCHLD有worker退出
 	if(g_reap)
 	{
-		g_reap = 0;
 		LOG_ERROR(ELOG_KEY, "[runtime] reap children");
-		ProcessGetStatus();	//回收退出进程状态（waitpid以防僵尸进程）
 		
+		g_reap = 0;
+		ProcessGetStatus();
 		iLive = ReapChildren();
 	}
 	
-	//worker都退出了
+	//worker都退出,且收到了SIGTERM信号或SIGINT信号(g_terminate ==1)
+	//或SIGQUIT信号(g_quit == 1),则master退出
 	if (!iLive && (g_terminate || g_quit)) 
 	{
 		//ngx_master_process_exit(cycle);
 		//MasterProcessExit();
 	}
 	
+	//收到SIGTERM信号或SIGINT信号(g_terminate ==1)
+	//通知所有worker退出，并且等待worker退出 
 	if(g_terminate)
 	{
 		if(delay == 0) 
 		{
 			delay = 50;     //设置延时
 		}
-
 		if (sigio) 
 		{
 			sigio--;
 			return;
 		}
-
-		sigio = mWorkerNum + 2 /* cache processes */;
+		sigio = mWorkerNum;
 
 		if (delay > 1000) 
 		{
 			//延时已到，给所有worker发送SIGKILL信号，强制杀死worker
-			//ngx_signal_worker_processes(cycle, SIGKILL);
 			SignalWorker(SIGKILL);
 		} 
 		else 
 		{
 			//给所有worker发送SIGTERM信号，通知worker退出
-			//ngx_signal_worker_processes(cycle,ngx_signal_value(NGX_TERMINATE_SIGNAL));
 			SignalWorker(SIGTERM);
 		}
 		return;
@@ -216,36 +216,24 @@ void wMaster<T>::HandleSignal()
 	if(g_quit)
 	{
 		SignalWorker(SIGQUIT);
-		
 		//关闭所有监听socket
-		//close();
 		return;
 	}
 	
 	//收到SIGHUP信号
 	if (g_reconfigure) 
 	{
-		g_reconfigure = 0;
 		LOG_DEBUG(ELOG_KEY, "[runtime] reconfiguring");
+		g_reconfigure = 0;
 		
-		//重新初始化配置
-		/*
-		cycle = ngx_init_cycle(cycle);
-		if (cycle == NULL) 
-		{
-			cycle = (ngx_cycle_t *) ngx_cycle;
-			continue;
-		}
-		*/
-		
-		//重启worker
-		WorkerStart(mWorkerNum, NGX_PROCESS_JUST_RESPAWN);
+		PrepareStart();	//重新初始化配置
+		WorkerStart(mWorkerNum, NGX_PROCESS_JUST_RESPAWN);	//重启worker
 		
 		/* allow new processes to start */
-		msleep(100);
-
+		usleep(100*1000);	//100ms
+		
 		live = 1;
-		SignalWorker(SIGTERM);
+		SignalWorker(SIGTERM);	//关闭原来worker进程
 	}
 }
 
@@ -258,23 +246,20 @@ int wMaster<T>::ReapChildren()
 	int iLive = 0;
 	for (int i = 0; i < mWorkerNum; i++) 
     {
-		//当前分配到worker进程表项索引（无需发送给自己）
         if (mWorkerPool[i]->mPid == -1)
         {
             continue;
         }
 		
 		if(mWorkerPool[i]->mExited)	//已退出
-		{	
-			//非分离 同步文件描述符
+		{
+			//非分离，就同步文件描述符
 			if(!mWorkerPool[i]->mDetached)
 			{
-				mWorkerPool[i]->mCh.Close();
+				mWorkerPool[i]->mCh.Close();	//关闭channel
 				
 				struct ChannelReqClose_t stCh;
-				memset(&stCh, 0, sizeof(struct ChannelReqClose_t));
 				stCh.mFD = -1;
-				
 				stCh.mPid = mWorkerPool[i]->mPid;
 				stCh.mSlot = i;
 				PassCloseChannel(&stCh);
@@ -292,8 +277,6 @@ int wMaster<T>::ReapChildren()
 				}
 				
 				struct ChannelReqOpen_t stCh;
-				memset(&stCh, 0, sizeof(struct ChannelReqOpen_t));
-				
 				stCh.mSlot = mSlot;
 				stCh.mPid = mWorkerPool[mSlot]->mPid;
 				stCh.mFD = mWorkerPool[mSlot]->mCh[0];
@@ -313,7 +296,6 @@ int wMaster<T>::ReapChildren()
 			iLive = 1;
 		}
     }
-	
 	return iLive;
 }
 

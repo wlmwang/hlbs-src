@@ -41,7 +41,14 @@ class wMaster : public wSingleton<T>
 		void PassCloseChannel(struct ChannelReqClose_t *pCh);
 		virtual wWorker* NewWorker(int iSlot = 0);
 		virtual void HandleSignal();
+		/**
+		 *  如果有worker异常退出，则重启
+		 *  如果所有的worker都退出了，则返回0
+		 */
 		int ReapChildren();
+		/**
+		 *  给所有worker进程发送信号
+		 */
 		void SignalWorker(int iSigno);
 
 		/**
@@ -61,7 +68,8 @@ class wMaster : public wSingleton<T>
 		 */
 		void InitSignals();
 		/**
-		 *  获取子进程退出状态
+		 *  回收退出进程状态（waitpid以防僵尸进程）
+		 *  更新进程表
 		 */
 		void ProcessGetStatus();
 		

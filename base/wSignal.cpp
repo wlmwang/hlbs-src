@@ -13,6 +13,20 @@ int g_sigio;
 int g_reap;
 int g_reconfigure;
 
+//信号集
+wSignal::signal_t g_signals[] = {
+	{SIGHUP, "SIGHUP", "reload", SignalHandler},
+	{SIGTERM, "SIGTERM", "stop", SignalHandler},
+	{SIGINT, "SIGINT", "", SignalHandler},
+	{SIGQUIT, "SIGQUIT", "quit", SignalHandler},
+	{SIGALRM, "SIGALRM", "", SignalHandler},
+	{SIGIO, "SIGIO", "", SignalHandler},
+	{SIGCHLD, "SIGCHLD", "", SignalHandler},
+	{SIGSYS, "SIGSYS", "", SIG_IGN},
+	{SIGPIPE, "SIGPIPE", "", SIG_IGN},
+	{0, NULL, "", NULL}
+};
+
 wSignal::wSignal() {}
 
 wSignal::wSignal(__sighandler_t  func)
@@ -52,20 +66,10 @@ int wSignal::AddSig_t(const signal_t *pSig)
 	return AddSigno(pSig->mSigno);
 }
 
-//信号集
-wSignal::signal_t g_signals[] = {
-	{SIGHUP, "SIGHUP", "reload", SignalHandler},
-	{SIGTERM, "SIGTERM", "stop", SignalHandler},
-	{SIGINT, "SIGINT", "", SignalHandler},
-	{SIGQUIT, "SIGQUIT", "quit", SignalHandler},
-	{SIGALRM, "SIGALRM", "", SignalHandler},
-	{SIGIO, "SIGIO", "", SignalHandler},
-	{SIGCHLD, "SIGCHLD", "", SignalHandler},
-	{SIGSYS, "SIGSYS", "", SIG_IGN},
-	{SIGPIPE, "SIGPIPE", "", SIG_IGN},
-	{0, NULL, "", NULL}
-};
-
+/**
+ *  信号处理入口函数
+ *  对于SIGCHLD信号，由自定义函数处理g_reap时调用waitpid
+ */
 void SignalHandler(int signo)
 {
     char *action;
@@ -82,7 +86,6 @@ void SignalHandler(int signo)
     }
 
     action = "";
-	
 	switch (signo) 
 	{
 		case SIGQUIT:
@@ -134,13 +137,6 @@ void SignalHandler(int signo)
 			action = ", ignoring";
 			break;
 	}
-	*/
-	
-	/*
-    if (signo == SIGCHLD) 
-	{
-        //GetProcessStatus();	//回收worker进程状态
-    }
 	*/
 	
 	LOG_DEBUG(ELOG_KEY, "signal %d (%s) received%s", signo, sig->mSigname, action);
