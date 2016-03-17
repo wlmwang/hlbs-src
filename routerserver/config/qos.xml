@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QOS>
+	<!--成功率权重 时延权重-->
+	<FACTOR RATE_WEIGHT="7" DELAY_WEIGHT="1"/>
+	
+	<!--请求超时时间500ms-->
+	<TIMEOUT REQ_TIMEOUT="500"/>
+
+	<!--访问量的配置信息-->
+	<REQ REQ_MAX="10000" REQ_MIN="10" REQ_ERR_MIN="0.1" REQ_EXTEND_RATE="0.2" PRE_TIME="4"/>
+
+	<!--并发量的配置信息-->
+	<LIST LIST_MAX="100" LIST_MIN="10" LIST_ERR_MIN="0.001" LIST_EXTEND_TARE="0.2" LIST_TIMEOUT="2"/>
+
+	<!--时延配置-->
+	<DELAY>
+		<TIME BEGIN="0" END="100"/>
+		<TIME BEGIN="100" END="200"/>
+		<TIME BEGIN="200" END="500"/>
+		<TIME BEGIN="500" END="100000000"/>
+	</DELAY>
+</QOS>

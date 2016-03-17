@@ -23,10 +23,10 @@ void RouterConfig::Initialize()
 	mPort = 0;
 	mBacklog = 1024;
 	mWorkers = 1;
-	mDoc = new TiXmlDocument();
 	memcpy(mBaseConfFile, CONF_XML, strlen(CONF_XML) + 1);
 	memcpy(mSvrConfFile, SVR_XML, strlen(SVR_XML) + 1);
 
+	mDoc = new TiXmlDocument();
 	mSvrQos = SvrQos::Instance();
 }
 
@@ -153,9 +153,83 @@ void RouterConfig::GetSvrConf()
 		exit(1);
 	}
 
-	SetModTime();
+	//SetModTime();
 }
 
+void RouterConfig::GetQosConf()
+{
+	mSvrQos->mRateWeight = 7;
+	mSvrQos->mDelayWeight = 1;
+
+    float rate = (float) mSvrQos->mRateWeight / (float) mSvrQos->mDelayWeight;
+    /** rate should be between 0.01-100 */
+    if(rate > 100000)
+    {
+        mSvrQos->mRateWeight = 100000;
+        mSvrQos->mDelayWeight = 1;
+    }
+    if(rate < 0.00001)
+    {
+        mSvrQos->mDelayWeight = 100000;
+        mSvrQos->mRateWeight = 1;
+    }
+
+	/** 访问量 */
+	mSvrQos->mReqCfg->mReqLimit = 10000;
+	mSvrQos->mReqCfg->mReqMax = 10000;
+	mSvrQos->mReqCfg->mReqMin = 10;
+	mSvrQos->mReqCfg->mReqErrMin = 0.5;
+	mSvrQos->mReqCfg->mReqExtendRate = 0.2;
+	mSvrQos->mReqCfg->RebuildTm = 60; /*4*/
+
+	mSvrQos->mRebuildTm = mSvrQos->mReqCfg->RebuildTm;
+
+	/** 并发量 */
+	mSvrQos->mListCfg->mListLimit = 100;
+	mSvrQos->mListCfg->mListMax = 400;
+	mSvrQos->mListCfg->mListMin = 10;
+	mSvrQos->mListCfg->mReqErrMin = 0.1;
+	mSvrQos->mListCfg->mListExtendRate = 0.2;
+
+	/** 宕机配置 */
+	mSvrQos->mDownCfg->mReqCountTrigerProbe = 100000;
+	mSvrQos->mDownCfg->mDownTimeTrigerProbe = 600;
+	mSvrQos->mDownCfg->mProbeTimes = 3;
+	mSvrQos->mDownCfg->mPossibleDownErrReq = 10;
+	mSvrQos->mDownCfg->mPossbileDownErrRate = 0.5;
+	mSvrQos->mDownCfg->mProbeBegin = 0;
+	mSvrQos->mDownCfg->mProbeInterval = 3;
+	mSvrQos->mDownCfg->mProbeNodeExpireTime = 600;
+
+	if (!(mSvrQos->mReqCfg->mReqExtendRate > 0.001 && mSvrQos->mReqCfg->mReqExtendRate < 101))
+	{
+		exit(1);
+	}
+
+	if (mSvrQos->mReqCfg->mReqErrMin >= 1)
+	{
+		exit(1);
+	}
+
+	if (mSvrQos->mDownCfg->mPossbileDownErrRate > 1 || mSvrQos->mDownCfg->mPossbileDownErrRate < 0.01)
+	{
+		exit(1);
+	}
+
+	if (mSvrQos->mDownCfg->mProbeTimes < 3)
+	{
+		exit(1);
+	}
+
+	if (mSvrQos->mReqCfg->RebuildTm < 3)
+	{
+		exit(1);
+	}
+}
+
+
+
+/*
 int RouterConfig::SetModTime()
 {
 	struct stat stBuf;
@@ -336,3 +410,5 @@ bool RouterConfig::IsChangeSvr(const SvrNet_t* pR1, const SvrNet_t* pR2)
 	}
 	return false;
 }
+
+*/

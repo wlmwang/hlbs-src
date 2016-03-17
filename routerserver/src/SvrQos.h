@@ -10,6 +10,7 @@
 #include <vector>
 #include <map>
 #include <list>
+#include <algorithm>
 
 #include "wCore.h"
 #include "wMisc.h"
@@ -23,7 +24,7 @@ class SvrQos : public wSingleton<SvrQos>
 		SvrQos();
 		~SvrQos();
 
-		int AddNode(struct SvrNet_t stSvr);
+		int SaveNode(struct SvrNet_t& stSvr);
 
 		/*
 		//初始化svr
@@ -44,47 +45,22 @@ class SvrQos : public wSingleton<SvrQos>
 		*/
 
 	protected:
-	    int 		mRebuildTm;	//QOS重建时间间隔  >3
-	    SvrReqCfg_t	mReqCfg;	//QOS访问量控制的默认配置
-	    SvrListCfg_t mListCfg;	//QOS并发量控制的默认配置
+		int mRateWeight;	//成功率因子	1~100000 默认1
+		int mDelayWeight;	//时延因子		1~100000 默认1
+	    int mRebuildTm;		//重建时间间隔 默认为3s
+	    int mReqTimeout;	//请求超时时间 默认为500ms
 
-		map<struct SvrNet_t, struct SvrStat_t*>	mMapReqSvr;
+	    bool mAllReqMin;		//所有节点都过载？
+
+	    SvrReqCfg_t	 mReqCfg;	//访问量控制
+	    SvrListCfg_t mListCfg;	//并发量控制
+		SvrDownCfg_t mDownCfg;	//宕机控制
 		
-		map<struct SvrKind_t, multimap<float, SvrNode_t>* > mRouteTable;
-		map<struct SvrKind_t, list<SvrNode_t>* > mErrTable;
+		map<struct SvrNet_t, struct SvrStat_t*>	mMapReqSvr;		//节点信息。路由-统计，一对一
+		map<struct SvrKind_t, multimap<float, SvrNode_t>* > mRouteTable;	//路由信息。种类-节点，一对多
+		map<struct SvrKind_t, list<SvrNode_t>* > mErrTable;		//宕机路由表
 	    
 	    //QOSTMCFG	_qos_tm_cfg;	//OS 每个时间节点(0-19)统计数据
-		
-		/*
-		void SvrRebuild();
-		void DelContainer();
-		vector<Svr_t*>::iterator GetItFromV(Svr_t* pSvr);
-		vector<Svr_t*>::iterator GetItById(int iId);
-		
-		bool IsChangeSvr(const SvrNet_t* pR1, const SvrNet_t* pR2);
-
-		int GetAllSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid);
-		int GetAllSvrByGid(SvrNet_t* pBuffer, int iGid);
-		void SetGXDirty(Svr_t* stSvr, int iDirty = 1);
-
-		int CalcWeight(Svr_t* stSvr);
-		short CalcPre(Svr_t* stSvr);
-		short CalcOverLoad(Svr_t* stSvr);
-		short CalcShutdown(Svr_t* stSvr);
-
-		int GcdWeight(vector<Svr_t*> vSvr, int n);
-		void ReleaseConn(Svr_t* stSvr);
-		int GetSumConn(Svr_t* stSvr);
-		*/
-	
-		//vector<Svr_t*> mSvr;	//统计表
-		//map<string, vector<Svr_t*> > mSvrByGXid;	//路由表
-		//map<string, StatcsGXid_t*> mStatcsGXid;		//WRR统计表
-
-		//阈值配置
-		//SvrReqCfg_t mSvrReqCfg;
-		//SvrListCfg_t mSvrListCfg;
-		//SvrDownCfg_t mSvrDownCfg;
 };
 
 #endif

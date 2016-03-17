@@ -25,7 +25,8 @@ int main(int argc, const char *argv[])
 	}
 	pConfig->GetBaseConf();
 	pConfig->GetSvrConf();
-
+	pConfig->GetQosConf();
+	
 	//daemon
 	if (pConfig->mDaemon == 1)
 	{
