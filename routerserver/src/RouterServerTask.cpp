@@ -31,9 +31,11 @@ void RouterServerTask::Initialize()
 	ROUTER_REG_DISP(CMD_SVR_REQ, SVR_REQ_SYNC, &RouterServerTask::SyncSvrReq);
 }
 
+//验证登录
 int RouterServerTask::VerifyConn()
 {
-	//验证登录消息
+	if(!ROUTER_LOGIN) return 0;
+	
 	char pBuffer[ sizeof(LoginReqToken_t) ];
 	int iLen = SyncRecv(pBuffer, sizeof(LoginReqToken_t));
 	if (iLen > 0)
@@ -53,7 +55,8 @@ int RouterServerTask::VerifyConn()
 //发送登录验证
 int RouterServerTask::Verify()
 {
-	//验证登录
+	if(!AGENT_LOGIN) return 0;
+	
 	LoginReqToken_t stLoginReq;
 	stLoginReq.mConnType = SERVER_ROUTER;
 	memcpy(stLoginReq.mToken, "Anny", 4);

@@ -32,9 +32,11 @@ void AgentServerTask::Initialize()
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_GXID, &AgentServerTask::GetSvrByGXid);
 }
 
+//验证登录消息
 int AgentServerTask::VerifyConn()
 {
-	//验证登录消息
+	if(!AGENT_LOGIN) return 0;
+	
 	char pBuffer[ sizeof(LoginReqToken_t) ];
 	int iLen = SyncRecv(pBuffer, sizeof(LoginReqToken_t));
 	if (iLen > 0)
@@ -51,9 +53,11 @@ int AgentServerTask::VerifyConn()
 	return -1;
 }
 
+//发送登录验证
 int AgentServerTask::Verify()
 {
-	//验证登录
+	if(!ROUTER_LOGIN) return 0;
+	
 	LoginReqToken_t stLoginReq;
 	stLoginReq.mConnType = SERVER_AGENT;
 	memcpy(stLoginReq.mToken, "Anny", 4);
