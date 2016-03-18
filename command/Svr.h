@@ -83,8 +83,8 @@ struct SvrDownCfg_t
 	int mReqCountTrigerProbe;   //100000
 	int mDownTimeTrigerProbe;   //600
 	int mProbeTimes;            //(3,~)
-	int mPossibleDownErrReq;    //10
-	float mPossbileDownErrRate; //0.5   (0.01,1)
+	int mPossibleDownErrReq;    //10	连续错误阈值
+	float mPossbileDownErrRate; //0.5   (0.01,1)	宕机错误率阈值
 
     //mProbeBegin >0 才打开自探测
     int mProbeBegin;    //0
@@ -253,12 +253,13 @@ struct SvrKind_t
 	int		mGid;
 	int		mXid;
 	int 	mOverload;
-    float 	mPtotalErrRate;  //错误率总和
-    int 	mPsubCycCount;
+    float 	mPtotalErrRate;		//累计连续过载，所有路由错误率平均值总和
+    int 	mPsubCycCount;		//累计连续过载次数
 
     int 	mPtm; 			//rebuild 时刻的绝对时间 time_t
     int 	mRebuildTm; 	//rebuild 的时间间隔
 	float 	mWeightSum;
+	int64_t mAccess64tm;	//最近访问时间
 
 	int mPindex;
 	int mIdx;	//当前分配到索引号
@@ -335,7 +336,7 @@ struct SvrKind_t
 };
 
 /**
- * svr节点信息
+ * Svr节点信息
  * 路由信息、各种阈值及统计信息
  */
 struct SvrNode_t
@@ -378,19 +379,18 @@ struct SvrNode_t
 
 #pragma pack(1)
 
-/**
- * mWeight ：静态权重，动态权重比例的系数
- * 不要配太高(0~10)，否则会弱化Svr动态负载均衡效果，能表示各个Svr处理能力即可。0为禁用此Svr。
- */
 /*Svr 基础属性 && 通信结构*/
 struct SvrNet_t
 {
 	int		mGid;
 	int		mXid;
-	int 	mWeight;
+	int 	mWeight;	//静态权重，0为禁用此Svr
 	short	mVersion;
 	int		mPort;
 	char	mHost[MAX_SVR_HOST];
+
+    int 	mPre;
+    int 	mExpired;	//过期时间
 
 	SvrNet_t()
 	{
@@ -523,16 +523,12 @@ struct SvrCaller_t
 
 #pragma pack()
 
-/*
-inline bool GreaterSvr(const Svr_t* pR1, const Svr_t* pR2)
+/**
+ * sort用到（降序）
+ */
+inline bool GreaterSvr(const struct SvrNet_t* pR1, const struct SvrNet_t* pR2)
 {
 	return   pR1->mWeight > pR2->mWeight;
 }
-
-inline bool LessSvr(const Svr_t* pR1, const Svr_t* pR2)
-{
-	return   pR1->mWeight < pR2->mWeight;
-}
-*/
 
 #endif

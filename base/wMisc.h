@@ -46,6 +46,23 @@ inline unsigned long long GetTickCount()    //clock_t
     return (unsigned long long)tv.tv_sec * 1000 + (unsigned long long)tv.tv_usec / 1000;
 }
 
+//获取微妙级别时间
+inline int64_t GetTimeofday()
+{
+    timeval tv;
+    gettimeofday(&tv, NULL);
+    return (int64_t)tv.tv_sec * 1000000 + (int64_t)tv.tv_usec;
+}
+
+inline void GetTimeofday(struct timeval* pVal, void*)
+{
+    if (pVal == NULL)
+    {
+        return;
+    }
+    gettimeofday(&pVal, NULL);
+}
+
 //long -> string
 inline string Itos(const long &i)
 {

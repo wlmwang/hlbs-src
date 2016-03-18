@@ -11,6 +11,7 @@
 #include <map>
 #include <list>
 #include <algorithm>
+#include <cmath>
 
 #include "wCore.h"
 #include "wMisc.h"
@@ -50,6 +51,7 @@ class SvrQos : public wSingleton<SvrQos>
 	    int mRebuildTm;		//重建时间间隔 默认为3s
 	    int mReqTimeout;	//请求超时时间 默认为500ms
 
+	    float mAvgErrRate;		//错误平均值（过载时）
 	    bool mAllReqMin;		//所有节点都过载？
 
 	    SvrReqCfg_t	 mReqCfg;	//访问量控制
@@ -58,7 +60,7 @@ class SvrQos : public wSingleton<SvrQos>
 		
 		map<struct SvrNet_t, struct SvrStat_t*>	mMapReqSvr;		//节点信息。路由-统计，一对一
 		map<struct SvrKind_t, multimap<float, SvrNode_t>* > mRouteTable;	//路由信息。种类-节点，一对多
-		map<struct SvrKind_t, list<SvrNode_t>* > mErrTable;		//宕机路由表
+		map<struct SvrKind_t, list<struct SvrNode_t>* > mErrTable;		//宕机路由表
 	    
 	    //QOSTMCFG	_qos_tm_cfg;	//OS 每个时间节点(0-19)统计数据
 };
