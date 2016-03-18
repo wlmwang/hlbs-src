@@ -52,13 +52,12 @@
 
 #define PROCESS_SINGLE     0 	//单独进程
 #define PROCESS_MASTER     1 	//主进程
-//#define PROCESS_SIGNALLER  2 	//信号进程
+#define PROCESS_SIGNALLER  2 	//信号进程
 #define PROCESS_WORKER     3 	//工作进程
 
 #define PROCESS_NORESPAWN     -1	//子进程退出时，父进程不再创建
-//#define PROCESS_JUST_SPAWN    -2	//正在重启
-#define PROCESS_RESPAWN       -3	//子进程异常退出时，master会重新创建它。如当worker或cache manager异常退出时，父进程会重新创建它
-#define PROCESS_DETACHED	  -5	//热代码替换? TODO
+#define PROCESS_JUST_SPAWN    -2	//正在重启
+#define PROCESS_RESPAWN       -3	//子进程异常退出时，master会重新创建它
 
 #define MAX_PROCESSES         1024
 

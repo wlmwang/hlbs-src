@@ -139,7 +139,7 @@ void RouterConfig::GetSvrConf()
 				stSvr.mWeight = szWeight != NULL ? atoi(szWeight): stSvr.mWeight;
 				stSvr.mVersion = szVersion != NULL ? atoi(szVersion): stSvr.mVersion;
 				
-				mSvrQos.AddNode(stSvr);
+				mSvrQos.SaveNode(stSvr);
 			}
 			else
 			{
@@ -153,83 +153,9 @@ void RouterConfig::GetSvrConf()
 		exit(1);
 	}
 
-	//SetModTime();
+	SetModTime();
 }
 
-void RouterConfig::GetQosConf()
-{
-	mSvrQos->mRateWeight = 7;
-	mSvrQos->mDelayWeight = 1;
-
-    float rate = (float) mSvrQos->mRateWeight / (float) mSvrQos->mDelayWeight;
-    /** rate should be between 0.01-100 */
-    if(rate > 100000)
-    {
-        mSvrQos->mRateWeight = 100000;
-        mSvrQos->mDelayWeight = 1;
-    }
-    if(rate < 0.00001)
-    {
-        mSvrQos->mDelayWeight = 100000;
-        mSvrQos->mRateWeight = 1;
-    }
-
-	/** 访问量 */
-	mSvrQos->mReqCfg->mReqLimit = 10000;
-	mSvrQos->mReqCfg->mReqMax = 10000;
-	mSvrQos->mReqCfg->mReqMin = 10;
-	mSvrQos->mReqCfg->mReqErrMin = 0.5;
-	mSvrQos->mReqCfg->mReqExtendRate = 0.2;
-	mSvrQos->mReqCfg->RebuildTm = 60; /*4*/
-
-	mSvrQos->mRebuildTm = mSvrQos->mReqCfg->RebuildTm;
-
-	/** 并发量 */
-	mSvrQos->mListCfg->mListLimit = 100;
-	mSvrQos->mListCfg->mListMax = 400;
-	mSvrQos->mListCfg->mListMin = 10;
-	mSvrQos->mListCfg->mReqErrMin = 0.1;
-	mSvrQos->mListCfg->mListExtendRate = 0.2;
-
-	/** 宕机配置 */
-	mSvrQos->mDownCfg->mReqCountTrigerProbe = 100000;
-	mSvrQos->mDownCfg->mDownTimeTrigerProbe = 600;
-	mSvrQos->mDownCfg->mProbeTimes = 3;
-	mSvrQos->mDownCfg->mPossibleDownErrReq = 10;
-	mSvrQos->mDownCfg->mPossbileDownErrRate = 0.5;
-	mSvrQos->mDownCfg->mProbeBegin = 0;
-	mSvrQos->mDownCfg->mProbeInterval = 3;
-	mSvrQos->mDownCfg->mProbeNodeExpireTime = 600;
-
-	if (!(mSvrQos->mReqCfg->mReqExtendRate > 0.001 && mSvrQos->mReqCfg->mReqExtendRate < 101))
-	{
-		exit(1);
-	}
-
-	if (mSvrQos->mReqCfg->mReqErrMin >= 1)
-	{
-		exit(1);
-	}
-
-	if (mSvrQos->mDownCfg->mPossbileDownErrRate > 1 || mSvrQos->mDownCfg->mPossbileDownErrRate < 0.01)
-	{
-		exit(1);
-	}
-
-	if (mSvrQos->mDownCfg->mProbeTimes < 3)
-	{
-		exit(1);
-	}
-
-	if (mSvrQos->mReqCfg->RebuildTm < 3)
-	{
-		exit(1);
-	}
-}
-
-
-
-/*
 int RouterConfig::SetModTime()
 {
 	struct stat stBuf;
@@ -252,6 +178,86 @@ bool RouterConfig::IsModTime()
 	}
 	return false;
 }
+
+void RouterConfig::GetQosConf()
+{
+	mSvrQos->mRateWeight = 7;
+	mSvrQos->mDelayWeight = 1;
+
+    float rate = (float) mSvrQos->mRateWeight / (float) mSvrQos->mDelayWeight;
+    
+    /** rate 需在 0.01-100 之间*/
+    if(rate > 100000)
+    {
+        mSvrQos->mRateWeight = 100000;
+        mSvrQos->mDelayWeight = 1;
+    }
+    if(rate < 0.00001)
+    {
+        mSvrQos->mDelayWeight = 100000;
+        mSvrQos->mRateWeight = 1;
+    }
+
+	/** 访问量配置 */
+	mSvrQos->mReqCfg->mReqLimit = 10000;
+	mSvrQos->mReqCfg->mReqMax = 10000;
+	mSvrQos->mReqCfg->mReqMin = 10;
+	mSvrQos->mReqCfg->mReqErrMin = 0.5;
+	mSvrQos->mReqCfg->mReqExtendRate = 0.2;
+	mSvrQos->mReqCfg->RebuildTm = 60; /*4*/
+
+	mSvrQos->mRebuildTm = mSvrQos->mReqCfg->RebuildTm;
+
+	/** 并发量配置 */
+	mSvrQos->mListCfg->mListLimit = 100;
+	mSvrQos->mListCfg->mListMax = 400;
+	mSvrQos->mListCfg->mListMin = 10;
+	mSvrQos->mListCfg->mReqErrMin = 0.1;
+	mSvrQos->mListCfg->mListExtendRate = 0.2;
+
+	/** 宕机配置 */
+	mSvrQos->mDownCfg->mReqCountTrigerProbe = 100000;
+	mSvrQos->mDownCfg->mDownTimeTrigerProbe = 600;
+	mSvrQos->mDownCfg->mProbeTimes = 3;
+	mSvrQos->mDownCfg->mPossibleDownErrReq = 10;
+	mSvrQos->mDownCfg->mPossbileDownErrRate = 0.5;
+	mSvrQos->mDownCfg->mProbeBegin = 0;
+	mSvrQos->mDownCfg->mProbeInterval = 3;
+	mSvrQos->mDownCfg->mProbeNodeExpireTime = 600;
+
+	if(!(mSvrQos->mReqCfg->mReqExtendRate > 0.001 && mSvrQos->mReqCfg->mReqExtendRate < 101))
+	{
+		LOG_ERROR(ELOG_KEY, "[startup] Init invalid req_extend_rate[%f]  !((ext > 0.001) && (ext < 101))", mSvrQos->mReqCfg->mReqExtendRate);
+		exit(1);
+	}
+
+	if (mSvrQos->mReqCfg->mReqErrMin >= 1)
+	{
+		LOG_ERROR(ELOG_KEY, "[startup] Init invalid _req_err_min[%f]  _qos_req_cfg._req_err_min > 1", mSvrQos->mReqCfg->mReqErrMin);
+		exit(1);
+	}
+
+	if (mSvrQos->mDownCfg->mPossbileDownErrRate > 1 || mSvrQos->mDownCfg->mPossbileDownErrRate < 0.01)
+	{
+		LOG_ERROR(ELOG_KEY, "[startup] Init invalid err_rate_to_def_possible_down[%f] > 1 or < _req_min[%f]", mSvrQos->mReqCfg->mReqErrMin, mSvrQos->mDownCfg->mPossbileDownErrRate);
+		exit(1);
+	}
+
+	if (mSvrQos->mDownCfg->mProbeTimes < 3)
+	{
+		LOG_ERROR(ELOG_KEY, "[startup] Init invalid continuous_err_req_count_to_def_possible_down[%d] <3", mSvrQos->mDownCfg->mProbeTimes);
+		exit(1);
+	}
+
+	if (mSvrQos->mReqCfg->RebuildTm < 3)
+	{
+		LOG_ERROR(ELOG_KEY, "[startup] Init invalid rebuildtm[%d] < 3", mSvrQos->mReqCfg->RebuildTm);
+		exit(1);
+	}
+}
+
+
+/*
 
 //获取修改的svr
 //不能删除节点（可修改Disabled=1属性，达到删除节点效果）

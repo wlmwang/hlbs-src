@@ -399,59 +399,65 @@ struct SvrNet_t
 		mWeight = INIT_WEIGHT;
 		mPort = 0;
 		mVersion = 0;
+		mPre = 0;
+		mExpired = 0;
 		memset(mHost, 0, MAX_SVR_HOST);
 	}
 
-	SvrNet_t(const SvrNet_t &svr)
+	SvrNet_t(const SvrNet_t &stSvr)
 	{
-		mGid = svr.mGid;
-		mXid = svr.mXid;
-		mWeight = svr.mWeight;
-		mPort = svr.mPort;
-		mVersion = svr.mVersion;
-		memcpy(mHost, svr.mHost, MAX_SVR_HOST);
+		mGid = stSvr.mGid;
+		mXid = stSvr.mXid;
+		mWeight = stSvr.mWeight;
+		mPort = stSvr.mPort;
+		mVersion = stSvr.mVersion;
+		mPre = stSvr.mPre;
+		mExpired = stSvr.mExpired;
+		memcpy(mHost, stSvr.mHost, MAX_SVR_HOST);
 	}
 
-	SvrNet_t& operator=(const SvrNet_t &svr)
+	SvrNet_t& operator=(const SvrNet_t &stSvr)
 	{
-		mGid = svr.mGid;
-		mXid = svr.mXid;
-		mWeight = svr.mWeight;
-		mPort = svr.mPort;
-		mVersion = svr.mVersion;
-		memcpy(mHost, svr.mHost, MAX_SVR_HOST);
+		mGid = stSvr.mGid;
+		mXid = stSvr.mXid;
+		mWeight = stSvr.mWeight;
+		mPort = stSvr.mPort;
+		mVersion = stSvr.mVersion;
+		mPre = stSvr.mPre;
+		mExpired = stSvr.mExpired;
+		memcpy(mHost, stSvr.mHost, MAX_SVR_HOST);
 		return *this;
 	}
 	
-	bool operator<(const SvrNet_t &other) const
+	bool operator<(const SvrNet_t &stSvr) const
 	{
-        if (mGid < other.mGid )
+        if (mGid < stSvr.mGid )
         {
             return true;
         }
-        else if(mGid > other.mGid)
+        else if(mGid > stSvr.mGid)
         {
         	return false;
         }
-        else if(mXid < other.mXid)
+        else if(mXid < stSvr.mXid)
         {
             return true;
         }
-        else if(mXid > other.mXid)
+        else if(mXid > stSvr.mXid)
         {
             return false;
         }
-        else if(mPort < other.mPort)
+        else if(mPort < stSvr.mPort)
         {
             return true;
         }
-        else if(mPort > other.mPort)
+        else if(mPort > stSvr.mPort)
         {
             return false;
         }
         else
         {
-            int cmp = strcmp(mHost, other.mHost);
+            int cmp = strcmp(mHost, stSvr.mHost);
             if(cmp < 0)
         	{
 				return true;

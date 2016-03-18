@@ -30,8 +30,11 @@ void RouterWorker::PrepareRun()
 		LOG_ERROR(ELOG_KEY, "[startup] Get RouterConfig instance failed");
 		exit(1);
 	}
-	//pConfig->GetBaseConf();
-	//pConfig->GetSvrConf();
+
+	//重新加载配置（兼容重启时刻）
+	pConfig->GetBaseConf();
+	pConfig->GetSvrConf();
+	pConfig->GetQosConf();
 
 	mServer = RouterServer::Instance();
 	if(mServer == NULL) 

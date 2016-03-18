@@ -51,14 +51,16 @@ void RouterServer::Run()
 void RouterServer::CheckModSvr()
 {
 	RouterConfig *pConfig = RouterConfig::Instance();
-	if (pConfig->IsModTime())
+	if(pConfig->IsModTime())
 	{
 		SvrResSync_t stSvr;
 		stSvr.mCode = 0;
+
+		//读更新配置
 		stSvr.mNum = pConfig->GetModSvr(stSvr.mSvr);	//SvrNet_t
 		if (stSvr.mNum > 0)
 		{
-			cout << "broadcast new svr" << endl;
+			LOG_DEBUG(ELOG_KEY, "[runtime] broadcast new Svr");
 			Broadcast((char *)&stSvr, sizeof(stSvr));	//广播所有agent
 		}
 	}

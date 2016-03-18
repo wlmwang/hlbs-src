@@ -18,9 +18,6 @@ void SvrQos::Initialize() {}
 /** 添加节点&路由 | 修改节点&路由权重 */
 int SvrQos::SaveNode(struct SvrNet_t& stSvr)
 {
-	//访问量加1
-	//...
-	
 	map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
 	if (mapReqIt == mMapReqSvr.end())
 	{
