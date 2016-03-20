@@ -429,6 +429,7 @@ struct SvrNet_t
 		return *this;
 	}
 	
+	/** 忽略 weight version 比较、排序*/
 	bool operator<(const SvrNet_t &stSvr) const
 	{
         if (mGid < stSvr.mGid )
@@ -470,7 +471,6 @@ struct SvrNet_t
         return false;
 	}
 };
-
 
 struct SvrCaller_t
 {

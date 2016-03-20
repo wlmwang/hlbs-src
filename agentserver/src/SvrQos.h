@@ -9,88 +9,69 @@
 
 #include <vector>
 #include <map>
+#include <list>
+#include <algorithm>
+#include <cmath>
 
 #include "wCore.h"
 #include "wMisc.h"
 #include "wLog.h"
 #include "wSingleton.h"
 #include "SvrCmd.h"
-#include "AgentConfig.h"
-
-struct StatcsGXid_t
-{
-	int mSumConn;//该类目下总共被分配次数
-
-	int mIdx;	//当前分配到索引号
-	int mCur;	//当前weight。初始化为最大值
-	int mGcd;	//weight最大公约数
-	StatcsGXid_t()
-	{
-		mIdx = -1;
-		mCur = 0;
-		mGcd = 0;
-		mSumConn = 0;
-	}
-};
 
 class SvrQos : public wSingleton<SvrQos>
 {
 	public:
 		SvrQos();
 		~SvrQos();
-
-		/*
-		//初始化svr
-		int InitSvr(SvrNet_t *pSvr, int iLen = 0);
-		int ReloadSvr(SvrNet_t *pSvr, int iLen = 0);
-		int SyncSvr(SvrNet_t *pSvr, int iLen = 0);
+		void Initialize();
 		
-		//CGI获取所有svr
-		int GetSvrAll(SvrNet_t* pBuffer);
-		//CGI获取一个路由
-		int GetSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid);
+		int SaveNode(struct SvrNet_t& stSvr);
+		int DelNode(struct SvrNet_t& stSvr);
+		int ModNode(struct SvrNet_t& stSvr);
+		int AllocNode(struct SvrNet_t& stSvr);
+		int QueryNode(struct SvrNet_t& stSvr);
+		int NotifyNode(struct SvrNet_t& stSvr);
+		int CallerNode(struct SvrNet_t& stSvr, struct SvrCaller_t& stCaller);
 		
-		//接受上报数据
-		void ReportSvr(SvrReportReqId_t *pReportSvr);
-		void Statistics();
+		bool IsExistNode(struct SvrNet_t& stSvr);
+		bool IsVerChange(struct SvrNet_t& stSvr);
+		map<struct SvrNet_t, struct SvrStat_t*>::iterator SearchNode(struct SvrNet_t& stSvr);
 		
-		int GXidWRRSvr(SvrNet_t* pBuffer, string sKey, vector<Svr_t*> vSvr);
-		*/
-
+		int GetSvrAll(struct SvrNet_t* pBuffer);
+		
 	protected:
-		map<struct SvrNet_t, struct SvrStat_t*>	mMapSvr;
-		map<struct SvrKind_t, multimap<float, SvrNode_t>* > mRouteTable;
+		int LoadStatCfg(struct SvrNet_t& stSvr, struct SvrStat_t* pSvrStat);
+		int AddRouteNode(struct SvrNet_t& stSvr, struct SvrStat_t* pSvrStat);
+		int GetRouteNode(struct SvrNet_t& stSvr);
+		int RouteCheck(struct SvrStat_t* pSvrStat, struct SvrNet& stNode, double iFirstReq, bool bFirstRt);
+		int RouteNodeRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat);
+		int ModRouteNode(struct SvrNet_t& stSvr);
+		int DelRouteNode(struct SvrNet_t& stSvr);
+		int GetAddCount(SvrStat_t* pSvrStat, int iReqCount);
+		int ReqRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat);
+		int ListRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat);
+		int RebuildRoute(struct SvrKind_t& stItem, int bForce = false);
+		int AddErrRoute(struct SvrKind_t& stItem, struct SvrNode_t& stNode);
+		int RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct SvrNode_t>* pSvrNode);
 		
-		/*
-		void SvrRebuild();
-		void DelContainer();
-		vector<Svr_t*>::iterator GetItFromV(Svr_t* pSvr);
-		vector<Svr_t*>::iterator GetItById(int iId);
+		int mRateWeight;	//成功率因子	1~100000 默认1
+		int mDelayWeight;	//时延因子		1~100000 默认1
+	    int mRebuildTm;		//重建时间间隔 默认为3s
+	    int mReqTimeout;	//请求超时时间 默认为500ms
+
+	    float mAvgErrRate;		//错误平均值（过载时）
+	    bool mAllReqMin;		//所有节点都过载？
+
+	    SvrReqCfg_t	 mReqCfg;	//访问量控制
+	    SvrListCfg_t mListCfg;	//并发量控制
+		SvrDownCfg_t mDownCfg;	//宕机控制
 		
-		bool IsChangeSvr(const SvrNet_t* pR1, const SvrNet_t* pR2);
-
-		int GetAllSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid);
-		int GetAllSvrByGid(SvrNet_t* pBuffer, int iGid);
-		void SetGXDirty(Svr_t* stSvr, int iDirty = 1);
-
-		int CalcWeight(Svr_t* stSvr);
-		short CalcPre(Svr_t* stSvr);
-		short CalcOverLoad(Svr_t* stSvr);
-		short CalcShutdown(Svr_t* stSvr);
-
-		int GcdWeight(vector<Svr_t*> vSvr, int n);
-		void ReleaseConn(Svr_t* stSvr);
-		int GetSumConn(Svr_t* stSvr);
-		*/
-	
-		//vector<Svr_t*> mSvr;	//统计表
-		//map<string, vector<Svr_t*> > mSvrByGXid;	//路由表
-		//map<string, StatcsGXid_t*> mStatcsGXid;		//WRR统计表
-
-		//阈值配置
-		//SvrReqCfg_t mSvrReqCfg;
-		//SvrListCfg_t mSvrListCfg;
-		//SvrDownCfg_t mSvrDownCfg;
+		map<struct SvrNet_t, struct SvrStat_t*>	mMapReqSvr;		//节点信息。路由-统计，一对一
+		map<struct SvrKind_t, multimap<float, SvrNode_t>* > mRouteTable;	//路由信息。种类-节点，一对多
+		map<struct SvrKind_t, list<struct SvrNode_t>* > mErrTable;		//宕机路由表
+	    
+	    //QOSTMCFG	_qos_tm_cfg;	//OS 每个时间节点(0-19)统计数据
 };
 
 #endif

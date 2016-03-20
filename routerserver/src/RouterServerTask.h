@@ -25,8 +25,7 @@ class RouterServerTask : public wTcpTask
 	public:
 		RouterServerTask();
 		RouterServerTask(wIO *pIO);
-		~RouterServerTask();
-		
+		virtual ~RouterServerTask();
 		void Initialize();
 
 		virtual int VerifyConn();
@@ -38,7 +37,6 @@ class RouterServerTask : public wTcpTask
 
 		DEC_FUNC(InitSvrReq);
 		DEC_FUNC(ReloadSvrReq);
-		DEC_FUNC(SyncSvrReq);	//主动同步svr配置  建议agent只增量、更新、不删除同步（删除可让disabled=1）
 		
 	protected:
 		DEC_DISP(mDispatch);

@@ -33,6 +33,8 @@ void AgentClientTask::Initialize()
 
 int AgentClientTask::VerifyConn()
 {
+	if(!AGENT_LOGIN) return 0;
+	
 	//验证登录消息
 	char pBuffer[ sizeof(LoginReqToken_t) ];
 	int iLen = SyncRecv(pBuffer, sizeof(LoginReqToken_t));
@@ -52,6 +54,8 @@ int AgentClientTask::VerifyConn()
 
 int AgentClientTask::Verify()
 {
+	if(!ROUTER_LOGIN) return 0;
+	
 	//验证登录
 	LoginReqToken_t stLoginReq;
 	stLoginReq.mConnType = SERVER_AGENT;
@@ -100,7 +104,13 @@ int AgentClientTask::InitSvrRes(char *pBuffer, int iLen)
 	AgentConfig *pConfig = AgentConfig::Instance();
 	SvrResInit_t *pCmd = (struct SvrResInit_t*) pBuffer;
 	
-	if (pCmd->mNum > 0) pConfig->InitSvr(pCmd->mSvr, pCmd->mNum);
+	if(pCmd->mNum > 0) 
+	{
+		for(int i = 0; i < pCmd->mNum; i++)
+		{
+			pConfig->Qos()->SaveNode(pCmd->mSvr[i]);
+		}
+	}
 	return 0;
 }
 
@@ -110,16 +120,30 @@ int AgentClientTask::ReloadSvrRes(char *pBuffer, int iLen)
 	AgentConfig *pConfig = AgentConfig::Instance();
 	SvrResReload_t *pCmd = (struct SvrResReload_t* )pBuffer;
 
-	if (pCmd->mNum > 0) pConfig->ReloadSvr(pCmd->mSvr, pCmd->mNum);
+	if(pCmd->mNum > 0) 
+	{
+		pConfig->Qos()->DelNode();
+		
+		for(int i = 0; i < pCmd->mNum; i++)
+		{
+			pConfig->Qos()->SaveNode(pCmd->mSvr[i]);
+		}
+	}
 	return 0;
 }
 
-//router发来sync响应
+//router发来sync响应(增量同步)
 int AgentClientTask::SyncSvrRes(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
 	SvrResSync_t *pCmd = (struct SvrResSync_t* )pBuffer;
 
-	if (pCmd->mNum > 0) pConfig->SyncSvr(pCmd->mSvr, pCmd->mNum);
+	if(pCmd->mNum > 0) 
+	{
+		for(int i = 0; i < pCmd->mNum; i++)
+		{
+			pConfig->Qos()->SaveNode(pCmd->mSvr[i]);
+		}
+	}
 	return 0;
 }

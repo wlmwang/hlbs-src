@@ -63,7 +63,6 @@ wTask* AgentServer::NewTcpTask(wIO *pIO)
 	return pTask;
 }
 
-
 void AgentServer::InitShm()
 {
 	char *pAddr = NULL;
@@ -109,10 +108,10 @@ void AgentServer::ConnectRouter()
 	}
 	LOG_DEBUG(ELOG_KEY, "[startup] Connect to RouterServer success, ip(%s) port(%d)", pRconf->mIPAddr, pRconf->mPort);
 	
-	//发送初始化svr配置请求
 	InitSvrReq();
 }
 
+/** 发送初始化svr配置请求 */
 int AgentServer::InitSvrReq()
 {
 	wMTcpClient<AgentClientTask>* pRouterConn = RouterConn();	//客户端连接
@@ -130,6 +129,7 @@ int AgentServer::InitSvrReq()
 	return -1;
 }
 
+/** 发送重载svr配置请求 */
 int AgentServer::ReloadSvrReq()
 {
 	wMTcpClient<AgentClientTask>* pRouterConn = RouterConn();
@@ -179,8 +179,18 @@ void AgentServer::CheckQueue()
 			return;
 		}
 		
-		SvrReportReqId_t *pReportSvr = (SvrReportReqId_t*) szBuff;
-		//mConfig->ReportSvr(pReportSvr);
+		//上报调用结果
+		SvrReqReport_t *pReportSvr = (SvrReqReport_t*) szBuff;
+		
+		struct SvrNet_t stSvr;
+		stSvr.mGid = pReportSvr->mCaller.mCalledGid;
+		stSvr.mXid = pReportSvr->mCaller.mCalledXid;
+		stSvr.mPort = pReportSvr->mCaller.mPort;
+		memcpy(stSvr.mHost, pReportSvr->mCaller.mHost, sizeof(pReportSvr->mCaller.mHost));
+		if(stSvr.mGid>0 && stSvr.mXid>0 && stSvr.mPort>0 && stSvr.mHost[0]!=0)
+		{
+			mConfig->Qos()->CallerNode(stSvr, pReportSvr->mCaller);
+		}
 	}
 }
 

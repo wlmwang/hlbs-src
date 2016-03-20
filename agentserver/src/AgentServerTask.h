@@ -25,7 +25,6 @@ class AgentServerTask : public wTcpTask
 		AgentServerTask();
 		AgentServerTask(wIO *pIO);
 		~AgentServerTask();
-		
 		void Initialize();
 		
 		virtual int VerifyConn();

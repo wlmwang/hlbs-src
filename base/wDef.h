@@ -28,6 +28,8 @@
 //shm消息队列的长度
 #define MSG_QUEUE_LEN 16777216 /* 16m */
 
+#define MEM_POOL_MAX 16777216 /* 16m */
+
 //心跳包间隔时间
 #define KEEPALIVE_TIME 3000 /* 3*1000 */
 

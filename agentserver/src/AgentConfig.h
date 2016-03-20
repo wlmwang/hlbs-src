@@ -16,8 +16,10 @@
 #include "wLog.h"
 #include "wSingleton.h"
 #include "SvrCmd.h"
+#include "SvrQos.h"
+#include "wMemPool.h"
 
-#define MAX_ROUTER_NUM 32
+#define MAX_ROUTER_NUM 64	//最多连接64个router
 
 #define CONF_XML "../config/conf.xml"
 #define ROUTER_XML "../config/router.xml"
@@ -28,6 +30,7 @@ struct RouterConf_t
 	char mIPAddr[MAX_IP_LEN];
 	unsigned int mPort;
 	short mDisabled;
+	
 	RouterConf_t()
 	{
 		memset(mIPAddr, 0, sizeof(mIPAddr));
@@ -43,7 +46,8 @@ class AgentConfig : public wConfig<AgentConfig>
 		unsigned int mPort;
 		unsigned int mBacklog;
 		unsigned int mWorkers;
-
+	
+	public:
 		AgentConfig();
 		virtual ~AgentConfig();
 		void Initialize();
@@ -51,9 +55,15 @@ class AgentConfig : public wConfig<AgentConfig>
 		
 		void GetBaseConf();
 		void GetRouterConf();
-
+		void GetQosConf();
+		
+		SvrQos *Qos() { return mSvrQos; }
+		
 	protected:
+		SvrQos *mSvrQos;
 		TiXmlDocument* mDoc;
+		wMemPool *mMemPool;
+		
 		RouterConf_t mRouterConf[MAX_ROUTER_NUM];
 };
 

@@ -13,7 +13,7 @@
 #pragma pack(1)
 
 //++++++++++++请求数据结构
-const BYTE CMD_CHANNEL_REQ = 50;
+const BYTE CMD_CHANNEL_REQ = 10;
 struct ChannelReqCmd_s : public wCommand
 {
 	ChannelReqCmd_s(BYTE para)
@@ -32,7 +32,7 @@ struct ChannelReqCmd_s : public wCommand
 };
 
 const BYTE CHANNEL_REQ_OPEN = 1;
-struct ChannelReqOpen_t : ChannelReqCmd_s 
+struct ChannelReqOpen_t : public ChannelReqCmd_s 
 {
 	ChannelReqOpen_t() : ChannelReqCmd_s(CHANNEL_REQ_OPEN)
 	{
@@ -41,7 +41,7 @@ struct ChannelReqOpen_t : ChannelReqCmd_s
 };
 
 const BYTE CHANNEL_REQ_CLOSE = 2;
-struct ChannelReqClose_t : ChannelReqCmd_s 
+struct ChannelReqClose_t : public ChannelReqCmd_s 
 {
 	ChannelReqClose_t() : ChannelReqCmd_s(CHANNEL_REQ_CLOSE)
 	{
@@ -50,7 +50,7 @@ struct ChannelReqClose_t : ChannelReqCmd_s
 };
 
 const BYTE CHANNEL_REQ_QUIT = 3;
-struct ChannelReqQuit_t : ChannelReqCmd_s 
+struct ChannelReqQuit_t : public ChannelReqCmd_s 
 {
 	ChannelReqQuit_t() : ChannelReqCmd_s(CHANNEL_REQ_QUIT)
 	{
@@ -59,7 +59,7 @@ struct ChannelReqQuit_t : ChannelReqCmd_s
 };
 
 const BYTE CHANNEL_REQ_TERMINATE = 4;
-struct ChannelReqTerminate_t : ChannelReqCmd_s 
+struct ChannelReqTerminate_t : public ChannelReqCmd_s 
 {
 	ChannelReqTerminate_t() : ChannelReqCmd_s(CHANNEL_REQ_TERMINATE)
 	{
@@ -68,7 +68,7 @@ struct ChannelReqTerminate_t : ChannelReqCmd_s
 };
 
 const BYTE CHANNEL_REQ_REOPEN = 5;
-struct ChannelReqReopen_t : ChannelReqCmd_s 
+struct ChannelReqReopen_t : public ChannelReqCmd_s 
 {
 	ChannelReqReopen_t() : ChannelReqCmd_s(CHANNEL_REQ_REOPEN)
 	{

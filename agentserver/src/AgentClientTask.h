@@ -26,7 +26,6 @@ class AgentClientTask : public wTcpTask
 		AgentClientTask();
 		AgentClientTask(wIO *pIO);
 		~AgentClientTask();
-		
 		void Initialize();
 		
 		virtual int VerifyConn();

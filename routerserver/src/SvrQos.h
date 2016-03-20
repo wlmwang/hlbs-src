@@ -24,28 +24,37 @@ class SvrQos : public wSingleton<SvrQos>
 	public:
 		SvrQos();
 		~SvrQos();
-
+		void Initialize();
+		
 		int SaveNode(struct SvrNet_t& stSvr);
-
-		/*
-		//初始化svr
-		int InitSvr(SvrNet_t *pSvr, int iLen = 0);
-		int ReloadSvr(SvrNet_t *pSvr, int iLen = 0);
-		int SyncSvr(SvrNet_t *pSvr, int iLen = 0);
+		int DelNode(struct SvrNet_t& stSvr);
+		int ModNode(struct SvrNet_t& stSvr);
+		int AllocNode(struct SvrNet_t& stSvr);
+		int QueryNode(struct SvrNet_t& stSvr);
+		int NotifyNode(struct SvrNet_t& stSvr);
+		int CallerNode(struct SvrNet_t& stSvr, struct SvrCaller_t& stCaller);
 		
-		//CGI获取所有svr
-		int GetSvrAll(SvrNet_t* pBuffer);
-		//CGI获取一个路由
-		int GetSvrByGXid(SvrNet_t* pBuffer, int iGid, int iXid);
+		bool IsExistNode(struct SvrNet_t& stSvr);
+		bool IsVerChange(struct SvrNet_t& stSvr);
+		map<struct SvrNet_t, struct SvrStat_t*>::iterator SearchNode(struct SvrNet_t& stSvr);
 		
-		//接受上报数据
-		void ReportSvr(SvrReportReqId_t *pReportSvr);
-		void Statistics();
+		int GetSvrAll(struct SvrNet_t* pBuffer);
 		
-		int GXidWRRSvr(SvrNet_t* pBuffer, string sKey, vector<Svr_t*> vSvr);
-		*/
-
 	protected:
+		int LoadStatCfg(struct SvrNet_t& stSvr, struct SvrStat_t* pSvrStat);
+		int AddRouteNode(struct SvrNet_t& stSvr, struct SvrStat_t* pSvrStat);
+		int GetRouteNode(struct SvrNet_t& stSvr);
+		int RouteCheck(struct SvrStat_t* pSvrStat, struct SvrNet& stNode, double iFirstReq, bool bFirstRt);
+		int RouteNodeRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat);
+		int ModRouteNode(struct SvrNet_t& stSvr);
+		int DelRouteNode(struct SvrNet_t& stSvr);
+		int GetAddCount(SvrStat_t* pSvrStat, int iReqCount);
+		int ReqRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat);
+		int ListRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat);
+		int RebuildRoute(struct SvrKind_t& stItem, int bForce = false);
+		int AddErrRoute(struct SvrKind_t& stItem, struct SvrNode_t& stNode);
+		int RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct SvrNode_t>* pSvrNode);
+		
 		int mRateWeight;	//成功率因子	1~100000 默认1
 		int mDelayWeight;	//时延因子		1~100000 默认1
 	    int mRebuildTm;		//重建时间间隔 默认为3s

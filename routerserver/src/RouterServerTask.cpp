@@ -28,7 +28,6 @@ void RouterServerTask::Initialize()
 {
 	ROUTER_REG_DISP(CMD_SVR_REQ, SVR_REQ_INIT, &RouterServerTask::InitSvrReq);
 	ROUTER_REG_DISP(CMD_SVR_REQ, SVR_REQ_RELOAD, &RouterServerTask::ReloadSvrReq);
-	ROUTER_REG_DISP(CMD_SVR_REQ, SVR_REQ_SYNC, &RouterServerTask::SyncSvrReq);
 }
 
 //验证登录
@@ -104,7 +103,7 @@ int RouterServerTask::InitSvrReq(char *pBuffer, int iLen)
 
 	SvrResInit_t vRRt;
 	vRRt.mCode = 0;
-	vRRt.mNum = pConfig->GetSvrAll(vRRt.mSvr);	//SvrNet_t
+	vRRt.mNum = pConfig->Qos()->GetSvrAll(vRRt.mSvr);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
@@ -115,24 +114,7 @@ int RouterServerTask::ReloadSvrReq(char *pBuffer, int iLen)
 
 	SvrResReload_t vRRt;
 	vRRt.mCode = 0;
-	vRRt.mNum = pConfig->ReloadSvr(vRRt.mSvr);	//SvrNet_t
+	vRRt.mNum = pConfig->ReloadSvr(vRRt.mSvr);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
-	return 0;
-}
-
-//agent请求下发修改的svr。一般不需要，由router主动下发
-int RouterServerTask::SyncSvrReq(char *pBuffer, int iLen)
-{
-	RouterConfig *pConfig = RouterConfig::Instance();
-	if (pConfig->IsModTime())
-	{
-		SvrResSync_t vRRt;
-		vRRt.mCode = 0;
-		vRRt.mNum = pConfig->GetModSvr(vRRt.mSvr);	//SvrNet_t
-		if (vRRt.mNum > 0)
-		{
-			SyncSend((char *)&vRRt, sizeof(vRRt));
-		}
-	}
 	return 0;
 }

@@ -32,6 +32,7 @@ OBJECTS=./debug/AgentMain.o \
 		./debug/AgentServer.o \
 		./debug/AgentServerTask.o \
 		./debug/AgentClientTask.o \
+		./debug/wMemPool.o \
 		./debug/wSignal.o \
 		./debug/wWorker.o \
 		./debug/wProcTitle.o \
@@ -108,6 +109,9 @@ all: $(TARGET)
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wSignal.o: $(BASEPATH)/wSignal.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wMemPool.o: $(BASEPATH)/wMemPool.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wShmtx.o: $(BASEPATH)/wShmtx.cpp

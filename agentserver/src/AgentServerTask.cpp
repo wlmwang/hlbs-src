@@ -56,7 +56,7 @@ int AgentServerTask::VerifyConn()
 //发送登录验证
 int AgentServerTask::Verify()
 {
-	if(!ROUTER_LOGIN) return 0;
+	//if(!ROUTER_LOGIN) return 0;	//客户端验证
 	
 	LoginReqToken_t stLoginReq;
 	stLoginReq.mConnType = SERVER_AGENT;
@@ -126,7 +126,7 @@ int AgentServerTask::GetSvrAll(char *pBuffer, int iLen)
 
 	SvrResData_t vRRt;
 	vRRt.mReqId = pCmd->GetId();
-	vRRt.mNum = pConfig->GetSvrAll(vRRt.mSvr);
+	vRRt.mNum = pConfig->Qos()->GetSvrAll(vRRt.mSvr);
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
@@ -139,8 +139,13 @@ int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 	
 	SvrResData_t vRRt;
 	vRRt.mReqId = pCmd->GetId();
-	vRRt.mNum = 1;
-	pConfig->GetSvrByGXid(vRRt.mSvr, pCmd->mGid, pCmd->mXid);
+	
+	vRRt.mSvr[0].mGid = pCmd->mGid;
+	vRRt.mSvr[0].mXid = pCmd->mXid;
+	if(pConfig->Qos()->QueryNode(vRRt.mSvr[0]) >= 0)
+	{
+		vRRt.mNum = 1;
+	}
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
