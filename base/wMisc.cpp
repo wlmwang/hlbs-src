@@ -139,20 +139,18 @@ int InitDaemon(const char *filename)
 	//第一次fork
 	if ((pid = fork()) != 0) exit(0);
 
-	//将该进程设置一个新的进程组的首进程
 	setsid();
 
 	//忽略以下信号
-	/*
-	signal(SIGINT,  SIG_IGN);
-	signal(SIGHUP,  SIG_IGN);
-	signal(SIGQUIT, SIG_IGN);
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGTTOU, SIG_IGN);
-	signal(SIGTTIN, SIG_IGN);
-	signal(SIGCHLD, SIG_IGN);
-	signal(SIGTERM, SIG_IGN);
-	*/
+	wSignal stSig(SIG_IGN);
+	stSig.AddSigno(SIGINT);
+	stSig.AddSigno(SIGHUP);
+	stSig.AddSigno(SIGQUIT);
+	stSig.AddSigno(SIGTERM);
+	stSig.AddSigno(SIGCHLD);
+	stSig.AddSigno(SIGPIPE);
+	stSig.AddSigno(SIGTTIN);
+	stSig.AddSigno(SIGTTOU);
 
 	//再次fork
 	if ((pid = fork()) != 0) exit(0);
@@ -165,7 +163,6 @@ int InitDaemon(const char *filename)
 	}
 	umask(0);
 	
-	//TODO.
 	unlink(filename);
 	return 0;
 }

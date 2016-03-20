@@ -10,23 +10,18 @@
 #include "wCore.h"
 #include "wAssert.h"
 #include "wShm.h"
+#include "wNoncopyable.h"
 
 #define MSG_QUEUE_RESERVE_LEN 8
 
 /**
  *  消息传递的共享内存队列
  */
-
-class wMsgQueue
+class wMsgQueue : private wNoncopyable
 {
 	public:
-		wMsgQueue()
-		{
-			Initialize();
-		}
-
-		~wMsgQueue() {}
-
+		wMsgQueue();
+		~wMsgQueue();
 		void Initialize();
 
 		void SetBuffer(char *vBuffer, int vBufferLen);

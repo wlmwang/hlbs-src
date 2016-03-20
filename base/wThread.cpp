@@ -5,7 +5,6 @@
  */
 
 #include <stdarg.h>
-#include <string.h>
 
 #include "wThread.h"
 #include "wLog.h"

@@ -31,7 +31,7 @@ int wFile::Open(int flags, mode_t mode)
 	mFD = open(mFileName.c_str(), flags, mode);
 	if (mFD == -1)
 	{
-		mErrno = errno;
+		mErr = errno;
 		return -1;
 	}
 	fstat(mFD, &mInfo);
@@ -42,7 +42,7 @@ int wFile::Close()
 {
 	if(close(mFD) == -1)
 	{
-		mErrno = errno;
+		mErr = errno;
 		return -1;
 	}
 	return 0;
@@ -52,7 +52,7 @@ int wFile::Unlink()
 {
 	if(unlink(mFileName.c_str()) == -1)
 	{
-		mErrno = errno;
+		mErr = errno;
 		return -1;
 	}
 	return 0;
@@ -70,7 +70,7 @@ ssize_t wFile::Read(char *pBuf, size_t nbyte, off_t offset)
 	n = pread(mFD, pBuf, nbyte, offset);
 	if (n == -1)
 	{
-		mErrno = errno;
+		mErr = errno;
 		LOG_ERROR(ELOG_KEY, "pread() \"%s\" failed", mFileName.c_str());
 		return -1;
 	}
@@ -90,9 +90,9 @@ ssize_t wFile::Write(const char *pBuf, size_t nbytes, off_t offset)
 
         if (n == -1) 
         {
-			mErrno = errno;
+			mErr = errno;
 
-            if (mErrno == EINTR) 
+            if (mErr == EINTR) 
             {
                 LOG_DEBUG(ELOG_KEY, "pwrite() was interrupted");
                 continue;

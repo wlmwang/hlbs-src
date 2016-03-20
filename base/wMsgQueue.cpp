@@ -6,6 +6,13 @@
 
 #include "wMsgQueue.h"
 
+wMsgQueue::wMsgQueue()
+{
+	Initialize();
+}
+
+wMsgQueue::~wMsgQueue() {}
+
 void wMsgQueue::Initialize()
 {
 	mBeginIdxPtr = NULL;

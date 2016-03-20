@@ -17,7 +17,6 @@
 /**
  * 每种回调Func_t（mFunc调用参数不同）需不同的wDispatch
  */
-
 template<typename T,typename IDX>
 class wDispatch : private wNoncopyable
 {

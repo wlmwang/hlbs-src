@@ -45,10 +45,8 @@
 #define CR (u_char) '\r'
 #define CRLF "\r\n"
 
-//整形长度
-#define NGX_INT32_LEN   (sizeof("-2147483648") - 1)		/* int32长度*/
-#define NGX_INT64_LEN   (sizeof("-9223372036854775808") - 1) 	/* int64长度*/
-
+#define INT32_LEN   (sizeof("-2147483648") - 1)		/* int32长度*/
+#define INT64_LEN   (sizeof("-9223372036854775808") - 1) 	/* int64长度*/
 
 #define PROCESS_SINGLE     0 	//单独进程
 #define PROCESS_MASTER     1 	//主进程

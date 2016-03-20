@@ -23,7 +23,7 @@
 #include "wTcpClient.h"
 
 template <typename TASK>
-class wMTcpClient : public wNoncopyable
+class wMTcpClient : private wNoncopyable
 {
 	public:
 		wMTcpClient();

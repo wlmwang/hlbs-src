@@ -12,8 +12,6 @@
 #include "wMisc.h"
 #include "wNoncopyable.h"
 
-extern char **environ;
-
 class wProcTitle : private wNoncopyable
 {
 	public:

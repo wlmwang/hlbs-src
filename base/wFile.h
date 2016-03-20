@@ -81,7 +81,7 @@ class wFile : private wNoncopyable
 	private:
 	    int mFD;		//文件描述符
 	    string  mFileName;	//文件名称
-		int mErrno;
+		int mErr;
 
 	    struct stat mInfo;	//文件大小等资源信息
 	    off_t  mOffset;		//现在处理到文件何处了
