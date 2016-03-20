@@ -69,7 +69,7 @@ void wMTcpClient<TASK>::PrepareStart()
 {
 	if(InitEpoll() < 0)
 	{
-		exit(1);
+		exit(2);
 	}
 	PrepareRun();
 }

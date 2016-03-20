@@ -98,7 +98,7 @@ void wTcpServer<T>::PrepareMaster(string sIpAddr, unsigned int nPort)
 	//初始化Listen Socket
 	if(InitListen(sIpAddr ,nPort) < 0)
 	{
-		exit(1);
+		exit(2);
 	}
 
 	//运行前工作
@@ -114,13 +114,13 @@ void wTcpServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 	//初始化epoll
 	if(InitEpoll() < 0)
 	{
-		exit(1);
+		exit(2);
 	}
 	
 	//Listen Socket 添加到epoll中
 	if (mListenSock == NULL)
 	{
-		exit(1);
+		exit(2);
 	}
 	mTask = NewTcpTask(mListenSock);
 	if(NULL != mTask)
@@ -159,7 +159,7 @@ void wTcpServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 			else
 			{
 				LOG_ERROR(ELOG_KEY, "[startup] worker pool slot(%d) illegal", mWorker->mSlot);
-				exit(1);
+				exit(2);
 			}
 		}
 	}
@@ -187,19 +187,19 @@ void wTcpServer<T>::PrepareStart(string sIpAddr ,unsigned int nPort)
 	//初始化epoll
 	if(InitEpoll() < 0)
 	{
-		exit(1);
+		exit(2);
 	}
 	
 	//初始化Listen Socket
 	if(InitListen(sIpAddr ,nPort) < 0)
 	{
-		exit(1);
+		exit(2);
 	}
 
 	//Listen Socket 添加到epoll中
 	if (mListenSock == NULL)
 	{
-		exit(1);
+		exit(2);
 	}
 	mTask = NewTcpTask(mListenSock);
 	if(NULL != mTask)

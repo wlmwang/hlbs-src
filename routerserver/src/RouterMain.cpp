@@ -16,12 +16,12 @@ int main(int argc, const char *argv[])
 	if(pConfig == NULL) 
 	{
 		cout << "[startup] Get RouterConfig instance failed" << endl;
-		exit(1);
+		exit(2);
 	}
 	if (pConfig->GetOption(argc, argv) < 0)
 	{
 		cout << "[startup] Get Option failed" << endl;
-		exit(1);
+		exit(2);
 	}
 	pConfig->GetBaseConf();
 	pConfig->GetSvrConf();
@@ -33,7 +33,7 @@ int main(int argc, const char *argv[])
 		if (InitDaemon(LOCK_PATH) < 0)
 		{
 			LOG_ERROR(ELOG_KEY, "[startup] Create daemon failed!");
-			exit(1);
+			exit(2);
 		}
 	}
 	
@@ -42,7 +42,7 @@ int main(int argc, const char *argv[])
 	if(pMaster == NULL) 
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Get RouterMaster instance failed");
-		exit(1);
+		exit(2);
 	}
 	pMaster->PrepareStart();
 	pMaster->MasterStart();

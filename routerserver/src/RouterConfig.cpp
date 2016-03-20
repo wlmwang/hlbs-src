@@ -36,14 +36,14 @@ void RouterConfig::GetBaseConf()
 	if (!bLoadOK)
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Load config file(conf.xml) failed");
-		exit(1);
+		exit(2);
 	}
 
 	TiXmlElement *pRoot = mDoc->FirstChildElement();
 	if (NULL == pRoot)
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Read root from config file(conf.xml) failed");
-		exit(1);
+		exit(2);
 	}
 	
 	TiXmlElement *pElement = NULL;
@@ -73,7 +73,7 @@ void RouterConfig::GetBaseConf()
 	else
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Get log config from conf.xml failed");
-		exit(1);
+		exit(2);
 	}
 
 	pElement = pRoot->FirstChildElement("SERVER");
@@ -98,7 +98,7 @@ void RouterConfig::GetBaseConf()
 	else
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Get SERVER node from conf.xml failed");
-		exit(1);
+		exit(2);
 	}
 }
 
@@ -108,7 +108,7 @@ void RouterConfig::GetSvrConf()
 	if (!bLoadOK)
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Load config file(svr.xml) failed");
-		exit(1);
+		exit(2);
 	}
 
 	TiXmlElement *pElement = NULL;
@@ -150,7 +150,7 @@ void RouterConfig::GetSvrConf()
 	else
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Get SVRS node from svr.xml failed");
-		exit(1);
+		exit(2);
 	}
 
 	SetModTime();
@@ -228,31 +228,31 @@ void RouterConfig::GetQosConf()
 	if(!(mSvrQos->mReqCfg->mReqExtendRate > 0.001 && mSvrQos->mReqCfg->mReqExtendRate < 101))
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Init invalid req_extend_rate[%f]  !((ext > 0.001) && (ext < 101))", mSvrQos->mReqCfg->mReqExtendRate);
-		exit(1);
+		exit(2);
 	}
 
 	if (mSvrQos->mReqCfg->mReqErrMin >= 1)
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Init invalid _req_err_min[%f]  _qos_req_cfg._req_err_min > 1", mSvrQos->mReqCfg->mReqErrMin);
-		exit(1);
+		exit(2);
 	}
 
 	if (mSvrQos->mDownCfg->mPossbileDownErrRate > 1 || mSvrQos->mDownCfg->mPossbileDownErrRate < 0.01)
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Init invalid err_rate_to_def_possible_down[%f] > 1 or < _req_min[%f]", mSvrQos->mReqCfg->mReqErrMin, mSvrQos->mDownCfg->mPossbileDownErrRate);
-		exit(1);
+		exit(2);
 	}
 
 	if (mSvrQos->mDownCfg->mProbeTimes < 3)
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Init invalid continuous_err_req_count_to_def_possible_down[%d] <3", mSvrQos->mDownCfg->mProbeTimes);
-		exit(1);
+		exit(2);
 	}
 
 	if (mSvrQos->mReqCfg->RebuildTm < 3)
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Init invalid rebuildtm[%d] < 3", mSvrQos->mReqCfg->RebuildTm);
-		exit(1);
+		exit(2);
 	}
 }
 

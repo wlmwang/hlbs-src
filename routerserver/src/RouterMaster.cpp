@@ -36,13 +36,13 @@ void RouterMaster::PrepareRun()
     if(mConfig == NULL) 
     {
         LOG_ERROR(ELOG_KEY, "[startup] Get RouterConfig instance failed");
-        exit(1);
+        exit(2);
     }
     mServer = RouterServer::Instance();
     if(mServer == NULL) 
     {
         LOG_ERROR(ELOG_KEY, "[startup] Get RouterServer instance failed");
-        exit(1);
+        exit(2);
     }
 
     //进程标题

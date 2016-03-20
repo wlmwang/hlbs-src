@@ -28,7 +28,7 @@ void RouterWorker::PrepareRun()
 	if(mConfig == NULL) 
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Get RouterConfig instance failed");
-		exit(1);
+		exit(2);
 	}
 
 	//重新加载配置（兼容重启时刻）
@@ -40,7 +40,7 @@ void RouterWorker::PrepareRun()
 	if(mServer == NULL) 
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Get RouterServer instance failed");
-		exit(1);
+		exit(2);
 	}
 
 	mConfig->mProcTitle->Setproctitle("worker process", "HLFS: ");
