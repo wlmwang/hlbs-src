@@ -9,6 +9,12 @@
 #include "RouterConfig.h"
 #include "RouterMaster.h"
 
+//工作目录
+//#ifdef PREFIX
+//#undef PREFIX
+#define PREFIX  "/home/hlfs/disvr/routerserver/bin"
+//#endif
+
 int main(int argc, const char *argv[])
 {
 	//config

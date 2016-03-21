@@ -210,10 +210,12 @@ ssize_t wChannel::RecvBytes(char *vArray, size_t vLen)
         return -1;
     }
 
-    LOG_DEBUG(ELOG_KEY, "[runtime] recvmsg() success, buf len %d, real reveive len %d, head len %d", vLen , n, *(int*)vArray);
+    //获取文件描述符
+    ChannelReqCmd_s *pChannel = (ChannelReqCmd_s*) (vArray + sizeof(int));
 
-	//获取文件描述符
-	ChannelReqCmd_s *pChannel = (ChannelReqCmd_s*) (vArray + sizeof(int));
+    LOG_DEBUG(ELOG_KEY, "[runtime] recvmsg() success, buf len %d, real reveive len %d, head len %d", vLen , n, *(int*)vArray);
+    LOG_DEBUG(ELOG_KEY, "[runtime] receive channel success cmd(%d) fd(%d)", (int) pChannel->GetCmd(), pChannel->mFD);
+
     if (pChannel->GetCmd() == CMD_CHANNEL_REQ)	//channel请求 
     {
         if (cmsg.cm.cmsg_len < (socklen_t) CMSG_LEN(sizeof(int))) 

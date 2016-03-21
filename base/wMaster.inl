@@ -308,8 +308,6 @@ void wMaster<T>::WorkerStart(int n, int type)
 	
 	//同步channel fd消息结构
 	struct ChannelReqOpen_t stCh;
-	memset(&stCh, 0, sizeof(struct ChannelReqOpen_t));
-	
 	for (int i = 0; i < mWorkerNum; ++i)
 	{
 		//创建worker进程
