@@ -290,7 +290,6 @@ void RouterConfig::GetQosConf()
 	mSvrQos->mListCfg.mListLimit = 100;
 	mSvrQos->mListCfg.mListMax = 400;
 	mSvrQos->mListCfg.mListMin = 10;
-	mSvrQos->mListCfg.mReqErrMin = 0.1;
 	mSvrQos->mListCfg.mListExtendRate = 0.2;
 
 	/** 宕机配置 */

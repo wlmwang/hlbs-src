@@ -143,6 +143,7 @@ int InitDaemon(const char *filename)
 
 	//忽略以下信号
 	wSignal stSig(SIG_IGN);
+	
 	stSig.AddSigno(SIGINT);
 	stSig.AddSigno(SIGHUP);
 	stSig.AddSigno(SIGQUIT);

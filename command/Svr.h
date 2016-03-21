@@ -86,8 +86,29 @@ struct SvrNet_t
 		memcpy(mHost, stSvr.mHost, MAX_SVR_HOST);
 		return *this;
 	}
-	
+
 	/** 忽略 weight version 比较、排序*/
+    bool operator==(SvrNet_t const &other) const
+    {
+        if (mGid != other.mGid)
+        {
+            return false;
+        }
+        else if(mXid != other.mXid)
+        {
+            return false;
+        }
+        else if(strcmp(mHost,other.mHost))
+        {
+            return false;
+        }
+        else if (mPort != other.mPort)
+        {
+            return false;
+        }
+        return true;
+    }
+
 	bool operator<(const SvrNet_t &stSvr) const
 	{
         if (mGid < stSvr.mGid )

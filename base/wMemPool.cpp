@@ -18,16 +18,16 @@ wMemPool::~wMemPool()
 
 void wMemPool::Initialize()
 {
-	*mStart = NULL;
-	*mLast = NULL;
-	*mEnd = NULL;
+	mStart = NULL;
+	mLast = NULL;
+	mEnd = NULL;
 	mSize = 0;
 	mExtra = NULL;
 }
 
 char *wMemPool::Create(size_t size)
 {
-    mStart = memalign(POOL_ALIGNMENT, size);	//Ò³¶ÔÆë
+    mStart = (char *) memalign(POOL_ALIGNMENT, size);
     if(mStart == NULL)
 	{
         return NULL;
@@ -45,13 +45,13 @@ char *wMemPool::Alloc(size_t size)
 	char *m = NULL;
 	if(m + size <= mEnd)
 	{
-		m = ALIGN_PTR(mLast, ALIGNMENT);
+		m = (char *) ALIGN_PTR(mLast, ALIGNMENT);
 		mLast = m + size;
 	}
 	else
 	{
-		struct extra_t *l = memalign(POOL_ALIGNMENT, sizeof(struct extra_t));
-		m = memalign(POOL_ALIGNMENT, size);
+		struct extra_t *l = (struct extra_t *) memalign(POOL_ALIGNMENT, sizeof(struct extra_t));
+		m = (char *) memalign(POOL_ALIGNMENT, size);
 		
 		l->mAddr = m;
 		l->mNext = mExtra;

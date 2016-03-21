@@ -45,11 +45,11 @@ class SvrQos : public wSingleton<SvrQos>
 		int LoadStatCfg(struct SvrNet_t& stSvr, struct SvrStat_t* pSvrStat);
 		int AddRouteNode(struct SvrNet_t& stSvr, struct SvrStat_t* pSvrStat);
 		int GetRouteNode(struct SvrNet_t& stSvr);
-		int RouteCheck(struct SvrStat_t* pSvrStat, struct SvrNet& stNode, double iFirstReq, bool bFirstRt);
+		int RouteCheck(struct SvrStat_t* pSvrStat, struct SvrNet_t& stNode, double iFirstReq, bool bFirstRt);
 		int RouteNodeRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat);
 		int ModRouteNode(struct SvrNet_t& stSvr);
 		int DelRouteNode(struct SvrNet_t& stSvr);
-		int GetAddCount(SvrStat_t* pSvrStat, int iReqCount);
+		int GetAddCount(struct SvrStat_t* pSvrStat, int iReqCount);
 		int ReqRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat);
 		int ListRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat);
 		int RebuildRoute(struct SvrKind_t& stItem, int bForce = false);

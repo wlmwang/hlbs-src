@@ -72,7 +72,7 @@ int wSignal::AddSig_t(const signal_t *pSig)
  */
 void SignalHandler(int signo)
 {
-    char *action;
+    string action;
     int err;
     wSignal::signal_t *sig;
     err = errno;
@@ -117,29 +117,7 @@ void SignalHandler(int signo)
 			break;
 	}
 	
-	/*
-	switch (signo) 
-	{
-		case SIGQUIT:
-			g_quit = 1;
-			action = ", shutting down";
-			break;
-
-		case SIGTERM:
-		case SIGINT:
-			g_terminate = 1;
-			action = ", exiting";
-			break;
-
-		case SIGHUP:
-		case USR2:	//升级
-		case SIGIO:
-			action = ", ignoring";
-			break;
-	}
-	*/
-	
-	LOG_DEBUG(ELOG_KEY, "signal %d (%s) received%s", signo, sig->mSigname, action);
+	LOG_DEBUG(ELOG_KEY, "signal %d (%s) received%s", signo, sig->mSigname, action.c_str());
     errno = err;
 }
 

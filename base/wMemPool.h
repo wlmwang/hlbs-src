@@ -14,6 +14,8 @@
 #include "wLog.h"
 #include "wNoncopyable.h"
 
+#define POOL_ALIGNMENT 4095
+
 class wMemPool : private wNoncopyable
 {
 	struct extra_t
@@ -28,7 +30,7 @@ class wMemPool : private wNoncopyable
 		void Initialize();
 		
 		char *Create(size_t size);
-		void *Alloc(size_t size);
+		char *Alloc(size_t size);
 		void Destroy();
 		void Reset();
 		
