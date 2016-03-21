@@ -32,9 +32,9 @@ void RouterWorker::PrepareRun()
 	}
 
 	//重新加载配置（兼容重启时刻）
-	pConfig->GetBaseConf();
-	pConfig->GetSvrConf();
-	pConfig->GetQosConf();
+	mConfig->GetBaseConf();
+	mConfig->GetSvrConf();
+	mConfig->GetQosConf();
 
 	mServer = RouterServer::Instance();
 	if(mServer == NULL) 

@@ -49,7 +49,7 @@ inline unsigned long long GetTickCount()    //clock_t
 //获取微妙级别时间
 inline int64_t GetTimeofday()
 {
-    timeval tv;
+    struct timeval tv;
     gettimeofday(&tv, NULL);
     return (int64_t)tv.tv_sec * 1000000 + (int64_t)tv.tv_usec;
 }
@@ -60,7 +60,7 @@ inline void GetTimeofday(struct timeval* pVal, void*)
     {
         return;
     }
-    gettimeofday(&pVal, NULL);
+    gettimeofday(pVal, NULL);
 }
 
 //long -> string

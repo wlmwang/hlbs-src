@@ -10,12 +10,12 @@
 #include "wLinux.h"
 #include "wDef.h"
 
-#include "wAssert.h"
-#include "wLog.h"
-#include "wMisc.h"
-#include "wSingleton.h"
-#include "wNoncopyable.h"
-#include "wMemPool.h"
+//#include "wAssert.h"
+//#include "wLog.h"
+//#include "wMisc.h"
+//#include "wSingleton.h"
+//#include "wNoncopyable.h"
+//#include "wMemPool.h"
 //#include "wMemCheck.h"
 
 #define ALIGNMENT	sizeof(unsigned long)
@@ -53,10 +53,10 @@
 #define SAFE_DELETE(ptr) \
     do \
     { \
-	if(ptr) { \
-		delete ptr; \
-		ptr = NULL; \
-	} \
+    	if(ptr) { \
+    		delete ptr; \
+    		ptr = NULL; \
+    	} \
     } while(0)
 
 #define SAFE_DELETE_VEC(pointer) \
@@ -69,14 +69,14 @@
 #define SAFE_FREE(ptr) \
     do \
     { \
-	if(ptr) { \
-		free(ptr); \
-		ptr = NULL; \
-	} \
+    	if(ptr) { \
+    		free(ptr); \
+    		ptr = NULL; \
+    	} \
     } while(0)
 
+//命名空间
 using namespace std;
-
 extern char **environ;
 
 #endif

@@ -33,6 +33,7 @@ OBJECTS=./debug/RouterMain.o \
 		./debug/RouterServer.o \
 		./debug/RouterServerTask.o \
 		./debug/RouterChannelTask.o \
+		./debug/SvrQos.o \
 		./debug/wMemPool.o \
 		./debug/wSignal.o \
 		./debug/wWorker.o \
@@ -75,6 +76,9 @@ all: $(TARGET)
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/RouterChannelTask.o: src/RouterChannelTask.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/SvrQos.o: src/SvrQos.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wWorker.o: $(BASEPATH)/wWorker.cpp

@@ -163,8 +163,9 @@ void wMaster<T>::HandleSignal()
 			LOG_ERROR(ELOG_KEY, "[runtime] setitimer() failed: %s", strerror(mErr));
 		}
 	}
-	
+
 	//阻塞方式等待信号量
+	wSigSet stSigset;
 	stSigset.Suspend();
 	
 	//SIGCHLD有worker退出
@@ -227,12 +228,12 @@ void wMaster<T>::HandleSignal()
 		g_reconfigure = 0;
 		
 		PrepareStart();	//重新初始化配置
-		WorkerStart(mWorkerNum, NGX_PROCESS_JUST_RESPAWN);	//重启worker
+		WorkerStart(mWorkerNum, PROCESS_JUST_SPAWN);	//重启worker
 		
 		/* allow new processes to start */
 		usleep(100*1000);	//100ms
 		
-		live = 1;
+		iLive = 1;
 		SignalWorker(SIGTERM);	//关闭原来worker进程
 	}
 }
@@ -534,10 +535,11 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
 
     	case PROCESS_RESPAWN:
     		pWorker->mRespawn = 1;
-
     		break;
+    	/*
     	case PROCESS_DETACHED:
     		pWorker->mDetached = 1;
+    	*/
     }
 	
     return pid;
@@ -626,7 +628,7 @@ void wMaster<T>::ProcessGetStatus()
                 return;
             }
 
-            if(err == ECHILD) 
+            if(mErr == ECHILD) 
 			{
 				LOG_ERROR(ELOG_KEY, "[runtime] waitpid() failed:%s", strerror(mErr));
                 return;

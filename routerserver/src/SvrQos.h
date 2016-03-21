@@ -21,6 +21,7 @@
 
 class SvrQos : public wSingleton<SvrQos>
 {
+	friend class RouterConfig;
 	public:
 		SvrQos();
 		~SvrQos();

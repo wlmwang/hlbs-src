@@ -28,9 +28,9 @@ class wMemPool : private wNoncopyable
 		void Initialize();
 		
 		char *Create(size_t size);
-		void Destroy(pool_t *pool);
-		void Reset(pool_t *pool);
-		void *Alloc(pool_t *pool, size_t size);
+		void *Alloc(size_t size);
+		void Destroy();
+		void Reset();
 		
 	protected:
 		char	*mStart; //ÆðÊ¼µØÖ·

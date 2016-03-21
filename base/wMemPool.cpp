@@ -77,7 +77,7 @@ void wMemPool::Destroy()
 	}
 }
 
-void wMemPool::ResetPool()
+void wMemPool::Reset()
 {
 	mLast = mStart;
     
