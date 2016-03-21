@@ -12,8 +12,9 @@
 #include "wIO.h"
 #include "wLog.h"
 #include "wMisc.h"
+#include "wNoncopyable.h"
 
-class wTask
+class wTask : private wNoncopyable
 {
 	public:
 		wTask();
