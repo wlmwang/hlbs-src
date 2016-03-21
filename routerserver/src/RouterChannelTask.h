@@ -35,6 +35,7 @@ class RouterChannelTask : public wChannelTask
 		DEC_FUNC(ChannelOpen);
 		DEC_FUNC(ChannelClose);
 		DEC_FUNC(ChannelQuit);
+		DEC_FUNC(ChannelTerminate);
 		
 	protected:
 		DEC_DISP(mDispatch);

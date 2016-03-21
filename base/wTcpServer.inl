@@ -38,6 +38,7 @@ void wTcpServer<T>::Initialize()
 	mListenSock = NULL;
 	mChannelSock = NULL;
 	mWorker = NULL;
+	mExiting = 0;
 }
 
 template <typename T>
@@ -176,7 +177,40 @@ void wTcpServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 template <typename T>
 void wTcpServer<T>::HandleSignal()
 {
-	//
+	if(mExiting)
+	{
+		WorkerExit();
+	}
+	
+	if(g_terminate)
+	{
+		LOG_ERROR(ELOG_KEY, "[rumtime] worker exiting");
+		WorkerExit();
+	}
+	
+	if(g_quit)
+	{
+		g_quit = 0;
+		LOG_ERROR(ELOG_KEY, "[rumtime] gracefully shutting down");
+		
+		if(!mExiting)
+		{
+			mExiting = 1;
+			mListenSock->Close();
+		}
+	}
+}
+
+template <typename T>
+void wTcpServer<T>::WorkerExit()
+{
+	if(mExiting)
+	{
+		//
+	}
+	
+	LOG_ERROR(ELOG_KEY, "[rumtime] exit");
+	exit(0);
 }
 
 template <typename T>

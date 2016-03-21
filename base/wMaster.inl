@@ -109,7 +109,6 @@ void wMaster<T>::MasterStart()
         LOG_ERROR(ELOG_KEY, "[runtime] sigprocmask() failed:%s", strerror(mErr));
 		return;
     }
-    stSigset.EmptySet();
 	
 	//防敬群锁
 	if(mUseMutex == 1)
@@ -130,6 +129,15 @@ void wMaster<T>::MasterStart()
 		HandleSignal();
 		Run();
 	}
+}
+
+template <typename T>
+void wMaster<T>::MasterExit()
+{
+    DeletePidFile();
+	
+    LOG_ERROR(ELOG_KEY, "[runtime] master exit");
+	exit(0);
 }
 
 template <typename T>
@@ -182,8 +190,7 @@ void wMaster<T>::HandleSignal()
 	//或SIGQUIT信号(g_quit == 1),则master退出
 	if (!iLive && (g_terminate || g_quit)) 
 	{
-		//ngx_master_process_exit(cycle);
-		//MasterProcessExit();
+		MasterExit();
 	}
 	
 	//收到SIGTERM信号或SIGINT信号(g_terminate ==1)
@@ -340,7 +347,7 @@ void wMaster<T>::SignalWorker(int iSigno)
 			pCh = &stChClose;
 			size = sizeof(struct ChannelReqTerminate_t);
 			break;
-			
+				
 		default:
 			other = 1;
 	}
@@ -361,14 +368,21 @@ void wMaster<T>::SignalWorker(int iSigno)
             continue;
         }
 		
-        if(other)
+        if(!other)
 		{
 	        LOG_DEBUG(ELOG_KEY, "[runtime] pass signal channel s:%i pid:%P to:%P", 
 	        	pCh->mSlot, pCh->mPid, mWorkerPool[i]->mPid);
 
 	        /* TODO: EAGAIN */
 			memcpy(pStart + sizeof(int), (char *)pCh, size);
-			mWorkerPool[i]->mCh.SendBytes(pStart, size + sizeof(int));
+			if (mWorkerPool[i]->mCh.SendBytes(pStart, size + sizeof(int)) >= 0)
+			{
+				if(iSigno == SIGQUIT || iSigno == SIGTERM)
+				{
+					mWorkerPool[i]->mExiting = 1;
+				}
+				continue;
+			}
 		}
 					   
 		LOG_ERROR(ELOG_KEY, "[runtime] kill (%d, %d)", mWorkerPool[i]->mPid, iSigno);
@@ -386,6 +400,11 @@ void wMaster<T>::SignalWorker(int iSigno)
                 g_reap = 1;
             }
             continue;
+        }
+		
+        if (iSigno != SIGUSR1) 
+		{
+			mWorkerPool[i]->mExiting = 1;
         }
     }
     

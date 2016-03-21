@@ -57,7 +57,8 @@ class wTcpServer: public wSingleton<T>
 		void WorkerStart(wWorker *pWorker = NULL, bool bDaemon = true);
 		int AcceptMutex();
 		virtual void HandleSignal();
-
+		void WorkerExit();
+		
 		/**
 		 * epoll event
 		 */
@@ -131,6 +132,7 @@ class wTcpServer: public wSingleton<T>
 		wChannel *mChannelSock;	//Unix Socket(进程间通信)
 
 		int mErr;
+		int mExiting;
 };
 
 #include "wTcpServer.inl"

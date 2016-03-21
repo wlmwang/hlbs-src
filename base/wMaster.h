@@ -34,6 +34,7 @@ class wMaster : public wSingleton<T>
 		void PrepareStart();
 		void MasterStart();		//master-worker模式启动
 		void SingleStart();		//单进程模式启动
+		void MasterExit();
 		
 		void WorkerStart(int n, int type = PROCESS_RESPAWN);
 		pid_t SpawnWorker(void* pData, const char *title, int type = PROCESS_RESPAWN);

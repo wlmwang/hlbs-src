@@ -28,8 +28,7 @@ void RouterChannelTask::Initialize()
 	CHANNEL_REG_DISP(CMD_CHANNEL_REQ, CHANNEL_REQ_OPEN, &RouterChannelTask::ChannelOpen);
 	CHANNEL_REG_DISP(CMD_CHANNEL_REQ, CHANNEL_REQ_CLOSE, &RouterChannelTask::ChannelClose);
 	CHANNEL_REG_DISP(CMD_CHANNEL_REQ, CHANNEL_REQ_QUIT, &RouterChannelTask::ChannelQuit);
-	//CHANNEL_REG_DISP(CMD_CHANNEL_REQ, CHANNEL_REQ_TERMINATE, &RouterChannelTask::ChannelTerminate);
-	//CHANNEL_REG_DISP(CMD_CHANNEL_REQ, CHANNEL_REQ_REOPEN, &RouterChannelTask::ChannelReopen);
+	CHANNEL_REG_DISP(CMD_CHANNEL_REQ, CHANNEL_REQ_TERMINATE, &RouterChannelTask::ChannelTerminate);
 }
 
 /**
@@ -108,9 +107,13 @@ int RouterChannelTask::ChannelClose(char *pBuffer, int iLen)
 int RouterChannelTask::ChannelQuit(char *pBuffer, int iLen)
 {
 	RouterMaster *pMaster = RouterMaster::Instance();
-	
-	//g_quit = 1;
-	
+	g_quit = 1;
 	return 0;
 }
 
+int RouterChannelTask::ChannelTerminate(char *pBuffer, int iLen)
+{
+	RouterMaster *pMaster = RouterMaster::Instance();
+	g_terminate = 1;
+	return 0;
+}
