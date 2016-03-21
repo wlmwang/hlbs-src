@@ -37,7 +37,17 @@ void wWorker::Initialize()
 	mGid = 0;
 	mPriority = 0;
 	mRlimitCore = 1024;
-	memcpy(mWorkingDir, PREFIX, strlen(PREFIX)+1);
+
+#ifdef PREFIX
+	memcpy(mWorkingDir, PREFIX, strlen(PREFIX) + 1);
+#else
+	if (GetCwd(mWorkingDir, sizeof(mWorkingDir)) == -1)
+	{
+		mErr = errno;
+		LOG_ERROR(ELOG_KEY, "[runtime] getcwd failed: %s", strerror(mErr));
+		exit(2);
+	}
+#endif
 
 	mDetached = 0;
 	mExited = 0;

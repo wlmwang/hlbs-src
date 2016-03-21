@@ -84,6 +84,15 @@ inline void Strlow(u_char *dst, u_char *src, size_t n)
     }
 }
 
+inline int GetCwd(char *path, size_t size)
+{
+    if(getcwd(path, size) == NULL)
+    {
+        return -1;
+    }
+    return 0;
+}
+
 //long -> char*
 void itoa(unsigned long val, char *buf, unsigned radix);
 

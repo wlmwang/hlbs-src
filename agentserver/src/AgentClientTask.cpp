@@ -108,6 +108,9 @@ int AgentClientTask::InitSvrRes(char *pBuffer, int iLen)
 	{
 		for(int i = 0; i < pCmd->mNum; i++)
 		{
+			LOG_DEBUG(ELOG_KEY, "[runtime] receive svr from router gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", 
+				pCmd->mSvr[i].mGid, pCmd->mSvr[i].mXid, pCmd->mSvr[i].mHost, pCmd->mSvr[i].mPort, pCmd->mSvr[i].mWeight, pCmd->mSvr[i].mVersion);
+			
 			pConfig->Qos()->SaveNode(pCmd->mSvr[i]);
 		}
 	}

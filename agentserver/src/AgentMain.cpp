@@ -10,10 +10,7 @@
 #include "AgentMaster.h"
 
 //工作目录
-//#ifdef PREFIX
-//#undef PREFIX
 #define PREFIX  "/home/hlfs/disvr/agentserver/bin"
-//#endif
 
 int main(int argc, const char *argv[])
 {
