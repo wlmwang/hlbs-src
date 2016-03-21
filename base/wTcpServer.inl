@@ -328,12 +328,14 @@ wTask* wTcpServer<T>::NewChannelTask(wIO *pIO)
 }
 
 template <typename T>
-int wTcpServer<T>::AddToEpoll(wTask* pTask, int iEvent)
+int wTcpServer<T>::AddToEpoll(wTask* pTask, int iEvents, int iOp)
 {
-	mEpollEvent.events = iEvent;
+	mEpollEvent.events = iEvents | EPOLLERR | EPOLLHUP; //|EPOLLET
 	mEpollEvent.data.fd = pTask->IO()->FD();
-	mEpollEvent.data.ptr = pTask;
-	int iRet = epoll_ctl(mEpollFD, EPOLL_CTL_ADD, pTask->IO()->FD(), &mEpollEvent);
+	mEpollEvent.data.ptr = pTask;	
+	LOG_DEBUG(ELOG_KEY, "[runtime] %s fd %d events read %d write %d", iOp == EPOLL_CTL_MOD ? "mod":"add", mEpollEvent.data.fd, mEpollEvent.events & EPOLLIN, mEpollEvent.events & EPOLLOUT);
+
+	int iRet = epoll_ctl(mEpollFD, iOp, pTask->IO()->FD(), &mEpollEvent);
 	if(iRet < 0)
 	{
 		mErr = errno;
@@ -452,6 +454,11 @@ void wTcpServer<T>::Recv()
 			}
 			else if (mEpollEventPool[i].events & EPOLLOUT)
 			{
+				if (pTask->IsWritting() <= 0)
+				{
+					AddToEpoll(pTask, EPOLLIN, EPOLL_CTL_MOD);
+					return;
+				}
 				//套接口准备好了写入操作
 				if (pTask->TaskSend() < 0)	//写入失败，半连接
 				{
@@ -529,7 +536,7 @@ int wTcpServer<T>::AcceptConn()
 	mTask = NewTcpTask(pSocket);
 	if(NULL != mTask)
 	{
-		if (mTask->VerifyConn() < 0 || mTask->Verify())
+		if(mTask->VerifyConn() < 0 || mTask->Verify())
 		{
 			LOG_ERROR(ELOG_KEY, "[runtime] connect illegal or verify timeout: %d, close it", iNewFD);
 			SAFE_DELETE(mTask);
@@ -537,7 +544,7 @@ int wTcpServer<T>::AcceptConn()
 		}
 		
 		mTask->Status() = TASK_RUNNING;
-		if (AddToEpoll(mTask) >= 0)
+		if(AddToEpoll(mTask) >= 0)
 		{
 			AddToTaskPool(mTask);
 		}

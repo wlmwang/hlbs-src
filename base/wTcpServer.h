@@ -68,7 +68,7 @@ class wTcpServer: public wSingleton<T>
 		 * @param  pTask [wTask*]
 		 * @return       [是否出错]
 		 */
-		int AddToEpoll(wTask* pTask, int iEvent = EPOLLIN|EPOLLERR|EPOLLHUP);
+		int AddToEpoll(wTask* pTask, int iEvents = EPOLLIN, int iOp = EPOLL_CTL_ADD);
         int RemoveEpoll(wTask* pTask);
 		
 		/**

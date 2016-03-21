@@ -48,6 +48,10 @@ class wTask
 		 *   0 : 发送成功
 		 */
 		virtual int WriteToSendBuf(const char *pCmd, int iLen);
+		/**
+		 * 发送缓冲区有数据
+		 */
+		int IsWritting() { return mSendWrite - mSendBytes; }
 		virtual int TaskSend();
 		
 		/**
