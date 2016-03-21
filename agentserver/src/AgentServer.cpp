@@ -151,7 +151,7 @@ int AgentServer::ReloadSvrReq()
  */
 void AgentServer::CheckQueue()
 {
-	int iLen = sizeof(SvrReportReqId_t);
+	int iLen = sizeof(SvrReqReport_t);
 	char szBuff[iLen];
 	memset(szBuff, 0, sizeof(szBuff));
 

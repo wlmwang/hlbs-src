@@ -112,9 +112,10 @@ int AgentServerTask::ReloadSvrReq(char *pBuffer, int iLen)
 {
 	AgentServer *pServer = AgentServer::Instance();
 	
-	SvrSetResData_t vRRt;
-	vRRt.mCode = pServer->ReloadSvrReq();
-	SyncSend((char *)&vRRt, sizeof(vRRt));
+	//TODO.
+	//SvrSetResData_t vRRt;
+	//vRRt.mCode = pServer->ReloadSvrReq();
+	//SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
 

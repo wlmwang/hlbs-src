@@ -122,7 +122,8 @@ int AgentClientTask::ReloadSvrRes(char *pBuffer, int iLen)
 
 	if(pCmd->mNum > 0) 
 	{
-		pConfig->Qos()->DelNode();
+		//TODO.
+		//pConfig->Qos()->DelNode();
 		
 		for(int i = 0; i < pCmd->mNum; i++)
 		{

@@ -149,7 +149,7 @@ void AgentConfig::GetRouterConf()
 	}
 }
 
-struct RouterConf_t* AgentConfig::GetOneRouterConf()
+struct AgentConfig::RouterConf_t* AgentConfig::GetOneRouterConf()
 {
 	for(int i = 0; i < MAX_ROUTER_NUM; i++)
 	{
@@ -181,59 +181,58 @@ void AgentConfig::GetQosConf()
     }
 
 	/** 访问量配置 */
-	mSvrQos->mReqCfg->mReqLimit = 10000;
-	mSvrQos->mReqCfg->mReqMax = 10000;
-	mSvrQos->mReqCfg->mReqMin = 10;
-	mSvrQos->mReqCfg->mReqErrMin = 0.5;
-	mSvrQos->mReqCfg->mReqExtendRate = 0.2;
-	mSvrQos->mReqCfg->RebuildTm = 60; /*4*/
+	mSvrQos->mReqCfg.mReqLimit = 10000;
+	mSvrQos->mReqCfg.mReqMax = 10000;
+	mSvrQos->mReqCfg.mReqMin = 10;
+	mSvrQos->mReqCfg.mReqErrMin = 0.5;
+	mSvrQos->mReqCfg.mReqExtendRate = 0.2;
+	mSvrQos->mReqCfg.mRebuildTm = 60; /*4*/
 
-	mSvrQos->mRebuildTm = mSvrQos->mReqCfg->RebuildTm;
+	mSvrQos->mRebuildTm = mSvrQos->mReqCfg.mRebuildTm;
 
 	/** 并发量配置 */
-	mSvrQos->mListCfg->mListLimit = 100;
-	mSvrQos->mListCfg->mListMax = 400;
-	mSvrQos->mListCfg->mListMin = 10;
-	mSvrQos->mListCfg->mReqErrMin = 0.1;
-	mSvrQos->mListCfg->mListExtendRate = 0.2;
+	mSvrQos->mListCfg.mListLimit = 100;
+	mSvrQos->mListCfg.mListMax = 400;
+	mSvrQos->mListCfg.mListMin = 10;
+	mSvrQos->mListCfg.mListExtendRate = 0.2;
 
 	/** 宕机配置 */
-	mSvrQos->mDownCfg->mReqCountTrigerProbe = 100000;
-	mSvrQos->mDownCfg->mDownTimeTrigerProbe = 600;
-	mSvrQos->mDownCfg->mProbeTimes = 3;
-	mSvrQos->mDownCfg->mPossibleDownErrReq = 10;
-	mSvrQos->mDownCfg->mPossbileDownErrRate = 0.5;
-	mSvrQos->mDownCfg->mProbeBegin = 0;
-	mSvrQos->mDownCfg->mProbeInterval = 3;
-	mSvrQos->mDownCfg->mProbeNodeExpireTime = 600;
+	mSvrQos->mDownCfg.mReqCountTrigerProbe = 100000;
+	mSvrQos->mDownCfg.mDownTimeTrigerProbe = 600;
+	mSvrQos->mDownCfg.mProbeTimes = 3;
+	mSvrQos->mDownCfg.mPossibleDownErrReq = 10;
+	mSvrQos->mDownCfg.mPossbileDownErrRate = 0.5;
+	mSvrQos->mDownCfg.mProbeBegin = 0;
+	mSvrQos->mDownCfg.mProbeInterval = 3;
+	mSvrQos->mDownCfg.mProbeNodeExpireTime = 600;
 
-	if(!(mSvrQos->mReqCfg->mReqExtendRate > 0.001 && mSvrQos->mReqCfg->mReqExtendRate < 101))
+	if(!(mSvrQos->mReqCfg.mReqExtendRate > 0.001 && mSvrQos->mReqCfg.mReqExtendRate < 101))
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Init invalid req_extend_rate[%f]  !((ext > 0.001) && (ext < 101))", mSvrQos->mReqCfg->mReqExtendRate);
+		LOG_ERROR(ELOG_KEY, "[startup] Init invalid req_extend_rate[%f]  !((ext > 0.001) && (ext < 101))", mSvrQos->mReqCfg.mReqExtendRate);
 		exit(2);
 	}
 
-	if (mSvrQos->mReqCfg->mReqErrMin >= 1)
+	if (mSvrQos->mReqCfg.mReqErrMin >= 1)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Init invalid _req_err_min[%f]  _qos_req_cfg._req_err_min > 1", mSvrQos->mReqCfg->mReqErrMin);
+		LOG_ERROR(ELOG_KEY, "[startup] Init invalid _req_err_min[%f]  _qos_req_cfg._req_err_min > 1", mSvrQos->mReqCfg.mReqErrMin);
 		exit(2);
 	}
 
-	if (mSvrQos->mDownCfg->mPossbileDownErrRate > 1 || mSvrQos->mDownCfg->mPossbileDownErrRate < 0.01)
+	if (mSvrQos->mDownCfg.mPossbileDownErrRate > 1 || mSvrQos->mDownCfg.mPossbileDownErrRate < 0.01)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Init invalid err_rate_to_def_possible_down[%f] > 1 or < _req_min[%f]", mSvrQos->mReqCfg->mReqErrMin, mSvrQos->mDownCfg->mPossbileDownErrRate);
+		LOG_ERROR(ELOG_KEY, "[startup] Init invalid err_rate_to_def_possible_down[%f] > 1 or < _req_min[%f]", mSvrQos->mReqCfg.mReqErrMin, mSvrQos->mDownCfg.mPossbileDownErrRate);
 		exit(2);
 	}
 
-	if (mSvrQos->mDownCfg->mProbeTimes < 3)
+	if (mSvrQos->mDownCfg.mProbeTimes < 3)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Init invalid continuous_err_req_count_to_def_possible_down[%d] <3", mSvrQos->mDownCfg->mProbeTimes);
+		LOG_ERROR(ELOG_KEY, "[startup] Init invalid continuous_err_req_count_to_def_possible_down[%d] <3", mSvrQos->mDownCfg.mProbeTimes);
 		exit(2);
 	}
 
-	if (mSvrQos->mReqCfg->RebuildTm < 3)
+	if (mSvrQos->mReqCfg.mRebuildTm < 3)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Init invalid rebuildtm[%d] < 3", mSvrQos->mReqCfg->RebuildTm);
+		LOG_ERROR(ELOG_KEY, "[startup] Init invalid rebuildtm[%d] < 3", mSvrQos->mReqCfg.mRebuildTm);
 		exit(2);
 	}
 }

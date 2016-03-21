@@ -24,24 +24,24 @@
 #define CONF_XML "../config/conf.xml"
 #define ROUTER_XML "../config/router.xml"
 
-//router配置，server.xml
-struct RouterConf_t
-{
-	char mIPAddr[MAX_IP_LEN];
-	unsigned int mPort;
-	short mDisabled;
-	
-	RouterConf_t()
-	{
-		memset(mIPAddr, 0, sizeof(mIPAddr));
-		mPort = 0;
-		mDisabled = 0;
-	}
-};
-
 class AgentConfig : public wConfig<AgentConfig>
 {
 	public:
+		//router配置，server.xml
+		struct RouterConf_t
+		{
+			char mIPAddr[MAX_IP_LEN];
+			unsigned int mPort;
+			short mDisabled;
+			
+			RouterConf_t()
+			{
+				memset(mIPAddr, 0, sizeof(mIPAddr));
+				mPort = 0;
+				mDisabled = 0;
+			}
+		};
+
 		char mIPAddr[MAX_IP_LEN];
 		unsigned int mPort;
 		unsigned int mBacklog;
