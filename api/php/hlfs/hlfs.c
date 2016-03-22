@@ -27,9 +27,7 @@
 #include "ext/standard/info.h"
 #include "php_hlfs.h"
 
-/* If you declare any globals in php_hlfs.h uncomment this:
 ZEND_DECLARE_MODULE_GLOBALS(hlfs)
-*/
 
 /* True global resources - no need for thread safety here */
 static int le_hlfs;
@@ -73,32 +71,36 @@ ZEND_GET_MODULE(hlfs)
 
 /* {{{ PHP_INI
  */
-/* Remove comments and fill if you need to have entries in php.ini
 PHP_INI_BEGIN()
-    STD_PHP_INI_ENTRY("hlfs.global_value",      "42", PHP_INI_ALL, OnUpdateLong, global_value, zend_hlfs_globals, hlfs_globals)
-    STD_PHP_INI_ENTRY("hlfs.global_string", "foobar", PHP_INI_ALL, OnUpdateString, global_string, zend_hlfs_globals, hlfs_globals)
+    //STD_PHP_INI_ENTRY("hlfs.global_value",      "42", PHP_INI_ALL, OnUpdateLong, global_value, zend_hlfs_globals, hlfs_globals)
+    //STD_PHP_INI_ENTRY("hlfs.global_string", "foobar", PHP_INI_ALL, OnUpdateString, global_string, zend_hlfs_globals, hlfs_globals)
+	//STD_PHP_INI_ENTRY("hlfs.path", "", PHP_INI_SYSTEM, OnUpdateString, path, zend_hlfs_globals, hlfs_globals)
 PHP_INI_END()
-*/
+
 /* }}} */
 
 /* {{{ php_hlfs_init_globals
  */
-/* Uncomment this function if you have INI entries
 static void php_hlfs_init_globals(zend_hlfs_globals *hlfs_globals)
 {
-	hlfs_globals->global_value = 0;
-	hlfs_globals->global_string = NULL;
+	//hlfs_globals->path = NULL;
+	//hlfs_globals->slist = NULL;
 }
-*/
 /* }}} */
 
-/* {{{ PHP_MINIT_FUNCTION
+/**
+ *  启动初始化
+ *  附着共享内存||连接agent服务器
  */
 PHP_MINIT_FUNCTION(hlfs)
 {
-	/* If you have INI entries, uncomment these lines 
-	REGISTER_INI_ENTRIES();
+	/*
+	if(HlfsStart(&g_handle) < 0)
+	{
+		return FAILURE;
+	}
 	*/
+	
 	return SUCCESS;
 }
 /* }}} */
@@ -107,9 +109,8 @@ PHP_MINIT_FUNCTION(hlfs)
  */
 PHP_MSHUTDOWN_FUNCTION(hlfs)
 {
-	/* uncomment this line if you have INI entries
-	UNREGISTER_INI_ENTRIES();
-	*/
+	HlfsFinal(&g_handle);
+	
 	return SUCCESS;
 }
 /* }}} */
@@ -196,11 +197,17 @@ PHP_FUNCTION(hlfs_notify_res)
 	int argc = ZEND_NUM_ARGS();
 	long gid;
 	long xid;
-
-	if (zend_parse_parameters(argc TSRMLS_CC, "ll", &gid, &xid) == FAILURE) 
+	char *host;
+	int host_len = 0;
+	long ret = 0;
+	long retcount = 1;
+	
+	if (zend_parse_parameters(argc TSRMLS_CC, "llsll", &gid, &xid,&host,&host_len,&ret,&retcount) == FAILURE) 
 		return;
-
-	php_error(E_WARNING, "hlfs_notify_res: not yet implemented");
+	
+	NotifyCallerRes(gid,xid,host,ret,retcount);
+	
+	//php_error(E_WARNING, "hlfs_notify_res: not yet implemented");
 }
 /* }}} */
 

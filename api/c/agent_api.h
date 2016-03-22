@@ -8,12 +8,11 @@
 #define _AGENT_API_H
 
 #include "wCore.h"
+#include "wShm.h"
+#include "wMsgQueue.h"
 #include "Common.h"
 #include "Svr.h"
 #include "SvrCmd.h"
-
-#include "wShm.h"
-#include "wMsgQueue.h"
 
 struct post_handle_t
 {
@@ -21,9 +20,6 @@ struct post_handle_t
 	wMsgQueue *queue;
 };
 //extern struct post_handle_t g_handle;
-
-/** 申请提交agent地址或共享内存 */
-int BeforePost(struct post_handle_t *handle);
 
 /** 单次获取路由 */
 int QueryNode(int iGid, int iXid, char* vHost, int* pPort, int *pWeight);
@@ -35,6 +31,11 @@ int NotifyCallerRes(int iGid, int iXid, const char* vHost, int iPort, int iReqRe
 int NotifyCaller(int iGid, int iXid, const char* vHost, int iPort, int iReqCount);
 
 /** 提交到agentsvr */
-int PostAgentSvr(SvrReqReport_t *pReport);
+int NotifyAgentSvr(SvrReqReport_t *pReport);
+
+/** 申请提交agent地址或共享内存 */
+int HlfsStart(struct post_handle_t *handle);
+
+void HlfsFinal(struct post_handle_t *handle);
 
 #endif

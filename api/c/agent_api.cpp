@@ -20,7 +20,7 @@ int NotifyCallerRes(int iGid, int iXid, const char* vHost, int iPort, int iReqRe
 	stReportSvr.mCaller.mReqRet = iReqRet;
 	stReportSvr.mCaller.mReqCount = iReqCount;
 	
-	return PostAgentSvr(stReportSvr);
+	return NotifyAgentSvr(stReportSvr);
 }
 
 int NotifyCaller(int iGid, int iXid, const char* vHost, int iPort, int iReqCount)
@@ -33,17 +33,17 @@ int QueryNode(int iGid, int iXid, char* vHost, int* pPort, int *pWeight)
 	return 0;
 }
 
-int PostAgentSvr(SvrReqReport_t *pReport)
+int NotifyAgentSvr(SvrReqReport_t *pReport)
 {
 	struct post_handle_t handle;
-	if (BeforePost(&handle) == -1)
+	if (HlfsStart(&handle) == -1)
 	{
 		return -1;
 	}
 	handle.queue->Push((char *)&pReport, sizeof(pReport));
 }
 
-int BeforePost(struct post_handle_t *handle)
+int HlfsStart(struct post_handle_t *handle)
 {
 	char *pAddr = 0;
 	handle->shm = new wShm(IPC_SHM, 'i', MSG_QUEUE_LEN);
@@ -51,6 +51,16 @@ int BeforePost(struct post_handle_t *handle)
 	{
 		handle->queue = new wMsgQueue();
 		handle->queue->SetBuffer(pAddr, MSG_QUEUE_LEN);
+		return 0;
 	}
 	return -1;
+}
+
+void HlfsFinal(struct post_handle_t *handle)
+{
+	if(handle != NULL)
+	{
+		SAFE_DELETE(handle->shm);
+		SAFE_DELETE(handle->queue);
+	}
 }

@@ -52,12 +52,13 @@ PHP_FUNCTION(hlfs_notify_num);
 /* 
   	Declare any global variables you may need between the BEGIN
 	and END macros here:     
+*/
 
 ZEND_BEGIN_MODULE_GLOBALS(hlfs)
-	long  global_value;
-	char *global_string;
+	//long  global_value;
+	//char *global_string;
 ZEND_END_MODULE_GLOBALS(hlfs)
-*/
+
 
 /* In every utility function you add that needs to use variables 
    in php_hlfs_globals, call TSRMLS_FETCH(); after declaring other 
