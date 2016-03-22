@@ -39,6 +39,7 @@ class wTcpServer: public wSingleton<T>
 		 * 事件读写主调函数
 		 */
 		void Recv();
+		int Send(wTask *pTask, const char *pCmd, int iLen);
 		void Broadcast(const char *pCmd, int iLen);
 		
 		/**

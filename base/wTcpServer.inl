@@ -76,22 +76,6 @@ void wTcpServer<T>::CleanTaskPool()
 }
 
 template <typename T>
-void wTcpServer<T>::Broadcast(const char *pCmd, int iLen)
-{
-	if(mTaskPool.size() > 0)
-	{
-		vector<wTask*>::iterator iter;
-		for(iter = mTaskPool.begin(); iter != mTaskPool.end(); iter++)
-		{
-			if ((*iter)->IsRunning() && ((*iter)->IO()->IOFlag() == FLAG_SEND || (*iter)->IO()->IOFlag() == FLAG_RVSD))
-			{
-				(*iter)->SyncSend(pCmd, iLen);	//同步发送
-			}
-		}
-	}
-}
-
-template <typename T>
 void wTcpServer<T>::PrepareMaster(string sIpAddr, unsigned int nPort)
 {
 	LOG_DEBUG(ELOG_KEY, "[startup] listen socket on ip(%s) port(%d)", sIpAddr.c_str(), nPort);
@@ -519,6 +503,38 @@ void wTcpServer<T>::Recv()
 					}
 				}
 			}
+		}
+	}
+}
+
+template <typename T>
+int wTcpServer<T>::Send(wTask *pTask, const char *pCmd, int iLen)
+{
+	if (pTask != NULL && pTask->IsRunning() && (pTask->IO()->IOFlag() == FLAG_SEND || pTask->IO()->IOFlag() == FLAG_RVSD))
+	{
+		if(pTask->WriteToSendBuf(pCmd, iLen))
+		{
+			return AddToEpoll(pTask, EPOLLIN | EPOLLOUT, EPOLL_CTL_MOD);
+		}
+	}
+	return -1;
+}
+
+template <typename T>
+void wTcpServer<T>::Broadcast(const char *pCmd, int iLen)
+{
+	if(mTaskPool.size() > 0)
+	{
+		vector<wTask*>::iterator iter;
+		for(iter = mTaskPool.begin(); iter != mTaskPool.end(); iter++)
+		{
+			/*
+			if ((*iter)->IsRunning() && ((*iter)->IO()->IOFlag() == FLAG_SEND || (*iter)->IO()->IOFlag() == FLAG_RVSD))
+			{
+				(*iter)->SyncSend(pCmd, iLen);	//同步发送
+			}
+			*/
+			Send(*iter, pCmd, iLen);
 		}
 	}
 }
