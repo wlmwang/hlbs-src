@@ -8,6 +8,7 @@
 #define _SVR_CMD_H_
 
 #include "wCore.h"
+#include "wCommand.h"
 #include "Common.h"
 #include "Svr.h"
 

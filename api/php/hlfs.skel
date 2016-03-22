@@ -1,0 +1,3 @@
+int hlfs_query_svr(int gid, int xid);
+int hlfs_notify_res(int gid, int xid, string host, int port, int reqres, int reqcount);
+int hlfs_notify_num(int gid, int xid, string host, int port, int reqcount);
