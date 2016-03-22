@@ -11,7 +11,6 @@
 #include <new>
 
 #include "wCore.h"
-#include "wLog.h"
 #include "wNoncopyable.h"
 
 #define POOL_ALIGNMENT 4095

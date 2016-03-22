@@ -4,7 +4,6 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include <stdarg.h>
 #include "wThreadPool.h"
 
 wThreadPool::wThreadPool()

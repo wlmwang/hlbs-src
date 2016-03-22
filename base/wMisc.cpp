@@ -4,11 +4,6 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include <sys/file.h>	//int flock(int fd,int operation);
-#include <signal.h>
-#include "wCore.h"
-#include "wLog.h"
-
 #include "wMisc.h"
 
 void itoa(unsigned long val, char *buf, unsigned radix) 

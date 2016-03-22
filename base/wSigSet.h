@@ -10,7 +10,6 @@
 #include <signal.h>
 
 #include "wCore.h"
-#include "wLog.h"
 #include "wNoncopyable.h"
 
 class wSigSet : private wNoncopyable

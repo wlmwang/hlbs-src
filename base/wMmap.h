@@ -10,7 +10,6 @@
 #include <sys/mman.h>
 
 #include "wCore.h"
-#include "wLog.h"
 #include "wNoncopyable.h"
 
 /**

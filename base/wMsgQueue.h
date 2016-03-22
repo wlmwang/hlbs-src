@@ -9,7 +9,6 @@
 
 #include "wCore.h"
 #include "wAssert.h"
-#include "wShm.h"
 #include "wNoncopyable.h"
 
 #define MSG_QUEUE_RESERVE_LEN 8

@@ -9,9 +9,6 @@
 
 #include "wCore.h"
 #include "wTask.h"
-#include "wSocket.h"
-#include "wLog.h"
-#include "wMisc.h"
 #include "wCommand.h"
 
 class wTcpTask : public wTask

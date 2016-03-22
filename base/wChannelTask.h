@@ -9,9 +9,6 @@
 
 #include "wCore.h"
 #include "wTask.h"
-#include "wChannel.h"
-#include "wLog.h"
-#include "wMisc.h"
 #include "wCommand.h"
 
 class wChannelTask : public wTask

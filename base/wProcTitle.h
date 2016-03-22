@@ -8,7 +8,6 @@
 #define _W_PROC_TITLE_H_
 
 #include "wCore.h"
-#include "wLog.h"
 #include "wMisc.h"
 #include "wNoncopyable.h"
 

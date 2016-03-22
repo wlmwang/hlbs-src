@@ -11,10 +11,12 @@
 #include <vector>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/file.h>	//int flock(int fd,int operation);
 
 #include "wCore.h"
 #include "wCommand.h"
 #include "wSignal.h"
+#include "wLog.h"
 
 inline const char* IP2Text(long ip)
 {

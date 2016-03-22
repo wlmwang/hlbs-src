@@ -7,10 +7,6 @@
 #ifndef _W_COMMAND_H_
 #define _W_COMMAND_H_
 
-/**
- *  消息头
- */
-
 #include "wCore.h"
 
 #define CMD_ID(cmd, para) ((para)<<8 | (cmd))
