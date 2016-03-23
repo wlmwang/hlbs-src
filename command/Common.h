@@ -18,7 +18,7 @@ enum CLIENT_TYPE
 #define ROUTER_LOGIN true
 #define AGENT_LOGIN true
 
-#define IPC_SHM "/tmp/report-agent.bin"
+#define AGENT_SHM "/tmp/report-agent.bin"
 
 //Dispatch
 #define REG_FUNC(ActIdx, vFunc) wDispatch<function<int(char*, int)>, int>::Func_t {ActIdx, std::bind(vFunc, this, std::placeholders::_1, std::placeholders::_2)}

@@ -51,8 +51,8 @@ void AgentCmd::Initialize()
 
 void AgentCmd::InitShareMemory()
 {
-	mInShm = new wShm(IPC_SHM, 'o', MSG_QUEUE_LEN);
-	mOutShm = new wShm(IPC_SHM, 'i', MSG_QUEUE_LEN);
+	mInShm = new wShm(AGENT_SHM, 'o', MSG_QUEUE_LEN);
+	mOutShm = new wShm(AGENT_SHM, 'i', MSG_QUEUE_LEN);
 	char *pAddr = NULL;
 	if((mInShm->AttachShm() != NULL) && ((pAddr = mInShm.AllocShm(MSG_QUEUE_LEN)) != NULL))
 	{

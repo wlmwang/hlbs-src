@@ -67,7 +67,7 @@ void AgentServer::InitShm()
 {
 	char *pAddr = NULL;
 
-	mInShm = new wShm(IPC_SHM, 'i', MSG_QUEUE_LEN);
+	mInShm = new wShm(AGENT_SHM, 'i', MSG_QUEUE_LEN);
 	if((mInShm->CreateShm() != NULL) && ((pAddr = mInShm->AllocShm(MSG_QUEUE_LEN)) != NULL))
 	{
 		mInMsgQ = new wMsgQueue();
@@ -78,7 +78,7 @@ void AgentServer::InitShm()
 		LOG_ERROR(ELOG_KEY, "[startup] Create (In) Share Memory failed");
 	}
 
-	mOutShm = new wShm(IPC_SHM, 'o', MSG_QUEUE_LEN);
+	mOutShm = new wShm(AGENT_SHM, 'o', MSG_QUEUE_LEN);
 	if((mOutShm->CreateShm() != NULL) && ((pAddr = mOutShm->AllocShm(MSG_QUEUE_LEN)) != NULL))
 	{
 		mOutMsgQ = new wMsgQueue();
