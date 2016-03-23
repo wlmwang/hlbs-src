@@ -29,6 +29,8 @@ struct postHandle_t
 	wSocket *mSock;
 };
 
+extern struct postHandle_t g_handle;
+
 /** 单次获取路由 */
 int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr);
 

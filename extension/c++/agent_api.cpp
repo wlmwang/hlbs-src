@@ -6,16 +6,17 @@
 
 #include "agent_api.h"
 
+struct postHandle_t g_handle;
+
 int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 {
-	struct postHandle_t stHandle;
-	if (ConnectAgent(&stHandle) < 0)
+	if (ConnectAgent(&g_handle) < 0)
 	{
 		return -1;
 	}
-	if (stHandle.mSvrQos)
+	if (g_handle.mSvrQos)
 	{
-		stHandle.mSvrQos->QueryNode(stSvr);
+		g_handle.mSvrQos->QueryNode(stSvr);
 		return 0;
 	}
 	return -1;
@@ -33,14 +34,13 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 	stReportSvr.mCaller.mReqUsetimeUsec = iUsetimeUsec;
 	memcpy(stReportSvr.mCaller.mHost, stSvr.mHost, strlen(stSvr.mHost) + 1);
 
-	struct postHandle_t stHandle;
-	if (InitShm(&stHandle) < 0)
+	if (InitShm(&g_handle) < 0)
 	{
 		return -1;
 	}
-	if (stHandle.mQueue)
+	if (g_handle.mQueue)
 	{
-		return stHandle.mQueue->Push((char *)&stReportSvr, sizeof(struct SvrReqReport_t));
+		return g_handle.mQueue->Push((char *)&stReportSvr, sizeof(struct SvrReqReport_t));
 	}
 	return -1;
 }
@@ -72,7 +72,7 @@ int ConnectAgent(struct postHandle_t *pHandle)
 	pHandle->mSock = new wSocket();
 	if(pHandle->mSock->Open() > 0)
 	{
-		if(pHandle->mSock->Connect(AGENT_HOST, AGENT_PORT) < 0)
+		if(pHandle->mSock->Connect(AGENT_HOST, AGENT_PORT) > 0)
 		{
 			pHandle->mSvrQos = SvrQos::Instance();
 			return 0;
