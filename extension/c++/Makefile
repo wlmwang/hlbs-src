@@ -12,14 +12,14 @@ CXXFLAGS =-g -std=c++11 -fPIC -O2 -pipe -fno-ident -Wno-invalid-offsetof
 INCPATH=-I./$(BASEPATH)
 LIBS=-shared
 
-TARGET=libagent_api
+TARGET=./debug/libagent_api
 
 OBJECTS=./debug/agent_api.o \
-		./debug/SvrQos.o \
 		./debug/wIO.o \
 		./debug/wMsgQueue.o \
 		./debug/wMisc.o \
-		./debug/wSocket.o \
+		./debug/wSocket.o \\
+		./debug/wTask.o \
 		./debug/wShm.o
 
 all: $(TARGET).so
@@ -29,9 +29,6 @@ $(TARGET).so:$(OBJECTS)
 	$(CXX) $^ -o $@ $(LIBS)
 
 ./debug/agent_api.o: agent_api.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/SvrQos.o: SvrQos.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wIO.o: $(BASEPATH)/wIO.cpp
@@ -46,12 +43,16 @@ $(TARGET).so:$(OBJECTS)
 ./debug/wSocket.o: $(BASEPATH)/wSocket.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
+./debug/wTask.o: $(BASEPATH)/wTask.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
 ./debug/wShm.o: $(BASEPATH)/wShm.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 clean:
-	-rm -rf $(OBJECTS)
-	-rm -f libagent_api.so
-	-mkdir debug
-	chmod 755 -R debug
+	-rm -rf ./debug
+	
+dir:
+	-mkdir ./debug
+	chmod 755 -R ./debug
 

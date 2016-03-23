@@ -11,22 +11,22 @@
 #include "wShm.h"
 #include "wMsgQueue.h"
 #include "wSocket.h"
+#include "wTask.h"
 #include "Common.h"
 #include "Svr.h"
 #include "SvrCmd.h"
-#include "SvrQos.h"
 
 #define AGENT_HOST "192.168.8.13"
 #define AGENT_PORT 10007
 
 struct postHandle_t
 {
-	int mType;	//0 共享内存、1 socket 上报
-
-	SvrQos *mSvrQos;
+	int mType;	//0 共享内存、1 socket
+	
+	wSocket *mSock;
+	wTask *mTask;
 	wShm *mShm;
 	wMsgQueue *mQueue;
-	wSocket *mSock;
 };
 
 extern struct postHandle_t g_handle;

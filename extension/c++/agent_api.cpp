@@ -10,14 +10,36 @@ struct postHandle_t g_handle;
 
 int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 {
-	if (ConnectAgent(&g_handle) < 0)
+	struct SvrReqGXid_t stCmd
+	stCmd.mGid = stSvr.mGid;
+	stCmd.mGid = stSvr.mXid;
+	
+	if(g_handle.mSock == NULL || g_handle.mTask == NULL)
 	{
-		return -1;
+		ConnectAgent(&g_handle);
 	}
-	if (g_handle.mSvrQos)
+	if (g_handle.mSock || g_handle.mTask)
 	{
-		g_handle.mSvrQos->QueryNode(stSvr);
-		return 0;
+		//查询请求
+		if(g_handle.mTask->SyncSend((char*)&stCmd, sizeof(stCmd)) > 0)
+		{
+			//接受返回
+			struct SvrResData_t vRRt;
+			char pBuffer[sizeof(struct SvrResData_t)];
+			int iLen = SyncRecv(pBuffer, sizeof(struct SvrResData_t));
+			if (iLen > 0)
+			{
+				SvrResData_t *pRes = (SvrResData_t*) pBuffer;
+				
+				if(pRes->mNum == 1 && pRes->mSvr[0])
+				{
+					stSvr.mPort = pRes->mSvr[0].mPort;
+					memcpy(stSvr.mHost, pRes->mSvr[0].mHost, strlen(pRes->mSvr[0].mHost) + 1);
+					return 0;
+				}
+			}
+		}
+		return -2;
 	}
 	return -1;
 }
@@ -34,11 +56,11 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 	stReportSvr.mCaller.mReqUsetimeUsec = iUsetimeUsec;
 	memcpy(stReportSvr.mCaller.mHost, stSvr.mHost, strlen(stSvr.mHost) + 1);
 
-	if (InitShm(&g_handle) < 0)
+	if(g_handle.mShm == NULL || g_handle.mQueue == NULL)
 	{
-		return -1;
+		InitShm(&g_handle);
 	}
-	if (g_handle.mQueue)
+	if (g_handle.mShm && g_handle.mQueue)
 	{
 		return g_handle.mQueue->Push((char *)&stReportSvr, sizeof(struct SvrReqReport_t));
 	}
@@ -47,7 +69,7 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 
 int NotifyCallerNum(const struct SvrNet_t &stSvr, int iReqCount)
 {
-	return 0;
+	return -1;
 }
 
 int InitShm(struct postHandle_t *pHandle)
@@ -70,11 +92,11 @@ int InitShm(struct postHandle_t *pHandle)
 int ConnectAgent(struct postHandle_t *pHandle)
 {
 	pHandle->mSock = new wSocket();
-	if(pHandle->mSock->Open() > 0)
+	if(pHandle->mSock->Open() >= 0)
 	{
-		if(pHandle->mSock->Connect(AGENT_HOST, AGENT_PORT) > 0)
+		if(pHandle->mSock->Connect(AGENT_HOST, AGENT_PORT) >= 0)
 		{
-			pHandle->mSvrQos = SvrQos::Instance();
+			pHandle->mTask = new wTask(pHandle->mSock);
 			return 0;
 		}
 		return -2;
@@ -87,7 +109,6 @@ void Release(struct postHandle_t *pHandle)
 	if(pHandle != NULL)
 	{
 		SAFE_DELETE(pHandle->mShm);
-		SAFE_DELETE(pHandle->mQueue);
 		SAFE_DELETE(pHandle->mSock);
 	}
 }
