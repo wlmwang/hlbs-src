@@ -8,7 +8,6 @@
 #define _W_ASSERT_H_
 
 #include "wCore.h"
-#include "wLog.h"
 
 #define W_ASSERT(a, b) \
 	if(!(a)) \

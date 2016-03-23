@@ -6,7 +6,7 @@
 
 CXX=g++
 
-BASEPATH=base
+BASEPATH=./base
 CXXFLAGS =-g -std=c++11 -fPIC -O2 -pipe -fno-ident -Wno-invalid-offsetof
 
 INCPATH=-I./$(BASEPATH)
@@ -14,7 +14,9 @@ LIBS=-shared
 
 TARGET=libagent_api
 
-OBJECTS=./debug/wIO.o \
+OBJECTS=./debug/agent_api.o \
+		./debug/SvrQos.o \
+		./debug/wIO.o \
 		./debug/wMsgQueue.o \
 		./debug/wMisc.o \
 		./debug/wSocket.o \
@@ -25,6 +27,12 @@ all: $(TARGET).so
 $(TARGET).so:$(OBJECTS)
 	@echo "Compiling $@"
 	$(CXX) $^ -o $@ $(LIBS)
+
+./debug/agent_api.o: agent_api.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/SvrQos.o: SvrQos.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wIO.o: $(BASEPATH)/wIO.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
@@ -42,8 +50,8 @@ $(TARGET).so:$(OBJECTS)
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 clean:
-	rm -f $(OBJECTS)
-
-dir:
+	-rm -rf $(OBJECTS)
+	-rm -f libagent_api.so
 	-mkdir debug
 	chmod 755 -R debug
+

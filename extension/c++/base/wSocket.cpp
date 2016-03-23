@@ -22,14 +22,12 @@ void wSocket::Initialize()
 
 int wSocket::Open()
 {
-	int iSocketFD = socket(AF_INET, SOCK_STREAM, 0); 
-	if(iSocketFD < 0)
+	mFD = socket(AF_INET, SOCK_STREAM, 0); 
+	if(mFD < 0)
 	{
 		mErr = errno;
 		return -1;
 	}
-	mFD = iSocketFD;
-
 	int iFlags = 1;
 	struct linger stLing = {0,0};
 	setsockopt(mFD, SOL_SOCKET, SO_REUSEADDR, &iFlags, sizeof(iFlags));
@@ -37,6 +35,123 @@ int wSocket::Open()
 	setsockopt(mFD, SOL_SOCKET, SO_LINGER, &stLing, sizeof(stLing));
 	
 	return mFD;
+}
+
+int wSocket::Bind(string sIpAddr ,unsigned int nPort)
+{
+	if (mFD == FD_UNKNOWN)
+	{
+		return -1;
+	}
+	mHost = sIpAddr;
+	mPort = nPort;
+
+	struct sockaddr_in stSocketAddr;
+	stSocketAddr.sin_family = AF_INET;
+	stSocketAddr.sin_port = htons((short)nPort);
+	stSocketAddr.sin_addr.s_addr = inet_addr(sIpAddr.c_str());
+
+	if(bind(mFD, (struct sockaddr *)&stSocketAddr, sizeof(stSocketAddr)) < 0)
+	{
+		mErr = errno;
+		return -1;
+	}
+	return 0;
+}
+
+int wSocket::Listen(string sIpAddr ,unsigned int nPort)
+{
+	if (mFD == FD_UNKNOWN)
+	{
+		return -1;
+	}
+	mSockType = SOCK_LISTEN;
+	mIOFlag = FLAG_RECV;
+
+	if(Bind(sIpAddr, nPort) < 0)
+	{
+		return -1;
+	}
+
+	//setsockopt socket : 设置发送缓冲大小4M
+	int iOptLen = sizeof(socklen_t);
+	int iOptVal = 0x400000;
+	if(setsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) < -1)
+	{
+		mErr = errno;
+		return -1;
+	}
+	
+	if(listen(mFD, LISTEN_BACKLOG) < 0)
+	{
+		mErr = errno;
+		return -1;
+	}
+	return 0;
+}
+
+int wSocket::Connect(string sIpAddr ,unsigned int nPort)
+{
+	if (mFD == FD_UNKNOWN)
+	{
+		return -1;
+	}
+
+	mHost = sIpAddr;
+	mPort = nPort;
+	mSockStatus = STATUS_CONNECTED;
+	mSockType = SOCK_CONNECT;
+	mIOFlag = FLAG_RECV;
+
+	sockaddr_in stSockAddr;
+	memset(&stSockAddr, 0, sizeof(sockaddr_in));
+	stSockAddr.sin_family = AF_INET;
+	stSockAddr.sin_port = htons((short)nPort);
+	stSockAddr.sin_addr.s_addr = inet_addr(sIpAddr.c_str());;
+
+	socklen_t iOptVal = 100*1024;
+	socklen_t iOptLen = sizeof(socklen_t);
+	if(setsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) != 0)
+	{
+		mErr = errno;
+		return -1;
+	}
+	if(getsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (void *)&iOptVal, &iOptLen) == 0)
+	{
+		//
+	}
+	
+	if(connect(mFD, (const struct sockaddr *)&stSockAddr, sizeof(stSockAddr)) < 0)
+	{
+		mErr = errno;
+		return -1;
+	}
+	return 0;
+}
+
+int wSocket::Accept(struct sockaddr* pClientSockAddr, socklen_t *pSockAddrSize)
+{
+	if (mFD == FD_UNKNOWN || mSockType != SOCK_LISTEN)
+	{
+		return -1;
+	}
+	
+	int iNewFD = accept(mFD, pClientSockAddr, pSockAddrSize);
+	if(iNewFD < 0)
+	{
+		mErr = errno;
+	    return -1;
+    }
+
+	//setsockopt socket：设置发送缓冲大小3M
+	int iOptLen = sizeof(socklen_t);
+	int iOptVal = 0x300000;
+	if(setsockopt(iNewFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) < -1)
+	{
+		mErr = errno;
+		return -1;
+	}
+	return iNewFD;
 }
 
 int wSocket::SetTimeout(int iTimeout)

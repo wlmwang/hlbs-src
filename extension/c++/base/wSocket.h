@@ -27,10 +27,15 @@ class wSocket : public wIO
 		virtual int SetTimeout(int iTimeout = 30);	//单位：秒
 		virtual int SetSendTimeout(int iTimeout = 30);
 		virtual int SetRecvTimeout(int iTimeout = 30);
-		
-		virtual int Open();
+
 		virtual ssize_t RecvBytes(char *vArray, size_t vLen);
 		virtual ssize_t SendBytes(char *vArray, size_t vLen);
+
+		int Open();
+		int Bind(string sIpAddr ,unsigned int nPort);
+		int Listen(string sIpAddr ,unsigned int nPort);
+		int Connect(string sIpAddr ,unsigned int nPort);
+		int Accept(struct sockaddr* pClientSockAddr, socklen_t *pSockAddrSize);
 
 	protected:
 		int mErr;

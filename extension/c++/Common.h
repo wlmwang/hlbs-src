@@ -18,6 +18,6 @@ enum CLIENT_TYPE
 #define ROUTER_LOGIN true
 #define AGENT_LOGIN true
 
-#define IPC_SHM "/tmp/report-agent.bin"
+#define AGENT_SHM "/tmp/report-agent.bin"
 
 #endif

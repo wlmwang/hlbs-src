@@ -109,9 +109,7 @@ char *wShm::CreateShm()
 }
 
 char *wShm::AttachShm()
-{
-	LOG_DEBUG(ELOG_KEY, "[runtime] try to attach %lld bytes of share memory", mSize);
-	
+{	
 	//把需要申请共享内存的key值申请出来
 	mKey = ftok(mFilename, mPipeId);
 	if (mKey < 0) 

@@ -13,13 +13,13 @@ dnl [  --with-hlfs             Include hlfs support])
 
 dnl Otherwise use enable:
 
-dnl PHP_ARG_ENABLE(hlfs, whether to enable hlfs support,
-dnl Make sure that the comment is aligned:
-dnl [  --enable-hlfs           Enable hlfs support])
+PHP_ARG_ENABLE(hlfs, whether to enable hlfs support,
+Make sure that the comment is aligned:
+[  --enable-hlfs           Enable hlfs support])
 
 if test "$PHP_HLFS" != "no"; then
   dnl Write more examples of tests here...
-
+  
   dnl # --with-hlfs -> check with-path
   dnl SEARCH_PATH="/usr/local /usr"     # you might want to change this
   dnl SEARCH_FOR="/include/hlfs.h"  # you most likely want to change this
@@ -59,5 +59,14 @@ if test "$PHP_HLFS" != "no"; then
   dnl
   dnl PHP_SUBST(HLFS_SHARED_LIBADD)
 
-  PHP_NEW_EXTENSION(hlfs, hlfs.c, $ext_shared)
+  PHP_REQUIRE_CXX()
+  PHP_SUBST(HLFS_SHARED_LIBADD)
+  PHP_ADD_LIBRARY(stdc++, 1, HLFS_SHARED_LIBADD)
+  PHP_ADD_LIBRARY_WITH_PATH(agent_api, /home/hlfs/disvr/extension/c++, HLFS_SHARED_LIBADD) 
+  PHP_NEW_EXTENSION(hlfs, hlfs.cpp, $ext_shared)
+
+  PHP_ADD_INCLUDE(/home/hlfs/disvr/extension/c++/base)
+  PHP_ADD_INCLUDE(/home/hlfs/disvr/extension/c++)
+  PHP_ADD_INCLUDE(/usr/local/lib)
+  
 fi

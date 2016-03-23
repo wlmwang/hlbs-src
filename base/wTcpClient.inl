@@ -77,7 +77,7 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 		return -1;
 	}
 
-	LOG_DEBUG(ELOG_KEY, "[runtime] connect to %s:%d successfully", inet_ntoa(stSockAddr.sin_addr), vPort);
+	LOG_DEBUG(ELOG_KEY, "[runtime] connect to %s:%d successfully", vIPAddress, vPort);
 	
 	mTcpTask = NewTcpTask(pSocket);
 	if(NULL != mTcpTask)
