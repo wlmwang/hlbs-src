@@ -60,33 +60,16 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 	}
 	SAFE_DELETE(mTcpTask);
 	
-	int iSocketFD = socket(AF_INET, SOCK_STREAM, 0);
+	wSocket* pSocket = new wSocket();
+	int iSocketFD = pSocket->Open();
 	if(iSocketFD < 0)
 	{
 		mErr = errno;
 		LOG_ERROR(ELOG_KEY, "[runtime] create socket failed: %s", strerror(mErr));
 		return -1;
 	}
-	sockaddr_in stSockAddr;
-	memset(&stSockAddr, 0, sizeof(sockaddr_in));
-	stSockAddr.sin_family = AF_INET;
-	stSockAddr.sin_port = htons(vPort);
-	stSockAddr.sin_addr.s_addr = inet_addr(vIPAddress);;
 
-	socklen_t iOptVal = 100*1024;
-	socklen_t iOptLen = sizeof(socklen_t);
-	if(setsockopt(iSocketFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) != 0)
-	{
-		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] set send buffer size to %d failed: %s", iOptVal, strerror(mErr));
-		return -1;
-	}
-	if(getsockopt(iSocketFD, SOL_SOCKET, SO_SNDBUF, (void *)&iOptVal, &iOptLen) == 0)
-	{
-		LOG_DEBUG(ELOG_KEY, "[runtime] set send buffer of socket is %d", iOptVal);
-	}
-	
-	int iRet = connect(iSocketFD, (const struct sockaddr *)&stSockAddr, sizeof(stSockAddr));
+	int iRet = pSocket->Connect(vIPAddress, vPort);
 	if(iRet < 0)
 	{
 		mErr = errno;
@@ -95,14 +78,6 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 	}
 
 	LOG_DEBUG(ELOG_KEY, "[runtime] connect to %s:%d successfully", inet_ntoa(stSockAddr.sin_addr), vPort);
-
-	wSocket* pSocket = new wSocket();
-	pSocket->FD() = iSocketFD;
-	pSocket->Host() = vIPAddress;
-	pSocket->Port() = vPort;
-	pSocket->SockStatus() = STATUS_CONNECTED;
-	pSocket->SockType() = SOCK_CONNECT;
-	pSocket->IOFlag() = FLAG_RECV;
 	
 	mTcpTask = NewTcpTask(pSocket);
 	if(NULL != mTcpTask)

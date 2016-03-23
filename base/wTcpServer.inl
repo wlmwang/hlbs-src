@@ -280,38 +280,9 @@ int wTcpServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 		SAFE_DELETE(mListenSock);
 		return -1;
 	}
-	mListenSock->Host() = sIpAddr;
-	mListenSock->Port() = nPort;
-	mListenSock->SockType() = SOCK_LISTEN;
-	mListenSock->IOFlag() = FLAG_RECV;
-	
-	//bind socket
-	struct sockaddr_in stSocketAddr;
-	stSocketAddr.sin_family = AF_INET;
-	stSocketAddr.sin_port = htons((short)nPort);
-	stSocketAddr.sin_addr.s_addr = inet_addr(sIpAddr.c_str());
-	int iRet = bind(iFD, (struct sockaddr *)&stSocketAddr, sizeof(stSocketAddr));
-	if(iRet < 0)
-	{
-		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[startup] Socket bind failed%s", strerror(mErr));
-		SAFE_DELETE(mListenSock);
-		return -1;
-	}
-	//setsockopt socket : 设置发送缓冲大小4M
-	int iOptLen = sizeof(socklen_t);
-	int iOptVal = 0x400000;
-	if(setsockopt(iFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) < -1)
-	{
-		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[startup] Set send buffer size failed:%s",strerror(mErr));
-		SAFE_DELETE(mListenSock);
-		return -1;
-	}
 	
 	//listen socket
-	iRet = listen(iFD, LISTEN_BACKLOG);
-	if(iRet < 0)
+	if(mListenSock->Listen(sIpAddr, nPort) < 0)
 	{
 		mErr = errno;
 		LOG_ERROR(ELOG_KEY, "[startup] listen failed: %s", strerror(mErr));
@@ -528,12 +499,6 @@ void wTcpServer<T>::Broadcast(const char *pCmd, int iLen)
 		vector<wTask*>::iterator iter;
 		for(iter = mTaskPool.begin(); iter != mTaskPool.end(); iter++)
 		{
-			/*
-			if ((*iter)->IsRunning() && ((*iter)->IO()->IOFlag() == FLAG_SEND || (*iter)->IO()->IOFlag() == FLAG_RVSD))
-			{
-				(*iter)->SyncSend(pCmd, iLen);	//同步发送
-			}
-			*/
 			Send(*iter, pCmd, iLen);
 		}
 	}
@@ -545,29 +510,20 @@ void wTcpServer<T>::Broadcast(const char *pCmd, int iLen)
 template <typename T>
 int wTcpServer<T>::AcceptConn()
 {
-	if(mListenSock == NULL || mListenSock->FD() == FD_UNKNOWN)
+	if(mListenSock == NULL)
 	{
 		return -1;
 	}
-	int iFD = mListenSock->FD();
 	
 	struct sockaddr_in stSockAddr;
-	socklen_t iSockAddrSize = sizeof(stSockAddr);
-	int iNewFD = accept(iFD, (struct sockaddr*)&stSockAddr, &iSockAddrSize);
-	if(iNewFD < 0)
+	socklen_t iSockAddrSize = sizeof(stSockAddr);	
+	int iNewFD = mListenSock->Accept((struct sockaddr*)&stSockAddr, &iSockAddrSize);
+	if(iNewFD <= 0)
 	{
 		mErr = errno;
 		LOG_ERROR(ELOG_KEY, "[runtime] client connect failed:%s", strerror(mErr));
 	    return -1;
     }
-	//setsockopt socket：设置发送缓冲大小3M
-	int iOptLen = sizeof(socklen_t);
-	int iOptVal = 0x300000;
-	if(setsockopt(iNewFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) < -1)
-	{
-		mErr = errno;
-		LOG_DEBUG(ELOG_KEY, "[runtime] set send buffer size failed:%s",strerror(mErr));
-	}
 		
 	//new tcp task
 	wSocket *pSocket = new wSocket();
