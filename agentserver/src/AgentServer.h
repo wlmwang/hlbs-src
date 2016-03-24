@@ -11,19 +11,19 @@
 #include <vector>
 
 #include "wCore.h"
+#include "wAssert.h"
 #include "wSingleton.h"
 #include "wTimer.h"
+#include "wLog.h"
+#include "wMisc.h"
 #include "wTcpServer.h"
-#include "wTcpTask.h"
 #include "wMTcpClient.h"
-#include "wTcpClient.h"
 #include "wShm.h"
 #include "wMsgQueue.h"
-#include "AgentServerTask.h"
-#include "AgentClientTask.h"
-#include "AgentConfig.h"
 #include "Common.h"
 #include "SvrCmd.h"
+#include "AgentClientTask.h"
+#include "AgentServerTask.h"
 
 class AgentServer: public wTcpServer<AgentServer>
 {

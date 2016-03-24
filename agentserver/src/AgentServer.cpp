@@ -4,8 +4,6 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include "wLog.h"
-#include "wMisc.h"
 #include "AgentServer.h"
 
 AgentServer::AgentServer() : wTcpServer<AgentServer>("路由服务器")

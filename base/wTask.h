@@ -48,7 +48,7 @@ class wTask : private wNoncopyable
 		 *  -2 ：发送缓冲剩余空间不足，请稍后重试
 		 *   0 : 发送成功
 		 */
-		virtual int WriteToSendBuf(const char *pCmd, int iLen);
+		virtual int SendToBuf(const char *pCmd, int iLen);
 		/**
 		 * 发送缓冲区有数据
 		 */

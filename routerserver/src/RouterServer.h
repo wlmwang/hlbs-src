@@ -16,6 +16,9 @@
 #include "wTask.h"
 #include "wIO.h"
 #include "wTcpServer.h"
+#include "RouterConfig.h"
+#include "RouterServerTask.h"
+#include "RouterChannelTask.h"
 
 class RouterServer: public wTcpServer<RouterServer>
 {
@@ -33,6 +36,9 @@ class RouterServer: public wTcpServer<RouterServer>
 		virtual wTask* NewChannelTask(wIO *pIO);
 
 		void CheckModSvr();	//检测配置文件是否修改
+		
+	protected:
+		RouterConfig *mConfig;
 };
 
 #endif

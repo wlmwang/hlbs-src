@@ -4,11 +4,7 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include "AgentServer.h" 
 #include "AgentServerTask.h"
-#include "AgentConfig.h"
-#include "wAssert.h"
-#include "LoginCmd.h"
 
 AgentServerTask::AgentServerTask()
 {
@@ -27,6 +23,9 @@ AgentServerTask::~AgentServerTask()
 
 void AgentServerTask::Initialize()
 {
+    mConfig = AgentConfig::Instance();
+    mServer = AgentServer::Instance();
+
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_RELOAD, &AgentServerTask::ReloadSvrReq);
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_ALL, &AgentServerTask::GetSvrAll);
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_GXID, &AgentServerTask::GetSvrByGXid);
@@ -103,7 +102,7 @@ int AgentServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, 
 int AgentServerTask::SyncSvrReq(char *pBuffer, int iLen)
 {
 	SvrReqSync_t vRRt;
-	SyncSend((char *)&vRRt, sizeof(vRRt));
+	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
 
@@ -128,7 +127,7 @@ int AgentServerTask::GetSvrAll(char *pBuffer, int iLen)
 	SvrResData_t vRRt;
 	vRRt.mReqId = pCmd->GetId();
 	vRRt.mNum = pConfig->Qos()->GetSvrAll(vRRt.mSvr);
-	SyncSend((char *)&vRRt, sizeof(vRRt));
+	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
 
@@ -151,6 +150,6 @@ int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 	LOG_DEBUG(ELOG_KEY, "[runtime] send svr agent num(%d) gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", vRRt.mNum,
 		vRRt.mSvr[0].mGid, vRRt.mSvr[0].mXid, vRRt.mSvr[0].mHost, vRRt.mSvr[0].mPort, vRRt.mSvr[0].mWeight, vRRt.mSvr[0].mVersion);
 	
-	SyncSend((char *)&vRRt, sizeof(vRRt));
+	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
 	return 0;
 }

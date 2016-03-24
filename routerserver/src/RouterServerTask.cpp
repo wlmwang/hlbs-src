@@ -4,10 +4,7 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include "wAssert.h"
 #include "RouterServerTask.h"
-#include "RouterConfig.h"
-#include "LoginCmd.h"
 
 RouterServerTask::RouterServerTask()
 {
@@ -26,6 +23,9 @@ RouterServerTask::~RouterServerTask()
 
 void RouterServerTask::Initialize()
 {
+    mConfig = RouterConfig::Instance();
+    mServer = RouterServer::Instance();
+    
 	ROUTER_REG_DISP(CMD_SVR_REQ, SVR_REQ_INIT, &RouterServerTask::InitSvrReq);
 	ROUTER_REG_DISP(CMD_SVR_REQ, SVR_REQ_RELOAD, &RouterServerTask::ReloadSvrReq);
 }
@@ -35,7 +35,7 @@ int RouterServerTask::VerifyConn()
 {
 	if(!ROUTER_LOGIN) return 0;
 	
-	char pBuffer[ sizeof(LoginReqToken_t) ];
+	char pBuffer[sizeof(LoginReqToken_t)];
 	int iLen = SyncRecv(pBuffer, sizeof(LoginReqToken_t));
 	if (iLen > 0)
 	{
@@ -46,7 +46,6 @@ int RouterServerTask::VerifyConn()
 			mConnType = pLoginRes->mConnType;
 			return 0;
 		}
-		//LOG_ERROR("client", "[verify] receive client and verify failed from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
 	}
 	return -1;
 }
@@ -99,22 +98,18 @@ int RouterServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer,
 
 int RouterServerTask::InitSvrReq(char *pBuffer, int iLen)
 {
-	RouterConfig *pConfig = RouterConfig::Instance();
-
 	SvrResInit_t vRRt;
 	vRRt.mCode = 0;
-	vRRt.mNum = pConfig->Qos()->GetSvrAll(vRRt.mSvr);
-	SyncSend((char *)&vRRt, sizeof(vRRt));
+	vRRt.mNum = mConfig->Qos()->GetSvrAll(vRRt.mSvr);	
+	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
 
 int RouterServerTask::ReloadSvrReq(char *pBuffer, int iLen)
 {
-	RouterConfig *pConfig = RouterConfig::Instance();
-
 	SvrResReload_t vRRt;
 	vRRt.mCode = 0;
-	vRRt.mNum = pConfig->ReloadSvr(vRRt.mSvr);
-	SyncSend((char *)&vRRt, sizeof(vRRt));
+	vRRt.mNum = mConfig->ReloadSvr(vRRt.mSvr);
+	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
 	return 0;
 }

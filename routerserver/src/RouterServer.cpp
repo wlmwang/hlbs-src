@@ -4,10 +4,7 @@
  * Copyright (C) Disvr, Inc.
  */
 
-#include "RouterConfig.h"
 #include "RouterServer.h"
-#include "RouterServerTask.h"
-#include "RouterChannelTask.h"
 
 RouterServer::RouterServer() : wTcpServer<RouterServer>("路由服务器")
 {
@@ -21,7 +18,7 @@ RouterServer::~RouterServer()
 
 void RouterServer::Initialize()
 {
-	//...
+	mConfig = RouterConfig::Instance();
 }
 
 wTask* RouterServer::NewTcpTask(wIO *pIO)
@@ -50,14 +47,13 @@ void RouterServer::Run()
 //检测配置文件是否修改
 void RouterServer::CheckModSvr()
 {
-	RouterConfig *pConfig = RouterConfig::Instance();
-	if(pConfig->IsModTime())
+	if(mConfig->IsModTime())
 	{
 		SvrResSync_t stSvr;
 		stSvr.mCode = 0;
 
 		//读更新配置
-		stSvr.mNum = pConfig->GetModSvr(stSvr.mSvr);	//SvrNet_t
+		stSvr.mNum = mConfig->GetModSvr(stSvr.mSvr);	//SvrNet_t
 		if (stSvr.mNum > 0)
 		{
 			LOG_DEBUG(ELOG_KEY, "[runtime] broadcast new Svr");

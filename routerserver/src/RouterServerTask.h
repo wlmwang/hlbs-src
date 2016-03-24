@@ -17,6 +17,10 @@
 #include "wTask.h"
 #include "wDispatch.h"
 #include "SvrCmd.h"
+#include "LoginCmd.h"
+#include "wAssert.h"
+#include "RouterConfig.h"
+#include "RouterServer.h"
 
 #define ROUTER_REG_DISP(cmdid, paraid, func) mDispatch.Register("RouterServerTask", CMD_ID(cmdid, paraid), REG_FUNC(CMD_ID(cmdid, paraid), func));
 
@@ -40,6 +44,9 @@ class RouterServerTask : public wTcpTask
 		
 	protected:
 		DEC_DISP(mDispatch);
+
+		RouterConfig *mConfig;
+		RouterServer *mServer;
 };
 
 #endif

@@ -483,7 +483,7 @@ int wTcpServer<T>::Send(wTask *pTask, const char *pCmd, int iLen)
 {
 	if (pTask != NULL && pTask->IsRunning() && (pTask->IO()->IOFlag() == FLAG_SEND || pTask->IO()->IOFlag() == FLAG_RVSD))
 	{
-		if(pTask->WriteToSendBuf(pCmd, iLen))
+		if(pTask->SendToBuf(pCmd, iLen) > 0)
 		{
 			return AddToEpoll(pTask, EPOLLIN | EPOLLOUT, EPOLL_CTL_MOD);
 		}

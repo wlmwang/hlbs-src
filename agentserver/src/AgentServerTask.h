@@ -16,8 +16,13 @@
 #include "wDispatch.h"
 #include "Common.h"
 #include "SvrCmd.h"
+#include "LoginCmd.h"
+#include "AgentConfig.h"
+#include "AgentServer.h"
 
 #define AGENT_REG_DISP(cmdid, paraid, func) mDispatch.Register("AgentServerTask", CMD_ID(cmdid, paraid), REG_FUNC(CMD_ID(cmdid, paraid), func));
+
+class AgentServer;
 
 class AgentServerTask : public wTcpTask
 {
@@ -41,6 +46,9 @@ class AgentServerTask : public wTcpTask
 		
 	protected:
 		DEC_DISP(mDispatch);
+
+		AgentConfig *mConfig;
+		AgentServer *mServer;
 };
 
 #endif
