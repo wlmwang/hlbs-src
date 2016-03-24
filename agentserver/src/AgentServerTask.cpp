@@ -56,7 +56,7 @@ int AgentServerTask::VerifyConn()
 //发送登录验证
 int AgentServerTask::Verify()
 {
-	//if(!ROUTER_LOGIN) return 0;	//客户端验证
+	if(!CLIENT_LOGIN) return 0;	//客户端验证
 	
 	LoginReqToken_t stLoginReq;
 	stLoginReq.mConnType = SERVER_AGENT;
@@ -147,6 +147,10 @@ int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 	{
 		vRRt.mNum = 1;
 	}
+
+	LOG_DEBUG(ELOG_KEY, "[runtime] send svr agent num(%d) gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", vRRt.mNum,
+		vRRt.mSvr[0].mGid, vRRt.mSvr[0].mXid, vRRt.mSvr[0].mHost, vRRt.mSvr[0].mPort, vRRt.mSvr[0].mWeight, vRRt.mSvr[0].mVersion);
+	
 	SyncSend((char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
