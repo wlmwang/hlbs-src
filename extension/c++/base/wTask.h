@@ -59,13 +59,16 @@ class wTask : private wNoncopyable
 		 */
 		int SyncSend(const char *pCmd, int iLen);
 		/**
-		 *  同步接受确切长度消息
-		 *  最好在设置为阻塞模式下启用该函数，毕竟只有超时了(30s)或者接受不完整消息才出错
-		 *  确保pCmd有足够长的空间接受自此同步消息
+		 *  同步接受确切长度消息，确保pCmd有足够长的空间接受自此同步消息
+		 *  
+		 *  慎用：（一般建议只用于连接前的验证消息交互）
+		 *  1. 需保证此socket还未加入epoll中，防止出现竞争！！！
+		 *  2. 需保证即将接受消息的类型是服务端正发送消息的类型，否则会出现混乱。（心跳除外）
 		 */
-		int SyncRecv(char *pCmd, int iLen);
+		int SyncRecv(char *pCmd, int iLen, int iTimeout = 30/*s*/);
 		
-		virtual int HandleRecvMessage(char * pBuffer, int nLen) {} //业务逻辑入口函数
+		//业务逻辑入口函数
+		virtual int HandleRecvMessage(char * pBuffer, int nLen) {}
 		
 	protected:
 		wIO	*mIO;

@@ -189,15 +189,17 @@ int wTask::SyncSend(const char *pCmd, int iLen)
 	return mIO->SendBytes(mTmpSendMsgBuff, iLen + sizeof(int));
 }
 
-int wTask::SyncRecv(char *pCmd, int iLen)
+int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 {
-	int iRecvLen = 0, iMsgLen = 0, iTryCount = 20; /*每个消息最多被分为20个包*/
+	int iRecvLen = 0, iMsgLen = 0, iTryCount = 0; /*每个消息最多被分为多少个包*/
+	long long iSleep = 5000;	//5ms
 	struct wCommand* pTmpCmd = 0;
 	
+	iTryCount = iTimeout * 1000000 / iSleep;
 	memset(mTmpRecvMsgBuff, 0, sizeof(mTmpRecvMsgBuff));
 	do
 	{
-		iRecvLen = mIO->RecvBytes(mTmpRecvMsgBuff, iLen + sizeof(int));
+		iRecvLen += mIO->RecvBytes(mTmpRecvMsgBuff, iLen + sizeof(int));
 		if(iRecvLen <= 0)
 		{
 			LOG_ERROR(ELOG_KEY, "[runtime] recv data invalid len:%d ,fd(%d)", iRecvLen, mIO->FD());
@@ -207,6 +209,8 @@ int wTask::SyncRecv(char *pCmd, int iLen)
 		{
 			continue;
 		}
+		
+		usleep(iSleep);
 		//过滤掉心跳
 		pTmpCmd = (struct wCommand*) mTmpRecvMsgBuff;
 	} while(pTmpCmd != NULL && pTmpCmd->GetCmd() == CMD_NULL && pTmpCmd->GetPara() == PARA_NULL);

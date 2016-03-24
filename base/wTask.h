@@ -60,13 +60,13 @@ class wTask : private wNoncopyable
 		 */
 		int SyncSend(const char *pCmd, int iLen);
 		/**
-		 *  同步接受确切长度消息
-		 *  最好在设置为阻塞模式下启用该函数，毕竟只有超时了(30s)或者接受不完整消息才出错
+		 *  同步接受确切长度消息(需保证此sock未加入epoll中，防止出现竞争！！)
 		 *  确保pCmd有足够长的空间接受自此同步消息
 		 */
-		int SyncRecv(char *pCmd, int iLen);
+		int SyncRecv(char *pCmd, int iLen, int iTimeout = 30/*s*/);
 		
-		virtual int HandleRecvMessage(char * pBuffer, int nLen) = 0 ; //业务逻辑入口函数
+		//业务逻辑入口函数
+		virtual int HandleRecvMessage(char * pBuffer, int nLen) {}
 		
 	protected:
 		wIO	*mIO;
