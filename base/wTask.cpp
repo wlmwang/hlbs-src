@@ -46,7 +46,7 @@ int wTask::TaskRecv()
 {
 	int iRecvLen = mIO->RecvBytes(mRecvMsgBuff + mRecvBytes, sizeof(mRecvMsgBuff) - mRecvBytes);
 	
-	LOG_DEBUG(ELOG_KEY, "[runtime] recv data len: %d , %s", iRecvLen, mRecvMsgBuff);
+	//LOG_DEBUG(ELOG_KEY, "[runtime] recv data len: %d , %s", iRecvLen, mRecvMsgBuff);
 	if(iRecvLen <= 0)
 	{
 		LOG_ERROR(ELOG_KEY, "[runtime] recv data invalid len: %d , %s", iRecvLen, mRecvMsgBuff);
@@ -89,7 +89,7 @@ int wTask::TaskRecv()
 		}
 		
 		//业务逻辑
-		LOG_DEBUG(ELOG_KEY, "[runtime] HandleRecvMessage start");
+		//LOG_DEBUG(ELOG_KEY, "[runtime] HandleRecvMessage start");
 		HandleRecvMessage(pBuffer - iMsgLen, iMsgLen);	//去除4字节消息长度标识位
 	}
 

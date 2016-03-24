@@ -46,7 +46,7 @@ int wTask::TaskRecv()
 {
 	int iRecvLen = mIO->RecvBytes(mRecvMsgBuff + mRecvBytes, sizeof(mRecvMsgBuff) - mRecvBytes);
 	
-	LOG_DEBUG(ELOG_KEY, "[runtime] recv data len: %d , %s", iRecvLen, mRecvMsgBuff);
+	//LOG_DEBUG(ELOG_KEY, "[runtime] recv data len: %d , %s", iRecvLen, mRecvMsgBuff);
 	if(iRecvLen <= 0)
 	{
 		return iRecvLen;	

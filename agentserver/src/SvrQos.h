@@ -19,7 +19,6 @@
 #include "wSingleton.h"
 #include "SvrCmd.h"
 
-
 class SvrQos : public wSingleton<SvrQos>
 {
 	friend class AgentConfig;

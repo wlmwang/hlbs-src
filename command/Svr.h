@@ -214,7 +214,7 @@ struct SvrReqCfg_t
 	int			mReqLimit;			//访问量控制的阀值
 	int			mReqMax;			//访问量控制的最大值
 	int			mReqMin;			//访问量控制的最小值
-	int			mReqCount;			//访问量控制的实际值
+	int			mReqCount;			//访问量控制的实际值（请求数）
 	float		mReqErrMin;			//错误的最小阀值 0-1 [小于则服务无错，应增大访问量。大于则服务过载，应减少访问量。]
 	float		mReqExtendRate;		//无错误的时候的访问量阀值扩张率 0.001-101
 	int         mRebuildTm;        	//统计的周期 60s
@@ -314,9 +314,9 @@ struct SvrInfo_t
 	int 		mLastReqErrRet;
 	int 		mLastReqErrTm;
 	int  		mLastReqSuc;
-	bool  		mLastErr;
-	int 		mLastAlarmReq;
-	int 		mLastAlarmSucReq;
+	bool  		mLastErr;			//门限扩张标识 true：收缩  false：扩张
+	int 		mLastAlarmReq;		//请求数扩张门限（上一周期数量），判断扩展是否有效
+	int 		mLastAlarmSucReq;	//成功请求数扩张门限
 	int 		mPreAll;			//mPreAll*mLoadX，作为WRR的标准
 
 	int 		mCityId;	//被调所属城市id
@@ -377,6 +377,7 @@ struct SvrInfo_t
  */
 struct SvrStat_t
 {
+	int 			mType;
 	SvrReqCfg_t		mReqCfg;	//访问量配置
 	SvrListCfg_t	mListCfg;	//并发量配置
 	SvrInfo_t		mInfo;		//统计信息
