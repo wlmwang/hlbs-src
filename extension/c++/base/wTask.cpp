@@ -81,6 +81,7 @@ int wTask::TaskRecv()
 			iBuffMsgLen += iMsgLen + sizeof(int);
 			pBuffer -= iMsgLen + sizeof(int);
 			
+			LOG_DEBUG(ELOG_KEY, "[runtime] recv a part of message: real len = %d, now len = %d", iMsgLen, iBuffMsgLen);
 			break;
 		}
 		
@@ -182,7 +183,7 @@ int wTask::SyncSend(const char *pCmd, int iLen)
 
 int wTask::SyncRecv(char *pCmd, int iLen)
 {
-	int iRecvLen = 0, iMsgLen = 0;
+	int iRecvLen = 0, iMsgLen = 0, iTryCount = 20; /*每个消息最多被分为20个包*/
 	struct wCommand* pTmpCmd = 0;
 	
 	memset(mTmpRecvMsgBuff, 0, sizeof(mTmpRecvMsgBuff));
@@ -192,6 +193,10 @@ int wTask::SyncRecv(char *pCmd, int iLen)
 		if(iRecvLen <= 0)
 		{
 			return iRecvLen;	
+		}
+		if (iRecvLen < iLen + sizeof(int) && iTryCount-- > 0)
+		{
+			continue;
 		}
 		//过滤掉心跳
 		pTmpCmd = (struct wCommand*) mTmpRecvMsgBuff;

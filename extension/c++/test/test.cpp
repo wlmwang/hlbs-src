@@ -35,7 +35,7 @@ int Post()
 int main(int argc,char **argv)
 {
 	Get();
-	Post();
+	//Post();
 	return 0;
 }
 

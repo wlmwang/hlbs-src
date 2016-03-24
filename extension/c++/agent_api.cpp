@@ -10,7 +10,7 @@ struct postHandle_t g_handle;
 
 int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 {
-	struct SvrReqGXid_t stCmd
+	struct SvrReqGXid_t stCmd;
 	stCmd.mGid = stSvr.mGid;
 	stCmd.mGid = stSvr.mXid;
 	
@@ -18,7 +18,7 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 	{
 		ConnectAgent(&g_handle);
 	}
-	if (g_handle.mSock || g_handle.mTask)
+	if (g_handle.mSock != NULL && g_handle.mTask != NULL)
 	{
 		//查询请求
 		if(g_handle.mTask->SyncSend((char*)&stCmd, sizeof(stCmd)) > 0)
@@ -26,12 +26,12 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 			//接受返回
 			struct SvrResData_t vRRt;
 			char pBuffer[sizeof(struct SvrResData_t)];
-			int iLen = SyncRecv(pBuffer, sizeof(struct SvrResData_t));
+			int iLen = g_handle.mTask->SyncRecv(pBuffer, sizeof(struct SvrResData_t));
 			if (iLen > 0)
 			{
 				SvrResData_t *pRes = (SvrResData_t*) pBuffer;
 				
-				if(pRes->mNum == 1 && pRes->mSvr[0])
+				if(pRes->mNum == 1)
 				{
 					stSvr.mPort = pRes->mSvr[0].mPort;
 					memcpy(stSvr.mHost, pRes->mSvr[0].mHost, strlen(pRes->mSvr[0].mHost) + 1);
@@ -60,7 +60,7 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 	{
 		InitShm(&g_handle);
 	}
-	if (g_handle.mShm && g_handle.mQueue)
+	if (g_handle.mShm != NULL && g_handle.mQueue != NULL)
 	{
 		return g_handle.mQueue->Push((char *)&stReportSvr, sizeof(struct SvrReqReport_t));
 	}

@@ -18,7 +18,7 @@ OBJECTS=./debug/agent_api.o \
 		./debug/wIO.o \
 		./debug/wMsgQueue.o \
 		./debug/wMisc.o \
-		./debug/wSocket.o \\
+		./debug/wSocket.o \
 		./debug/wTask.o \
 		./debug/wShm.o
 
