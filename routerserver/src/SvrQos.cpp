@@ -893,7 +893,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
 	multimap<float, struct SvrNode_t>* pTable = rtIt->second;
 	if(pTable == NULL || pTable->empty())
 	{
-        LOG_ERROR(ELOG_KEY, "[svr] RebuildRoute failed(cannot find route info)! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
+        LOG_ERROR(ELOG_KEY, "[svr] RebuildRoute failed(cannot find routenode)! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
 		return -1;
 	}
 
@@ -1147,7 +1147,7 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
     list<struct SvrNode_t>* pErrRoute = reIt->second;
     if(pErrRoute->empty())
 	{
-		LOG_ERROR(ELOG_KEY, "[svr] rebuild error route failed(cannot find route info list) gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
+		LOG_ERROR(ELOG_KEY, "[svr] rebuild error route failed(cannot find routenode in list) gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
         SAFE_DELETE(pErrRoute);
 		mErrTable.erase(reIt);
         return -1;
