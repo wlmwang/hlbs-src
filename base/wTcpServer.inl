@@ -321,9 +321,7 @@ int wTcpServer<T>::AddToEpoll(wTask* pTask, int iEvents, int iOp)
 {
 	mEpollEvent.events = iEvents | EPOLLERR | EPOLLHUP; //|EPOLLET
 	mEpollEvent.data.fd = pTask->IO()->FD();
-	mEpollEvent.data.ptr = pTask;	
-	LOG_DEBUG(ELOG_KEY, "[runtime] %s fd %d events read %d write %d", iOp == EPOLL_CTL_MOD ? "mod":"add", mEpollEvent.data.fd, mEpollEvent.events & EPOLLIN, mEpollEvent.events & EPOLLOUT);
-
+	mEpollEvent.data.ptr = pTask;
 	int iRet = epoll_ctl(mEpollFD, iOp, pTask->IO()->FD(), &mEpollEvent);
 	if(iRet < 0)
 	{
@@ -331,6 +329,8 @@ int wTcpServer<T>::AddToEpoll(wTask* pTask, int iEvents, int iOp)
 		LOG_ERROR(ELOG_KEY, "[runtime] fd(%d) add into epoll failed: %s", pTask->IO()->FD(), strerror(mErr));
 		return -1;
 	}
+	
+	LOG_DEBUG(ELOG_KEY, "[runtime] %s fd %d events read %d write %d", iOp == EPOLL_CTL_MOD ? "mod":"add", pTask->IO()->FD(), mEpollEvent.events & EPOLLIN, mEpollEvent.events & EPOLLOUT);
 	return 0;
 }
 

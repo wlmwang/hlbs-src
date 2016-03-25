@@ -866,7 +866,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
 	map<struct SvrKind_t, multimap<float, struct SvrNode_t>* >::iterator rtIt = mRouteTable.find(stItem);
 	if (rtIt == mRouteTable.end())
 	{
-		LOG_DEBUG(ELOG_KEY, "[svr] rebuild route test error route whether restore! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
+		LOG_DEBUG(ELOG_KEY, "[svr] RebuildRoute test error route whether restore! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
 
 		//全部过载
 		mAllReqMin = true;
@@ -874,7 +874,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
         RebuildErrRoute(stItem, pNewTable);
         if(!pNewTable->empty())
 		{
-			LOG_DEBUG(ELOG_KEY, "[svr] rebuild route recovery error route restore! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
+			LOG_DEBUG(ELOG_KEY, "[svr] RebuildRoute recovery error route restore! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
             
             //stItem.mInnerChange++;
             stItem.mPindex = 0;
@@ -885,7 +885,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
             SAFE_DELETE(pNewTable);
         }
 
-        LOG_ERROR(ELOG_KEY, "[svr] rebuild route failed(cannot find route)! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
+        LOG_ERROR(ELOG_KEY, "[svr] RebuildRoute failed(cannot find route)! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
 		return -1;
 	}
 	
@@ -893,7 +893,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
 	multimap<float, struct SvrNode_t>* pTable = rtIt->second;
 	if(pTable == NULL || pTable->empty())
 	{
-        LOG_ERROR(ELOG_KEY, "[svr] rebuild route failed(cannot find route info)! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
+        LOG_ERROR(ELOG_KEY, "[svr] RebuildRoute failed(cannot find route info)! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
 		return -1;
 	}
 
@@ -905,7 +905,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
 	}
     if(!bForce && iCurTm - stKind.mPtm < stKind.mRebuildTm)
 	{
-        LOG_DEBUG(ELOG_KEY, "[svr] rebuild route nothing to do! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
+        LOG_DEBUG(ELOG_KEY, "[svr] RebuildRoute nothing to do! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
         return 0;
     }
     //rebuild时间
@@ -964,9 +964,9 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
     	else
     	{
     		//节点过载
-	        LOG_ERROR(ELOG_KEY, "[svr] one node ready to overload,gid(%d),xid(%d),host(%s),port(%d),limit(%d),reqall(%d),reqsuc(%d),reqrej(%d),err(%d),errtm(%d), service err rate[%f][%f]>config err_rate[%f]",
+	        LOG_ERROR(ELOG_KEY, "[svr] RebuildRoute one node ready to overload,gid(%d),xid(%d),host(%s),port(%d),limit(%d),reqall(%d),reqsuc(%d),reqrej(%d),err(%d),errtm(%d), service err rate[%f][%f]>config err_rate[%f]",
 	        	stItem.mGid,stItem.mXid,it->second.mNet.mHost,it->second.mNet.mPort,
-	        	it->second.mStat->mReqCfg->mReqLimit,iReqAll,iReqSuc,iReqRej,iReqErrRet,iReqErrTm,fNodeErrRate,fAvgErrRate,fCfgErrRate);
+	        	it->second.mStat->mReqCfg.mReqLimit,iReqAll,iReqSuc,iReqRej,iReqErrRet,iReqErrTm,fNodeErrRate,fAvgErrRate,fCfgErrRate);
     		
     		//通知 TODO
     	}
@@ -975,7 +975,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
     	if (it->second.mNet.mWeight == 0)
     	{
     		it->second.mNet.mWeight = INIT_WEIGHT;
-	        LOG_ERROR(ELOG_KEY, "[svr] invalid weight=0 gid(%d),xid(%d),host(%s),port(%d)",stItem.mGid,stItem.mXid,it->second.mNet.mHost,it->second.mNet.mPort)
+	        LOG_ERROR(ELOG_KEY, "[svr] RebuildRoute invalid weight=0 gid(%d),xid(%d),host(%s),port(%d)",stItem.mGid,stItem.mXid,it->second.mNet.mHost,it->second.mNet.mPort);
     	}
 		
 		si.mBuildTm = nowTm;
@@ -999,7 +999,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
     	mAvgErrRate = stKind.mPtotalErrRate / stKind.mPsubCycCount;
 
 	    LOG_ERROR(ELOG_KEY, "[svr] all node ready to overload,gid(%d),xid(%d),avg err rate=%f, all service err rate>config err_rate[%f]",
-	    	stItem.mGid,stItem.mXid,fAvgErrRate,fCfgErrRate)
+	    	stItem.mGid,stItem.mXid,fAvgErrRate,fCfgErrRate);
     	
     	//通知 TODO
     }
@@ -1092,8 +1092,8 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
             }
         }
 
-	    LOG_ERROR(ELOG_KEY, "[svr] all overload, mod=%d cmd=%d avg err rate=%f, all req to min>config err_rate[%f]",
-	    	stItem.mGid,stItem.mXid,fAvgErrRate,fCfgErrRate)
+	    LOG_ERROR(ELOG_KEY, "[svr] RebuildRoute all overload, mod=%d cmd=%d avg err rate=%f, all req to min>config err_rate[%f]",
+	    	stItem.mGid,stItem.mXid,fAvgErrRate,fCfgErrRate);
  	
         //通知 TODO
 	}

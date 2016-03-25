@@ -2,10 +2,10 @@
 <ROOT>
 	<SVRS>
 		<!--SVR后端服务配置-->
-		<SVR GID="1" XID="1" HOST="192.168.8.13" PORT="3306" WEIGHT="1" VERSION="0" NAME="mysql" /> <!--master-->
-		<SVR GID="1" XID="2" HOST="192.168.8.14" PORT="3306" WEIGHT="1" VERSION="0" NAME="mysql" /> <!--slave-->
-		<SVR GID="1" XID="2" HOST="192.168.8.15" PORT="3306" WEIGHT="1" VERSION="0" NAME="mysql" /> <!--slave-->
-		<SVR GID="2" XID="1" HOST="192.168.8.14" PORT="6379" WEIGHT="1" VERSION="0" NAME="redis" />
-		<SVR GID="2" XID="1" HOST="192.168.8.15" PORT="6379" WEIGHT="1" VERSION="0" NAME="redis" />
+		<SVR GID="1" XID="1" HOST="192.168.8.13" PORT="3306" WEIGHT="100" VERSION="0" NAME="mysql" /> <!--master-->
+		<SVR GID="1" XID="2" HOST="192.168.8.14" PORT="3306" WEIGHT="100" VERSION="0" NAME="mysql" /> <!--slave-->
+		<SVR GID="1" XID="2" HOST="192.168.8.15" PORT="3306" WEIGHT="100" VERSION="0" NAME="mysql" /> <!--slave-->
+		<SVR GID="2" XID="1" HOST="192.168.8.14" PORT="6379" WEIGHT="100" VERSION="0" NAME="redis" />
+		<SVR GID="2" XID="1" HOST="192.168.8.15" PORT="6379" WEIGHT="100" VERSION="0" NAME="redis" />
 	</SVRS>
 </ROOT>

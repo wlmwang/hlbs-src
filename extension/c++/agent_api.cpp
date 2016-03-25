@@ -12,7 +12,7 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 {
 	struct SvrReqGXid_t stCmd;
 	stCmd.mGid = stSvr.mGid;
-	stCmd.mGid = stSvr.mXid;
+	stCmd.mXid = stSvr.mXid;
 	
 	if(g_handle.mSock == NULL || g_handle.mTask == NULL)
 	{

@@ -24,6 +24,7 @@
 
 #define ROUTER_REG_DISP(cmdid, paraid, func) mDispatch.Register("RouterServerTask", CMD_ID(cmdid, paraid), REG_FUNC(CMD_ID(cmdid, paraid), func));
 
+class RouterServer;
 class RouterServerTask : public wTcpTask
 {
 	public:

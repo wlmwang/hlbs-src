@@ -19,6 +19,7 @@
 #include "wSingleton.h"
 #include "SvrCmd.h"
 
+class AgentConfig;
 class SvrQos : public wSingleton<SvrQos>
 {
 	friend class AgentConfig;
@@ -34,7 +35,8 @@ class SvrQos : public wSingleton<SvrQos>
 		int QueryNode(struct SvrNet_t& stSvr);
 		int NotifyNode(struct SvrNet_t& stSvr);
 		int CallerNode(struct SvrNet_t& stSvr, struct SvrCaller_t& stCaller);
-		
+		int CleanNode();
+
 		bool IsExistNode(struct SvrNet_t& stSvr);
 		bool IsVerChange(struct SvrNet_t& stSvr);
 		map<struct SvrNet_t, struct SvrStat_t*>::iterator SearchNode(struct SvrNet_t& stSvr);
@@ -61,18 +63,17 @@ class SvrQos : public wSingleton<SvrQos>
 	    int mRebuildTm;		//重建时间间隔 默认为3s
 	    int mReqTimeout;	//请求超时时间 默认为500ms
 
-	    float mAvgErrRate;		//错误平均值（过载时）
+	    float mAvgErrRate;		//错误平均值，实时扩展收缩
 	    bool mAllReqMin;		//所有节点都过载？
 
 	    SvrReqCfg_t	 mReqCfg;	//访问量控制
 	    SvrListCfg_t mListCfg;	//并发量控制
 		SvrDownCfg_t mDownCfg;	//宕机控制
 		
+		int mPreRoute;			//是否开启预取缓存功能。开启后可以预先将某个gid, xid对应的host,port加载到内存中，以节省访问资源。
 		map<struct SvrNet_t, struct SvrStat_t*>	mMapReqSvr;		//节点信息。路由-统计，一对一
 		map<struct SvrKind_t, multimap<float, SvrNode_t>* > mRouteTable;	//路由信息。种类-节点，一对多
-		map<struct SvrKind_t, list<struct SvrNode_t>* > mErrTable;		//宕机路由表
-	    
-	    //QOSTMCFG	_qos_tm_cfg;	//OS 每个时间节点(0-19)统计数据
+		map<struct SvrKind_t, list<struct SvrNode_t>* > mErrTable;		//宕机路由表	    
 };
 
 #endif

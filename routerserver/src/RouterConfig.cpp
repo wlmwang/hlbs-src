@@ -333,9 +333,9 @@ void RouterConfig::GetQosConf()
 		exit(2);
 	}
 	
-	if (mSvrQos->mReqCfg->mPreTime <= 0 || mSvrQos->mReqCfg->mPreTime > (mSvrQos->mRebuildTm / 2))
+	if (mSvrQos->mReqCfg.mPreTime <= 0 || mSvrQos->mReqCfg.mPreTime > (mSvrQos->mRebuildTm / 2))
 	{
-		mSvrQos->mReqCfg->mPreTime = 2;
+		mSvrQos->mReqCfg.mPreTime = 2;
 	}
 }
 

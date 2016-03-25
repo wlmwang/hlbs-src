@@ -19,6 +19,7 @@
 #include "wSingleton.h"
 #include "SvrCmd.h"
 
+class RouterConfig;
 class SvrQos : public wSingleton<SvrQos>
 {
 	friend class RouterConfig;

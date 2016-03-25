@@ -232,7 +232,7 @@ ssize_t wSocket::RecvBytes(char *vArray, size_t vLen)
 				continue;
 			}
 			
-			LOG_ERROR(ELOG_KEY, "recv fd(%d) error: %s", mFD, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[runtime] recv fd(%d) error: %s", mFD, strerror(mErr));
 			return iRecvLen;
 		}
 	}

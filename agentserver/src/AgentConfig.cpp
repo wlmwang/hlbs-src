@@ -186,7 +186,8 @@ void AgentConfig::GetQosConf()
 	mSvrQos->mReqCfg.mReqMin = 10;
 	mSvrQos->mReqCfg.mReqErrMin = 0.5;
 	mSvrQos->mReqCfg.mReqExtendRate = 0.2;
-	mSvrQos->mReqCfg.mRebuildTm = 60; /*4*/
+	mSvrQos->mReqCfg.mRebuildTm = 60;
+	mSvrQos->mReqCfg.mPreTime = 4;
 
 	mSvrQos->mRebuildTm = mSvrQos->mReqCfg.mRebuildTm;
 
@@ -234,5 +235,10 @@ void AgentConfig::GetQosConf()
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Init invalid rebuildtm[%d] < 3", mSvrQos->mReqCfg.mRebuildTm);
 		exit(2);
+	}
+	
+	if (mSvrQos->mReqCfg.mPreTime <= 0 || mSvrQos->mReqCfg.mPreTime > (mSvrQos->mRebuildTm / 2))
+	{
+		mSvrQos->mReqCfg.mPreTime = 2;
 	}
 }

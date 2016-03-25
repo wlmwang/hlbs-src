@@ -23,7 +23,6 @@
 #define AGENT_REG_DISP(cmdid, paraid, func) mDispatch.Register("AgentServerTask", CMD_ID(cmdid, paraid), REG_FUNC(CMD_ID(cmdid, paraid), func));
 
 class AgentServer;
-
 class AgentServerTask : public wTcpTask
 {
 	public:
