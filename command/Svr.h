@@ -435,7 +435,7 @@ struct SvrKind_t
     int 	mPtm; 			//rebuild 时刻的绝对时间 time_t
     int 	mRebuildTm; 	//rebuild 的时间间隔
 	float 	mWeightSum;
-	int64_t mAccess64tm;	//最近访问时间
+	int64_t mAccess64tm;	//最近访问时间 微妙
 
 	int mPindex;
 	
@@ -449,6 +449,22 @@ struct SvrKind_t
         mWeightSum = 0.0f;
         mOverload = 0;
         mPtm = time(NULL);
+        mAccess64tm = GetTimeofday();
+        mPindex = 0;
+	}
+	
+	SvrKind_t(const SvrKind_t& stKind)
+	{
+		mGid = stKind.mGid;
+		mXid = stKind.mXid;
+        mPtotalErrRate = stKind.mPtotalErrRate;
+        mPsubCycCount = stKind.mPsubCycCount;
+        mRebuildTm = stKind.mRebuildTm;
+        mWeightSum = stKind.mWeightSum;
+        mOverload = stKind.mOverload;
+        mPtm = stKind.mPtm;
+        mAccess64tm = stKind.mAccess64tm;
+        mPindex = stKind.mPindex;
 	}
 
 	SvrKind_t(const SvrNet_t& stNode)
@@ -461,6 +477,23 @@ struct SvrKind_t
         mWeightSum = 0.0f;
         mOverload = 0;
         mPtm = time(NULL);
+        mAccess64tm = GetTimeofday();
+        mPindex = 0;
+	}
+
+	SvrKind_t& operator=(const SvrKind_t& stKind)
+	{
+		mGid = stKind.mGid;
+		mXid = stKind.mXid;
+        mPtotalErrRate = stKind.mPtotalErrRate;
+        mPsubCycCount = stKind.mPsubCycCount;
+        mRebuildTm = stKind.mRebuildTm;
+        mWeightSum = stKind.mWeightSum;
+        mOverload = stKind.mOverload;
+        mPtm = stKind.mPtm;
+        mAccess64tm = stKind.mAccess64tm;
+        mPindex = stKind.mPindex;
+        return *this;
 	}
 
     bool operator<(SvrKind_t const &other) const
