@@ -69,6 +69,7 @@ class SvrQos : public wSingleton<SvrQos>
 	    SvrListCfg_t mListCfg;	//并发量控制
 		SvrDownCfg_t mDownCfg;	//宕机控制
 		
+		int mPreRoute;			//是否开启预取缓存功能。开启后可以预先将某个gid, xid对应的host,port加载到内存中，以节省访问资源。
 		map<struct SvrNet_t, struct SvrStat_t*>	mMapReqSvr;		//节点信息。路由-统计，一对一
 		map<struct SvrKind_t, multimap<float, SvrNode_t>* > mRouteTable;	//路由信息。种类-节点，一对多
 		map<struct SvrKind_t, list<struct SvrNode_t>* > mErrTable;		//宕机路由表	    

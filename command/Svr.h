@@ -47,7 +47,7 @@ struct SvrNet_t
 	int		mPort;
 	char	mHost[MAX_SVR_HOST];
 
-    int 	mPre;
+    int 	mPre;		//预取数
     int 	mExpired;	//过期时间
 
 	SvrNet_t()
@@ -218,6 +218,7 @@ struct SvrReqCfg_t
 	float		mReqErrMin;			//错误的最小阀值 0-1 [小于则服务无错，应增大访问量。大于则服务过载，应减少访问量。]
 	float		mReqExtendRate;		//无错误的时候的访问量阀值扩张率 0.001-101
 	int         mRebuildTm;        	//统计的周期 60s
+	int 		mPreTime;			//4(不能大于route重建时间的一半) 可以设定预取时间长度N秒内的路由计数，N小于当前周期的1/2
 	SvrReqCfg_t()
 	{
 		mReqLimit = 0;
@@ -227,6 +228,7 @@ struct SvrReqCfg_t
 		mReqErrMin = 0.0;
 		mReqExtendRate = 0.0;
 		mRebuildTm = 3;
+		mPreTime = 0;
 	};
 };
 
@@ -315,9 +317,9 @@ struct SvrInfo_t
 	int 		mLastReqErrTm;
 	int  		mLastReqSuc;
 	bool  		mLastErr;			//门限扩张标识 true：收缩  false：扩张
-	int 		mLastAlarmReq;		//请求数扩张门限（上一周期数量），判断扩展是否有效
-	int 		mLastAlarmSucReq;	//成功请求数扩张门限
-	int 		mPreAll;			//mPreAll*mLoadX，作为WRR的标准
+	int 		mLastAlarmReq;		//参考值。请求数扩张门限（上一周期数量），判断扩展是否有效
+	int 		mLastAlarmSucReq;	//参考值。成功请求数扩张门限
+	int 		mPreAll;			//mPreAll*mLoadX，作为WRR的标准  路由已分配数
 
 	int 		mCityId;	//被调所属城市id
 	int 		mOffSide;	//被调节点与主调异地标志，默认为0， 1标为异地
