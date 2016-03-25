@@ -58,6 +58,9 @@ class SvrQos : public wSingleton<SvrQos>
 		int AddErrRoute(struct SvrKind_t& stItem, struct SvrNode_t& stNode);
 		int RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct SvrNode_t>* pSvrNode);
 		
+		/** for test */
+		void LogAllNode();
+
 		int mRateWeight;	//成功率因子	1~100000 默认1
 		int mDelayWeight;	//时延因子		1~100000 默认1
 	    int mRebuildTm;		//重建时间间隔 默认为3s

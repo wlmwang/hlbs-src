@@ -249,6 +249,9 @@ int SvrQos::QueryNode(struct SvrNet_t& stSvr)
 	int iAck = GetRouteNode(stSvr);
 	
 	LOG_DEBUG(ELOG_KEY, "[svr] QueryNode(%d).Svr:gid(%d),xid(%d),host(%s),port(%d),weight(%d)",iAck,stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
+	
+	/** for test */
+	LogAllNode();
 	return iAck;
 }
 
@@ -345,7 +348,7 @@ int SvrQos::GetRouteNode(struct SvrNet_t& stSvr)
     multimap<float, struct SvrNode_t>* pTable = rtIt->second;
 	if(pTable == NULL || pTable->empty())
 	{
-		LOG_ERROR(ELOG_KEY, "[svr] GetRouteNode gid(%d), xid(%d) failed. SvrNode is empty", stSvr.mGid,stSvr.mXid);
+		LOG_ERROR(ELOG_KEY, "[svr] GetRouteNode gid(%d), xid(%d) failed.SvrNode is empty", stSvr.mGid,stSvr.mXid);
 		return -1;
 	}
 
@@ -748,9 +751,12 @@ int SvrQos::ReqRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat)
 
         //目标调整值： iReqAll * (1 + mReqExtendRate)
         int iDest = iReqAll + (int)(iReqAll * mReqCfg.mReqExtendRate);
-        LOG_DEBUG(ELOG_KEY, "[svr] ReqRebuild DEST = %d, req_limit = %d", iDest, pSvrStat->mReqCfg.mReqLimit);
 
-        if(pSvrStat->mReqCfg.mReqLimit < iDest)
+        LOG_DEBUG(ELOG_KEY, "[svr] ReqRebuild lasterr=%d succount=%d alarmreq=%d, dest=%d reqlimit=%d errrate=%f avgerrate=%f reqerrmin=%f",
+        	pSvrStat->mInfo.mLastErr,iSucCount, pSvrStat->mInfo.mLastAlarmReq,
+        	iDest, pSvrStat->mReqCfg.mReqLimit, fErrRate,pSvrStat->mInfo.mAvgErrRate,pSvrStat->mReqCfg.mReqErrMin);
+
+        if(pSvrStat->mReqCfg.mReqLimit < iDest)	//扩张
 		{
             pSvrStat->mReqCfg.mReqLimit += GetAddCount(pSvrStat, iReqAll);
             if(pSvrStat->mReqCfg.mReqLimit > iDest)
@@ -823,7 +829,7 @@ int SvrQos::ListRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat)
 	int iReqCount = pSvrStat->mInfo.mReqAll - pSvrStat->mInfo.mReqRej;	//请求数
 	if (iReqCount <= 0)
 	{
-        LOG_ERROR(ELOG_KEY, "[svr] ListRebuild mReqAll < mReqRej");
+        LOG_ERROR(ELOG_KEY, "[svr] ListRebuild mReqAll(%d) < mReqRej(%d)", pSvrStat->mInfo.mReqAll, pSvrStat->mInfo.mReqRej);
 		return 0;
 	}
 
@@ -848,7 +854,7 @@ int SvrQos::ListRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat)
 	}
 	else
 	{
-		LOG_DEBUG(ELOG_KEY, "[svr] ListRebuild mReqRej > mReqSuc, mAvgTm is setting DELAY_MAX");
+		LOG_DEBUG(ELOG_KEY, "[svr] ListRebuild mReqRej(%d) > mReqSuc(%d), mAvgTm is setting DELAY_MAX",iErrCount,iReqCount);
 		pSvrStat->mInfo.mAvgTm = DELAY_MAX;	//最大延时
 		pSvrStat->mInfo.mOkRate = 0;
 	}
@@ -1057,9 +1063,9 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
 
         struct SvrNode_t stNode(it->second.mNet, pStat); //set mIsDetecting = false
         iReqLimit = pStat->mReqCfg.mReqLimit;
-        iReqLimit = iReqLimit <= 0 ? pStat->mReqCfg.mReqMin + 1 : iReqLimit;
-
-        if(iReqLimit > pStat->mReqCfg.mReqMin)	//阈值大于最低限制
+        iReqLimit = iReqLimit <= 0 ? (pStat->mReqCfg.mReqMin + 1) : iReqLimit;
+        //门限小于最低阈值，加入宕机列表
+        if(iReqLimit > pStat->mReqCfg.mReqMin)
 		{
 			pNewTable->insert(make_pair(stNode.mKey, stNode));
 			mAllReqMin = false;	//fixed
@@ -1068,6 +1074,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
 		{
             AddErrRoute(stItem, stNode);	//加入宕机列表
         }
+	    LOG_DEBUG(ELOG_KEY, "[svr] RebuildRoute reqlimit=%d reqmin=%d",iReqLimit,pStat->mReqCfg.mReqMin);
 	}
 
 	//所有节点都过载
@@ -1091,7 +1098,6 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
             	mAvgErrRate = 0;
             }
         }
-
 	    LOG_ERROR(ELOG_KEY, "[svr] RebuildRoute all overload, mod=%d cmd=%d avg err rate=%f, all req to min>config err_rate[%f]",
 	    	stItem.mGid,stItem.mXid,fAvgErrRate,fCfgErrRate);
  	
@@ -1125,10 +1131,14 @@ int SvrQos::AddErrRoute(struct SvrKind_t& stItem, struct SvrNode_t& stNode)
         pErrRoute = reIt->second;
         iErrCount = pErrRoute == NULL ? 0 : pErrRoute->size();
 	}
-	//log
+
+	time_t nowTm = time(NULL);
 	
+	LOG_DEBUG(ELOG_KEY, "[svr] AddErrRoute node overload, exist count=%d: mod=%d cmd=%d ip=%s port=%u stop_time=%d limit=%d",
+		iErrCount+1,stNode.mNet.mGid,stNode.mNet.mXid,stNode.mNet.mHost,stNode.mNet.mPort,nowTm - stNode.mStopTime,stNode.mStat->mReqCfg->mReqLimit);
+    	
 	//record down server
-	stNode.mStopTime = time(NULL);
+	stNode.mStopTime = nowTm;
 	stNode.mReqAllAfterDown = 0;
 	//stNode.mHasDumpStatistic = 0;
     pErrRoute->push_back(stNode); 
@@ -1141,13 +1151,13 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
     map<struct SvrKind_t, list<struct SvrNode_t>* >::iterator reIt = mErrTable.find(stItem);
     if(reIt == mErrTable.end())
 	{
-		LOG_ERROR(ELOG_KEY, "[svr] rebuild error route failed(cannot find route) gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
+		LOG_ERROR(ELOG_KEY, "[svr] RebuildErrRoute failed(cannot find errroute) gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
         return -1;
     }
     list<struct SvrNode_t>* pErrRoute = reIt->second;
     if(pErrRoute->empty())
 	{
-		LOG_ERROR(ELOG_KEY, "[svr] rebuild error route failed(cannot find routenode in list) gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
+		LOG_ERROR(ELOG_KEY, "[svr] RebuildErrRoute failed(cannot find errroute routenode in list) gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
         SAFE_DELETE(pErrRoute);
 		mErrTable.erase(reIt);
         return -1;
@@ -1331,4 +1341,50 @@ int SvrQos::GetAddCount(SvrStat_t* pSvrStat, int iReqCount)
     {
         return max((int)(pSvrStat->mReqCfg.mReqLimit * pSvrStat->mReqCfg.mReqExtendRate/pSvrStat->mInfo.mDelayLoad), pSvrStat->mReqCfg.mReqMin);
     }
+}
+
+/** for test */
+void SvrQos::LogAllNode()
+{
+	LOG_DEBUG(ELOG_KEY, "[svr] LogAllNode for test mRouteTable=%d mErrTable=%d", mRouteTable.size(),mErrTable.size());
+	
+	//路由map
+	map<struct SvrKind_t,  multimap<float, struct SvrNode_t>* >::iterator rtIt = mRouteTable.begin(), rtIt1 = mRouteTable.end();
+	for(rtIt; rtIt != rtIt1; rtIt++)
+	{
+		multimap<float, struct SvrNode_t>* pTable = rtIt->second;
+		multimap<float, struct SvrNode_t>::iterator it = pTable->begin() , it1 = pTable->end();
+		LOG_DEBUG(ELOG_KEY, "[svr] LogAllNode mRouteTable kind(gid=%d xid=%d) have node size=%d", rtIt->first.mGid,rtIt->first.mXid,rtIt->second->size());
+
+		for (it; it != it1; it++)
+		{
+            LOG_DEBUG(ELOG_KEY, "[svr] LogAllNode mRouteTable key=%f, gid=%d xid=%d host=%s port=%hu weight=%d pre=%d,reqall=%d reqrej=%d reqsuc=%d reqerrret=%d reqerrtm=%d loadx=%f okload=%f delayload=%f okrate=%f avgtm=%d preall=%d,reqlimit=%d reqmax=%d,reqmin=%d reqerrmin=%f reqrebuild=%d pretime=%d",
+            	it->first,
+            	it->second.mNet.mGid,it->second.mNet.mXid,it->second.mNet.mHost,it->second.mNet.mPort,it->second.mNet.mWeight,it->second.mNet.mPre,
+            	it->second.mStat->mInfo.mReqAll,it->second.mStat->mInfo.mReqRej,it->second.mStat->mInfo.mReqSuc,it->second.mStat->mInfo.mReqErrRet,
+            	it->second.mStat->mInfo.mReqErrTm,it->second.mStat->mInfo.mLoadX,it->second.mStat->mInfo.mOkLoad,it->second.mStat->mInfo.mDelayLoad,
+            	it->second.mStat->mInfo.mOkRate,it->second.mStat->mInfo.mAvgTm,it->second.mStat->mInfo.mPreAll,
+            	it->second.mStat->mReqCfg.mReqLimit,it->second.mStat->mReqCfg.mReqMax,it->second.mStat->mReqCfg.mReqMin,it->second.mStat->mReqCfg.mReqErrMin,it->second.mStat->mReqCfg.mRebuildTm,it->second.mStat->mReqCfg.mPreTime);
+		}
+	}
+
+	//宕机map
+	map<struct SvrKind_t, list<struct SvrNode_t>* >::iterator reIt = mErrTable.begin(), reIt1 = mErrTable.end();
+	LOG_DEBUG(ELOG_KEY,"[svr] LogAllNode mErrTable size=%d",mErrTable.size());
+	for (reIt; reIt != reIt1; reIt++)
+	{
+		list<struct SvrNode_t>* pErrRoute = reIt->second;
+		list<struct SvrNode_t>::iterator it = pErrRoute->begin(), it1 = pErrRoute->end();
+		LOG_DEBUG(ELOG_KEY, "[svr] LogAllNode mErrTable kind(gid=%d xid=%d) have node size=%d", reIt->first.mGid,reIt->first.mXid,reIt->second->size());
+
+		for (it; it != it1; it++)
+		{
+            LOG_DEBUG(ELOG_KEY, "[svr] LogAllNode mErrTable gid=%d xid=%d host=%s port=%hu weight=%d pre=%d,reqall=%d reqrej=%d reqsuc=%d reqerrret=%d reqerrtm=%d loadx=%f okload=%f delayload=%f okrate=%f avgtm=%d preall=%d,reqlimit=%d reqmax=%d,reqmin=%d reqerrmin=%f reqrebuild=%d pretime=%d",
+            	it->mNet.mGid,it->mNet.mXid,it->mNet.mHost,it->mNet.mPort,it->mNet.mWeight,it->mNet.mPre,
+            	it->mStat->mInfo.mReqAll,it->mStat->mInfo.mReqRej,it->mStat->mInfo.mReqSuc,it->mStat->mInfo.mReqErrRet,
+            	it->mStat->mInfo.mReqErrTm,it->mStat->mInfo.mLoadX,it->mStat->mInfo.mOkLoad,it->mStat->mInfo.mDelayLoad,
+            	it->mStat->mInfo.mOkRate,it->mStat->mInfo.mAvgTm,it->mStat->mInfo.mPreAll,
+            	it->mStat->mReqCfg.mReqLimit,it->mStat->mReqCfg.mReqMax,it->mStat->mReqCfg.mReqMin,it->mStat->mReqCfg.mReqErrMin,it->mStat->mReqCfg.mRebuildTm,it->mStat->mReqCfg.mPreTime);
+		}
+	}
 }
