@@ -17,9 +17,7 @@ class wChannelTask : public wTask
 		wChannelTask();
 		wChannelTask(wIO *pIO);
 		void Initialize();
-		virtual ~wChannelTask();
-		
-		virtual int HandleRecvMessage(char * pBuffer, int nLen) {}
+		virtual ~wChannelTask();		
 };
 
 #endif

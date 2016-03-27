@@ -17,12 +17,13 @@
 #include "wLog.h"
 #include "wSingleton.h"
 #include "wTimer.h"
-#include "wIO.h"
-#include "wSocket.h"
 #include "wTask.h"
 #include "wWorker.h"
 #include "wMaster.h"
+#include "wSocket.h"
+#include "wHttp.h"
 #include "wTcpTask.h"
+#include "wHttpTask.h"
 #include "wChannelTask.h"
 
 template <typename T>
@@ -53,7 +54,7 @@ class wTcpServer: public wSingleton<T>
 		 *
 		 * PrepareMaster 需在master进程中调用
 		 * WorkerStart在worker进程提供服务
-		 */		
+		 */
 		void PrepareMaster(string sIpAddr ,unsigned int nPort);	
 		void WorkerStart(wWorker *pWorker = NULL, bool bDaemon = true);
 		int AcceptMutex();
@@ -90,8 +91,9 @@ class wTcpServer: public wSingleton<T>
 		/**
 		 * 新建客户端
 		 */
-		virtual wTask* NewTcpTask(wIO *pIO);
-		virtual wTask* NewChannelTask(wIO *pIO);
+		virtual wTask* NewTcpTask(wIO *pIO);	//io = wSocket
+		virtual wTask* NewHttpTask(wIO *pIO);	//io = wHttp
+		virtual wTask* NewChannelTask(wIO *pIO);//io = wChannel
 		
 		/**
 		 * 服务主循环逻辑，继承可以定制服务

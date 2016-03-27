@@ -16,8 +16,8 @@ wSocket::~wSocket() {}
 void wSocket::Initialize()
 {
 	mIOType = TYPE_SOCK;
-	mSockType = SOCK_UNKNOWN;
-	mSockStatus = STATUS_UNKNOWN;
+	mIOFalg = FLAG_RVSD;
+	mTaskType = TASK_TCP;
 }
 
 int wSocket::Open()
@@ -99,7 +99,7 @@ int wSocket::Connect(string sIpAddr ,unsigned int nPort)
 
 	mHost = sIpAddr;
 	mPort = nPort;
-	mSockStatus = STATUS_CONNECTED;
+	
 	mSockType = SOCK_CONNECT;
 	mIOFlag = FLAG_RECV;
 

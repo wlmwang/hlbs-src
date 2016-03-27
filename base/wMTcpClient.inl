@@ -246,6 +246,7 @@ void wMTcpClient<TASK>::Recv()
 	int iType = 0;
 
 	int iFD = FD_UNKNOWN;
+	TASK_TYPE taskType;
 	SOCK_TYPE sockType;
 	SOCK_STATUS sockStatus;
 	IO_FLAG iOFlag;

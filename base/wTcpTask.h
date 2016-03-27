@@ -24,9 +24,7 @@ class wTcpTask : public wTask
 
 		virtual int Heartbeat();
 		virtual int HeartbeatOutTimes();
-		
-		virtual int HandleRecvMessage(char * pBuffer, int nLen) {}
-		
+				
 		int ConnType() { return mConnType; }
 	protected:
 		int mConnType; //客户端类型

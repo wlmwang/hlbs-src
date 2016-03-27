@@ -129,7 +129,6 @@ void wTcpServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 			{
 				//new unix task
 				mChannelSock->IOFlag() = FLAG_RECV;
-				mChannelSock->SockStatus() = STATUS_LISTEN;
 				
 				mTask = NewChannelTask(mChannelSock);
 				if(NULL != mTask)
@@ -310,6 +309,13 @@ wTask* wTcpServer<T>::NewTcpTask(wIO *pIO)
 }
 
 template <typename T>
+wTask* wTcpServer<T>::NewHttpTask(wIO *pIO)
+{
+	wTask *pTask = new wHttpTask(pIO);
+	return pTask;
+}
+
+template <typename T>
 wTask* wTcpServer<T>::NewChannelTask(wIO *pIO)
 {
 	wTask *pTask = new wChannelTask(pIO);
@@ -377,18 +383,20 @@ void wTcpServer<T>::Recv()
 	}
 	
 	wTask *pTask = NULL;
-	int iFD = FD_UNKNOWN;
+	int iFD;
+	TASK_TYPE taskType;
 	SOCK_TYPE sockType;
-	SOCK_STATUS sockStatus;
 	IO_FLAG iOFlag;
+	IO_TYPE ioType;
 	for(int i = 0 ; i < iRet ; i++)
 	{
 		pTask = (wTask *)mEpollEventPool[i].data.ptr;
 		iFD = pTask->IO()->FD();
+		taskType = pTask->IO()->TaskType();
 		sockType = pTask->IO()->SockType();
-		sockStatus = pTask->IO()->SockStatus();
 		iOFlag = pTask->IO()->IOFlag();
-
+		iOType = pTask->IO()->IOType();
+		
 		if(iFD < 0)
 		{
 			mErr = errno;
@@ -419,14 +427,15 @@ void wTcpServer<T>::Recv()
 			continue;
 		}
 		
-		if(sockType == SOCK_LISTEN && sockStatus == STATUS_LISTEN)
+		//tcp|http|unix
+		if(iOType == TYPE_SOCK && sockType == SOCK_LISTEN)
 		{
 			if (mEpollEventPool[i].events & EPOLLIN)
 			{
 				AcceptConn();	//accept connect
 			}
 		}
-		else if(sockType == SOCK_CONNECT && sockStatus == STATUS_CONNECTED)
+		else if(iOType == TYPE_SOCK && sockType == SOCK_CONNECT)
 		{
 			if (mEpollEventPool[i].events & EPOLLIN)
 			{
@@ -443,6 +452,7 @@ void wTcpServer<T>::Recv()
 			}
 			else if (mEpollEventPool[i].events & EPOLLOUT)
 			{
+				//清除写事件
 				if (pTask->IsWritting() <= 0)
 				{
 					AddToEpoll(pTask, EPOLLIN, EPOLL_CTL_MOD);
@@ -460,28 +470,13 @@ void wTcpServer<T>::Recv()
 				}
 			}
 		}
-		else if(sockType == SOCK_UNIX && sockStatus == STATUS_LISTEN)
-		{
-			if (mEpollEventPool[i].events & EPOLLIN)
-			{
-				//channel准备好了读取操作
-				if (pTask->TaskRecv() <= 0)	//==0主动断开
-				{
-					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or unix socket closed");
-					if (RemoveEpoll(pTask) >= 0)
-					{
-						RemoveTaskPool(pTask);
-					}
-				}
-			}
-		}
 	}
 }
 
 template <typename T>
 int wTcpServer<T>::Send(wTask *pTask, const char *pCmd, int iLen)
 {
-	if (pTask != NULL && pTask->IsRunning() && (pTask->IO()->IOFlag() == FLAG_SEND || pTask->IO()->IOFlag() == FLAG_RVSD))
+	if (pTask != NULL && pTask->IsRunning() && pTask->IO()->IOType() == TYPE_SOCK && (pTask->IO()->IOFlag() == FLAG_SEND || pTask->IO()->IOFlag() == FLAG_RVSD))
 	{
 		if(pTask->SendToBuf(pCmd, iLen) > 0)
 		{
@@ -532,6 +527,7 @@ int wTcpServer<T>::AcceptConn()
 	pSocket->Port() = stSockAddr.sin_port;
 	pSocket->SockType() = SOCK_CONNECT;
 	pSocket->IOFlag() = FLAG_RVSD;
+	pSocket->TaskType() = TASK_TCP;
 	pSocket->SockStatus() = STATUS_CONNECTED;
 	if (pSocket->SetNonBlock() < 0)
 	{
@@ -580,7 +576,7 @@ std::vector<wTask*>::iterator wTcpServer<T>::RemoveTaskPool(wTask* pTask)
     std::vector<wTask*>::iterator it = std::find(mTaskPool.begin(), mTaskPool.end(), pTask);
     if(it != mTaskPool.end())
     {
-    	if ((*it)->IO()->SockType() != SOCK_UNIX)
+    	if ((*it)->IO()->TaskType() != TASK_UNIX)
     	{
     		(*it)->DeleteIO();
     	}
@@ -626,11 +622,13 @@ void wTcpServer<T>::CheckTimeout()
 	if(mTaskPool.size() > 0)
 	{
 		SOCK_TYPE sockType;
+		TASK_TYPE taskType;
 		vector<wTask*>::iterator iter;
 		for(iter = mTaskPool.begin(); iter != mTaskPool.end(); iter++)
 		{
 			sockType = (*iter)->IO()->SockType();
-			if (sockType == SOCK_CONNECT)
+			taskType = (*iter)->IO()->TaskType();
+			if (taskType == TASK_TCP && sockType == SOCK_CONNECT)
 			{
 				//心跳检测
 				iIntervalTime = iNowTime - (*iter)->IO()->SendTime();	//上一次发送心跳时间间隔
