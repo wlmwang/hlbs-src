@@ -246,6 +246,8 @@ int SvrQos::AllocNode(struct SvrNet_t& stSvr)
 /** 单次获取路由 */
 int SvrQos::QueryNode(struct SvrNet_t& stSvr)
 {
+	LOG_DEBUG(ELOG_KEY,"[svr] QueryNode start");
+	
 	int iAck = GetRouteNode(stSvr);
 	
 	LOG_DEBUG(ELOG_KEY, "[svr] QueryNode(%d).Svr:gid(%d),xid(%d),host(%s),port(%d),weight(%d)",iAck,stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
@@ -272,10 +274,10 @@ int SvrQos::LoadStatCfg(struct SvrNet_t& stSvr, struct SvrStat_t* pSvrStat)
 /** 添加新路由 */
 int SvrQos::AddRouteNode(struct SvrNet_t& stSvr, struct SvrStat_t* pSvrStat)
 {
-    struct SvrKind_t stNode(stSvr);
-    stNode.mRebuildTm = pSvrStat->mReqCfg.mRebuildTm;
+    struct SvrKind_t stKind(stSvr);
+    stKind.mRebuildTm = pSvrStat->mReqCfg.mRebuildTm;
 
-    multimap<float, struct SvrNode_t>* &pTable = mRouteTable[stSvr];
+    multimap<float, struct SvrNode_t>* &pTable = mRouteTable[stKind];
     if(pTable == NULL)
 	{
         pTable = new multimap<float, SvrNode_t>;
@@ -372,7 +374,7 @@ int SvrQos::GetRouteNode(struct SvrNet_t& stSvr)
 		it++;
 	}
 	
-    //如果不是第一个路由，获得比第一个路由的负载更低的路由
+    //如果不是第一个路由，获得比第一个路由的负载更低的路由 round_robin
 	if (iIndex != 0)
 	{
 		int iReq = it->second.mStat->mInfo.mPreAll;
@@ -398,10 +400,10 @@ int SvrQos::GetRouteNode(struct SvrNet_t& stSvr)
 	}
 
 	//未找到合适节点 或 第一个节点即为合适节点
-	if(iIndex == 0)
+	if (iIndex == 0)
 	{
 		bFirstRt = true;
-	} 
+	}
 	
 	//已经获得了预选路由即host,port
 	memcpy(stSvr.mHost, it->second.mNet.mHost, sizeof(stSvr.mHost));
@@ -409,17 +411,17 @@ int SvrQos::GetRouteNode(struct SvrNet_t& stSvr)
     stSvr.mWeight = it->second.mNet.mWeight; //fixed
 
     int iRet;
-	while((iRet = RouteCheck(it->second.mStat, stSvr, dFirstReq, bFirstRt)) != 0)	//过载
+	while ((iRet = RouteCheck(it->second.mStat, stSvr, dFirstReq, bFirstRt)) != 0)	//过载
 	{
 		iIndex++;
 		bFirstRt = false;
-		if(iIndex >= (int)pTable->size())
+		if (iIndex >= (int)pTable->size())
 		{
 			iIndex = 0;
 			bFirstRt = true;
 		}
 
-		if(iIndex == stKind.mPindex)	//一个轮回
+		if (iIndex == stKind.mPindex)	//一个轮回
 		{
 			it = it1;
 			//TODO.
@@ -429,7 +431,7 @@ int SvrQos::GetRouteNode(struct SvrNet_t& stSvr)
 				it++;
 			}
 
-            if (iRet == - 9995)		//节点无错误
+            if (iRet == - 9995)		//节点无错误（非本地节点而已~）
 			{
 				memcpy(stSvr.mHost, it->second.mNet.mHost, sizeof(stSvr.mHost));
 				stSvr.mPort = it->second.mNet.mPort;
@@ -441,6 +443,7 @@ int SvrQos::GetRouteNode(struct SvrNet_t& stSvr)
 			{
                 it->second.mStat->mInfo.mReqRej++;
                 it->second.mStat->mInfo.mSReqRej++;
+
                 LOG_ERROR(ELOG_KEY, "[svr] GetRouteNode overload gid=%d xid=%d host=%s port=%hu rej=%d",
                 	stSvr.mGid,stSvr.mXid,it->second.mNet.mHost,it->second.mNet.mPort,it->second.mStat->mInfo.mSReqRej);
                 return -1;
@@ -458,22 +461,16 @@ int SvrQos::GetRouteNode(struct SvrNet_t& stSvr)
 		stSvr.mPort = it->second.mNet.mPort;
 	    stSvr.mWeight = it->second.mNet.mWeight; //fixed
 	}
-
 	time_t nowTm = time(NULL);
-
-	stSvr.mExpired = nowTm + stKind.mRebuildTm - (nowTm - stKind.mPtm);
-	if(it1 == it)	//首节点
+	stSvr.mExpired = nowTm + stKind.mRebuildTm - (nowTm - stKind.mPtm);	//过期时间
+	
+	//如果是第一个路由, 获取负载更低的路由（探测下一个路由）
+	if (it1 == it)
 	{
 		it++;
-		if(it == pTable->end())
+		if (it != pTable->end() && (it->second.mStat->mInfo.mPreAll * it->second.mKey < dFirstReq))
 		{
-			return 0;
-		}
-
-        //如果是第一个路由, 获取负载更低的路由
-		if(it->second.mStat->mInfo.mPreAll * it->second.mKey < dFirstReq)
-		{
-			if((iIndex + 1) < (int)pTable->size())
+			if ((iIndex + 1) < (int)pTable->size())
 			{
 				iIndex++;
 			}
@@ -586,7 +583,7 @@ int SvrQos::RouteCheck(struct SvrStat_t* pSvrStat, struct SvrNet_t& stNode, doub
     
     //TODO 预取数：初始值为预测的此进程本周期的成功请求数
     //int iSuc = mReqCfg.mPreTime * ( (pid_lastsuc + pid_inc )/ pSvrStat->mReqCfg.mRebuildTm);
-    int iSuc = mReqCfg.mPreTime * 100;
+    int iSuc = mReqCfg.mPreTime * 1000;	//4*1000  ： 假设4s内4000个成功请求
 
     if (fErrate > 0 && fErrate < 1)
     {
@@ -687,8 +684,8 @@ int SvrQos::ReqRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat)
         fErrRate = 0;
     }
 
-    iSucCount > 0 ? iSucCount : 0;
-    fErrRate < 1 ? fErrRate : 1;
+    iSucCount = iSucCount > 0 ? iSucCount : 0;
+    fErrRate = fErrRate < 1 ? fErrRate : 1;
     pSvrStat->mInfo.mOkRate = 1 - fErrRate;	//重置成功率
 
 	//统计节点延时值
@@ -752,7 +749,7 @@ int SvrQos::ReqRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat)
         //目标调整值： iReqAll * (1 + mReqExtendRate)
         int iDest = iReqAll + (int)(iReqAll * mReqCfg.mReqExtendRate);
 
-        LOG_DEBUG(ELOG_KEY, "[svr] ReqRebuild lasterr=%d succount=%d alarmreq=%d, dest=%d reqlimit=%d errrate=%f avgerrate=%f reqerrmin=%f",
+        LOG_DEBUG(ELOG_KEY, "[svr] ReqRebuild :expand: lasterr=%d succount=%d alarmreq=%d, dest=%d reqlimit=%d errrate=%f avgerrate=%f reqerrmin=%f",
         	pSvrStat->mInfo.mLastErr,iSucCount, pSvrStat->mInfo.mLastAlarmReq,
         	iDest, pSvrStat->mReqCfg.mReqLimit, fErrRate,pSvrStat->mInfo.mAvgErrRate,pSvrStat->mReqCfg.mReqErrMin);
 
@@ -784,6 +781,9 @@ int SvrQos::ReqRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat)
 		{
 			pSvrStat->mReqCfg.mReqLimit = iReqAll - (int)(iReqAll * fErrRate);
 		}
+
+        LOG_DEBUG(ELOG_KEY, "[svr] ReqRebuild :reduce: okrate=%f succount=%d reqall=%d reqlimit=%d errrate=%f reqmin=%f",
+        	pSvrStat->mInfo.mOkRate,iSucCount,iReqAll,pSvrStat->mReqCfg.mReqLimit, fErrRate,pSvrStat->mReqCfg.mReqMin);
 
 		pSvrStat->mInfo.mLastErr = true;
 		pSvrStat->mInfo.mLastAlarmReq = iReqAll;
@@ -829,7 +829,7 @@ int SvrQos::ListRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat)
 	int iReqCount = pSvrStat->mInfo.mReqAll - pSvrStat->mInfo.mReqRej;	//请求数
 	if (iReqCount <= 0)
 	{
-        LOG_ERROR(ELOG_KEY, "[svr] ListRebuild mReqAll(%d) < mReqRej(%d)", pSvrStat->mInfo.mReqAll, pSvrStat->mInfo.mReqRej);
+        LOG_ERROR(ELOG_KEY, "[svr] ListRebuild mReqAll(%d) <= mReqRej(%d)", pSvrStat->mInfo.mReqAll, pSvrStat->mInfo.mReqRej);
 		return 0;
 	}
 
@@ -872,15 +872,16 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
 	map<struct SvrKind_t, multimap<float, struct SvrNode_t>* >::iterator rtIt = mRouteTable.find(stItem);
 	if (rtIt == mRouteTable.end())
 	{
-		LOG_DEBUG(ELOG_KEY, "[svr] RebuildRoute test error route whether restore! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
+		LOG_DEBUG(ELOG_KEY, "[svr] RebuildRoute errorroute whether restore! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
 
 		//全部过载
 		mAllReqMin = true;
         multimap<float, struct SvrNode_t>* pNewTable = new multimap<float, struct SvrNode_t>;
+        /** ping测试 */
         RebuildErrRoute(stItem, pNewTable);
         if(!pNewTable->empty())
 		{
-			LOG_DEBUG(ELOG_KEY, "[svr] RebuildRoute recovery error route restore! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
+			LOG_DEBUG(ELOG_KEY, "[svr] RebuildRoute recovery errorroute restore! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
             
             //stItem.mInnerChange++;
             stItem.mPindex = 0;
@@ -904,14 +905,14 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
 	}
 
 	int iCurTm = time(NULL);
-	//如果还没到路由rebuild时间直接返回，默认一分钟rebuild一次
 	if((iCurTm - stKind.mPtm) > 2 * stKind.mRebuildTm || (stKind.mPtm - iCurTm) > 2 * stKind.mRebuildTm) 
 	{
-		stKind.mPtm = iCurTm;	//防时间跳变
+		stKind.mPtm = iCurTm;	//TODO 防时间跳变
 	}
-    if(!bForce && iCurTm - stKind.mPtm < stKind.mRebuildTm)
+	//如果还没到路由rebuild时间直接返回，默认一分钟rebuild一次
+    if(!bForce && (iCurTm-stKind.mPtm < stKind.mRebuildTm))
 	{
-        LOG_DEBUG(ELOG_KEY, "[svr] RebuildRoute nothing to do! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
+        LOG_DEBUG(ELOG_KEY, "[svr] RebuildRoute nothing to do bForce(%d) iCurTm-stKind.mPtm(%d) stKind.mRebuildTm(%d)! gid(%d),xid(%d)",(int) bForce,iCurTm-stKind.mPtm,stKind.mRebuildTm, stItem.mGid,stItem.mXid);
         return 0;
     }
     //rebuild时间
@@ -930,8 +931,8 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
     float fCfgErrRate = 0, fNodeErrRate = 0, fTotalErrRate = 0, fHeightSucRate = 0,fHighWeight = 0,  fBestLowPri = 1;/*, avg_err_rate = 0, total_err_rate = 0, high_suc_rage = 0, node_err_rate = 0;*/
 
     //统计数量
-    multimap<float, struct SvrNode_t>::iterator it = pTable->begin();
-    for(; it != pTable->end(); it++)
+    multimap<float, struct SvrNode_t>::iterator it;
+    for(it = pTable->begin(); it != pTable->end(); it++)
     {
     	struct SvrInfo_t &si = it->second.mStat->mInfo;
 
@@ -1014,12 +1015,12 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
     map<struct SvrKind_t, list<struct SvrNode_t>* >::iterator reIt = mErrTable.find(stItem);
 	if (reIt != mErrTable.end())
 	{
-		list<struct SvrNode_t>::iterator it = reIt->second->begin();
-		for (; it != reIt->second->end(); it++)
+		list<struct SvrNode_t>::iterator eit = reIt->second->begin();
+		for (; eit != reIt->second->end(); eit++)
 		{
-			//累积宕机的服务自宕机开始，该sid的所有请求数
+			//累积宕机的服务自宕机开始，该Svr的所有请求数
 			//此请求数用来作为判断是否进行宕机恢复探测的依据
-			it->mReqAllAfterDown += iRouteTotalReq;
+			eit->mReqAllAfterDown += iRouteTotalReq;
 		}
 	}
 
@@ -1027,7 +1028,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
 	float fWeightLoad = 1;
 	int iReqLimit = 0;
 	//计算负载
-	for(; it != pTable->end(); it++)
+	for(it = pTable->begin(); it != pTable->end(); it++)
 	{
 		struct SvrStat_t *pStat = it->second.mStat;
 		struct SvrInfo_t &si = pStat->mInfo;

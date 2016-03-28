@@ -8,12 +8,12 @@ int Get()
 
 	struct SvrNet_t stSvr;
 	stSvr.mGid = 1;
-	stSvr.mXid = 1;
+	stSvr.mXid = 2;
 
 	string s;
 	cout << "res:" << QueryNode(stSvr, 0.2, s) << endl;
 	cout << "host:" << stSvr.mHost << endl;
-	//Release(&g_handle);
+	cout << "port:" << stSvr.mPort << endl;
 }
 
 int Post()
@@ -22,14 +22,13 @@ int Post()
 
 	SvrNet_t stSvr;
 	stSvr.mGid = 1;
-	stSvr.mXid = 1;
+	stSvr.mXid = 2;
 	stSvr.mPort = 3306;
-	memcpy(stSvr.mHost,"192.168.8.13",sizeof("192.168.8.13"));
+	memcpy(stSvr.mHost,"192.168.8.13", sizeof("192.168.8.13"));
 	
 	string s;
 	cout << "res:" << NotifyCallerRes(stSvr, 0, 2000, s) << endl;
 	cout << "host:" << stSvr.mHost << endl;
-	//Release(&g_handle);
 }
 
 int main(int argc,char **argv)

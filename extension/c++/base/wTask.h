@@ -51,7 +51,7 @@ class wTask : private wNoncopyable
 		/**
 		 * 发送缓冲区有数据
 		 */
-		int IsWritting() { return mSendWrite - mSendBytes; }
+		int WritableLen() { return mSendWrite - mSendBytes; }
 		virtual int TaskSend();
 		
 		/**
@@ -62,7 +62,7 @@ class wTask : private wNoncopyable
 		 *  同步接受确切长度消息(需保证此sock未加入epoll中，防止出现竞争！！)
 		 *  确保pCmd有足够长的空间接受自此同步消息
 		 */
-		int SyncRecv(char *pCmd, int iLen, int iTimeout = 30/*s*/);
+		int SyncRecv(char *pCmd, int iLen, int iTimeout = 10/*s*/);
 		
 		//业务逻辑入口函数
 		virtual int HandleRecvMessage(char * pBuffer, int nLen) {}

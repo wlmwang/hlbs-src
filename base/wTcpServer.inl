@@ -416,7 +416,7 @@ void wTcpServer<T>::Recv()
 			}
 			continue;
 		}
-		if (mEpollEventPool[i].events & (EPOLLERR | EPOLLPRI))	//出错
+		if (mEpollEventPool[i].events & (EPOLLERR | EPOLLPRI))	//出错(多数为sock已关闭)
 		{
 			mErr = errno;
 			LOG_ERROR(ELOG_KEY, "[runtime] epoll event recv error from fd(%d), close it: %s", iFD, strerror(mErr));
@@ -452,8 +452,9 @@ void wTcpServer<T>::Recv()
 			}
 			else if (mEpollEventPool[i].events & EPOLLOUT)
 			{
+				LOG_ERROR(ELOG_KEY, "[runtime] EPOLLOUT(write) is write %d", (int) pTask->WritableLen());
 				//清除写事件
-				if (pTask->IsWritting() <= 0)
+				if (pTask->WritableLen() <= 0)
 				{
 					AddToEpoll(pTask, EPOLLIN, EPOLL_CTL_MOD);
 					return;

@@ -179,28 +179,43 @@ int wTask::SyncSend(const char *pCmd, int iLen)
 
 int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 {
-	int iRecvLen = 0, iMsgLen = 0, iTryCount = 0; /*每个消息最多被分为多少个包*/
+	int iSize = 0, iRecvLen = 0, iMsgLen = 0, iTryCount = 0; /*每个消息最多被分为多少个包*/
 	long long iSleep = 5000;	//5ms
-	struct wCommand* pTmpCmd = 0;
-	
-	iTryCount = iTimeout * 1000000 / iSleep;
+
+	iTryCount = iTimeout*1000000 / iSleep;
 	memset(mTmpRecvMsgBuff, 0, sizeof(mTmpRecvMsgBuff));
-	do
-	{
-		iRecvLen += mIO->RecvBytes(mTmpRecvMsgBuff, iLen + sizeof(int));
-		if(iRecvLen <= 0)
+	
+	struct wCommand* pTmpCmd = 0;
+	int iCmdMsgLen = sizeof(int) + sizeof(struct wCommand);
+
+	do {
+		iSize = mIO->RecvBytes(mTmpRecvMsgBuff + iRecvLen, iLen + sizeof(int));
+		if (iSize <= 0)
 		{
-			return iRecvLen;	
+			break;
 		}
-		if (iRecvLen < iLen + sizeof(int) && iTryCount-- > 0)
+		iRecvLen += iSize;
+
+		if ((iRecvLen < iCmdMsgLen) && (iTryCount-- > 0))	//至少一个消息体长度
 		{
+			usleep(iSleep);
 			continue;
 		}
+
+		pTmpCmd = (struct wCommand*) (mTmpRecvMsgBuff + sizeof(int));
+		if (pTmpCmd != NULL && pTmpCmd->GetCmd() == CMD_NULL && pTmpCmd->GetPara() == PARA_NULL)	//过滤掉心跳
+		{
+			memmove(mTmpRecvMsgBuff, mTmpRecvMsgBuff + iCmdMsgLen, iRecvLen - iCmdMsgLen);
+			iRecvLen -= iCmdMsgLen;
+		}
 		
-		usleep(iSleep);
-		//过滤掉心跳
-		pTmpCmd = (struct wCommand*) mTmpRecvMsgBuff;
-	} while(pTmpCmd != NULL && pTmpCmd->GetCmd() == CMD_NULL && pTmpCmd->GetPara() == PARA_NULL);
+		if ((iRecvLen < iLen + sizeof(int)) && (iTryCount-- > 0))
+		{
+			usleep(iSleep);
+			continue;
+		}
+		break;
+	} while(true);
 	
 	iMsgLen = *(int *)mTmpRecvMsgBuff;
 	if(iMsgLen < MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN)

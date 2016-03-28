@@ -46,10 +46,9 @@ int wTask::TaskRecv()
 {
 	int iRecvLen = mIO->RecvBytes(mRecvMsgBuff + mRecvBytes, sizeof(mRecvMsgBuff) - mRecvBytes);
 	
-	//LOG_DEBUG(ELOG_KEY, "[runtime] recv data len: %d , %s", iRecvLen, mRecvMsgBuff);
 	if(iRecvLen <= 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] recv data invalid len: %d , %s", iRecvLen, mRecvMsgBuff);
+		LOG_ERROR(ELOG_KEY, "[runtime] recv data invalid len: %d, fd(%d)", iRecvLen, mIO->FD());
 		return iRecvLen;	
 	}
 	mRecvBytes += iRecvLen;	
@@ -89,7 +88,6 @@ int wTask::TaskRecv()
 		}
 		
 		//业务逻辑
-		//LOG_DEBUG(ELOG_KEY, "[runtime] HandleRecvMessage start");
 		HandleRecvMessage(pBuffer - iMsgLen, iMsgLen);	//去除4字节消息长度标识位
 	}
 
@@ -191,46 +189,60 @@ int wTask::SyncSend(const char *pCmd, int iLen)
 
 int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 {
-	int iRecvLen = 0, iMsgLen = 0, iTryCount = 0; /*每个消息最多被分为多少个包*/
+	int iSize = 0, iRecvLen = 0, iMsgLen = 0, iTryCount = 0; /*每个消息最多被分为多少个包*/
 	long long iSleep = 5000;	//5ms
-	struct wCommand* pTmpCmd = 0;
-	
-	iTryCount = iTimeout * 1000000 / iSleep;
+
+	iTryCount = iTimeout*1000000 / iSleep;
 	memset(mTmpRecvMsgBuff, 0, sizeof(mTmpRecvMsgBuff));
-	do
-	{
-		iRecvLen += mIO->RecvBytes(mTmpRecvMsgBuff, iLen + sizeof(int));
-		if(iRecvLen <= 0)
+	
+	struct wCommand* pTmpCmd = 0;
+	int iCmdMsgLen = sizeof(int) + sizeof(struct wCommand);
+
+	do {
+		iSize = mIO->RecvBytes(mTmpRecvMsgBuff + iRecvLen, iLen + sizeof(int));
+		if (iSize <= 0)
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] recv data invalid len:%d ,fd(%d)", iRecvLen, mIO->FD());
-			return iRecvLen;	
+			break;
 		}
-		if (iRecvLen < iLen + sizeof(int) && iTryCount-- > 0)
+		iRecvLen += iSize;
+
+		if ((iRecvLen < iCmdMsgLen) && (iTryCount-- > 0))	//至少一个消息体长度
 		{
+			usleep(iSleep);
 			continue;
 		}
+
+		pTmpCmd = (struct wCommand*) (mTmpRecvMsgBuff + sizeof(int));
+		if (pTmpCmd != NULL && pTmpCmd->GetCmd() == CMD_NULL && pTmpCmd->GetPara() == PARA_NULL)	//过滤掉心跳
+		{
+			memmove(mTmpRecvMsgBuff, mTmpRecvMsgBuff + iCmdMsgLen, iRecvLen - iCmdMsgLen);
+			iRecvLen -= iCmdMsgLen;
+		}
 		
-		usleep(iSleep);
-		//过滤掉心跳
-		pTmpCmd = (struct wCommand*) mTmpRecvMsgBuff;
-	} while(pTmpCmd != NULL && pTmpCmd->GetCmd() == CMD_NULL && pTmpCmd->GetPara() == PARA_NULL);
+		if ((iRecvLen < iLen + sizeof(int)) && (iTryCount-- > 0))
+		{
+			usleep(iSleep);
+			continue;
+		}
+		break;
+	} while(true);
 	
 	iMsgLen = *(int *)mTmpRecvMsgBuff;
 	if(iMsgLen < MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] get message invalid len: %d, fd(%d)", iMsgLen, mIO->FD());
+		LOG_ERROR(ELOG_KEY, "[runtime] sync recv message invalid len: %d, fd(%d)", iMsgLen, mIO->FD());
 		return -1;
 	}
 
 	if (iMsgLen > iRecvLen)	//消息不完整
 	{
-		LOG_DEBUG(ELOG_KEY, "[runtime] recv a part of message: real len = %d, now len = %d", iMsgLen, iRecvLen);
+		LOG_DEBUG(ELOG_KEY, "[runtime] sync recv a part of message: real len = %d, now len = %d, call len = %d", iMsgLen, iRecvLen, iLen);
 		return -1;
 	}
 
 	if (iMsgLen > iLen)
 	{
-		LOG_DEBUG(ELOG_KEY, "[runtime] error buffer len, it\'s to short!");
+		LOG_DEBUG(ELOG_KEY, "[runtime] sync recv error buffer len, it\'s to short!");
 		return -1;
 	}
 	memcpy(pCmd, mTmpRecvMsgBuff + sizeof(int), iLen);

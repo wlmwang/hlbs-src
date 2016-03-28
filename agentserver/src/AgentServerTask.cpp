@@ -36,7 +36,7 @@ int AgentServerTask::VerifyConn()
 {
 	if(!AGENT_LOGIN) return 0;
 	
-	char pBuffer[ sizeof(LoginReqToken_t) ];
+	char pBuffer[sizeof(LoginReqToken_t)];
 	int iLen = SyncRecv(pBuffer, sizeof(LoginReqToken_t));
 	if (iLen > 0)
 	{

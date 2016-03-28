@@ -35,7 +35,7 @@ void AgentCmdTask::Initialize()
 int AgentCmdTask::VerifyConn()
 {
 	//验证登录消息
-	char pBuffer[ sizeof(LoginReqToken_t) ];
+	char pBuffer[sizeof(LoginReqToken_t)];
 	int iLen = SyncRecv(pBuffer, sizeof(LoginReqToken_t));
 	if (iLen > 0)
 	{
