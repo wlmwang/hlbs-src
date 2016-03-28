@@ -27,10 +27,28 @@ int Post()
 	cout << "host:" << stSvr.mHost << endl;
 }
 
+int GPSvr()
+{
+	struct SvrNet_t stSvr;
+	stSvr.mGid = 1;
+	stSvr.mXid = 2;
+
+	string s;
+	cout << "res:" << QueryNode(stSvr, 0.2, s) << endl;
+	cout << "host:" << stSvr.mHost << endl;
+	cout << "port:" << stSvr.mPort << endl;
+
+	if (stSvr.mHost[0]!=0 && stSvr.mPort>0)
+	{
+		cout << "res:" << NotifyCallerRes(stSvr, 0, 2000, s) << endl;
+	}
+}
+
 int main(int argc,char **argv)
 {
-	Get();
-	Post();
+	//Get();
+	//Post();
+	GPSvr();
 	return 0;
 }
 
