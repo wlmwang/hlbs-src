@@ -179,10 +179,21 @@ int SvrQos::NotifyNode(struct SvrNet_t& stSvr)
 }
 
 /** 调用结果上报 */
-int SvrQos::CallerNode(struct SvrNet_t& stSvr, struct SvrCaller_t& stCaller)
+int SvrQos::CallerNode(struct SvrCaller_t& stCaller)
 {
-	LOG_DEBUG(ELOG_KEY, "[svr] caller node start gid(%d),xid(%d),host(%s),port(%d),weight(%d), ret(%d),usec(%d)",
-		stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight,stCaller.mReqRet,stCaller.mReqUsetimeUsec);
+	LOG_DEBUG(ELOG_KEY, "[svr] caller node start gid(%d),xid(%d),host(%s),port(%d), ret(%d),usec(%d)",
+		stCaller.mCalledGid,stCaller.mCalledXid,stCaller.mHost,stCaller.mPort,stCaller.mReqRet,stCaller.mReqUsetimeUsec);
+
+	if (stCaller.mCalledGid <= 0 || stCaller.mCalledXid <= 0 || stCaller.mPort <= 0 || stCaller.mHost[0] == 0)
+	{
+		return -1;
+	}
+	
+	struct SvrNet_t stSvr;
+	stSvr.mGid = stCaller.mCalledGid;
+	stSvr.mXid = stCaller.mCalledXid;
+	stSvr.mPort = stCaller.mPort;
+	memcpy(stSvr.mHost, stCaller.mHost, sizeof(stSvr.mHost));
 
 	if (stCaller.mReqUsetimeUsec <= 0)
 	{

@@ -34,7 +34,7 @@ class SvrQos : public wSingleton<SvrQos>
 		int AllocNode(struct SvrNet_t& stSvr);
 		int QueryNode(struct SvrNet_t& stSvr);
 		int NotifyNode(struct SvrNet_t& stSvr);
-		int CallerNode(struct SvrNet_t& stSvr, struct SvrCaller_t& stCaller);
+		int CallerNode(struct SvrCaller_t& stCaller);
 		int CleanNode();
 
 		bool IsExistNode(struct SvrNet_t& stSvr);

@@ -29,6 +29,7 @@ void AgentServerTask::Initialize()
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_RELOAD, &AgentServerTask::ReloadSvrReq);
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_ALL, &AgentServerTask::GetSvrAll);
 	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_GXID, &AgentServerTask::GetSvrByGXid);
+	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_REPORT, &AgentServerTask::ReportSvr);
 }
 
 //验证登录消息
@@ -131,7 +132,7 @@ int AgentServerTask::GetSvrAll(char *pBuffer, int iLen)
 	return 0;
 }
 
-//agentcmd发来请求(重点考虑此接口~)
+//agentcmd发来查询请求(重点考虑此接口~)
 int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
@@ -149,6 +150,25 @@ int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 
 	LOG_DEBUG(ELOG_KEY, "[runtime] send svr agent num(%d) gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", vRRt.mNum,
 		vRRt.mSvr[0].mGid, vRRt.mSvr[0].mXid, vRRt.mSvr[0].mHost, vRRt.mSvr[0].mPort, vRRt.mSvr[0].mWeight, vRRt.mSvr[0].mVersion);
+	
+	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
+	return 0;
+}
+
+//agentcmd发来上报请求(重点考虑此接口~)
+int AgentServerTask::ReportSvr(char *pBuffer, int iLen)
+{
+	AgentConfig *pConfig = AgentConfig::Instance();
+	SvrReqReport_t *pCmd = (struct SvrReqReport_t* )pBuffer;
+	
+	SvrResReport_t vRRt;
+
+	if(pConfig->Qos()->CallerNode(pCmd->mCaller) >= 0)
+	{
+		vRRt.mCode = 1;
+	}
+
+	LOG_DEBUG(ELOG_KEY, "[runtime] send svr report %d", vRRt.mCode);
 	
 	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
 	return 0;

@@ -64,6 +64,17 @@ struct SvrReqGXid_t : public SvrReqCmd_s
 	WORD mXid;
 };
 
+/** 上报数据结构 */
+const BYTE SVR_REQ_REPORT = 5;
+struct SvrReqReport_t : public SvrReqCmd_s
+{
+	SvrReqReport_t() : SvrReqCmd_s(SVR_REQ_REPORT)
+	{
+		memset(&mCaller, 0, sizeof(mCaller));
+	}
+	struct SvrCaller_t mCaller;
+};
+
 //++++++++++++返回数据结构
 const BYTE CMD_SVR_RES = 61;
 struct SvrResCmd_s : public wCommand
@@ -131,23 +142,11 @@ struct SvrResData_t : public SvrResCmd_s
 	SvrNet_t mSvr[MAX_SVR_NUM];
 };
 
-
-/** 上报数据结构 */
-const BYTE REPORT_SVR_REQ = 70;
-struct SvrReqReport_s : public wCommand
+//上报返回
+const BYTE SVR_RES_REPORT = 4;
+struct SvrResReport_t : public SvrResCmd_s 
 {
-	SvrReqReport_s(BYTE para)
-	{
-		mCmd = REPORT_SVR_REQ;
-		mPara = para;
-	}
-	struct SvrCaller_t mCaller;
-};
-
-const BYTE SVR_REQ_REPORT = 0;
-struct SvrReqReport_t : public SvrReqReport_s
-{
-	SvrReqReport_t() : SvrReqReport_s(SVR_REQ_REPORT)
+	SvrResReport_t() : SvrResCmd_s(SVR_RES_REPORT) 
 	{
 		//
 	}

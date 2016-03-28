@@ -24,13 +24,11 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 		if(g_handle.mTask->SyncSend((char*)&stCmd, sizeof(stCmd)) > 0)
 		{
 			//接受返回
-			struct SvrResData_t vRRt;
 			char pBuffer[sizeof(struct SvrResData_t)];
 			int iLen = g_handle.mTask->SyncRecv(pBuffer, sizeof(struct SvrResData_t));
 			if (iLen > 0)
 			{
 				SvrResData_t *pRes = (SvrResData_t*) pBuffer;
-				
 				if(pRes->mNum == 1)
 				{
 					stSvr.mPort = pRes->mSvr[0].mPort;
@@ -46,46 +44,42 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 
 int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetimeUsec, string &sErr)
 {
-	struct SvrReqReport_t stReportSvr;
+	struct SvrReqReport_t stCmd;
 
-	stReportSvr.mCaller.mCalledGid = stSvr.mGid;
-	stReportSvr.mCaller.mCalledXid = stSvr.mXid;
-	stReportSvr.mCaller.mPort = stSvr.mPort;
-	stReportSvr.mCaller.mReqRet = iResult;
-	stReportSvr.mCaller.mReqCount = 1;
-	stReportSvr.mCaller.mReqUsetimeUsec = iUsetimeUsec;
-	memcpy(stReportSvr.mCaller.mHost, stSvr.mHost, strlen(stSvr.mHost) + 1);
+	stCmd.mCaller.mCalledGid = stSvr.mGid;
+	stCmd.mCaller.mCalledXid = stSvr.mXid;
+	stCmd.mCaller.mPort = stSvr.mPort;
+	stCmd.mCaller.mReqRet = iResult;
+	stCmd.mCaller.mReqCount = 1;
+	stCmd.mCaller.mReqUsetimeUsec = iUsetimeUsec;
+	memcpy(stCmd.mCaller.mHost, stSvr.mHost, strlen(stSvr.mHost) + 1);
 
-	if(g_handle.mShm == NULL || g_handle.mQueue == NULL)
+	if(g_handle.mSock == NULL || g_handle.mTask == NULL)
 	{
-		InitShm(&g_handle);
+		ConnectAgent(&g_handle);
 	}
-	if (g_handle.mShm != NULL && g_handle.mQueue != NULL)
+
+	if (g_handle.mSock != NULL && g_handle.mTask != NULL)
 	{
-		return g_handle.mQueue->Push((char *)&stReportSvr, sizeof(struct SvrReqReport_t));
+		//上报请求
+		if(g_handle.mTask->SyncSend((char*)&stCmd, sizeof(stCmd)) > 0)
+		{
+			//接受返回
+			char pBuffer[sizeof(struct SvrResReport_t)];
+			int iLen = g_handle.mTask->SyncRecv(pBuffer, sizeof(struct SvrResReport_t));
+			if (iLen > 0)
+			{
+				struct SvrResReport_t *pRes = (struct SvrResReport_t*) pBuffer;
+				return pRes->mCode;
+			}
+		}
+		return -2;
 	}
 	return -1;
 }
 
 int NotifyCallerNum(const struct SvrNet_t &stSvr, int iReqCount)
 {
-	return -1;
-}
-
-int InitShm(struct postHandle_t *pHandle)
-{
-	char *pAddr = 0;
-	pHandle->mShm = new wShm(AGENT_SHM, 'i', MSG_QUEUE_LEN);
-	if((pHandle->mShm->AttachShm() != NULL) && ((pAddr = pHandle->mShm->AllocShm(MSG_QUEUE_LEN)) != NULL))
-	{
-		pHandle->mQueue = new wMsgQueue();
-		if (pHandle->mQueue != NULL)
-		{
-			pHandle->mQueue->SetBuffer(pAddr, MSG_QUEUE_LEN);
-			return 0;
-		}
-		return -2;
-	}
 	return -1;
 }
 
@@ -108,7 +102,6 @@ void Release(struct postHandle_t *pHandle)
 {
 	if(pHandle != NULL)
 	{
-		SAFE_DELETE(pHandle->mShm);
 		SAFE_DELETE(pHandle->mSock);
 	}
 }

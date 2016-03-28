@@ -47,7 +47,7 @@ struct SvrNet_t
 	int		mPort;
 	char	mHost[MAX_SVR_HOST];
 
-    int 	mPre;
+    int 	mPre;		//预取数
     int 	mExpired;	//过期时间
 
 	SvrNet_t()
@@ -214,10 +214,11 @@ struct SvrReqCfg_t
 	int			mReqLimit;			//访问量控制的阀值
 	int			mReqMax;			//访问量控制的最大值
 	int			mReqMin;			//访问量控制的最小值
-	int			mReqCount;			//访问量控制的实际值
+	int			mReqCount;			//访问量控制的实际值（请求数）
 	float		mReqErrMin;			//错误的最小阀值 0-1 [小于则服务无错，应增大访问量。大于则服务过载，应减少访问量。]
 	float		mReqExtendRate;		//无错误的时候的访问量阀值扩张率 0.001-101
 	int         mRebuildTm;        	//统计的周期 60s
+	int 		mPreTime;			//4(不能大于route重建时间的一半) 可以设定预取时间长度N秒内的路由计数，N小于当前周期的1/2
 	SvrReqCfg_t()
 	{
 		mReqLimit = 0;
@@ -227,6 +228,7 @@ struct SvrReqCfg_t
 		mReqErrMin = 0.0;
 		mReqExtendRate = 0.0;
 		mRebuildTm = 3;
+		mPreTime = 0;
 	};
 };
 
@@ -314,10 +316,10 @@ struct SvrInfo_t
 	int 		mLastReqErrRet;
 	int 		mLastReqErrTm;
 	int  		mLastReqSuc;
-	bool  		mLastErr;
-	int 		mLastAlarmReq;
-	int 		mLastAlarmSucReq;
-	int 		mPreAll;			//mPreAll*mLoadX，作为WRR的标准
+	bool  		mLastErr;			//门限扩张标识 true：收缩  false：扩张
+	int 		mLastAlarmReq;		//参考值。请求数扩张门限（上一周期数量），判断扩展是否有效
+	int 		mLastAlarmSucReq;	//参考值。成功请求数扩张门限
+	int 		mPreAll;			//mPreAll*mLoadX，作为WRR的标准  路由已分配数
 
 	int 		mCityId;	//被调所属城市id
 	int 		mOffSide;	//被调节点与主调异地标志，默认为0， 1标为异地
@@ -377,6 +379,7 @@ struct SvrInfo_t
  */
 struct SvrStat_t
 {
+	int 			mType;
 	SvrReqCfg_t		mReqCfg;	//访问量配置
 	SvrListCfg_t	mListCfg;	//并发量配置
 	SvrInfo_t		mInfo;		//统计信息
@@ -432,7 +435,7 @@ struct SvrKind_t
     int 	mPtm; 			//rebuild 时刻的绝对时间 time_t
     int 	mRebuildTm; 	//rebuild 的时间间隔
 	float 	mWeightSum;
-	int64_t mAccess64tm;	//最近访问时间
+	int64_t mAccess64tm;	//最近访问时间 微妙
 
 	int mPindex;
 	
@@ -446,6 +449,22 @@ struct SvrKind_t
         mWeightSum = 0.0f;
         mOverload = 0;
         mPtm = time(NULL);
+        mAccess64tm = GetTimeofday();
+        mPindex = 0;
+	}
+	
+	SvrKind_t(const SvrKind_t& stKind)
+	{
+		mGid = stKind.mGid;
+		mXid = stKind.mXid;
+        mPtotalErrRate = stKind.mPtotalErrRate;
+        mPsubCycCount = stKind.mPsubCycCount;
+        mRebuildTm = stKind.mRebuildTm;
+        mWeightSum = stKind.mWeightSum;
+        mOverload = stKind.mOverload;
+        mPtm = stKind.mPtm;
+        mAccess64tm = stKind.mAccess64tm;
+        mPindex = stKind.mPindex;
 	}
 
 	SvrKind_t(const SvrNet_t& stNode)
@@ -458,6 +477,23 @@ struct SvrKind_t
         mWeightSum = 0.0f;
         mOverload = 0;
         mPtm = time(NULL);
+        mAccess64tm = GetTimeofday();
+        mPindex = 0;
+	}
+
+	SvrKind_t& operator=(const SvrKind_t& stKind)
+	{
+		mGid = stKind.mGid;
+		mXid = stKind.mXid;
+        mPtotalErrRate = stKind.mPtotalErrRate;
+        mPsubCycCount = stKind.mPsubCycCount;
+        mRebuildTm = stKind.mRebuildTm;
+        mWeightSum = stKind.mWeightSum;
+        mOverload = stKind.mOverload;
+        mPtm = stKind.mPtm;
+        mAccess64tm = stKind.mAccess64tm;
+        mPindex = stKind.mPindex;
+        return *this;
 	}
 
     bool operator<(SvrKind_t const &other) const

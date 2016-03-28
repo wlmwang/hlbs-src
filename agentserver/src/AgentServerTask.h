@@ -40,9 +40,11 @@ class AgentServerTask : public wTcpTask
 		
 		DEC_FUNC(ReloadSvrReq);
 		DEC_FUNC(GetSvrAll);
-		DEC_FUNC(GetSvrByGXid);
+		DEC_FUNC(GetSvrByGXid);	//获取一个可用svr
+		DEC_FUNC(ReportSvr);	//上报
+
 		DEC_FUNC(SyncSvrReq);
-		
+
 	protected:
 		DEC_DISP(mDispatch);
 

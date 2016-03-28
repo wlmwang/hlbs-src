@@ -180,14 +180,9 @@ void AgentServer::CheckQueue()
 		//上报调用结果
 		SvrReqReport_t *pReportSvr = (SvrReqReport_t*) szBuff;
 		
-		struct SvrNet_t stSvr;
-		stSvr.mGid = pReportSvr->mCaller.mCalledGid;
-		stSvr.mXid = pReportSvr->mCaller.mCalledXid;
-		stSvr.mPort = pReportSvr->mCaller.mPort;
-		memcpy(stSvr.mHost, pReportSvr->mCaller.mHost, sizeof(pReportSvr->mCaller.mHost));
-		if(stSvr.mGid>0 && stSvr.mXid>0 && stSvr.mPort>0 && stSvr.mHost[0]!=0)
+		if(pReportSvr->mCaller.mCalledGid>0 && pReportSvr->mCaller.mCalledXid>0 && pReportSvr->mCaller.mPort>0 && pReportSvr->mCaller.mHost[0]!=0)
 		{
-			mConfig->Qos()->CallerNode(stSvr, pReportSvr->mCaller);
+			mConfig->Qos()->CallerNode(pReportSvr->mCaller);
 		}
 	}
 }

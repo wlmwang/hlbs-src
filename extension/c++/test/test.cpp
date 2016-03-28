@@ -4,8 +4,6 @@
 
 int Get()
 {
-	cout << "connect:" <<ConnectAgent(&g_handle) << endl;
-
 	struct SvrNet_t stSvr;
 	stSvr.mGid = 1;
 	stSvr.mXid = 2;
@@ -18,13 +16,11 @@ int Get()
 
 int Post()
 {
-	cout << "connect:" <<InitShm(&g_handle) << endl;
-
 	SvrNet_t stSvr;
 	stSvr.mGid = 1;
 	stSvr.mXid = 2;
 	stSvr.mPort = 3306;
-	memcpy(stSvr.mHost,"192.168.8.13", sizeof("192.168.8.13"));
+	memcpy(stSvr.mHost,"192.168.8.14", sizeof("192.168.8.14"));
 	
 	string s;
 	cout << "res:" << NotifyCallerRes(stSvr, 0, 2000, s) << endl;
@@ -34,7 +30,7 @@ int Post()
 int main(int argc,char **argv)
 {
 	Get();
-	//Post();
+	Post();
 	return 0;
 }
 

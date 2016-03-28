@@ -8,8 +8,6 @@
 #define _AGENT_API_H
 
 #include "wCore.h"
-#include "wShm.h"
-#include "wMsgQueue.h"
 #include "wSocket.h"
 #include "wTask.h"
 #include "Common.h"
@@ -21,12 +19,8 @@
 
 struct postHandle_t
 {
-	int mType;	//0 共享内存、1 socket
-	
 	wSocket *mSock;
 	wTask *mTask;
-	wShm *mShm;
-	wMsgQueue *mQueue;
 };
 
 extern struct postHandle_t g_handle;
@@ -40,9 +34,7 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 /** 调用数上报 */
 int NotifyCallerNum(const struct SvrNet_t &stSvr, int iReqCount);
 
-void Release(struct postHandle_t *pHandle);
-
-int InitShm(struct postHandle_t *pHandle);
 int ConnectAgent(struct postHandle_t *pHandle);
+void Release(struct postHandle_t *pHandle);
 
 #endif
