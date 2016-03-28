@@ -11,6 +11,34 @@
 #include "wMisc.h"
 #include "wNoncopyable.h"
 
+enum IO_TYPE
+{
+	TYPE_UNKNOWN = -1,
+	TYPE_SOCK,	//tcp|udp|http|unix
+	TYPE_FILE,
+	TYPE_BUF,
+	TYPE_SHM
+};
+
+enum IO_FLAG
+{
+	FLAG_UNKNOWN = -1,
+    FLAG_RECV,
+    FLAG_SEND,
+	FLAG_RVSD	//收发
+};
+
+/**	TASK_HTTP使用TASK_TCP传输协议*/
+enum TASK_TYPE
+{
+	TASK_UNKNOWN = -1,
+	TASK_UDP,
+	TASK_TCP,
+	TASK_UNIX,
+	TASK_HTTP
+};
+
+/**	未起实质性作用~*/
 enum SOCK_STATUS
 {
 	STATUS_UNKNOWN = -1,
@@ -23,26 +51,8 @@ enum SOCK_STATUS
 enum SOCK_TYPE
 {
 	SOCK_UNKNOWN = -1,
-	SOCK_LISTEN = 0,	//服务端
-	SOCK_CONNECT,	//客户端
-	SOCK_UNIX,
-};
-
-enum IO_TYPE
-{
-	TYPE_UNKNOWN = -1,
-	TYPE_SOCK,	//tcp|udp|unix socket
-	TYPE_FILE,
-	TYPE_BUF,
-	TYPE_SHM,
-};
-
-enum IO_FLAG
-{
-	FLAG_UNKNOWN = -1,
-    FLAG_RECV,
-    FLAG_SEND,
-	FLAG_RVSD
+	SOCK_LISTEN = 0,	//监听sock
+	SOCK_CONNECT		//连接sock
 };
 
 class wIO : private wNoncopyable
@@ -58,6 +68,8 @@ class wIO : private wNoncopyable
 		
 		SOCK_TYPE &SockType() { return mSockType;}
 		SOCK_STATUS &SockStatus() { return mSockStatus;}
+		
+		TASK_TYPE &TaskType() { return mTaskType;}
 		
 		unsigned long long &RecvTime() { return mRecvTime; }
 		unsigned long long &SendTime() { return mSendTime; }
@@ -86,7 +98,9 @@ class wIO : private wNoncopyable
 		
 		SOCK_TYPE mSockType;
 		SOCK_STATUS mSockStatus;
-
+		
+		TASK_TYPE mTaskType;
+		
 		string mHost;
 		unsigned short mPort;
 		

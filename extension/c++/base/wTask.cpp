@@ -46,7 +46,6 @@ int wTask::TaskRecv()
 {
 	int iRecvLen = mIO->RecvBytes(mRecvMsgBuff + mRecvBytes, sizeof(mRecvMsgBuff) - mRecvBytes);
 	
-	//LOG_DEBUG(ELOG_KEY, "[runtime] recv data len: %d , %s", iRecvLen, mRecvMsgBuff);
 	if(iRecvLen <= 0)
 	{
 		return iRecvLen;	
@@ -110,40 +109,35 @@ int wTask::TaskRecv()
 
 int wTask::TaskSend()
 {
+	int iSendLen = 0;
+	int iMsgLen = 0;
 	while(true)
 	{
-		int iMsgLen = mSendWrite - mSendBytes;
-		
+		iMsgLen = mSendWrite - mSendBytes;
 		if(iMsgLen <= 0)
 		{
 			return 0;
 		}
 		
-		int iSendLen = mIO->SendBytes(mSendMsgBuff + mSendBytes, iMsgLen);
+		iSendLen = mIO->SendBytes(mSendMsgBuff + mSendBytes, iMsgLen);
 		if(iSendLen < 0)
 		{
 			return iSendLen;
 		}
-		
-		if(iSendLen < iMsgLen)
-		{
-			mSendBytes += iSendLen;
-			continue;
-		}
+		mSendBytes += iSendLen;
 		
 	}
 	
-	int iSendLen = mSendBytes;
 	if(mSendBytes > 0)
 	{
 		memmove(mSendMsgBuff, mSendMsgBuff + mSendBytes, mSendWrite - mSendBytes);	//清除已处理消息
 		mSendWrite -= mSendBytes;
 		mSendBytes = 0;
 	}
-	return iSendLen;
+	return mSendBytes;
 }
 
-int wTask::WriteToSendBuf(const char *pCmd, int iLen)
+int wTask::SendToBuf(const char *pCmd, int iLen)
 {
 	//判断消息长度
 	if(iLen <= MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN )
@@ -165,7 +159,9 @@ int wTask::WriteToSendBuf(const char *pCmd, int iLen)
 	
 	*(int *)(mSendMsgBuff + mSendWrite)= iLen;
 	memcpy(mSendMsgBuff + mSendWrite + sizeof(int), pCmd, iLen);
-	return 0;
+	mSendWrite += iMsgLen;
+
+	return mSendWrite - mSendBytes;
 }
 
 int wTask::SyncSend(const char *pCmd, int iLen)

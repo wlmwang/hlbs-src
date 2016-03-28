@@ -16,7 +16,7 @@ wSocket::~wSocket() {}
 void wSocket::Initialize()
 {
 	mIOType = TYPE_SOCK;
-	mIOFalg = FLAG_RVSD;
+	mIOFlag = FLAG_RVSD;
 	mTaskType = TASK_TCP;
 }
 
@@ -226,10 +226,8 @@ ssize_t wSocket::RecvBytes(char *vArray, size_t vLen)
 			}
 			if(iRecvLen < 0 && (mErr == EAGAIN || mErr == EWOULDBLOCK))	//缓冲区满|超时
 			{
-				//可读事件准备(tcptask)
-				//waitread
-				usleep(100);
-				continue;
+				//usleep(100);
+				//continue;
 			}
 			
 			LOG_ERROR(ELOG_KEY, "[runtime] recv fd(%d) error: %s", mFD, strerror(mErr));
@@ -270,10 +268,8 @@ ssize_t wSocket::SendBytes(char *vArray, size_t vLen)
 			}
 			if(iSendLen < 0 && (mErr == EAGAIN || mErr == EWOULDBLOCK))	//缓冲区满|超时
 			{
-				//可写事件准备(tcptask)
-				//waitwrite
-				usleep(100);
-				continue;
+				//usleep(100);
+				//continue;
 			}
 			
 			LOG_ERROR(ELOG_KEY, "send fd(%d) error: %s", mFD, strerror(mErr));

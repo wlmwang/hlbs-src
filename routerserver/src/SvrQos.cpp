@@ -1135,7 +1135,7 @@ int SvrQos::AddErrRoute(struct SvrKind_t& stItem, struct SvrNode_t& stNode)
 	time_t nowTm = time(NULL);
 	
 	LOG_DEBUG(ELOG_KEY, "[svr] AddErrRoute node overload, exist count=%d: mod=%d cmd=%d ip=%s port=%u stop_time=%d limit=%d",
-		iErrCount+1,stNode.mNet.mGid,stNode.mNet.mXid,stNode.mNet.mHost,stNode.mNet.mPort,nowTm - stNode.mStopTime,stNode.mStat->mReqCfg->mReqLimit);
+		iErrCount+1,stNode.mNet.mGid,stNode.mNet.mXid,stNode.mNet.mHost,stNode.mNet.mPort,nowTm - stNode.mStopTime,stNode.mStat->mReqCfg.mReqLimit);
     	
 	//record down server
 	stNode.mStopTime = nowTm;

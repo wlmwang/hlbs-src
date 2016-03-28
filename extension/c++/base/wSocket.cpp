@@ -16,8 +16,8 @@ wSocket::~wSocket() {}
 void wSocket::Initialize()
 {
 	mIOType = TYPE_SOCK;
-	mSockType = SOCK_UNKNOWN;
-	mSockStatus = STATUS_UNKNOWN;
+	mIOFlag = FLAG_RVSD;
+	mTaskType = TASK_TCP;
 }
 
 int wSocket::Open()
@@ -99,7 +99,7 @@ int wSocket::Connect(string sIpAddr ,unsigned int nPort)
 
 	mHost = sIpAddr;
 	mPort = nPort;
-	mSockStatus = STATUS_CONNECTED;
+	
 	mSockType = SOCK_CONNECT;
 	mIOFlag = FLAG_RECV;
 
@@ -226,10 +226,7 @@ ssize_t wSocket::RecvBytes(char *vArray, size_t vLen)
 			}
 			if(iRecvLen < 0 && (mErr == EAGAIN || mErr == EWOULDBLOCK))	//缓冲区满|超时
 			{
-				//可读事件准备(tcptask)
-				//waitread
-				usleep(100);
-				continue;
+				//continue;
 			}
 			
 			return iRecvLen;
@@ -269,10 +266,7 @@ ssize_t wSocket::SendBytes(char *vArray, size_t vLen)
 			}
 			if(iSendLen < 0 && (mErr == EAGAIN || mErr == EWOULDBLOCK))	//缓冲区满|超时
 			{
-				//可写事件准备(tcptask)
-				//waitwrite
-				usleep(100);
-				continue;
+				//continue;
 			}
 			
 			return iSendLen;

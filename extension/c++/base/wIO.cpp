@@ -22,8 +22,8 @@ void wIO::Initialize()
 	mIOType = TYPE_UNKNOWN;
 	mIOFlag = FLAG_UNKNOWN;
 	mTaskType = TASK_UNKNOWN;
-	mSockStatus = STATUS_UNKNOWN;
 	mSockType = SOCK_UNKNOWN;
+	mSockStatus = STATUS_UNKNOWN;
 	mHost = "";
 	mPort = 0;	
 	mRecvTime = 0;

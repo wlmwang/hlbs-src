@@ -38,6 +38,7 @@ OBJECTS=./debug/RouterMain.o \
 		./debug/wSignal.o \
 		./debug/wWorker.o \
 		./debug/wProcTitle.o \
+		./debug/wHttpTask.o  \
 		./debug/wTcpTask.o  \
 		./debug/wChannel.o \
 		./debug/wChannelTask.o \
@@ -48,6 +49,7 @@ OBJECTS=./debug/RouterMain.o \
 		./debug/wLog.o \
 		./debug/wMisc.o \
 		./debug/wSocket.o \
+		./debug/wHttp.o \
 		./debug/wShmtx.o \
 		./debug/wShm.o
 
@@ -114,7 +116,13 @@ all: $(TARGET)
 ./debug/wTcpTask.o: $(BASEPATH)/wTcpTask.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
+./debug/wHttpTask.o: $(BASEPATH)/wHttpTask.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
 ./debug/wSocket.o: $(BASEPATH)/wSocket.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wHttp.o: $(BASEPATH)/wHttp.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wSignal.o: $(BASEPATH)/wSignal.cpp

@@ -387,7 +387,7 @@ void wTcpServer<T>::Recv()
 	TASK_TYPE taskType;
 	SOCK_TYPE sockType;
 	IO_FLAG iOFlag;
-	IO_TYPE ioType;
+	IO_TYPE iOType;
 	for(int i = 0 ; i < iRet ; i++)
 	{
 		pTask = (wTask *)mEpollEventPool[i].data.ptr;

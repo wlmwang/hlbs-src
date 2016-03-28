@@ -47,7 +47,7 @@ class wTask : private wNoncopyable
 		 *  -2 ：发送缓冲剩余空间不足，请稍后重试
 		 *   0 : 发送成功
 		 */
-		virtual int WriteToSendBuf(const char *pCmd, int iLen);
+		virtual int SendToBuf(const char *pCmd, int iLen);
 		/**
 		 * 发送缓冲区有数据
 		 */
@@ -59,11 +59,8 @@ class wTask : private wNoncopyable
 		 */
 		int SyncSend(const char *pCmd, int iLen);
 		/**
-		 *  同步接受确切长度消息，确保pCmd有足够长的空间接受自此同步消息
-		 *  
-		 *  慎用：（一般建议只用于连接前的验证消息交互）
-		 *  1. 需保证此socket还未加入epoll中，防止出现竞争！！！
-		 *  2. 需保证即将接受消息的类型是服务端正发送消息的类型，否则会出现混乱。（心跳除外）
+		 *  同步接受确切长度消息(需保证此sock未加入epoll中，防止出现竞争！！)
+		 *  确保pCmd有足够长的空间接受自此同步消息
 		 */
 		int SyncRecv(char *pCmd, int iLen, int iTimeout = 30/*s*/);
 		
