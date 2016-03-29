@@ -487,6 +487,7 @@ int wTcpServer<T>::Send(wTask *pTask, const char *pCmd, int iLen)
 	return -1;
 }
 
+/** 只广播tcp连接 */
 template <typename T>
 void wTcpServer<T>::Broadcast(const char *pCmd, int iLen)
 {
@@ -495,7 +496,10 @@ void wTcpServer<T>::Broadcast(const char *pCmd, int iLen)
 		vector<wTask*>::iterator iter;
 		for(iter = mTaskPool.begin(); iter != mTaskPool.end(); iter++)
 		{
-			Send(*iter, pCmd, iLen);
+			if (*iter != NULL && (*iter)->IO()->TaskType() == TASK_TCP)
+			{
+				Send(*iter, pCmd, iLen);
+			}
 		}
 	}
 }

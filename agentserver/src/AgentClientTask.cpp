@@ -64,13 +64,9 @@ int AgentClientTask::Verify()
 	return 0;
 }
 
-/**
- *  接受数据
- */
 int AgentClientTask::HandleRecvMessage(char *pBuffer, int nLen)
 {
 	W_ASSERT(pBuffer != NULL, return -1);
-	//解析消息
 	struct wCommand *pCommand = (struct wCommand*) pBuffer;
 	return ParseRecvMessage(pCommand , pBuffer, nLen);
 }
@@ -108,7 +104,7 @@ int AgentClientTask::InitSvrRes(char *pBuffer, int iLen)
 	{
 		for(int i = 0; i < pCmd->mNum; i++)
 		{
-			LOG_DEBUG(ELOG_KEY, "[runtime] receive svr from router gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", 
+			LOG_DEBUG(ELOG_KEY, "[runtime] init svr from router gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", 
 				pCmd->mSvr[i].mGid, pCmd->mSvr[i].mXid, pCmd->mSvr[i].mHost, pCmd->mSvr[i].mPort, pCmd->mSvr[i].mWeight, pCmd->mSvr[i].mVersion);
 			
 			pConfig->Qos()->SaveNode(pCmd->mSvr[i]);
@@ -121,15 +117,16 @@ int AgentClientTask::InitSvrRes(char *pBuffer, int iLen)
 int AgentClientTask::ReloadSvrRes(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	SvrResReload_t *pCmd = (struct SvrResReload_t* )pBuffer;
+	struct SvrResReload_t *pCmd = (struct SvrResReload_t* )pBuffer;
 
 	if(pCmd->mNum > 0) 
 	{
-		//TODO.
-		//pConfig->Qos()->DelNode();
-		
+		pConfig->Qos()->CleanNode();	
 		for(int i = 0; i < pCmd->mNum; i++)
 		{
+			LOG_DEBUG(ELOG_KEY, "[runtime] reload svr from router gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", 
+				pCmd->mSvr[i].mGid, pCmd->mSvr[i].mXid, pCmd->mSvr[i].mHost, pCmd->mSvr[i].mPort, pCmd->mSvr[i].mWeight, pCmd->mSvr[i].mVersion);
+			
 			pConfig->Qos()->SaveNode(pCmd->mSvr[i]);
 		}
 	}
@@ -140,12 +137,15 @@ int AgentClientTask::ReloadSvrRes(char *pBuffer, int iLen)
 int AgentClientTask::SyncSvrRes(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	SvrResSync_t *pCmd = (struct SvrResSync_t* )pBuffer;
+	struct SvrResSync_t *pCmd = (struct SvrResSync_t* )pBuffer;
 
 	if(pCmd->mNum > 0) 
 	{
 		for(int i = 0; i < pCmd->mNum; i++)
 		{
+			LOG_DEBUG(ELOG_KEY, "[runtime] sync svr from router gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", 
+				pCmd->mSvr[i].mGid, pCmd->mSvr[i].mXid, pCmd->mSvr[i].mHost, pCmd->mSvr[i].mPort, pCmd->mSvr[i].mWeight, pCmd->mSvr[i].mVersion);
+			
 			pConfig->Qos()->SaveNode(pCmd->mSvr[i]);
 		}
 	}

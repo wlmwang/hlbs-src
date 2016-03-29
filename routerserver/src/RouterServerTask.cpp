@@ -62,13 +62,9 @@ int RouterServerTask::Verify()
 	return 0;
 }
 
-/**
- *  接受数据
- */
 int RouterServerTask::HandleRecvMessage(char * pBuffer, int nLen)
 {
 	W_ASSERT(pBuffer != NULL, return -1);
-	//解析消息
 	struct wCommand *pCommand = (struct wCommand*) pBuffer;
 	return ParseRecvMessage(pCommand, pBuffer, nLen);
 }
@@ -96,20 +92,24 @@ int RouterServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer,
 	return 0;
 }
 
+/** 向单个agent发送init回应 */
 int RouterServerTask::InitSvrReq(char *pBuffer, int iLen)
 {
-	SvrResInit_t vRRt;
+	struct SvrResInit_t vRRt;
 	vRRt.mCode = 0;
 	vRRt.mNum = mConfig->Qos()->GetSvrAll(vRRt.mSvr);	
 	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
 
+/** 向单个agent发送reload响应 */
 int RouterServerTask::ReloadSvrReq(char *pBuffer, int iLen)
 {
-	SvrResReload_t vRRt;
+	struct SvrResReload_t vRRt;
 	vRRt.mCode = 0;
-	vRRt.mNum = mConfig->ReloadSvr(vRRt.mSvr);
+	
+	mConfig->Qos()->CleanNode();
+	vRRt.mNum = mConfig->GetModSvr(vRRt.mSvr);
 	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
 	return 0;
 }

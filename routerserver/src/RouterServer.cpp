@@ -44,19 +44,20 @@ void RouterServer::Run()
 	CheckModSvr();
 }
 
-//检测配置文件是否修改
+//检测配置文件是否修改(增量同步)
 void RouterServer::CheckModSvr()
 {
 	if(mConfig->IsModTime())
 	{
-		SvrResSync_t stSvr;
+		struct SvrResSync_t stSvr;
 		stSvr.mCode = 0;
 
-		//读更新配置
 		stSvr.mNum = mConfig->GetModSvr(stSvr.mSvr);	//SvrNet_t
 		if (stSvr.mNum > 0)
 		{
-			LOG_DEBUG(ELOG_KEY, "[runtime] broadcast new Svr");
+			LOG_DEBUG(ELOG_KEY, "[runtime] sync new or change(version) svr gid=%d xid=%d host=%s port=%d weight=%d ver=%d",
+				stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight,stSvr.mVersion);
+
 			Broadcast((char *)&stSvr, sizeof(stSvr));	//广播所有agent
 		}
 	}

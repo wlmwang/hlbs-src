@@ -15,7 +15,7 @@ enum CLIENT_TYPE
 	SERVER_CMD,
 };
 
-#define ROUTER_LOGIN true
+#define ROUTER_LOGIN false
 #define AGENT_LOGIN false
 #define CLIENT_LOGIN false
 

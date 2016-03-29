@@ -42,7 +42,6 @@ class RouterConfig: public wConfig<RouterConfig>
 		bool IsModTime();
 		int SetModTime();
 		int GetModSvr(SvrNet_t* pBuffer);
-		int ReloadSvr(SvrNet_t* pBuffer);
 		
 		SvrQos *Qos() { return mSvrQos; }
 		

@@ -158,13 +158,6 @@ void RouterConfig::GetSvrConf()
 	SetModTime();
 }
 
-int RouterConfig::ReloadSvr(SvrNet_t* pBuffer)
-{
-	//TODO
-	//mSvrQos->DelNode();
-	return GetModSvr(pBuffer);
-}
-
 //不能删除节点（可修改WEIGHT=0属性，达到删除节点效果）
 int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 {
@@ -172,7 +165,7 @@ int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 	if (!bLoadOK)
 	{
 		LOG_ERROR(ELOG_KEY, "[modify svr] Load config file(svr.xml) failed");
-		exit(2);
+		return -1;
 	}
 
 	TiXmlElement *pElement = NULL;
