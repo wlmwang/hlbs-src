@@ -308,7 +308,7 @@ struct SvrInfo_t
 	float       mOkRate;			//上一周期成功率 0-1
 	unsigned int mAvgTm;			//上一周期成功请求平均时延，微秒  mTotalUsec/mReqSuc
 	long long   mTotalUsec; 		//请求总微秒数
-	float 		mAvgErrRate;		//平均错误率
+	float 		mAvgErrRate;		//平均错误率，统计多个周期的错误率并加以平均得到（未超过最低阈值(mReqCfg.mReqErrMin)，始终为0）
 
 	/** 上一周期统计数据 */
 	int 		mLastReqAll;
@@ -370,7 +370,7 @@ struct SvrInfo_t
 
     void InitInfo(struct SvrNet_t& stSvr)
     {
-
+    	//...
     }
 };
 
@@ -540,7 +540,7 @@ struct SvrNode_t
 	SvrNet_t mNet;
 	SvrStat_t *mStat;
 
-	float mKey;		//关键值，初始化为 mInfo.mLoadX=1
+	float mKey;				//关键值，初始化为 mInfo.mLoadX = 1
 
 	int mStopTime;			//宕机记录信息
 	int mReqAllAfterDown;	//宕机以来所有请求数量
@@ -549,7 +549,7 @@ struct SvrNode_t
     int mDownTimeTrigerProbeEx;		//时间
     int mReqCountTrigerProbeEx;		//请求数量
     
-    bool mIsDetecting; 		//是否处在“探测宕机是否恢复”的状态  
+    bool mIsDetecting; 		//是否处在 "探测宕机是否恢复" 的状态  
     //int mHasDumpStatistic;//是否备份
 
 	SvrNode_t(const struct SvrNet_t& nt, struct SvrStat_t* pStat)

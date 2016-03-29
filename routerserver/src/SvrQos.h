@@ -11,6 +11,7 @@
 #include <map>
 #include <list>
 #include <algorithm>
+#include <iterator>
 #include <cmath>
 
 #include "wCore.h"
@@ -66,8 +67,8 @@ class SvrQos : public wSingleton<SvrQos>
 	    int mRebuildTm;		//重建时间间隔 默认为3s
 	    int mReqTimeout;	//请求超时时间 默认为500ms
 
-	    float mAvgErrRate;		//错误平均值，实时扩展收缩
-	    bool mAllReqMin;		//所有节点都过载？
+	    float mAvgErrRate;		//错误平均值，过载时
+	    bool mAllReqMin;		//所有节点都过载
 
 	    SvrReqCfg_t	 mReqCfg;	//访问量控制
 	    SvrListCfg_t mListCfg;	//并发量控制
