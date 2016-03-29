@@ -84,10 +84,10 @@ int SvrQos::SaveNode(struct SvrNet_t& stSvr)
 		struct SvrNet_t &stKey = const_cast<struct SvrNet_t&> (mapReqIt->first);
 		if (stSvr.mWeight != stKey.mWeight)
 		{
-			LOG_DEBUG(ELOG_KEY, "[svr] modify Svr weight gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
             stKey.mWeight = stSvr.mWeight;
             ModRouteNode(stSvr);
 		}
+		LOG_DEBUG(ELOG_KEY, "[svr] modify Svr weight gid(%d),xid(%d),host(%s),port(%d),weight(%d),old_key(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight, stKey.mWeight);
 	}
 	return 0;
 }
@@ -134,22 +134,22 @@ int SvrQos::ModNode(struct SvrNet_t& stSvr)
 {
 	if (stSvr.mWeight < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[svr] del node failed(weight invalid) gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
+		LOG_ERROR(ELOG_KEY, "[svr] ModNode invalid gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
 		return -1;
 	}
 
 	int iRet = 0;
 	if (stSvr.mWeight == 0)		//权重为0删除节点
 	{
-		LOG_DEBUG(ELOG_KEY, "[svr] del node start gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
+		LOG_DEBUG(ELOG_KEY, "[svr] DelNode start gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
 		iRet = DelNode(stSvr);
 	}
 	else
 	{
-		LOG_DEBUG(ELOG_KEY, "[svr] modify node start gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
+		LOG_DEBUG(ELOG_KEY, "[svr] ModNode start gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
 		if(stSvr.mWeight > MAX_WEIGHT)
 		{
-			LOG_ERROR(ELOG_KEY, "[svr] modify node but weight is setting default(invalid) gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
+			LOG_ERROR(ELOG_KEY, "[svr] ModNode but weight is setting default(invalid) gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
 			stSvr.mWeight = MAX_WEIGHT;
 		}
 		iRet = SaveNode(stSvr);
@@ -1215,7 +1215,7 @@ int SvrQos::ModRouteNode(struct SvrNet_t& stSvr)
 
 	if(rtIt == mRouteTable.end() && reIt == mErrTable.end())
 	{
-		LOG_ERROR(ELOG_KEY, "[svr] modify route node invalid Svr gid(%d),xid(%d)",stSvr.mGid,stSvr.mXid);
+		LOG_ERROR(ELOG_KEY, "[svr] ModRouteNode route invalid Svr gid(%d),xid(%d)",stSvr.mGid,stSvr.mXid);
         return -1;
     }
 
@@ -1227,7 +1227,7 @@ int SvrQos::ModRouteNode(struct SvrNet_t& stSvr)
 		{
 			if(it->second.mNet == stSvr)	//请求节点
 			{
-				LOG_DEBUG(ELOG_KEY, "[svr] modify route node weight gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
+				LOG_DEBUG(ELOG_KEY, "[svr] ModRouteNode route weight gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
                 if (it->second.mNet.mWeight != stSvr.mWeight)
 				{
                     it->second.mNet.mWeight = stSvr.mWeight;	//设置为请求权重
@@ -1236,6 +1236,7 @@ int SvrQos::ModRouteNode(struct SvrNet_t& stSvr)
 			}
 		}
 	}
+
 	if(reIt != mErrTable.end())
 	{
 		list<SvrNode_t>* pNode = reIt->second;
@@ -1244,7 +1245,7 @@ int SvrQos::ModRouteNode(struct SvrNet_t& stSvr)
 		{
 			if(it->mNet == stSvr)
 			{
-				LOG_DEBUG(ELOG_KEY, "[svr] modify error node weight gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
+				LOG_DEBUG(ELOG_KEY, "[svr] ModRouteNode error weight gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
                 if(it->mNet.mWeight != stSvr.mWeight)
 				{
                     it->mNet.mWeight = stSvr.mWeight;
@@ -1254,7 +1255,7 @@ int SvrQos::ModRouteNode(struct SvrNet_t& stSvr)
 		}
 	}
 
-	LOG_DEBUG(ELOG_KEY, "[svr] modify nothing route node weight gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
+	LOG_DEBUG(ELOG_KEY, "[svr] ModRouteNode nothing to do gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
 	return 0;
 }
 

@@ -23,6 +23,7 @@
 
 #define CONF_XML "../config/conf.xml"
 #define ROUTER_XML "../config/router.xml"
+#define QOS_XML "../config/qos.xml"
 
 class AgentConfig : public wConfig<AgentConfig>
 {
@@ -65,6 +66,10 @@ class AgentConfig : public wConfig<AgentConfig>
 		wMemPool *mMemPool;
 		
 		RouterConf_t mRouterConf[MAX_ROUTER_NUM];
+
+		char mRouteConfFile[255];
+		char mQosConfFile[255];
+		char mBaseConfFile[255];
 };
 
 #endif

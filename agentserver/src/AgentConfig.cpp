@@ -28,7 +28,11 @@ void AgentConfig::Initialize()
 	mWorkers = 1;
 	memset(mIPAddr, 0, sizeof(mIPAddr));
 	memset(mRouterConf, 0, sizeof(mRouterConf));
-	
+
+	memcpy(mRouteConfFile, ROUTER_XML, strlen(ROUTER_XML) + 1);
+	memcpy(mQosConfFile, QOS_XML, strlen(QOS_XML) + 1);
+	memcpy(mBaseConfFile, CONF_XML, strlen(CONF_XML) + 1);
+
 	mDoc = new TiXmlDocument();
 	mSvrQos = SvrQos::Instance();
 	mMemPool = new wMemPool();
@@ -37,7 +41,7 @@ void AgentConfig::Initialize()
 
 void AgentConfig::GetBaseConf()
 {
-	bool bLoadOK = mDoc->LoadFile(CONF_XML);
+	bool bLoadOK = mDoc->LoadFile(mBaseConfFile);
 	if (!bLoadOK)
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Load config file(conf.xml) failed");
@@ -109,11 +113,11 @@ void AgentConfig::GetBaseConf()
 
 void AgentConfig::GetRouterConf()
 {
-	bool bLoadOK = mDoc->LoadFile(ROUTER_XML);
+	bool bLoadOK = mDoc->LoadFile(mRouteConfFile);
 	if (!bLoadOK)
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Load config file(router.xml) failed");
-		exit(1);
+		exit(2);
 	}
 
 	TiXmlElement *pElement = NULL;
@@ -149,26 +153,35 @@ void AgentConfig::GetRouterConf()
 	}
 }
 
-struct AgentConfig::RouterConf_t* AgentConfig::GetOneRouterConf()
-{
-	for(int i = 0; i < MAX_ROUTER_NUM; i++)
-	{
-		if (mRouterConf[i].mPort != 0 && mRouterConf[i].mDisabled == 0 && strlen(mRouterConf[i].mIPAddr) != 0)
-		{
-			return &mRouterConf[i];
-		}
-	}
-	return NULL;
-}
-
 void AgentConfig::GetQosConf()
 {
-	mSvrQos->mRateWeight = 7;
-	mSvrQos->mDelayWeight = 1;
+	bool bLoadOK = mDoc->LoadFile(mQosConfFile);
+	if (!bLoadOK)
+	{
+		LOG_ERROR(ELOG_KEY, "[startup] Load config file(qos.xml) failed");
+		exit(2);
+	}
+	
+	TiXmlElement *pElement = NULL;
+	TiXmlElement *pChildElm = NULL;
+	TiXmlElement *pRoot = mDoc->FirstChildElement();
 
+	/** 成功率、时延比例配置 */
+	pElement = pRoot->FirstChildElement("FACTOR");
+	if(NULL != pElement)
+	{
+		const char *szRate = pElement->Attribute("RATE_WEIGHT");
+		const char *szDelay = pElement->Attribute("DELAY_WEIGHT");
+		mSvrQos->mRateWeight = szRate != NULL ? (atoi(szRate)>0 ? atoi(szRate):7) : 7;
+		mSvrQos->mDelayWeight = szDelay != NULL ? (atoi(szDelay)>0 ? atoi(szDelay):1) : 1;
+	}
+	else
+	{
+		mSvrQos->mRateWeight = 7;
+		mSvrQos->mDelayWeight = 1;
+	}
+	/** rate 需在 0.01-100 之间*/
     float rate = (float) mSvrQos->mRateWeight / (float) mSvrQos->mDelayWeight;
-    
-    /** rate 需在 0.01-100 之间*/
     if(rate > 100000)
     {
         mSvrQos->mRateWeight = 100000;
@@ -179,33 +192,86 @@ void AgentConfig::GetQosConf()
         mSvrQos->mDelayWeight = 100000;
         mSvrQos->mRateWeight = 1;
     }
+	
+	/** 路由重建时间 */
+	pElement = pRoot->FirstChildElement("CFG");
+	if(NULL != pElement)
+	{
+		const char *szType = pElement->Attribute("TYPE");
+		const char *szRebuild = pElement->Attribute("REBUILD");
+		mSvrQos->mRebuildTm = szRebuild != NULL ? (atoi(szRebuild)>0 ? atoi(szRebuild):60) : 60;
+	}
+	else
+	{
+		mSvrQos->mRebuildTm = 60;
+	}
 
 	/** 访问量配置 */
-	mSvrQos->mReqCfg.mReqLimit = 10000;
-	mSvrQos->mReqCfg.mReqMax = 10000;
-	mSvrQos->mReqCfg.mReqMin = 10;
-	mSvrQos->mReqCfg.mReqErrMin = 0.5;
-	mSvrQos->mReqCfg.mReqExtendRate = 0.2;
-	mSvrQos->mReqCfg.mRebuildTm = 60;
-	mSvrQos->mReqCfg.mPreTime = 4;
+	pElement = pRoot->FirstChildElement("REQ");
+	if(NULL != pElement)
+	{
+		const char *szReqMax = pElement->Attribute("REQ_MAX");
+		const char *szReqMin = pElement->Attribute("REQ_MIN");
+		const char *szReqErrMin = pElement->Attribute("REQ_ERR_MIN");
+		const char *szReqExtendRate = pElement->Attribute("REQ_EXTEND_RATE");
+		const char *szPreTime = pElement->Attribute("PRE_TIME");
 
-	mSvrQos->mRebuildTm = mSvrQos->mReqCfg.mRebuildTm;
+		mSvrQos->mReqCfg.mReqMax = szReqMax != NULL ? (atoi(szReqMax)>0 ? atoi(szReqMax):10000) : 10000;
+		mSvrQos->mReqCfg.mReqMin = szReqMin != NULL ? (atoi(szReqMin)>0 ? atoi(szReqMin):10) : 10;
+		mSvrQos->mReqCfg.mReqErrMin = szReqErrMin != NULL ? (atof(szReqErrMin)>0 ? atof(szReqErrMin):0.5) : 0.5;
+		mSvrQos->mReqCfg.mReqExtendRate = szReqExtendRate != NULL ? (atof(szReqExtendRate)>0 ? atof(szReqExtendRate):0.2) : 0.2;
+		mSvrQos->mReqCfg.mPreTime = szPreTime != NULL ? (atoi(szPreTime)>0 ? atoi(szPreTime):4) : 4;
+	}
+	else
+	{
+		mSvrQos->mReqCfg.mReqMax = 10000;
+		mSvrQos->mReqCfg.mReqMin = 10;
+		mSvrQos->mReqCfg.mReqErrMin = 0.5;
+		mSvrQos->mReqCfg.mReqExtendRate = 0.2;
+		mSvrQos->mReqCfg.mPreTime = 4;
+	}
+	mSvrQos->mReqCfg.mRebuildTm = mSvrQos->mRebuildTm;
 
 	/** 并发量配置 */
-	mSvrQos->mListCfg.mListLimit = 100;
-	mSvrQos->mListCfg.mListMax = 400;
-	mSvrQos->mListCfg.mListMin = 10;
-	mSvrQos->mListCfg.mListExtendRate = 0.2;
+	pElement = pRoot->FirstChildElement("LIST");
+	if(NULL != pElement)
+	{
+		const char *szListMax = pElement->Attribute("LIST_MAX");
+		const char *szListMin = pElement->Attribute("LIST_MIN");
+		const char *szListErrMin = pElement->Attribute("LIST_ERR_MIN");
+		const char *szListExtendRate = pElement->Attribute("LIST_EXTEND_RATE");
+		const char *szTimeout = pElement->Attribute("LIST_TIMEOUT");
+
+		mSvrQos->mListCfg.mListMax = szListMax != NULL ? (atoi(szListMax)>0 ? atoi(szListMax):400) : 400;
+		mSvrQos->mListCfg.mListMin = szListMin != NULL ? (atoi(szListMin)>0 ? atoi(szListMin):10) : 10;
+		mSvrQos->mListCfg.mListErrMin = szListErrMin != NULL ? (atof(szListErrMin)>0 ? atof(szListErrMin):0.001) : 0.001;
+		mSvrQos->mListCfg.mListExtendRate = szListExtendRate != NULL ? (atof(szListExtendRate)>0 ? atof(szListExtendRate):0.2) : 0.2;
+	}
+	else
+	{
+		mSvrQos->mListCfg.mListMax = 400;
+		mSvrQos->mListCfg.mListMin = 10;
+		mSvrQos->mListCfg.mListErrMin = 0.001;
+		mSvrQos->mListCfg.mListExtendRate = 0.2;
+	}
 
 	/** 宕机配置 */
-	mSvrQos->mDownCfg.mReqCountTrigerProbe = 100000;
-	mSvrQos->mDownCfg.mDownTimeTrigerProbe = 600;
-	mSvrQos->mDownCfg.mProbeTimes = 3;
-	mSvrQos->mDownCfg.mPossibleDownErrReq = 10;
-	mSvrQos->mDownCfg.mPossbileDownErrRate = 0.5;
-	mSvrQos->mDownCfg.mProbeBegin = 0;
-	mSvrQos->mDownCfg.mProbeInterval = 3;
-	mSvrQos->mDownCfg.mProbeNodeExpireTime = 600;
+	pElement = pRoot->FirstChildElement("DOWN");
+	if(NULL != pElement)
+	{
+		//TODO
+	}
+	else
+	{
+		mSvrQos->mDownCfg.mReqCountTrigerProbe = 100000;
+		mSvrQos->mDownCfg.mDownTimeTrigerProbe = 600;
+		mSvrQos->mDownCfg.mProbeTimes = 3;
+		mSvrQos->mDownCfg.mPossibleDownErrReq = 10;
+		mSvrQos->mDownCfg.mPossbileDownErrRate = 0.5;
+		mSvrQos->mDownCfg.mProbeBegin = 0;
+		mSvrQos->mDownCfg.mProbeInterval = 3;
+		mSvrQos->mDownCfg.mProbeNodeExpireTime = 600;
+	}
 
 	if(!(mSvrQos->mReqCfg.mReqExtendRate > 0.001 && mSvrQos->mReqCfg.mReqExtendRate < 101))
 	{
@@ -241,4 +307,16 @@ void AgentConfig::GetQosConf()
 	{
 		mSvrQos->mReqCfg.mPreTime = 2;
 	}
+}
+
+struct AgentConfig::RouterConf_t* AgentConfig::GetOneRouterConf()
+{
+	for(int i = 0; i < MAX_ROUTER_NUM; i++)
+	{
+		if (mRouterConf[i].mPort != 0 && mRouterConf[i].mDisabled == 0 && strlen(mRouterConf[i].mIPAddr) != 0)
+		{
+			return &mRouterConf[i];
+		}
+	}
+	return NULL;
 }
