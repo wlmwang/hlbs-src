@@ -1220,13 +1220,13 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 	          continue;
 		}
 
-		it->mStat->mReqCfg->mReqLimit = mDownCfg.mProbeTimes;
+		it->mStat->mReqCfg.mReqLimit = mDownCfg.mProbeTimes;
 		it->mIsDetecting = true;
 		it->mKey = iPri;
 
 		if (mAllReqMin)
 		{
-            it->mStat->mInfo.avg_err_rate = mAvgErrRate;
+            it->mStat->mInfo.mAvgErrRate = mAvgErrRate;
             it->mStat->mInfo.mLoadX = 1;
             it->mStat->mInfo.mOkLoad = 1;
             it->mStat->mInfo.mDelayLoad = 1;
@@ -1234,8 +1234,8 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 		else
 		{
             it->mStat->mInfo.mLoadX = iPri;
-            it->mStat->mInfo.ok_rate = low_ok_rate;
-            it->mStat->mInfo.avg_tm = big_delay; 
+            //it->mStat->mInfo.ok_rate = low_ok_rate;
+            //it->mStat->mInfo.avg_tm = big_delay; 
         }
 		//统计置0
 		it->mStat->mInfo.mReqAll = 0;
@@ -1247,7 +1247,7 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 		it->mStat->mInfo.mReqErrRet = 0;
 		it->mStat->mInfo.mSReqErrRet = 0;
 		it->mStat->mInfo.mReqErrTm = 0;
-		it->mStat->mInfo.mSReqErrTm = 0;
+		//it->mStat->mInfo.mSReqErrTm = 0;
 
 		LOG_ERROR(ELOG_KEY, "[svr] RebuildErrRoute failed(cannot find errroute routenode in list) gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
 

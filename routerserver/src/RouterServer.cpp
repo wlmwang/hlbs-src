@@ -55,8 +55,8 @@ void RouterServer::CheckModSvr()
 		stSvr.mNum = mConfig->GetModSvr(stSvr.mSvr);	//SvrNet_t
 		if (stSvr.mNum > 0)
 		{
-			LOG_DEBUG(ELOG_KEY, "[runtime] sync new or change(version) svr gid=%d xid=%d host=%s port=%d weight=%d ver=%d",
-				stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight,stSvr.mVersion);
+			//LOG_DEBUG(ELOG_KEY, "[runtime] sync new or change(version) svr gid=%d xid=%d host=%s port=%d weight=%d ver=%d",
+			//	stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight,stSvr.mVersion);
 
 			Broadcast((char *)&stSvr, sizeof(stSvr));	//广播所有agent
 		}
