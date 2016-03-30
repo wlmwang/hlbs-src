@@ -14,7 +14,8 @@ AgentServer::AgentServer() : wTcpServer<AgentServer>("路由服务器")
 	mInMsgQ = NULL;
 	mOutMsgQ = NULL;
 	mRouterConn = NULL;
-
+	mDetectThread = NULL;
+	
 	Initialize();
 }
 
@@ -25,26 +26,28 @@ AgentServer::~AgentServer()
 	SAFE_DELETE(mInMsgQ);
 	SAFE_DELETE(mOutMsgQ);
 	SAFE_DELETE(mRouterConn);
+	SAFE_DELETE(mDetectThread);
 }
 
 void AgentServer::Initialize()
 {
 	mTicker = GetTickCount();
 	mReportTimer = wTimer(REPORT_TIME_TICK);	//5min
-	
 	mConfig = AgentConfig::Instance();
-
-	InitShm();	//初始化共享内存。与agentcmd进程通信
 	
 	mRouterConn = new wMTcpClient<AgentClientTask>();
+	mDetectThread = new DetectThread();
+	
+	InitShm();	//初始化共享内存。与agentcmd进程通信
 }
 
 //准备工作
 void AgentServer::PrepareRun()
 {
 	mRouterConn->PrepareStart();
-
 	ConnectRouter(); //连接Router服务
+	
+	mDetectThread->StartThread();
 }
 
 void AgentServer::Run()

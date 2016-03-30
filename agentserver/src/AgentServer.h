@@ -24,6 +24,7 @@
 #include "SvrCmd.h"
 #include "AgentClientTask.h"
 #include "AgentServerTask.h"
+#include "DetectThread.h"
 
 class AgentServer: public wTcpServer<AgentServer>
 {
@@ -54,15 +55,16 @@ class AgentServer: public wTcpServer<AgentServer>
 	private:
 		unsigned long long mTicker;
 		wTimer mReportTimer;
-
-		wMTcpClient<AgentClientTask> *mRouterConn;	//连接router
 		
 		AgentConfig *mConfig;
-
+		DetectThread *mDetectThread;
+		
 		wShm *mInShm;	//输入的消息队列的缓冲区位置
 		wShm *mOutShm; //输出的消息队列的缓冲区位置
 		wMsgQueue* mInMsgQ;	// 输入的消息队列
 		wMsgQueue* mOutMsgQ;// 输出的消息队列
+		
+		wMTcpClient<AgentClientTask> *mRouterConn;	//连接router
 };
 
 #endif
