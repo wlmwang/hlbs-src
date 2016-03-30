@@ -57,7 +57,7 @@ class SvrQos : public wSingleton<SvrQos>
 		int ListRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat);
 		int RebuildRoute(struct SvrKind_t& stItem, int bForce = false);
 		int AddErrRoute(struct SvrKind_t& stItem, struct SvrNode_t& stNode);
-		int RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct SvrNode_t>* pSvrNode);
+		int RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct SvrNode_t>* pSvrNode, float iPri = 1);
 		
 		/** for test */
 		void LogAllNode();

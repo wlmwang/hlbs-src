@@ -295,7 +295,7 @@ struct SvrTM
 struct SvrInfo_t
 {
 	struct timeval mBuildTm;		//统计信息开始时间, 每个节点 rebuild 时刻的绝对时间
-	int			mReqAll;			//总的请求数
+	int			mReqAll;			//总的请求数，理论上请求调用agent获取路由次数
 	int			mReqRej;			//被拒绝的请求数
 	int			mReqSuc;			//成功的请求数
 	int			mReqErrRet;			//失败的请求数
@@ -319,7 +319,7 @@ struct SvrInfo_t
 	bool  		mLastErr;			//门限扩张标识 true：收缩  false：扩张
 	int 		mLastAlarmReq;		//参考值。请求数扩张门限（上一周期数量），判断扩展是否有效
 	int 		mLastAlarmSucReq;	//参考值。成功请求数扩张门限
-	int 		mPreAll;			//mPreAll*mLoadX，作为WRR的标准  路由已分配数
+	int 		mPreAll;			//路由被分配次数 + 预测本周期成功请求次数
 
 	int 		mCityId;	//被调所属城市id
 	int 		mOffSide;	//被调节点与主调异地标志，默认为0， 1标为异地
@@ -332,7 +332,9 @@ struct SvrInfo_t
 	int			mSReqErrRet;		//失败的请求数(统计用)
 	int			mSReqRrrTm;			//超时的请求数(统计用)
     int         mSPreAll;
-
+    
+    int 		mAddSuc;			//上个周期与上上个周期成功请求数差值
+    int 		mIdle;				//add连续核算次数
     SvrInfo_t()
     {
 		mBuildTm.tv_sec = mBuildTm.tv_usec = 0;
@@ -366,6 +368,9 @@ struct SvrInfo_t
 		mSReqErrRet = 0;
 		mSReqRrrTm  = 0;
         mSPreAll = 0;
+        
+        mAddSuc = 0;
+        mIdle = 0;
     }
 
     void InitInfo(struct SvrNet_t& stSvr)

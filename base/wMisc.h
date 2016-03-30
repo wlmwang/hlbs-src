@@ -13,6 +13,10 @@
 #include <arpa/inet.h>
 #include <sys/file.h>	//int flock(int fd,int operation);
 
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <net/if.h>
+
 #include "wCore.h"
 #include "wCommand.h"
 #include "wSignal.h"
@@ -31,6 +35,38 @@ inline long Text2IP(const char* ipstr)
 	return inet_addr(ipstr);
 }
 
+inline unsigned GetIpByIF(const char* pIfname)
+{
+    int iFD, iIntrface;
+    struct ifreq buf[64];
+    struct ifconf ifc = {0, {0}};
+    unsigned ip = 0; 
+
+    memset(buf, 0, sizeof(buf));
+    if ((iFD = socket(AF_INET, SOCK_DGRAM, 0)) >= 0)
+    {
+        ifc.ifc_len = sizeof(buf);
+        ifc.ifc_buf = (caddr_t)buf;
+        if (!ioctl(iFD, SIOCGIFCONF, (char*)&ifc))
+        {
+            iIntrface = ifc.ifc_len / sizeof(struct ifreq); 
+            while(iIntrface-- > 0)
+            {
+                if(strcmp(buf[iIntrface].ifr_name, pIfname) == 0)
+                {
+                    if(!(ioctl(iFD, SIOCGIFADDR, (char *)&buf[iIntrface])))
+                    {
+                        ip = (unsigned)((struct sockaddr_in *)(&buf[iIntrface].ifr_addr))->sin_addr.s_addr;
+                    }
+                    break;  
+                }       
+            }       
+        }
+        close(iFD);
+    }
+    return ip;
+}
+
 inline unsigned int HashString(const char* s)
 {
 	unsigned int hash = 5381;
@@ -41,7 +77,6 @@ inline unsigned int HashString(const char* s)
 	return hash & 0x7FFFFFFF;
 }
 
-//获取毫秒级时间
 inline unsigned long long GetTickCount()    //clock_t
 {
     struct timeval tv;
@@ -49,7 +84,6 @@ inline unsigned long long GetTickCount()    //clock_t
     return (unsigned long long)tv.tv_sec * 1000 + (unsigned long long)tv.tv_usec / 1000;
 }
 
-//获取微妙级别时间
 inline int64_t GetTimeofday()
 {
     struct timeval tv;
@@ -100,15 +134,11 @@ void itoa(unsigned long val, char *buf, unsigned radix);
 
 u_char *Cpystrn(u_char *dst, u_char *src, size_t n);
 
-//分隔字符串
 vector<string> Split(string sStr, string sPattern, bool bRepeat = true);
 
-//两个数最大公约数
 int Gcd(int a, int b);
-//n个数最大公约数
 int Ngcd(int *arr, int n);
 
-//变为守护进程
 int InitDaemon(const char *filename);
 
 #endif

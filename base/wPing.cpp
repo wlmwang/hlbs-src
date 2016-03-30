@@ -11,7 +11,7 @@ wPing::wPing()
 	Initialize();
 }
 
-wPing::wPing(const char *ip, int timeout)
+wPing::wPing(const char *ip, float timeout)
 {
 	mStrIp = ip;
 	mTimeout = timeout;
@@ -40,125 +40,252 @@ void wPing::Initialize()
 
 int wPing::Open()
 {
-	struct protoent *protocol;
-	if ((protocol = getprotobyname("icmp")) == NULL)
+	//ç”Ÿæˆä½¿ç”¨ICMPçš„åŸå§‹å¥—æ¥å­—,è¿™ç§å¥—æ¥å­—åªæœ‰rootæ‰èƒ½ç”Ÿæˆ
+	if ((mFD = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 	{
-		return FD_UNKNOWN;
-	}
-	/** Éú³ÉÊ¹ÓÃICMPµÄÔ­Ê¼Ì×½Ó×Ö,ÕâÖÖÌ×½Ó×ÖÖ»ÓĞroot²ÅÄÜÉú³É */
-	if ((mFD = socket(AF_INET, SOCK_RAW, protocol->p_proto)) < 0)	//IPPROTO_ICMP
-	{
-		return FD_UNKNOWN;
+		return NOT_PRI;
 	}
 	
-	/** »ØÊÕrootÈ¨ÏŞ,ÉèÖÃµ±Ç°ÓÃ»§È¨ÏŞ */
+	//å›æ”¶rootæƒé™,è®¾ç½®å½“å‰ç”¨æˆ·æƒé™
 	//setuid(getuid());
 	 
-	/** À©´óÌ×½Ó×Ö½ÓÊÕ»º³åÇøµ½50K¡£Ö÷ÒªÎªÁË¼õĞ¡½ÓÊÕ»º³åÇøÒç³öµÄµÄ¿ÉÄÜĞÔ£ºÈôÎŞÒâÖĞpingÒ»¸ö¹ã²¥µØÖ·»ò¶à²¥µØÖ·£¬½«»áÒıÀ´´óÁ¿Ó¦´ğ */
+	//æ‰©å¤§å¥—æ¥å­—æ¥æ”¶ç¼“å†²åŒºåˆ°50Kã€‚ä¸»è¦ä¸ºäº†å‡å°æ¥æ”¶ç¼“å†²åŒºæº¢å‡ºçš„çš„å¯èƒ½æ€§ï¼šè‹¥æ— æ„ä¸­pingä¸€ä¸ªå¹¿æ’­åœ°å€æˆ–å¤šæ’­åœ°å€ï¼Œå°†ä¼šå¼•æ¥å¤§é‡åº”ç­”
 	int size = 50*1024;
 	if (setsockopt(mFD, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size)) != 0)
 	{
-		//set socket receive buf failed:%d
+		LOG_ERROR(ELOG_KEY, "[ping] set socket receive buf failed:%d", size);
 		return FD_UNKNOWN;
 	}
-	
+
+	struct timeval tv;
+	tv.tv_sec = (int)mTimeout;
+	if(tv.tv_sec < 0 || tv.tv_sec >= 3) tv.tv_sec = 0;
+	tv.tv_usec = (int)((mTimeout - (int)mTimeout) * 1000000);
+	if(tv.tv_usec < 0 || tv.tv_usec >= 1000000 || (tv.tv_sec == 0 && tv.tv_usec == 0)) tv.tv_usec = 700000;
+
+    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, tv, sizeof(struct timeval));	//å‘é€è¶…æ—¶
+    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, tv, sizeof(struct timeval));	//æ¥å—è¶…æ—¶
+
 	bzero(&mDestAddr, sizeof(mDestAddr));
 	mDestAddr.sin_family = AF_INET;
 	
 	struct hostent *host;
 	unsigned long inaddr = 0l;
-	if (inaddr = inet_addr(mStrIp.c_str()) == INADDR_NONE)  
+	if (inaddr = inet_addr(mStrIp.c_str()) == INADDR_NONE)
 	{
-		/** ÊÇÖ÷»úÃû */
+		//æ˜¯ä¸»æœºå
 		if ((host = gethostbyname(mStrIp.c_str())) == NULL)
 		{
-			return false;
+			return FD_UNKNOWN;
 		}
 		memcpy((char *) &mDestAddr.sin_addr, host->h_addr, host->h_length);
-	}  
+	}
 	else
 	{
-		/** ÊÇipµØÖ· */
+		//æ˜¯ipåœ°å€
 		memcpy((char *) &mDestAddr, (char *) &inaddr, host->h_length);
 	}
 	
 	return mFD;
 }
 
-bool wPing::Ping(int times)
+int wPing::Ping()
 {
 	if (mFD == FD_UNKNOWN)
 	{
-		return false;
+		return -1;
 	}
 	
-	while (i < times)
+	//å‘é€æ‰€æœ‰ICMPæŠ¥æ–‡
+    if (SendPacket() == -1)
     {
-        i++;
-		
-		/*·¢ËÍËùÓĞICMP±¨ÎÄ*/
-        SendPacket(1);
-		
-		/*½ÓÊÕËùÓĞICMP±¨ÎÄ*/
-        RecvPacket();
+        Close();
+        return -1;
     }
+
+    int iRet = RecvPacket();
+    Close();
+    return iRet;
 }
 
-/** ·¢ËÍnum¸öICMP±¨ÎÄ */
-void wPing::SendPacket(int num)
+/** å‘é€numä¸ªICMPæŠ¥æ–‡ */
+void wPing::SendPacket()
 {
-	if (num > MAX_NO_PACKETS)
+	//è®¾ç½®ICMPæŠ¥å¤´
+	int iLen = Pack();
+	int iRet = sendto(mFD, mSendpacket, iLen, 0, (struct sockaddr *)&mDestAddr, sizeof(mDestAddr));
+	if (iRet < iLen)
 	{
-		num = MAX_NO_PACKETS;
+		LOG_ERROR(ELOG_KEY, "[ping] ip=%s,send ping error=%d,%s", mStrIp.c_str(), errno, strerror(errno));
+		return -1;
 	}
-	
-	int packetsize;
-	int i = 0;
-	while (i < num)
-	{
-		i++;
-		mSend++;
-		
-		/** ÉèÖÃICMP±¨Í· */
-		packetsize = Pack(mSend);
-		if (sendto(mFD, mSendpacket, packetsize, 0, (struct sockaddr *)&mDestAddr, sizeof(mDestAddr)) < 0)
-		{
-			continue;
-		}
-		/** Ã¿¸ôÒ»Ãë·¢ËÍÒ»¸öICMP±¨ÎÄ */
-		sleep(1);
-	}
+	return 0;
 }
 
-/** ½ÓÊÕËùÓĞICMP±¨ÎÄ */
+/** æ¥æ”¶æ‰€æœ‰ICMPæŠ¥æ–‡ */
 void wPing::RecvPacket()  
 {
-	int n, fromlen;
-    fromlen = sizeof(mFrom);
-    while (mRecv < mSend)
+	if (mFD == FD_UNKNOWN)
+	{
+		return;
+	}
+
+    struct msghdr msg;
+    struct iovec iov;
+    memset(&msg, 0, sizeof(msg));
+    memset(&iov, 0, sizeof(iov));
+
+	int iLen = 0, i = 0;
+    int fromlen = sizeof(mFrom);
+
+	memset(mRecvpacket, 0, sizeof(mRecvpacket));
+	memset(mCtlpacket, 0, sizeof(mCtlpacket));
+    for (i = 0; i < RECV_RETRY_TIMES; i++)
     {
-        alarm(MAX_WAIT_TIME);
-        if ((n = recvfrom(mFD, mRecvpacket, sizeof(mRecvpacket), 0, (struct sockaddr *)&mFrom, (struct socklen_t *)&fromlen)) < 0)  
+        iov.iov_base = mRecvpacket;
+        iov.iov_len = sizeof(mRecvpacket);
+        msg.msg_name = (struct sockaddr *)&mFromAddr;	//fixed
+        
+        msg.msg_namelen = sizeof(struct sockaddr_in);
+        msg.msg_iov = &iov;
+        msg.msg_iovlen = 1;
+        msg.msg_control = mCtlpacket;
+        msg.msg_controllen = sizeof(mCtlpacket);
+
+    	//iLen = recvfrom(mFD, mRecvpacket, sizeof(mRecvpacket), 0, (struct sockaddr *)&mFrom, (struct socklen_t *)&fromlen);
+        iLen = recvmsg(mFD, &msg, 0);
+        if (iLen < 0)
         {
             if (errno == EINTR)
 			{
 				continue;
 			}
-			//recvfrom error
-            continue;  
+			else if(errno == EAGAIN)
+			{
+				LOG_ERROR(ELOG_KEY, "[ping] ping recv timeout,ip=%s,err=EAGAIN", mStrIp.c_str());
+				//continue;
+				return -1;
+			}
+			else
+			{
+				LOG_ERROR(ELOG_KEY, "[ping] ping recv error,ip=%s,err=%d,%s", mStrIp.c_str(), errno, strerror(errno));
+				return -1;
+			}
         }
-		
-		/** ¼ÇÂ¼½ÓÊÕÊ±¼ä */
-        gettimeofday(&mRecvtv, NULL);
-        if (Unpack(mRecvpacket, n) == -1)
+        else if (iLen == 0)
+        {
+        	LOG_ERROR(ELOG_KEY, "[ping] ping recv return 0,ip=%s", mStrIp.c_str());
+        	return -1;
+        }
+		else
 		{
-			continue;
+            struct ip *iphdr = (struct ip *)mRecvpacket;
+            if(iphdr->ip_p == IPPROTO_ICMP && iphdr->ip_src.s_addr == mDestAddr->sin_addr.s_addr)
+            {
+                break;
+            }
 		}
-        mRecv++;
     }
-}  
 
-/** Ğ£ÑéºÍ */
+	if (i >= RECV_RETRY_TIMES)
+	{
+		LOG_ERROR(ELOG_KEY, "[ping] ping recv retry times=%d,ip=%s", i, mStrIp.c_str());
+        return -2;
+	}
+
+    //gettimeofday(&mRecvtv, NULL);
+    int iRet = Unpack(mRecvpacket, iLen);
+    if (iRet < 0)
+	{
+		LOG_ERROR(ELOG_KEY, "[ping] ping parse error=%d,ip=%s,retry=%u", iRet, mStrIp.c_str(), i);
+		return iRet;
+	}
+	else
+	{
+        LOG_DEBUG(ELOG_KEY, "[ping] ping succ,ip=%s,retry=%u", mStrIp.c_str(), i);
+        return i;
+	}
+}
+
+/** è®¾ç½®ICMPè¯·æ±‚æŠ¥å¤´ */
+int wPing::Pack()
+{
+	struct icmp *icmp;
+	memset(mSendpacket, 0, sizeof(mSendpacket));
+	icmp = (struct icmp*) mSendpacket;
+	icmp->icmp_type = ICMP_ECHO;
+	icmp->icmp_code = 0;
+	icmp->icmp_cksum = 0;
+	icmp->icmp_seq = mSeqNum++;
+	icmp->icmp_id = mPid;
+	memset(icmp->icmp_data, 0xa5, PDATA_SIZE);
+	icmp->icmp_data[0] = 5;
+	//ICMPæ•°æ®å­—æ®µä¸ºå½“å‰æ—¶é—´æˆª
+	//gettimeofday((struct timeval *)icmp->icmp_data, NULL);
+	
+	int iLen = 8 + PDATA_SIZE;
+	
+	//æ ¡éªŒç®—æ³•
+	icmp->icmp_cksum = CalChksum((unsigned short *)icmp, iLen);
+	return iLen;
+}
+
+/** å‰¥å»ICMPæŠ¥å¤´ */
+int wPing::Unpack(char *pBuffer, int iLen)
+{
+	if (iLen == 0)
+	{
+		return -7;
+	}
+	if (pBuffer == NULL)
+	{
+		return -8;
+	}
+
+	struct ip *ip = (struct ip *)pBuffer;
+    if(ip->ip_p != IPPROTO_ICMP)
+    {
+        return -2;
+    }
+
+    int iphdrlen = ip->ip_hl << 2;
+	
+	//è¶Šè¿‡ipæŠ¥å¤´,æŒ‡å‘ICMPæŠ¥å¤´
+	struct icmp *icmp = (struct icmp *) (pBuffer + iphdrlen); 
+	
+	//ICMPæŠ¥å¤´åŠICMPæ•°æ®æŠ¥çš„æ€»é•¿åº¦
+	iLen -= iphdrlen;
+	
+	//å°äºICMPæŠ¥å¤´é•¿åº¦åˆ™ä¸åˆç†
+	if (iLen < 8)
+	{
+		return -3;  
+	}
+	
+	//ç¡®ä¿æ‰€æ¥æ”¶çš„æ˜¯æˆ‘æ‰€å‘çš„çš„ICMPçš„å›åº”
+	if (icmp->icmp_type == ICMP_ECHOREPLY)
+	{
+		if (icmp->icmp_id != mPid)
+		{
+			return -4;
+		}
+        if(iLen < 16)
+        {
+            return -5;     
+        }
+        if (icmp->icmp_data[0] != ICMP_DATA)
+        {
+            return -6;
+        }
+	}
+	else
+	{
+		return -1;
+	}
+	return 0;
+}
+
+/** æ ¡éªŒå’Œ */
 unsigned short wPing::CalChksum(unsigned short *addr, int len)
 {
 	int sum = 0;
@@ -166,116 +293,23 @@ unsigned short wPing::CalChksum(unsigned short *addr, int len)
 	unsigned short *w = addr;
 	unsigned short answer = 0;
 			
-	/** °ÑICMP±¨Í·¶ş½øÖÆÊı¾İÒÔ2×Ö½ÚÎªµ¥Î»ÀÛ¼ÓÆğÀ´ */
+	//æŠŠICMPæŠ¥å¤´äºŒè¿›åˆ¶æ•°æ®ä»¥2å­—èŠ‚ä¸ºå•ä½ç´¯åŠ èµ·æ¥
 	while(nleft > 1)
 	{
 		sum += *w++;
 		nleft -= 2;
 	}
 	
-	/** ÈôICMP±¨Í·ÎªÆæÊı¸ö×Ö½Ú£¬»áÊ£ÏÂ×îºóÒ»×Ö½Ú¡£°Ñ×îºóÒ»¸ö×Ö½ÚÊÓÎªÒ»¸ö2×Ö½ÚÊı¾İµÄ¸ß×Ö½Ú£¬Õâ¸ö2×Ö½ÚÊı¾İµÄµÍ×Ö½ÚÎª0£¬¼ÌĞøÀÛ¼Ó */
+	//è‹¥ICMPæŠ¥å¤´ä¸ºå¥‡æ•°ä¸ªå­—èŠ‚ï¼Œä¼šå‰©ä¸‹æœ€åä¸€å­—èŠ‚ã€‚æŠŠæœ€åä¸€ä¸ªå­—èŠ‚è§†ä¸ºä¸€ä¸ª2å­—èŠ‚æ•°æ®çš„é«˜å­—èŠ‚ï¼Œè¿™ä¸ª2å­—èŠ‚æ•°æ®çš„ä½å­—èŠ‚ä¸º0ï¼Œç»§ç»­ç´¯åŠ 
 	if(nleft == 1)
 	{      
 		*(unsigned char *)(&answer) = *(unsigned char *)w;
 		sum += answer;
 	}
+	
 	sum = (sum >> 16) + (sum & 0xffff);
 	sum += (sum >> 16);
 	answer = ~sum;
+
 	return answer;
-}
-
-/** ÉèÖÃICMPÇëÇó±¨Í· */
-int wPing::Pack(int pack_no)
-{
-	struct icmp *icmp;
-	icmp = (struct icmp*) mSendpacket;
-	icmp->icmp_type = ICMP_ECHO;
-	icmp->icmp_code = 0;
-	icmp->icmp_cksum = 0;
-	icmp->icmp_seq = pack_no;
-	icmp->icmp_id = mPid;
-	
-	/** ¼ÇÂ¼·¢ËÍÊ±¼ä */
-	struct timeval *tval;
-	tval = (struct timeval *) icmp->icmp_data;
-	gettimeofday(tval, NULL);
-	
-	int packsize = 8 + SEND_DATA_LEN;
-	
-	/** Ğ£ÑéËã·¨ */
-	icmp->icmp_cksum = CalChksum((unsigned short *)icmp, packsize);
-	return packsize;
-}
-
-/** °şÈ¥ICMP±¨Í· */
-int wPing::Unpack(char *buf, int len)
-{
-	int i,iphdrlen;
-	struct ip *ip;
-	struct icmp *icmp;
-	struct timeval *tvsend;
-	double rtt;
-	ip = (struct ip *)buf;
-	
-	/** Çóip±¨Í·³¤¶È,¼´ip±¨Í·µÄ³¤¶È±êÖ¾³Ë4 */
-	iphdrlen = ip->ip_hl << 2;
-	
-	/** Ô½¹ıip±¨Í·,Ö¸ÏòICMP±¨Í· */
-	icmp = (struct icmp *) (buf + iphdrlen); 
-	
-	/** ICMP±¨Í·¼°ICMPÊı¾İ±¨µÄ×Ü³¤¶È */
-	len -= iphdrlen;
-	
-	/** Ğ¡ÓÚICMP±¨Í·³¤¶ÈÔò²»ºÏÀí */
-	if (len < 8)
-	{
-		//ICMP packets/'s length is less than 8/n
-		return -1;  
-	}
-	
-	/** È·±£Ëù½ÓÊÕµÄÊÇÎÒËù·¢µÄµÄICMPµÄ»ØÓ¦ */
-	if ((icmp->icmp_type == ICMP_ECHOREPLY) && (icmp->icmp_id == mPid))  
-	{  
-		tvsend = (struct timeval *) icmp->icmp_data;  
-		
-		/** ½ÓÊÕºÍ·¢ËÍµÄÊ±¼ä²î */
-		TvSub(&mRecvtv, tvsend);
-		
-		/** ÒÔºÁÃëÎªµ¥Î»¼ÆËãrtt */
-		rtt = mRecvtv.tv_sec * 1000 + mRecvtv.tv_usec / 1000;
-		mTotalResponseTimes += rtt;
-		if (mFasterResponseTime == -1)
-		{
-			mFasterResponseTime = rtt;
-		}
-		else if(mFasterResponseTime > rtt)
-		{
-			mFasterResponseTime = rtt;  
-		}
-		
-		if(mLowerResponseTime == -1)  
-		{  
-			mLowerResponseTime = rtt;  
-		}  
-		else if(mLowerResponseTime < rtt)  
-		{
-			mLowerResponseTime = rtt;  
-		}
-		/** ÏÔÊ¾Ïà¹ØĞÅÏ¢ */  
-		//printf("%d/tbyte from %s/t: icmp_seq=%u/tttl=%d/trtt=%.3f/tms/n", len, inet_ntoa(m_from.sin_addr), icmp->icmp_seq, ip->ip_ttl, rtt);  
-		
-		return 0;
-	}
-	return -1;
-}
-
-void wPing::TvSub(struct timeval *out,struct timeval *in)  
-{         
-    if((out->tv_usec -= in->tv_usec) < 0)
-    {
-        --out->tv_sec;
-        out->tv_usec += 1000000;
-    }
-    out->tv_sec -= in->tv_sec;
 }
