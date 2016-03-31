@@ -10,12 +10,10 @@
 #include <pthread.h>
 
 #include "wCore.h"
+#include "wLog.h"
 #include "wNoncopyable.h"
-#include "wCond.h"
 
-/**
- *  互斥锁
- */
+class wCond;
 class wMutex : private wNoncopyable
 {
 	friend class wCond;
@@ -92,14 +90,14 @@ class wMutex : private wNoncopyable
 class RWLock : private wNoncopyable
 {
 	public:
-		RWMutex(int pshared = PTHREAD_PROCESS_PRIVATE) 
+		RWLock(int pshared = PTHREAD_PROCESS_PRIVATE) 
 		{
 			pthread_rwlockattr_init(&mAttr);
 			pthread_rwlockattr_setpshared(&mAttr, pshared);
 			pthread_rwlock_init(&mRWlock, &mAttr);
 		}
 		
-		~RWMutex()
+		~RWLock()
 		{
 			pthread_rwlockattr_destroy(&mAttr);
 			pthread_rwlock_destroy(&mRWlock);
@@ -113,7 +111,7 @@ class RWLock : private wNoncopyable
 		 *  EDEADLK	重复加锁错误
 		 * 	...
 		 */
-		inline int RDLock()
+		inline int LockRD()
 		{
 			if(pthread_rwlock_rdlock(&mRWlock) == -1)	//可能被锁打断
 			{
@@ -131,7 +129,7 @@ class RWLock : private wNoncopyable
 		 *  EDEADLK	重复加锁错误
 		 * 	...
 		 */
-		inline int RDLock()
+		inline int LockWR()
 		{
 			if(pthread_rwlock_wrlock(&mRWlock) == -1)	//可能被锁打断
 			{
@@ -149,9 +147,9 @@ class RWLock : private wNoncopyable
 		 *  EAGAIN	Mutex的lock count(锁数量)已经超过 递归索的最大值，无法再获得该mutex锁
 		 *  EDEADLK	重复加锁错误
 		 */
-		inline int TryRDLock()
+		inline int TryLockRD()
 		{
-			return pthread_rwlock_tryrdlock(&mMutex);
+			return pthread_rwlock_tryrdlock(&mRWlock);
 		}
 		
 		/**
@@ -162,16 +160,16 @@ class RWLock : private wNoncopyable
 		 *  EAGAIN	Mutex的lock count(锁数量)已经超过 递归索的最大值，无法再获得该mutex锁
 		 *  EDEADLK	重复加锁错误
 		 */
-		inline int TryWRLock()
+		inline int TryLockWR()
 		{
-			return pthread_rwlock_trywrlock(&mMutex);
+			return pthread_rwlock_trywrlock(&mRWlock);
 		}
 		
 		/**
 		 *  释放锁
 		 *  0		成功
 		 *  EPERM	当前线程不是该 mRWlock 锁的拥有者
-		 */		
+		 */
 		inline int Unlock()
 		{
 			return pthread_rwlock_unlock(&mRWlock);
@@ -181,6 +179,65 @@ class RWLock : private wNoncopyable
 		pthread_rwlock_t mRWlock;
 		pthread_rwlockattr_t mAttr;
 		int mErrno;
+};
+
+class wCond : private wNoncopyable
+{
+	public:
+		/**
+		 *  PTHREAD_PROCESS_PRIVATE：单进程条件变量，默认设置
+		 *  PTHREAD_PROCESS_SHARED：进程间，共享条件变量（条件变量需进程间共享。如在共享内存中） 
+		 */
+		wCond(int pshared = PTHREAD_PROCESS_PRIVATE)
+		{
+			pthread_condattr_init(&mAttr);
+			pthread_condattr_setpshared(&mAttr, pshared);
+			pthread_cond_init(&mCond, &mAttr);
+		}
+		
+		~wCond()
+		{
+			pthread_condattr_destroy(&mAttr);
+			pthread_cond_destroy(&mCond);
+		}
+		
+		int Broadcast()
+		{
+			return pthread_cond_broadcast(&mCond);
+		}
+		
+		/**
+		 *  唤醒等待中的线程
+		 *  使用pthread_cond_signal不会有"惊群现象"产生，他最多只给一个线程发信号
+		 */
+		int Signal()
+		{
+			return pthread_cond_signal(&mCond);
+		}
+
+		/**
+		 * 等待特定的条件变量满足
+		 * @param stMutex 需要等待的互斥体
+		 */
+		int Wait(wMutex &stMutex)
+		{
+			return pthread_cond_wait(&mCond, &stMutex.mMutex);
+		}
+		
+		/**
+		 * 带超时的等待条件
+		 * @param  stMutex 需要等待的互斥体
+		 * @param  tsptr   超时时间
+		 * @return         
+		 */
+		int TimedWait(wMutex &stMutex, struct timespec *tsptr)
+		{
+			return pthread_cond_timedwait(&mCond, &stMutex.mMutex, tsptr);
+		}
+		
+	private:
+		pthread_cond_t mCond;		//系统条件变量
+		pthread_condattr_t mAttr;
 };
 
 #endif

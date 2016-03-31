@@ -79,9 +79,9 @@ class wIO : private wNoncopyable
 		virtual unsigned short &Port() { return mPort; }
 
 		//30s
-		virtual int SetTimeout(int iTimeout = 30) {}
-		virtual int SetSendTimeout(int iTimeout = 30) {} 
-		virtual int SetRecvTimeout(int iTimeout = 30) {}
+		virtual int SetTimeout(float fTimeout = 30) { return -1; }
+		virtual int SetSendTimeout(float fTimeout = 30) { return -1; } 
+		virtual int SetRecvTimeout(float fTimeout = 30) { return -1; }
 		
 		virtual int SetNonBlock(bool bNonblock = true);
 		

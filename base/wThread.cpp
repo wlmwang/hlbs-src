@@ -60,7 +60,7 @@ int wThread::StartThread(int join)
 	mRunStatus = THREAD_RUNNING;
 	pthread_create(&mTid, &mAttr, ThreadProc, (void *)this);
 	
-	pthread_attr_destry(&mAttr);
+	pthread_attr_destroy(&mAttr);
 	return 0;
 }
 
@@ -110,7 +110,7 @@ int wThread::Wakeup()
 {
 	mMutex->Lock();
 
-	if(!IsBlocked() && mRunStatus == RT_BLOCKED)
+	if(!IsBlocked() && mRunStatus == THREAD_BLOCKED)
     {
 		mCond->Signal();	//向线程发出信号以唤醒
 	}

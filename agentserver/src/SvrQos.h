@@ -19,6 +19,7 @@
 #include "wLog.h"
 #include "wSingleton.h"
 #include "SvrCmd.h"
+#include "DetectThread.h"
 
 class AgentConfig;
 class SvrQos : public wSingleton<SvrQos>
@@ -57,10 +58,13 @@ class SvrQos : public wSingleton<SvrQos>
 		int ListRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat);
 		int RebuildRoute(struct SvrKind_t& stItem, int bForce = false);
 		int AddErrRoute(struct SvrKind_t& stItem, struct SvrNode_t& stNode);
-		int RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct SvrNode_t>* pSvrNode, float iPri = 1);
+		int RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct SvrNode_t>* pSvrNode, float iPri = 1, float fLowOkRate = 1, unsigned int iBigDelay = 1);
 		
 		/** for test */
 		void LogAllNode();
+
+	protected:
+		DetectThread *mDetectThread;
 
 		int mRateWeight;	//成功率因子	1~100000 默认1
 		int mDelayWeight;	//时延因子		1~100000 默认1

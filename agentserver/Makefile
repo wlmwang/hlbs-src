@@ -33,6 +33,7 @@ OBJECTS=./debug/AgentMain.o \
 		./debug/AgentServerTask.o \
 		./debug/AgentClientTask.o \
 		./debug/SvrQos.o \
+		./debug/DetectThread.o \
 		./debug/wMemPool.o \
 		./debug/wSignal.o \
 		./debug/wWorker.o \
@@ -48,8 +49,10 @@ OBJECTS=./debug/AgentMain.o \
 		./debug/wLog.o \
 		./debug/wMisc.o \
 		./debug/wSocket.o \
+		./debug/wPing.o \
 		./debug/wHttp.o \
 		./debug/wShmtx.o \
+		./debug/wThread.o \
 		./debug/wShm.o
 
 $(TARGET): $(OBJECTS)
@@ -76,6 +79,9 @@ all: $(TARGET)
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/SvrQos.o: src/SvrQos.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/DetectThread.o: src/DetectThread.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wWorker.o: $(BASEPATH)/wWorker.cpp
@@ -117,6 +123,9 @@ all: $(TARGET)
 ./debug/wSocket.o: $(BASEPATH)/wSocket.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
+./debug/wPing.o: $(BASEPATH)/wPing.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
 ./debug/wHttp.o: $(BASEPATH)/wHttp.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
@@ -127,6 +136,9 @@ all: $(TARGET)
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wShmtx.o: $(BASEPATH)/wShmtx.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wThread.o: $(BASEPATH)/wThread.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wShm.o: $(BASEPATH)/wShm.cpp

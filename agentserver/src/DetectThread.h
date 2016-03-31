@@ -7,35 +7,51 @@
 #ifndef _DETECT_THREAD_H_
 #define _DETECT_THREAD_H_
 
+#include <map>
+#include <vector>
+
 #include "wCore.h"
+#include "wLog.h"
 #include "wMisc.h"
 #include "wThread.h"
+#include "wSingleton.h"
 #include "wPing.h"
-#include "SvrQos.h"
+#include "wSocket.h"
+#include "Detect.h"
 
-class SvrQos;
-class DetectThread : public wThread
+class DetectThread : public wThread, public wSingleton<DetectThread>
 {
-	friend class SvrQos;
 	public:
 		DetectThread();
 		virtual ~DetectThread();
 
 		virtual int PrepareRun();
 		virtual int Run();
-		virtual bool IsBlocked();
 		
-		//int DelDetect(const vector<detect_node> &nodevec);
-		//int AddDetect(const vector<detect_node> &nodevec);
-		//int GetDetectResult(detect_node &node, detect_result& result);
+		int DelDetect(const vector<struct DetectNode_t> &vNode);
+		int AddDetect(const vector<struct DetectNode_t> &vNode);
+		int GetDetectResult(struct DetectNode_t &stNode, struct DetectResult_t& stRes);
+		int DoDetectNode(const struct DetectNode_t& stNode, struct DetectResult_t& stRes);
 
 	protected:
-		unsigned int mLocalIp;
 		wPing *mPing;
-		wMutex *mDeteMutex;
-		//map<detect_node, detect_result> mDetectMapAll;
-		//map<detect_node, detect_result> mDetectMapNewadd; //新加入的,优先探测
-		//map<detect_node, detect_result> mDetectMapNewdel; //新删除的,优先探测
+		wSocket *mSocket;
+		int mPollFD;
+
+		unsigned int mLocalIp;
+		time_t mNowTm;
+		unsigned int mDetectLoopUsleep;
+		unsigned int mDetectMaxNode;
+		unsigned int mDetectNodeInterval;
+
+		float mPingTimeout;
+		float mTcpTimeout;
+
+		wMutex *mDetectMutex;
+		wMutex *mResultMutex;
+		map<struct DetectNode_t, struct DetectResult_t> mDetectMapAll;		//检测队列
+		map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewadd;	//新加入的,优先探测
+		map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewdel;	//新删除的,优先探测
 };
 
 #endif

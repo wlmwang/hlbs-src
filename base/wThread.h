@@ -11,7 +11,6 @@
 
 #include "wCore.h"
 #include "wMutex.h"
-#include "wCond.h"
 #include "wNoncopyable.h"
 
 enum PTHREAD_STATUS
@@ -32,7 +31,7 @@ class wThread : private wNoncopyable
 
 		virtual int PrepareRun() = 0;
 		virtual int Run() = 0;
-		virtual bool IsBlocked() = 0;
+		virtual bool IsBlocked() { return false; }
 
 		int StartThread(int join = 1);
 		int StopThread();
@@ -41,12 +40,12 @@ class wThread : private wNoncopyable
 		
 		bool IsRunning()
 		{
-			return mRunStatus == RT_RUNNING;
+			return mRunStatus == THREAD_RUNNING;
 		}
 		
 		bool IsStop()
 		{
-			return mRunStatus == RT_STOPPED;
+			return mRunStatus == THREAD_STOPPED;
 		}
 		
 		pthread_t GetTid()
@@ -56,7 +55,7 @@ class wThread : private wNoncopyable
 		
 		virtual char* GetRetVal()
 		{
-			mRetVal = "pthread exited";
+			memcpy(mRetVal, "pthread exited", sizeof("pthread exited"));
 			return mRetVal;
 		}
 	protected:

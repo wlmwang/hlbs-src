@@ -11,12 +11,6 @@ wPing::wPing()
 	Initialize();
 }
 
-wPing::wPing(const char *ip, float timeout)
-{
-	mStrIp = ip;
-	mTimeout = timeout;
-}
-
 wPing::~wPing()
 {
 	Close();
@@ -36,6 +30,7 @@ void wPing::Initialize()
 {
 	mPid = getpid();
 	mFD = FD_UNKNOWN;
+	mSeqNum = 0;
 }
 
 int wPing::Open()
@@ -57,15 +52,76 @@ int wPing::Open()
 		return FD_UNKNOWN;
 	}
 
-	struct timeval tv;
-	tv.tv_sec = (int)mTimeout;
-	if(tv.tv_sec < 0 || tv.tv_sec >= 3) tv.tv_sec = 0;
-	tv.tv_usec = (int)((mTimeout - (int)mTimeout) * 1000000);
-	if(tv.tv_usec < 0 || tv.tv_usec >= 1000000 || (tv.tv_sec == 0 && tv.tv_usec == 0)) tv.tv_usec = 700000;
+	return mFD;
+}
 
-    setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, tv, sizeof(struct timeval));	//发送超时
-    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, tv, sizeof(struct timeval));	//接受超时
+int wPing::SetTimeout(float fTimeout)
+{
+	if(SetSendTimeout(fTimeout) < 0)
+	{
+		return -1;
+	}
+	if(SetRecvTimeout(fTimeout) < 0)
+	{
+		return -1;
+	}
+	return 0;
+}
 
+int wPing::SetSendTimeout(float fTimeout)
+{
+	if(mFD == FD_UNKNOWN) 
+	{
+		return -1;
+	}
+
+	struct timeval stTimetv;
+	stTimetv.tv_sec = (int)fTimeout>=0 ? (int)fTimeout : 0;
+	stTimetv.tv_usec = (int)((fTimeout - (int)fTimeout) * 1000000);
+	if(stTimetv.tv_usec < 0 || stTimetv.tv_usec >= 1000000 || (stTimetv.tv_sec == 0 && stTimetv.tv_usec == 0))
+	{
+		stTimetv.tv_sec = 0;
+		stTimetv.tv_usec = 700000;
+	}
+
+	if(setsockopt(mFD, SOL_SOCKET, SO_SNDTIMEO, &stTimetv, sizeof(stTimetv)) == -1)  
+    {
+        return -1;  
+    }
+    return 0;
+}
+
+int wPing::SetRecvTimeout(float fTimeout)
+{
+	if(mFD == FD_UNKNOWN) 
+	{
+		return -1;
+	}
+
+	struct timeval stTimetv;
+	stTimetv.tv_sec = (int)fTimeout>=0 ? (int)fTimeout : 0;
+	stTimetv.tv_usec = (int)((fTimeout - (int)fTimeout) * 1000000);
+	if(stTimetv.tv_usec < 0 || stTimetv.tv_usec >= 1000000 || (stTimetv.tv_sec == 0 && stTimetv.tv_usec == 0))
+	{
+		stTimetv.tv_sec = 0;
+		stTimetv.tv_usec = 700000;
+	}
+	
+	if(setsockopt(mFD, SOL_SOCKET, SO_RCVTIMEO, &stTimetv, sizeof(stTimetv)) == -1)  
+    {
+        return -1;  
+    }
+    return 0;
+}
+
+int wPing::Ping(const char *pIp)
+{
+	if (mFD == FD_UNKNOWN)
+	{
+		return -1;
+	}
+	mStrIp = pIp;	
+	
 	bzero(&mDestAddr, sizeof(mDestAddr));
 	mDestAddr.sin_family = AF_INET;
 	
@@ -73,27 +129,17 @@ int wPing::Open()
 	unsigned long inaddr = 0l;
 	if (inaddr = inet_addr(mStrIp.c_str()) == INADDR_NONE)
 	{
-		//是主机名
-		if ((host = gethostbyname(mStrIp.c_str())) == NULL)
+		//是主机名 TODO
+		//if ((host = gethostbyname(mStrIp.c_str())) == NULL)
 		{
-			return FD_UNKNOWN;
+			return -1;
 		}
-		memcpy((char *) &mDestAddr.sin_addr, host->h_addr, host->h_length);
+		memcpy((char *)&mDestAddr.sin_addr, host->h_addr, host->h_length);
 	}
 	else
 	{
 		//是ip地址
-		memcpy((char *) &mDestAddr, (char *) &inaddr, host->h_length);
-	}
-	
-	return mFD;
-}
-
-int wPing::Ping()
-{
-	if (mFD == FD_UNKNOWN)
-	{
-		return -1;
+		memcpy((char *)&mDestAddr, (char *) &inaddr, host->h_length);
 	}
 	
 	//发送所有ICMP报文
@@ -109,7 +155,7 @@ int wPing::Ping()
 }
 
 /** 发送num个ICMP报文 */
-void wPing::SendPacket()
+int wPing::SendPacket()
 {
 	//设置ICMP报头
 	int iLen = Pack();
@@ -123,11 +169,11 @@ void wPing::SendPacket()
 }
 
 /** 接收所有ICMP报文 */
-void wPing::RecvPacket()  
+int wPing::RecvPacket()  
 {
 	if (mFD == FD_UNKNOWN)
 	{
-		return;
+		return -1;
 	}
 
     struct msghdr msg;
@@ -136,7 +182,7 @@ void wPing::RecvPacket()
     memset(&iov, 0, sizeof(iov));
 
 	int iLen = 0, i = 0;
-    int fromlen = sizeof(mFrom);
+    int fromlen = sizeof(mFromAddr);
 
 	memset(mRecvpacket, 0, sizeof(mRecvpacket));
 	memset(mCtlpacket, 0, sizeof(mCtlpacket));
@@ -152,7 +198,7 @@ void wPing::RecvPacket()
         msg.msg_control = mCtlpacket;
         msg.msg_controllen = sizeof(mCtlpacket);
 
-    	//iLen = recvfrom(mFD, mRecvpacket, sizeof(mRecvpacket), 0, (struct sockaddr *)&mFrom, (struct socklen_t *)&fromlen);
+    	//iLen = recvfrom(mFD, mRecvpacket, sizeof(mRecvpacket), 0, (struct sockaddr *)&mFromAddr, (struct socklen_t *)&fromlen);
         iLen = recvmsg(mFD, &msg, 0);
         if (iLen < 0)
         {
@@ -180,7 +226,7 @@ void wPing::RecvPacket()
 		else
 		{
             struct ip *iphdr = (struct ip *)mRecvpacket;
-            if(iphdr->ip_p == IPPROTO_ICMP && iphdr->ip_src.s_addr == mDestAddr->sin_addr.s_addr)
+            if(iphdr->ip_p == IPPROTO_ICMP && iphdr->ip_src.s_addr == mDestAddr.sin_addr.s_addr)
             {
                 break;
             }
@@ -302,7 +348,7 @@ unsigned short wPing::CalChksum(unsigned short *addr, int len)
 	
 	//若ICMP报头为奇数个字节，会剩下最后一字节。把最后一个字节视为一个2字节数据的高字节，这个2字节数据的低字节为0，继续累加
 	if(nleft == 1)
-	{      
+	{
 		*(unsigned char *)(&answer) = *(unsigned char *)w;
 		sum += answer;
 	}

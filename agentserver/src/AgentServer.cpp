@@ -26,7 +26,6 @@ AgentServer::~AgentServer()
 	SAFE_DELETE(mInMsgQ);
 	SAFE_DELETE(mOutMsgQ);
 	SAFE_DELETE(mRouterConn);
-	SAFE_DELETE(mDetectThread);
 }
 
 void AgentServer::Initialize()
@@ -36,7 +35,7 @@ void AgentServer::Initialize()
 	mConfig = AgentConfig::Instance();
 	
 	mRouterConn = new wMTcpClient<AgentClientTask>();
-	mDetectThread = new DetectThread();
+	mDetectThread = DetectThread::Instance();
 	
 	InitShm();	//初始化共享内存。与agentcmd进程通信
 }

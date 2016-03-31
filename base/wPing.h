@@ -14,32 +14,33 @@
 #include <netinet/ip_icmp.h>
 #include <netdb.h>
 
-//#include <netinet/tcp.h>
-//#include <netinet/udp.h>
-
 #include "wCore.h"
 #include "wMisc.h"
 #include "wNoncopyable.h"
 
 #define PACKET_SIZE	4096
 #define PDATA_SIZE	56
-#define NOT_PRI		-100
-#define RECV_RETRY_TIMES	4
+#define RECV_RETRY_TIMES 4
 #define ICMP_DATA   5
+#define NOT_PRI		-100
 
 class wPing : private wNoncopyable
 {
 	public:
-		wPing(const char *ip, float timeout = 0.1);
+		wPing();
 		void Initialize();
 		virtual ~wPing();
-
+		
 		int Open();
 		int Close();
 
-		int Ping();
-		void SendPacket();
-		void RecvPacket();
+		int SetTimeout(float fTimeout = 0.1);	//单位：秒
+		int SetSendTimeout(float fTimeout = 0.1);
+		int SetRecvTimeout(float fTimeout = 0.1);
+
+		int Ping(const char *pIp);
+		int SendPacket();
+		int RecvPacket();
 
 		int Pack();
 		int Unpack(char *buf, int len);
@@ -50,7 +51,6 @@ class wPing : private wNoncopyable
 		pid_t mPid;
 		int mFD;
 		string mStrIp;
-		float mTimeout;	//超时时间	
 		int mSeqNum;
 
 		struct sockaddr_in mDestAddr;	//目的地址
@@ -58,9 +58,7 @@ class wPing : private wNoncopyable
 
 		char mSendpacket[PACKET_SIZE];
 		char mRecvpacket[PACKET_SIZE];
-		char mCtlpacket[PACKET_SIZE];
-		
-		//struct timeval mRecvtv;		//接受到时间
+		char mCtlpacket[PACKET_SIZE];		
 };
 
 #endif

@@ -9,7 +9,6 @@
 
 #include "wCore.h"
 #include "wMutex.h"
-#include "wCond.h"
 #include "wNoncopyable.h"
 #include "wThread.h"
 

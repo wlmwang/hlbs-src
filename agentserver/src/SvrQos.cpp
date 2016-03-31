@@ -19,6 +19,7 @@ SvrQos::~SvrQos()
 void SvrQos::Initialize() 
 {
 	mPreRoute = 1;	//开启预取缓存功能
+	mDetectThread = DetectThread::Instance();
 }
 
 /** 查找某一节点 */
@@ -1028,8 +1029,13 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
 	}
 
 	multimap<float, struct SvrNode_t>* pNewTable = new multimap<float, struct SvrNode_t>;
+    
+    mAllReqMin = true;
+    float fBestLowSucRateValidate = 1;
+    unsigned int iBestBigDelayValidate = 1;
 	float fWeightLoad = 1;
 	int iReqLimit = 0;
+	
 	//计算负载
 	for(it = pTable->begin(); it != pTable->end(); it++)
 	{
@@ -1062,6 +1068,8 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
         }
         si.mLoadX *= fWeightLoad;	//权重因子
 
+        fBestLowPri = max(fBestLowPri, si.mLoadX);	//最大负载
+
         struct SvrNode_t stNode(it->second.mNet, pStat); //set mIsDetecting = false
         iReqLimit = pStat->mReqCfg.mReqLimit;
         iReqLimit = iReqLimit <= 0 ? (pStat->mReqCfg.mReqMin + 1) : iReqLimit;
@@ -1069,6 +1077,9 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
         //门限小于最低阈值，加入宕机列表
         if(iReqLimit > pStat->mReqCfg.mReqMin)
 		{
+            fBestLowSucRateValidate = min(fBestLowSucRateValidate, stNode.mStat->mInfo.mOkRate);
+            iBestBigDelayValidate = max(iBestBigDelayValidate, stNode.mStat->mInfo.mAvgTm);
+
 			pNewTable->insert(make_pair(stNode.mKey, stNode));
 			mAllReqMin = false;	//fixed
         }
@@ -1107,7 +1118,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
 	}
 
 	//宕机探测
-    RebuildErrRoute(stItem, pNewTable);
+    RebuildErrRoute(stItem, pNewTable, fBestLowPri, fBestLowSucRateValidate, iBestBigDelayValidate);
     
     struct SvrKind_t stNewKind(stKind);
     stNewKind.mPindex = 0;
@@ -1148,7 +1159,7 @@ int SvrQos::AddErrRoute(struct SvrKind_t& stItem, struct SvrNode_t& stNode)
 }
 
 /** TODO 重建宕机路由（故障恢复，恢复后放入pSvrNode指针中） */
-int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct SvrNode_t>* pSvrNode, float iPri)
+int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct SvrNode_t>* pSvrNode, float iPri, float fLowOkRate, unsigned int iBigDelay)
 {
     map<struct SvrKind_t, list<struct SvrNode_t>* >::iterator reIt = mErrTable.find(stItem);
     if(reIt == mErrTable.end())
@@ -1173,12 +1184,15 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 
 	int iCurTm = time(NULL);
 
+	vector<struct DetectNode_t> vDetectNodeadd, vDetectNodedel;
+	
 	//宕机检测、故障恢复
 	int iRet = -1;
 	bool bDelFlag = false;
 	int iDetectStat = -1;
 	while(it != pErrRoute->end())
 	{
+		struct DetectResult_t stRes;
 		bDelFlag = false;
 		iDetectStat = -1;  //-2: 没root权限探测  -1:网络探测失败 0:网络探测成功
 
@@ -1189,17 +1203,44 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 		
 		//mProbeBegin>0 才打开网络层探测
 		if (mDownCfg.mProbeBegin > 0 && iCurTm > it->mStopTime + mDownCfg.mProbeBegin)
-		{
-			//it->mNet.mHost,it->mNet->mPort,iCurTm,iCurTm+mProbeNodeExpireTime
-			//get_detect_result
-			//GetDetectResult();
-			if (iRet < 0)
+		{	
+			struct DetectNode_t stDetectNode(it->mNet.mHost, it->mNet.mPort, iCurTm, iCurTm + mDownCfg.mProbeNodeExpireTime);
+			mDetectThread->GetDetectResult(stDetectNode, stRes);
+			
+			LOG_ERROR(ELOG_KEY, "[svr] RebuildErrRoute detect ret=%d,code=%d,type=%d,mod=%d cmd=%d ip=%s port=%u after_stop_time=%d,reqall_after_down=%d,expire=%d,limit=%d",
+				iRet,stRes.mRc,stRes.mDetectType,it->mNet.mGid,it->mNet.mXid,it->mNet.mHost, it->mNet.mPort,
+				iCurTm - it->mStopTime, it->mReqAllAfterDown, stDetectNode.mExpireTime - stDetectNode.mCreateTime, it->mStat->mReqCfg.mReqLimit);
+			
+			if (iRet < 0)	//not found
 			{
-				//
+				vDetectNodeadd.push_back(stDetectNode);
 			}
 			else if (iRet == 0)
 			{
-				//
+				if (stRes.mRc < 0)
+				{
+					if(stRes.mRc == NOT_PRI)
+					{
+						//没有root权限，无法raw socket进行探测
+						iDetectStat = -2;
+					}
+					else
+					{
+						iDetectStat = -1;
+					}
+				}
+				else if(stRes.mDetectType == DETECT_TCP || stRes.mDetectType == DETECT_UDP)
+				{
+					//tcp or udp success, other fail
+					vDetectNodedel.push_back(stDetectNode);
+					bDelFlag = true;
+					iDetectStat = 0;
+				}
+				else
+				{
+					//tcp or udp fail
+					iDetectStat = -1;
+				}
 			}
 		}
 
@@ -1234,8 +1275,8 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 		else
 		{
             it->mStat->mInfo.mLoadX = iPri;
-            //it->mStat->mInfo.ok_rate = low_ok_rate;
-            //it->mStat->mInfo.avg_tm = big_delay; 
+            it->mStat->mInfo.mOkRate = fLowOkRate;
+            it->mStat->mInfo.mAvgTm = iBigDelay; 
         }
 		//统计置0
 		it->mStat->mInfo.mReqAll = 0;
@@ -1251,7 +1292,6 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 
 		LOG_ERROR(ELOG_KEY, "[svr] RebuildErrRoute failed(cannot find errroute routenode in list) gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
 
-
         pSvrNode->insert(make_pair(iPri,*it));
         pErrRoute->erase(it++);
 	}
@@ -1262,6 +1302,9 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 		mErrTable.erase(reIt);
 	}
 
+    if(!vDetectNodeadd.empty()) mDetectThread->AddDetect(vDetectNodeadd);
+    if(!vDetectNodedel.empty()) mDetectThread->DelDetect(vDetectNodeadd);
+	
 	return 0;
 }
 
