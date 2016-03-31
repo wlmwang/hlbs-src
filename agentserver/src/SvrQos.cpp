@@ -1205,7 +1205,7 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 		if (mDownCfg.mProbeBegin > 0 && iCurTm > it->mStopTime + mDownCfg.mProbeBegin)
 		{	
 			struct DetectNode_t stDetectNode(it->mNet.mHost, it->mNet.mPort, iCurTm, iCurTm + mDownCfg.mProbeNodeExpireTime);
-			mDetectThread->GetDetectResult(stDetectNode, stRes);
+			iRet = mDetectThread->GetDetectResult(stDetectNode, stRes);
 			
 			LOG_ERROR(ELOG_KEY, "[svr] RebuildErrRoute detect ret=%d,code=%d,type=%d,mod=%d cmd=%d ip=%s port=%u after_stop_time=%d,reqall_after_down=%d,expire=%d,limit=%d",
 				iRet,stRes.mRc,stRes.mDetectType,it->mNet.mGid,it->mNet.mXid,it->mNet.mHost, it->mNet.mPort,
@@ -1257,8 +1257,8 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 		//达到恢复条件，如果网络探测失败，推迟恢复
 		if((mDownCfg.mProbeBegin > 0) && (-1 == iDetectStat))
 		{
-	          it++; 
-	          continue;
+	        it++; 
+	        continue;
 		}
 
 		it->mStat->mReqCfg.mReqLimit = mDownCfg.mProbeTimes;
@@ -1292,7 +1292,7 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 
 		LOG_ERROR(ELOG_KEY, "[svr] RebuildErrRoute failed(cannot find errroute routenode in list) gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
 
-        pSvrNode->insert(make_pair(iPri,*it));
+        pSvrNode->insert(make_pair(iPri, *it));
         pErrRoute->erase(it++);
 	}
 

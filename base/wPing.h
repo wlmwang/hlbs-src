@@ -44,7 +44,6 @@ class wPing : private wNoncopyable
 
 		int Pack();
 		int Unpack(char *buf, int len);
-		
 		unsigned short CalChksum(unsigned short *addr, int len);
 		
 	protected:

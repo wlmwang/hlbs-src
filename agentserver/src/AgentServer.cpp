@@ -31,7 +31,6 @@ AgentServer::~AgentServer()
 void AgentServer::Initialize()
 {
 	mTicker = GetTickCount();
-	mReportTimer = wTimer(REPORT_TIME_TICK);	//5min
 	mConfig = AgentConfig::Instance();
 	
 	mRouterConn = new wMTcpClient<AgentClientTask>();
@@ -200,10 +199,4 @@ void AgentServer::CheckTimer()
 
 	//加上间隔时间
 	mTicker += iInterval;
-
-	//检测客户端超时
-	if(mReportTimer.CheckTimer(iInterval))
-	{
-		//mConfig->Statistics();	//统计上报svr的weight值
-	}
 }

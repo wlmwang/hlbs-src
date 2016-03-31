@@ -9,15 +9,13 @@
 
 #include "wCore.h"
 
-#define REPORT_TIME_TICK 3000	//3s重建时间svr
 #define MAX_SVR_HOST 255
 #define MAX_SVR_NUM 255			//每次请求svr最多个数
 
+#define SVR_TM_MAX 20
 #define INIT_WEIGHT     100      //默认权重值 
 #define MAX_WEIGHT      1000     //最大权重值
 #define DELAY_MAX 100000000		//最大延时值 100s
-
-#define SVR_TM_MAX 20
 
 enum QOS_RTN
 {

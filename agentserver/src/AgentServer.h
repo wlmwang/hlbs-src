@@ -54,7 +54,6 @@ class AgentServer: public wTcpServer<AgentServer>
 		
 	private:
 		unsigned long long mTicker;
-		wTimer mReportTimer;
 		
 		AgentConfig *mConfig;
 		DetectThread *mDetectThread;

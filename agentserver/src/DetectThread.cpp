@@ -45,16 +45,15 @@ int DetectThread::PrepareRun()
 int DetectThread::DoDetectNode(const struct DetectNode_t& stNode, struct DetectResult_t& stRes)
 {
 	int iRet = -1, iRc = 0, iPingElapse, iConnElapse, iUdpElapse, iAllElapse, iElapse, iDetectType = DETECT_UNKNOWN;
-	unsigned int uIp;
 	struct timeval stStarttv, stEndtv, stOrgtv;
+	
 	iPingElapse = iConnElapse = iUdpElapse = iAllElapse = iElapse = -1;
-    
     time_t iNowTm = time(NULL);
-
     gettimeofday(&stStarttv, 0);
+	
     stOrgtv.tv_sec = stStarttv.tv_sec;
     stOrgtv.tv_usec = stStarttv.tv_usec;
-    if (mPing->Open() > 0 && mPing->SetTimeout(mPingTimeout) >= 0)
+    if ((iRet = mPing->Open()) > 0 && mPing->SetTimeout(mPingTimeout) >= 0)
     {
     	iRet = mPing->Ping(stNode.mIp.c_str());
     }
@@ -67,12 +66,12 @@ int DetectThread::DoDetectNode(const struct DetectNode_t& stNode, struct DetectR
     }
     else
     {
-    	iDetectType = DETECT_PING;
-
     	//tcp connect
-    	iPingElapse = (int)((stEndtv.tv_sec - stStarttv.tv_sec)*1000000 + (stEndtv.tv_usec - stStarttv.tv_usec));
-    	gettimeofday(&stStarttv, 0);
-    	if (mSocket->Open() > 0)
+		iDetectType = DETECT_PING;
+		iPingElapse = (int)((stEndtv.tv_sec - stStarttv.tv_sec)*1000000 + (stEndtv.tv_usec - stStarttv.tv_usec));
+    	
+		gettimeofday(&stStarttv, 0);
+    	if ((iRet = mSocket->Open()) > 0)
     	{
     		iRet = mSocket->Connect(stNode.mIp.c_str(), stNode.mPort, mTcpTimeout);
     	}
@@ -105,7 +104,6 @@ int DetectThread::DoDetectNode(const struct DetectNode_t& stNode, struct DetectR
     }
     else
     {
-
     	LOG_DEBUG(ELOG_KEY, "[detect] fail detect %d us,ip %s:%u rc %d, ping %d,connect %d; elapse=%d,ret=%d",
     		iAllElapse, stNode.mIp.c_str(), stNode.mPort, iRc, iPingElapse, iConnElapse, iElapse, iRet);
     }
