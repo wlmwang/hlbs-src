@@ -116,15 +116,17 @@ int wSocket::Connect(string sIpAddr ,unsigned int nPort, float fTimeout)
 
 	socklen_t iOptVal = 100*1024;
 	socklen_t iOptLen = sizeof(socklen_t);
-	if(setsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) != 0)
+	if (setsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) != 0)
 	{
 		mErr = errno;
 		Close();
 		return -1;
 	}
-	if(getsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (void *)&iOptVal, &iOptLen) == 0)
+	if (getsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (void *)&iOptVal, &iOptLen) != 0)
 	{
-		//log...
+		mErr = errno;
+		Close();
+		return -1;
 	}
 
 	if (fTimeout > 0)
@@ -199,19 +201,41 @@ int wSocket::Connect(string sIpAddr ,unsigned int nPort, float fTimeout)
 	return 0;
 }
 
+/**
+ *  从客户端接收连接
+ *  return ：<0 对端发生错误|对端关闭(FIN_WAIT) =0 稍后重试 >0 文件描述符
+ */
 int wSocket::Accept(struct sockaddr* pClientSockAddr, socklen_t *pSockAddrSize)
 {
 	if (mFD == FD_UNKNOWN || mSockType != SOCK_LISTEN)
 	{
 		return -1;
 	}
-	
-	int iNewFD = accept(mFD, pClientSockAddr, pSockAddrSize);
-	if(iNewFD < 0)
+
+	int iNewFD = 0;
+	do
 	{
-		mErr = errno;
-	    return -1;
-    }
+		iNewFD = accept(mFD, pClientSockAddr, pSockAddrSize);
+		if (iNewFD < 0)
+		{
+			mErr = errno;
+			if (mErr == EINTR)	//中断
+			{
+				continue;
+			}
+			if (mErr == EAGAIN || mErr == EWOULDBLOCK)	//没有新连接
+			{
+				return 0;
+			}
+			break;
+	    }
+	    break;
+	} while (true);
+
+	if (iNewFD <= 0)
+	{
+		return -1;
+	}
 
 	//setsockopt socket：设置发送缓冲大小3M
 	int iOptLen = sizeof(socklen_t);
@@ -285,7 +309,7 @@ int wSocket::SetRecvTimeout(float fTimeout)
 
 /**
  *  从客户端接收原始数据
- *  return ：<0 对端发生错误|消息超长 =0 对端关闭(FIN_WAIT1) >0 接受字符
+ *  return ：<0 对端发生错误|消息超长|对端关闭(FIN_WAIT) =0 稍后重试 >0 接受字符
  */
 ssize_t wSocket::RecvBytes(char *vArray, size_t vLen)
 {
@@ -299,17 +323,20 @@ ssize_t wSocket::RecvBytes(char *vArray, size_t vLen)
 		{
 			return iRecvLen;
 		}
+		else if(iRecvLen == 0)	//关闭
+		{
+			return -999;
+		}
 		else
 		{
 			mErr = errno;
-			if(iRecvLen < 0 && mErr == EINTR)	//中断
+			if(mErr == EINTR)	//中断
 			{
 				continue;
 			}
-			if(iRecvLen < 0 && (mErr == EAGAIN || mErr == EWOULDBLOCK))	//缓冲区满|超时
+			if(mErr == EAGAIN || mErr == EWOULDBLOCK)	//暂时无数据可读，可以继续读，或者等待epoll的后续通知
 			{
-				//usleep(100);
-				//continue;
+				return 0;
 			}
 			
 			LOG_ERROR(ELOG_KEY, "[runtime] recv fd(%d) error: %s", mFD, strerror(mErr));
@@ -332,7 +359,7 @@ ssize_t wSocket::SendBytes(char *vArray, size_t vLen)
 	while(true)
 	{
 		iSendLen = send(mFD, vArray + iHaveSendLen, iLeftLen, 0);
-		if(iSendLen > 0)
+		if(iSendLen >= 0)
 		{
 			iLeftLen -= iSendLen;
 			iHaveSendLen += iSendLen;
@@ -348,10 +375,9 @@ ssize_t wSocket::SendBytes(char *vArray, size_t vLen)
 			{
 				continue;
 			}
-			if(iSendLen < 0 && (mErr == EAGAIN || mErr == EWOULDBLOCK))	//缓冲区满|超时
+			if(iSendLen < 0 && (mErr == EAGAIN || mErr == EWOULDBLOCK))	//当前缓冲区写满，可以继续写，或者等待epoll的后续通知
 			{
-				//usleep(100);
-				//continue;
+				return 0;
 			}
 			
 			LOG_ERROR(ELOG_KEY, "send fd(%d) error: %s", mFD, strerror(mErr));

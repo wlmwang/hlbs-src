@@ -15,8 +15,8 @@ enum CLIENT_TYPE
 	SERVER_CMD,
 };
 
-#define ROUTER_LOGIN true
-#define AGENT_LOGIN true
+#define ROUTER_LOGIN false
+#define AGENT_LOGIN false
 
 #define AGENT_SHM "/tmp/report-agent.bin"
 

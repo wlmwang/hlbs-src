@@ -62,7 +62,7 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 	
 	wSocket* pSocket = new wSocket();
 	int iSocketFD = pSocket->Open();
-	if(iSocketFD < 0)
+	if (iSocketFD < 0)
 	{
 		mErr = errno;
 		LOG_ERROR(ELOG_KEY, "[runtime] create socket failed: %s", strerror(mErr));
@@ -70,10 +70,10 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 	}
 
 	int iRet = pSocket->Connect(vIPAddress, vPort);
-	if(iRet < 0)
+	if (iRet < 0)
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] connect to server port(%d) failed: %s", vPort, strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[runtime] connect to server port(%d) failed: %s", vPort, strerror(pSocket->Errno()));
 		return -1;
 	}
 
@@ -153,7 +153,6 @@ void wTcpClient<T>::CheckReconnect()
 		{
 			mStatus = CLIENT_QUIT;
 			LOG_INFO(ELOG_KEY, "[runtime] disconnect server : out of heartbeat times");
-			//LOG_ERROR("server", "[timeout] disconnect server : out of heartbeat times: ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
 		}
 		else if(mTcpTask->IO() != NULL && mTcpTask->IO()->FD() < 0)
 		{

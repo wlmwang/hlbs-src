@@ -16,7 +16,10 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 	
 	if(g_handle.mSock == NULL || g_handle.mTask == NULL)
 	{
-		ConnectAgent(&g_handle);
+		if(ConnectAgent(&g_handle) < 0)
+		{
+			return -1;
+		}
 	}
 	if (g_handle.mSock != NULL && g_handle.mTask != NULL)
 	{
@@ -56,7 +59,10 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 
 	if(g_handle.mSock == NULL || g_handle.mTask == NULL)
 	{
-		ConnectAgent(&g_handle);
+		if(ConnectAgent(&g_handle) < 0)
+		{
+			return -1;
+		}
 	}
 
 	if (g_handle.mSock != NULL && g_handle.mTask != NULL)

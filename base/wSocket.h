@@ -40,9 +40,6 @@ class wSocket : public wIO
 		int Listen(string sIpAddr ,unsigned int nPort);
 		int Connect(string sIpAddr ,unsigned int nPort, float fTimeout = 30);
 		int Accept(struct sockaddr* pClientSockAddr, socklen_t *pSockAddrSize);
-
-	protected:
-		int mErr;
 };
 
 #endif

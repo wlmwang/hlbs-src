@@ -122,7 +122,6 @@ bool wMTcpClient<TASK>::GenerateClient(int iType, string sClientName, char *vIPA
 			return AddTcpClientPool(iType, pTcpClient);
 		}
 	}
-	LOG_DEBUG(ELOG_KEY, "[startup] GenerateClient to (%s)server faild!",sClientName.c_str());
 	return false;
 }
 
@@ -136,7 +135,7 @@ wTcpClient<TASK>* wMTcpClient<TASK>::CreateClient(int iType, string sClientName,
 		pTcpClient->PrepareStart();	//准备启动
 		return pTcpClient;
 	}
-	LOG_DEBUG(ELOG_KEY, "[startup] connect to (%s)server faild!",sClientName.c_str());
+	LOG_DEBUG(ELOG_KEY, "[startup] CreateClient connect to (%s)server faild!",sClientName.c_str());
 	SAFE_DELETE(pTcpClient);
 	return NULL;
 }
@@ -264,7 +263,6 @@ void wMTcpClient<TASK>::Recv()
 		{
 			mErr = errno;
 			LOG_ERROR(ELOG_KEY, "[runtime] socketfd error fd(%d): %s, close it", iFD, strerror(mErr));
-			//LOG_ERROR("server", "[disconnect] socketfd error(%s): ip(%s) port(%d)", strerror(mErr), pTask->IO()->Host().c_str(), pTask->IO()->Port());
 			if (RemoveEpoll(pClient) >= 0)
 			{
 				RemoveTcpClientPool(iType, pClient);
@@ -285,7 +283,6 @@ void wMTcpClient<TASK>::Recv()
 		{
 			mErr = errno;
 			LOG_ERROR(ELOG_KEY, "[runtime] epoll event recv error from fd(%d): %s, close it", iFD, strerror(mErr));
-			//LOG_ERROR("server", "[disconnect] epoll event recv error(%s): ip(%s) port(%d)", strerror(mErr), pTask->IO()->Host().c_str(), pTask->IO()->Port());
 			if (RemoveEpoll(pClient) >= 0)
 			{
 				RemoveTcpClientPool(iType, pClient);
@@ -298,11 +295,10 @@ void wMTcpClient<TASK>::Recv()
 			if (mEpollEventPool[i].events & EPOLLIN)
 			{
 				//套接口准备好了读取操作
-				if (pTask->TaskRecv() <= 0)
+				if (pTask->TaskRecv() < 0)
 				{
 					mErr = errno;
-					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or server-socket closed: %s", strerror(mErr));
-					//LOG_ERROR("server", "[disconnect] EPOLLIN(read) failed or socket closed(%s):ip(%s) port(%d)", strerror(mErr), pTask->IO()->Host().c_str(), pTask->IO()->Port());
+					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or server-socket closed: %s", strerror(pTask->IO()->Errno()));
 					if (RemoveEpoll(pClient) >= 0)
 					{
 						RemoveTcpClientPool(iType, pClient);
@@ -315,8 +311,7 @@ void wMTcpClient<TASK>::Recv()
 				if (pTask->TaskSend() < 0)
 				{
 					mErr = errno;
-					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLOUT(write) failed: %s", strerror(mErr));
-					//LOG_ERROR("server", "[disconnect] EPOLLOUT(write) failed(%s): ip(%s) port(%d)", strerror(mErr), pTask->IO()->Host().c_str(), pTask->IO()->Port());
+					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLOUT(write) failed: %s", strerror(pTask->IO()->Errno()));
 					if (RemoveEpoll(pClient) >= 0)
 					{
 						RemoveTcpClientPool(iType, pClient);

@@ -190,7 +190,7 @@ int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 
 	do {
 		iSize = mIO->RecvBytes(mTmpRecvMsgBuff + iRecvLen, iLen + sizeof(int));
-		if (iSize <= 0)
+		if (iSize < 0)
 		{
 			break;
 		}

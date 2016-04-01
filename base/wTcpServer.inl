@@ -400,7 +400,7 @@ void wTcpServer<T>::Recv()
 		if(iFD < 0)
 		{
 			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[runtime] socketfd error fd(%d), close it: %s", iFD, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[runtime] socket FD error fd(%d), close it", iFD);
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -440,10 +440,10 @@ void wTcpServer<T>::Recv()
 			if (mEpollEventPool[i].events & EPOLLIN)
 			{
 				//套接口准备好了读取操作
-				if (pTask->TaskRecv() <= 0)	//==0主动断开
+				if (pTask->TaskRecv() < 0)
 				{
 					mErr = errno;
-					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or tcp socket closed: %s", strerror(mErr));
+					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or tcp socket closed: %s", strerror(pTask->IO()->Errno()));
 					if (RemoveEpoll(pTask) >= 0)
 					{
 						RemoveTaskPool(pTask);
@@ -457,13 +457,13 @@ void wTcpServer<T>::Recv()
 				if (pTask->WritableLen() <= 0)
 				{
 					AddToEpoll(pTask, EPOLLIN, EPOLL_CTL_MOD);
-					return;
+					continue;
 				}
 				//套接口准备好了写入操作
-				if (pTask->TaskSend() < 0)	//写入失败，半连接
+				if (pTask->TaskSend() < 0)	//写入失败，半连接，对端读关闭
 				{
 					mErr = errno;
-					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLOUT(write) failed or tcp socket closed: %s", strerror(mErr));
+					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLOUT(write) failed or tcp socket closed: %s", strerror(pTask->IO()->Errno()));
 					if (RemoveEpoll(pTask) >= 0)
 					{
 						RemoveTaskPool(pTask);
@@ -518,11 +518,14 @@ int wTcpServer<T>::AcceptConn()
 	struct sockaddr_in stSockAddr;
 	socklen_t iSockAddrSize = sizeof(stSockAddr);	
 	int iNewFD = mListenSock->Accept((struct sockaddr*)&stSockAddr, &iSockAddrSize);
-	if(iNewFD <= 0)
+	if (iNewFD <= 0)
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] client connect failed:%s", strerror(mErr));
-	    return -1;
+		if (iNewFD < 0)
+		{
+			LOG_ERROR(ELOG_KEY, "[runtime] client connect failed:%s", strerror(mErr));
+		}
+	    return iNewFD;
     }
 		
 	//new tcp task

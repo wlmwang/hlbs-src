@@ -9,15 +9,13 @@
 
 #include "wCore.h"
 
-#define REPORT_TIME_TICK 3000	//3s重建时间svr
 #define MAX_SVR_HOST 255
 #define MAX_SVR_NUM 255			//每次请求svr最多个数
 
+#define SVR_TM_MAX 20
 #define INIT_WEIGHT     100      //默认权重值 
 #define MAX_WEIGHT      1000     //最大权重值
 #define DELAY_MAX 100000000		//最大延时值 100s
-
-#define SVR_TM_MAX 20
 
 enum QOS_RTN
 {
@@ -295,7 +293,7 @@ struct SvrTM
 struct SvrInfo_t
 {
 	struct timeval mBuildTm;		//统计信息开始时间, 每个节点 rebuild 时刻的绝对时间
-	int			mReqAll;			//总的请求数
+	int			mReqAll;			//总的请求数，理论上请求调用agent获取路由次数
 	int			mReqRej;			//被拒绝的请求数
 	int			mReqSuc;			//成功的请求数
 	int			mReqErrRet;			//失败的请求数
@@ -308,7 +306,7 @@ struct SvrInfo_t
 	float       mOkRate;			//上一周期成功率 0-1
 	unsigned int mAvgTm;			//上一周期成功请求平均时延，微秒  mTotalUsec/mReqSuc
 	long long   mTotalUsec; 		//请求总微秒数
-	float 		mAvgErrRate;		//平均错误率
+	float 		mAvgErrRate;		//平均错误率，统计多个周期的错误率并加以平均得到（未超过最低阈值(mReqCfg.mReqErrMin)，始终为0）
 
 	/** 上一周期统计数据 */
 	int 		mLastReqAll;
@@ -319,7 +317,7 @@ struct SvrInfo_t
 	bool  		mLastErr;			//门限扩张标识 true：收缩  false：扩张
 	int 		mLastAlarmReq;		//参考值。请求数扩张门限（上一周期数量），判断扩展是否有效
 	int 		mLastAlarmSucReq;	//参考值。成功请求数扩张门限
-	int 		mPreAll;			//mPreAll*mLoadX，作为WRR的标准  路由已分配数
+	int 		mPreAll;			//路由被分配次数 + 预测本周期成功请求次数
 
 	int 		mCityId;	//被调所属城市id
 	int 		mOffSide;	//被调节点与主调异地标志，默认为0， 1标为异地
@@ -332,7 +330,9 @@ struct SvrInfo_t
 	int			mSReqErrRet;		//失败的请求数(统计用)
 	int			mSReqRrrTm;			//超时的请求数(统计用)
     int         mSPreAll;
-
+    
+    int 		mAddSuc;			//上个周期与上上个周期成功请求数差值
+    int 		mIdle;				//add连续核算次数
     SvrInfo_t()
     {
 		mBuildTm.tv_sec = mBuildTm.tv_usec = 0;
@@ -366,11 +366,14 @@ struct SvrInfo_t
 		mSReqErrRet = 0;
 		mSReqRrrTm  = 0;
         mSPreAll = 0;
+        
+        mAddSuc = 0;
+        mIdle = 0;
     }
 
     void InitInfo(struct SvrNet_t& stSvr)
     {
-
+    	//...
     }
 };
 
@@ -540,7 +543,7 @@ struct SvrNode_t
 	SvrNet_t mNet;
 	SvrStat_t *mStat;
 
-	float mKey;		//关键值，初始化为 mInfo.mLoadX=1
+	float mKey;				//关键值，初始化为 mInfo.mLoadX = 1
 
 	int mStopTime;			//宕机记录信息
 	int mReqAllAfterDown;	//宕机以来所有请求数量
@@ -549,7 +552,7 @@ struct SvrNode_t
     int mDownTimeTrigerProbeEx;		//时间
     int mReqCountTrigerProbeEx;		//请求数量
     
-    bool mIsDetecting; 		//是否处在“探测宕机是否恢复”的状态  
+    bool mIsDetecting; 		//是否处在 "探测宕机是否恢复" 的状态  
     //int mHasDumpStatistic;//是否备份
 
 	SvrNode_t(const struct SvrNet_t& nt, struct SvrStat_t* pStat)

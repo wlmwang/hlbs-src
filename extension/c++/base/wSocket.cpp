@@ -32,7 +32,7 @@ int wSocket::Open()
 	struct linger stLing = {0,0};
 	setsockopt(mFD, SOL_SOCKET, SO_REUSEADDR, &iFlags, sizeof(iFlags));
 	setsockopt(mFD, SOL_SOCKET, SO_KEEPALIVE, &iFlags, sizeof(iFlags));
-	setsockopt(mFD, SOL_SOCKET, SO_LINGER, &stLing, sizeof(stLing));
+	setsockopt(mFD, SOL_SOCKET, SO_LINGER, &stLing, sizeof(stLing));	//优雅断开
 	
 	return mFD;
 }
@@ -54,6 +54,7 @@ int wSocket::Bind(string sIpAddr ,unsigned int nPort)
 	if(bind(mFD, (struct sockaddr *)&stSocketAddr, sizeof(stSocketAddr)) < 0)
 	{
 		mErr = errno;
+		Close();
 		return -1;
 	}
 	return 0;
@@ -70,6 +71,8 @@ int wSocket::Listen(string sIpAddr ,unsigned int nPort)
 
 	if(Bind(sIpAddr, nPort) < 0)
 	{
+		mErr = errno;
+		Close();
 		return -1;
 	}
 
@@ -79,18 +82,20 @@ int wSocket::Listen(string sIpAddr ,unsigned int nPort)
 	if(setsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) < -1)
 	{
 		mErr = errno;
+		Close();
 		return -1;
 	}
 	
 	if(listen(mFD, LISTEN_BACKLOG) < 0)
 	{
 		mErr = errno;
+		Close();
 		return -1;
 	}
 	return 0;
 }
 
-int wSocket::Connect(string sIpAddr ,unsigned int nPort)
+int wSocket::Connect(string sIpAddr ,unsigned int nPort, float fTimeout)
 {
 	if (mFD == FD_UNKNOWN)
 	{
@@ -111,37 +116,126 @@ int wSocket::Connect(string sIpAddr ,unsigned int nPort)
 
 	socklen_t iOptVal = 100*1024;
 	socklen_t iOptLen = sizeof(socklen_t);
-	if(setsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) != 0)
+	if (setsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) != 0)
 	{
 		mErr = errno;
+		Close();
 		return -1;
 	}
-	if(getsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (void *)&iOptVal, &iOptLen) == 0)
-	{
-		//
-	}
-	
-	if(connect(mFD, (const struct sockaddr *)&stSockAddr, sizeof(stSockAddr)) < 0)
+	if (getsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (void *)&iOptVal, &iOptLen) != 0)
 	{
 		mErr = errno;
+		Close();
 		return -1;
+	}
+
+	if (fTimeout > 0)
+	{
+		if(SetNonBlock() < 0)
+		{
+			SetSendTimeout(fTimeout);	//linux平台下可用
+		}
+	}
+
+	int iRet = connect(mFD, (const struct sockaddr *)&stSockAddr, sizeof(stSockAddr));
+	int iLen , iVal;
+	if(fTimeout > 0 && iRet < 0)
+	{
+		mErr = errno;
+		if (mErr == EINPROGRESS)	//连接建立，建立启动但是尚未完成
+		{
+			struct pollfd stFD;
+			int iTimeout = fTimeout * 1000000;
+
+			while (true)
+			{
+				stFD.fd = mFD;
+                stFD.events = POLLIN | POLLOUT;
+                iRet = poll(&stFD, 1, iTimeout);
+
+                if(iRet == -1)
+                {
+                	mErr = errno;
+                    if(mErr == EINTR)
+                    {
+                        continue;
+                    }
+                    Close();
+                    return -1;
+                }
+                else if(iRet == 0)
+                {
+                	//tcp connect timeout millisecond=%d
+                    Close();
+                    return ERR_TIMEO;
+                }
+                else
+                {
+                    iLen = sizeof(iVal);
+                    iRet = getsockopt(mFD, SOL_SOCKET, SO_ERROR, (char*)&iVal, (socklen_t*)&iLen);
+                    if(iRet == -1)
+                    {
+                    	//ip=%s:%u, tcp connect getsockopt errno=%d,%s
+                        Close();
+                        mErr = errno;
+                        return -1;
+                    }
+                    if(iVal > 0)
+                    {
+                    	//ip=%s:%u, tcp connect fail errno=%d,%s
+                        Close();
+                        mErr = errno;
+                        return -1;
+                    }
+                    break;	//连接成功
+                }
+			}
+		}
+		else
+		{
+			//ip=%s:%u, tcp connect directly errno=%d,%s
+			Close();
+			return -1;
+		}
 	}
 	return 0;
 }
 
+/**
+ *  从客户端接收连接
+ *  return ：<0 对端发生错误|对端关闭(FIN_WAIT) =0 稍后重试 >0 文件描述符
+ */
 int wSocket::Accept(struct sockaddr* pClientSockAddr, socklen_t *pSockAddrSize)
 {
 	if (mFD == FD_UNKNOWN || mSockType != SOCK_LISTEN)
 	{
 		return -1;
 	}
-	
-	int iNewFD = accept(mFD, pClientSockAddr, pSockAddrSize);
-	if(iNewFD < 0)
+
+	int iNewFD = 0;
+	do
 	{
-		mErr = errno;
-	    return -1;
-    }
+		iNewFD = accept(mFD, pClientSockAddr, pSockAddrSize);
+		if (iNewFD < 0)
+		{
+			mErr = errno;
+			if (mErr == EINTR)	//中断
+			{
+				continue;
+			}
+			if (mErr == EAGAIN || mErr == EWOULDBLOCK)	//没有新连接
+			{
+				return 0;
+			}
+			break;
+	    }
+	    break;
+	} while (true);
+
+	if (iNewFD <= 0)
+	{
+		return -1;
+	}
 
 	//setsockopt socket：设置发送缓冲大小3M
 	int iOptLen = sizeof(socklen_t);
@@ -154,47 +248,59 @@ int wSocket::Accept(struct sockaddr* pClientSockAddr, socklen_t *pSockAddrSize)
 	return iNewFD;
 }
 
-int wSocket::SetTimeout(int iTimeout)
+int wSocket::SetTimeout(float fTimeout)
 {
-	if(SetSendTimeout(iTimeout) < 0)
+	if(SetSendTimeout(fTimeout) < 0)
 	{
 		return -1;
 	}
-	if(SetRecvTimeout(iTimeout) < 0)
+	if(SetRecvTimeout(fTimeout) < 0)
 	{
 		return -1;
 	}
 	return 0;
 }
 
-int wSocket::SetSendTimeout(int iTimeout)
+int wSocket::SetSendTimeout(float fTimeout)
 {
 	if(mFD == FD_UNKNOWN || mIOType != TYPE_SOCK) 
 	{
 		return -1;
 	}
 
-	struct timeval stSendTimeval;
-	stSendTimeval.tv_sec = iTimeout<0 ? 0 : iTimeout;
-	stSendTimeval.tv_usec = 0;
-	if(setsockopt(mFD, SOL_SOCKET, SO_SNDTIMEO, &stSendTimeval, sizeof(stSendTimeval)) == -1)  
+	struct timeval stTimetv;
+	stTimetv.tv_sec = (int)fTimeout>=0 ? (int)fTimeout : 0;
+	stTimetv.tv_usec = (int)((fTimeout - (int)fTimeout) * 1000000);
+	if(stTimetv.tv_usec < 0 || stTimetv.tv_usec >= 1000000 || (stTimetv.tv_sec == 0 && stTimetv.tv_usec == 0))
+	{
+		stTimetv.tv_sec = 30;
+		stTimetv.tv_usec = 0;
+	}
+
+	if(setsockopt(mFD, SOL_SOCKET, SO_SNDTIMEO, &stTimetv, sizeof(stTimetv)) == -1)  
     {
         return -1;  
     }
     return 0;
 }
 
-int wSocket::SetRecvTimeout(int iTimeout)
+int wSocket::SetRecvTimeout(float fTimeout)
 {
 	if(mFD == FD_UNKNOWN || mIOType != TYPE_SOCK) 
 	{
 		return -1;
 	}
 
-	struct timeval stRecvTimeval;
-	stRecvTimeval.tv_sec = iTimeout<0 ? 0 : iTimeout;
-	stRecvTimeval.tv_usec = 0;
-	if(setsockopt(mFD, SOL_SOCKET, SO_RCVTIMEO, &stRecvTimeval, sizeof(stRecvTimeval)) == -1)  
+	struct timeval stTimetv;
+	stTimetv.tv_sec = (int)fTimeout>=0 ? (int)fTimeout : 0;
+	stTimetv.tv_usec = (int)((fTimeout - (int)fTimeout) * 1000000);
+	if(stTimetv.tv_usec < 0 || stTimetv.tv_usec >= 1000000 || (stTimetv.tv_sec == 0 && stTimetv.tv_usec == 0))
+	{
+		stTimetv.tv_sec = 30;
+		stTimetv.tv_usec = 0;
+	}
+	
+	if(setsockopt(mFD, SOL_SOCKET, SO_RCVTIMEO, &stTimetv, sizeof(stTimetv)) == -1)  
     {
         return -1;  
     }
@@ -203,7 +309,7 @@ int wSocket::SetRecvTimeout(int iTimeout)
 
 /**
  *  从客户端接收原始数据
- *  return ：<0 对端发生错误|消息超长 =0 对端关闭(FIN_WAIT1) >0 接受字符
+ *  return ：<0 对端发生错误|消息超长|对端关闭(FIN_WAIT) =0 稍后重试 >0 接受字符
  */
 ssize_t wSocket::RecvBytes(char *vArray, size_t vLen)
 {
@@ -217,16 +323,20 @@ ssize_t wSocket::RecvBytes(char *vArray, size_t vLen)
 		{
 			return iRecvLen;
 		}
+		else if(iRecvLen == 0)	//关闭
+		{
+			return -999;
+		}
 		else
 		{
 			mErr = errno;
-			if(iRecvLen < 0 && mErr == EINTR)	//中断
+			if(mErr == EINTR)	//中断
 			{
 				continue;
 			}
-			if(iRecvLen < 0 && (mErr == EAGAIN || mErr == EWOULDBLOCK))	//缓冲区满|超时
+			if(mErr == EAGAIN || mErr == EWOULDBLOCK)	//暂时无数据可读，可以继续读，或者等待epoll的后续通知
 			{
-				//continue;
+				return 0;
 			}
 			
 			return iRecvLen;
@@ -248,7 +358,7 @@ ssize_t wSocket::SendBytes(char *vArray, size_t vLen)
 	while(true)
 	{
 		iSendLen = send(mFD, vArray + iHaveSendLen, iLeftLen, 0);
-		if(iSendLen > 0)
+		if(iSendLen >= 0)
 		{
 			iLeftLen -= iSendLen;
 			iHaveSendLen += iSendLen;
@@ -264,9 +374,9 @@ ssize_t wSocket::SendBytes(char *vArray, size_t vLen)
 			{
 				continue;
 			}
-			if(iSendLen < 0 && (mErr == EAGAIN || mErr == EWOULDBLOCK))	//缓冲区满|超时
+			if(iSendLen < 0 && (mErr == EAGAIN || mErr == EWOULDBLOCK))	//当前缓冲区写满，可以继续写，或者等待epoll的后续通知
 			{
-				//continue;
+				return 0;
 			}
 			
 			return iSendLen;

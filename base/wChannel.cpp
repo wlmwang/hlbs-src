@@ -150,9 +150,9 @@ ssize_t wChannel::SendBytes(char *vArray, size_t vLen)
     if (n == -1) 
     {
         mErr = errno;
-        if (mErr == EAGAIN) 
+        if (mErr = EINTR || mErr == EAGAIN) 
         {
-            return EAGAIN;
+            return 0;
         }
 		
 		LOG_ERROR(ELOG_KEY, "[runtime] sendmsg() failed:%s", strerror(mErr));

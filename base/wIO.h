@@ -63,6 +63,7 @@ class wIO : private wNoncopyable
 		virtual ~wIO();
 		
 		int &FD() { return mFD; }
+		int &Errno() { return mErr; }
 		IO_TYPE &IOType() { return mIOType; }
 		IO_FLAG &IOFlag() { return mIOFlag; }
 		
@@ -93,6 +94,7 @@ class wIO : private wNoncopyable
 		
 	protected:
 		int mFD;
+		int mErr;
 		IO_TYPE mIOType;
 		IO_FLAG mIOFlag;
 		
