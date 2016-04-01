@@ -39,6 +39,7 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 					return 0;
 				}
 			}
+			return -3;
 		}
 		return -2;
 	}
