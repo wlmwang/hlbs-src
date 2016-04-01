@@ -161,7 +161,7 @@ int SvrQos::CallerNode(struct SvrCaller_t& stCaller)
 	stSvr.mGid = stCaller.mCalledGid;
 	stSvr.mXid = stCaller.mCalledXid;
 	stSvr.mPort = stCaller.mPort;
-	memcpy(stSvr.mHost, stCaller.mHost, strlen(stSvr.mHost)+1);
+	memcpy(stSvr.mHost, stCaller.mHost, strlen(stCaller.mHost)+1);
 
 	if (stCaller.mReqUsetimeUsec <= 0)
 	{
@@ -225,19 +225,13 @@ int SvrQos::AllocNode(struct SvrNet_t& stSvr)
 
 /** 单次获取路由 */
 int SvrQos::QueryNode(struct SvrNet_t& stSvr)
-{
-	LOG_DEBUG(ELOG_KEY,"[svr] QueryNode start");
-	
-	/** for test */
-	LogAllNode();
-
+{	
 	int iAck = GetRouteNode(stSvr);
 	
 	LOG_DEBUG(ELOG_KEY, "[svr] QueryNode(%d) Svr:gid(%d),xid(%d),host(%s),port(%d),weight(%d)",iAck,stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
 	
 	/** for test */
 	LogAllNode();
-
 	return iAck;
 }
 
@@ -897,7 +891,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
             SAFE_DELETE(pNewTable);
         }
 
-        LOG_ERROR(ELOG_KEY, "[svr] RebuildRoute failed(cannot find route)! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
+        LOG_ERROR(ELOG_KEY, "[svr] RebuildRoute recovery errorroute failed! gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
 		return -1;
 	}
 	
@@ -1120,11 +1114,14 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
 	//宕机探测
     RebuildErrRoute(stItem, pNewTable, fBestLowPri, fBestLowSucRateValidate, iBestBigDelayValidate);
     
+    mRouteTable.erase(rtIt);
     struct SvrKind_t stNewKind(stKind);
     stNewKind.mPindex = 0;
-    mRouteTable.erase(rtIt);
+    if (pNewTable != NULL && !pNewTable->empty())
+    {
+    	mRouteTable.insert(make_pair(stNewKind, pNewTable));
+    }
     SAFE_DELETE(pTable);
-    mRouteTable.insert(make_pair(stNewKind, pNewTable));
     return 0;
 }
 
@@ -1147,7 +1144,7 @@ int SvrQos::AddErrRoute(struct SvrKind_t& stItem, struct SvrNode_t& stNode)
 
 	time_t nowTm = time(NULL);
 	
-	LOG_DEBUG(ELOG_KEY, "[svr] AddErrRoute node overload, exist count=%d: mod=%d cmd=%d ip=%s port=%u stop_time=%d limit=%d",
+	LOG_DEBUG(ELOG_KEY, "[svr] AddErrRoute node overload, exist count=%d: gid=%d xid=%d host=%s port=%u stop_time=%d limit=%d",
 		iErrCount+1,stNode.mNet.mGid,stNode.mNet.mXid,stNode.mNet.mHost,stNode.mNet.mPort,nowTm - stNode.mStopTime,stNode.mStat->mReqCfg.mReqLimit);
     	
 	//record down server
@@ -1207,8 +1204,8 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 			struct DetectNode_t stDetectNode(it->mNet.mHost, it->mNet.mPort, iCurTm, iCurTm + mDownCfg.mProbeNodeExpireTime);
 			iRet = mDetectThread->GetDetectResult(stDetectNode, stRes);
 			
-			LOG_ERROR(ELOG_KEY, "[svr] RebuildErrRoute detect ret=%d,code=%d,type=%d,mod=%d cmd=%d ip=%s port=%u after_stop_time=%d,reqall_after_down=%d,expire=%d,limit=%d",
-				iRet,stRes.mRc,stRes.mDetectType,it->mNet.mGid,it->mNet.mXid,it->mNet.mHost, it->mNet.mPort,
+			LOG_ERROR(ELOG_KEY, "[svr] RebuildErrRoute detect ret=%d,code=%d,type=%d,gid=%d xid=%d host=%s port=%u after_stop_time=%d,reqall_after_down=%d,expire=%d,limit=%d",
+				iRet, stRes.mRc, stRes.mDetectType, it->mNet.mGid,it->mNet.mXid,it->mNet.mHost, it->mNet.mPort,
 				iCurTm - it->mStopTime, it->mReqAllAfterDown, stDetectNode.mExpireTime - stDetectNode.mCreateTime, it->mStat->mReqCfg.mReqLimit);
 			
 			if (iRet < 0)	//not found

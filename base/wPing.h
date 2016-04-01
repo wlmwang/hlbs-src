@@ -17,6 +17,7 @@
 #include "wCore.h"
 #include "wMisc.h"
 #include "wNoncopyable.h"
+#include "wLog.h"
 
 #define PACKET_SIZE	4096
 #define PDATA_SIZE	56

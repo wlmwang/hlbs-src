@@ -268,8 +268,8 @@ void AgentConfig::GetQosConf()
 		mSvrQos->mDownCfg.mProbeTimes = 3;
 		mSvrQos->mDownCfg.mPossibleDownErrReq = 10;
 		mSvrQos->mDownCfg.mPossbileDownErrRate = 0.5;
-		mSvrQos->mDownCfg.mProbeBegin = 0;
-		mSvrQos->mDownCfg.mProbeInterval = 3;
+		mSvrQos->mDownCfg.mProbeBegin = 3;
+		mSvrQos->mDownCfg.mProbeInterval = 10;
 		mSvrQos->mDownCfg.mProbeNodeExpireTime = 600;
 	}
 
