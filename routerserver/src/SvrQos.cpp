@@ -160,7 +160,7 @@ int SvrQos::CallerNode(struct SvrCaller_t& stCaller)
 	stSvr.mGid = stCaller.mCalledGid;
 	stSvr.mXid = stCaller.mCalledXid;
 	stSvr.mPort = stCaller.mPort;
-	memcpy(stSvr.mHost, stCaller.mHost, strlen(stSvr.mHost)+1);
+	memcpy(stSvr.mHost, stCaller.mHost, strlen(stCaller.mHost)+1);
 
 	if (stCaller.mReqUsetimeUsec <= 0)
 	{
