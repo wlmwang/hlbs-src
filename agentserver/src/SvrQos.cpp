@@ -999,7 +999,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
     if (bErrRateBig)
     {
     	fAvgErrRate = fTotalErrRate / pTable->size();
-    	stKind.mPtotalErrRate += fTotalErrRate / pTable->size();	//失败率平均值
+    	stKind.mPtotalErrRate += fTotalErrRate / pTable->size();	//所有节点过载平均错误率
     	stKind.mPsubCycCount++;
     	mAvgErrRate = stKind.mPtotalErrRate / stKind.mPsubCycCount;
 
@@ -1091,7 +1091,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
         {
         	stKind.mPsubCycCount = 1;
         }
-        mAvgErrRate = stKind.mPtotalErrRate / stKind.mPsubCycCount;	//平均错误率
+        mAvgErrRate = stKind.mPtotalErrRate / stKind.mPsubCycCount;	//所有节点过载平均错误率
 
         if (mAvgErrRate > 0.99999)
         {

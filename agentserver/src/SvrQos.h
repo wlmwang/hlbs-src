@@ -71,7 +71,7 @@ class SvrQos : public wSingleton<SvrQos>
 	    int mRebuildTm;		//重建时间间隔 默认为3s
 	    int mReqTimeout;	//请求超时时间 默认为500ms
 
-	    float mAvgErrRate;		//错误平均值，过载时
+	    float mAvgErrRate;		//所有节点过载平均错误率
 	    bool mAllReqMin;		//所有节点都过载
 
 	    SvrReqCfg_t	 mReqCfg;	//访问量控制
