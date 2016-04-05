@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export SERVER_HOME=~/disvr
+export SERVER_HOME=/usr/local/hlbs
 
 ./stop.sh
 

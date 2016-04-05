@@ -108,9 +108,14 @@ int log_va( const char* vLogName, int vPriority, const char* vFmt, va_list ap );
 
 //error log
 #define ELOG_KEY	"error"
-#define ELOG_LEVEL	LEVEL_DEBUG
 #define ELOG_FILE	"log/error.log"
 #define ELOG_FSIZE 10*1024*1024
 #define ELOG_BACKUP	20
+
+#ifdef _DEBUG_
+#define ELOG_LEVEL	LEVEL_DEBUG
+#else
+#define ELOG_LEVEL	LEVEL_INFO
+#endif
 
 #endif

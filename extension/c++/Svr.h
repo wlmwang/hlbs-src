@@ -8,6 +8,7 @@
 #define _SVR_H_
 
 #include "wCore.h"
+#include "wMisc.h"
 
 #define MAX_SVR_HOST 255
 #define MAX_SVR_NUM 255			//每次请求svr最多个数

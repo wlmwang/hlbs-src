@@ -50,35 +50,35 @@ extern "C" {
 }
 #endif
 
-#include "php_hlfs.h"
+#include "php_hlbs.h"
 
-//ZEND_DECLARE_MODULE_GLOBALS(hlfs)
+//ZEND_DECLARE_MODULE_GLOBALS(hlbs)
 
 /* True global resources - no need for thread safety here */
-//static int le_hlfs;
+//static int le_hlbs;
 
 //modify
-const zend_function_entry hlfs_functions[] = {
-	PHP_FE(hlfs_query_svr,	NULL)
-	PHP_FE(hlfs_notify_res,	NULL)
-	PHP_FE(hlfs_notify_num,	NULL)
+const zend_function_entry hlbs_functions[] = {
+	PHP_FE(hlbs_query_svr,	NULL)
+	PHP_FE(hlbs_notify_res,	NULL)
+	PHP_FE(hlbs_notify_num,	NULL)
 	PHP_FE_END
 };
 
 //modify
-zend_module_entry hlfs_module_entry = {
+zend_module_entry hlbs_module_entry = {
 #if ZEND_MODULE_API_NO >= 20010901
 	STANDARD_MODULE_HEADER,
 #endif
-	"hlfs",
-	hlfs_functions,
+	"hlbs",
+	hlbs_functions,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-	PHP_MINFO(hlfs),
+	PHP_MINFO(hlbs),
 #if ZEND_MODULE_API_NO >= 20010901
-	PHP_HLFS_VERSION,
+	PHP_HLBS_VERSION,
 #endif
 	STANDARD_MODULE_PROPERTIES
 };
@@ -87,21 +87,21 @@ zend_module_entry hlfs_module_entry = {
 #ifdef __cplusplus
 BEGIN_EXTERN_C()
 #endif
-ZEND_GET_MODULE(hlfs)
+ZEND_GET_MODULE(hlbs)
 #ifdef __cplusplus
 END_EXTERN_C()
 #endif
 
 //modify
-PHP_MINFO_FUNCTION(hlfs)
+PHP_MINFO_FUNCTION(hlbs)
 {
 	php_info_print_table_start();
-	php_info_print_table_header(2, "hlfs support", "enabled");
+	php_info_print_table_header(2, "hlbs support", "enabled");
 	php_info_print_table_end();
 
     //php_info_print_table_start();
-    //php_info_print_table_header(2, "HLFS System", "HLFS System - php extension");
-    //php_info_print_table_row(2, "Version",     PHP_HLFS_VERSION );
+    //php_info_print_table_header(2, "HLBS System", "HLBS System - php extension");
+    //php_info_print_table_row(2, "Version",     PHP_HLBS_VERSION );
     //php_info_print_table_row(2, "Anthor",      "PF, Hupu Inc." );
     //php_info_print_table_row(2, "Copyright",   "Copyright (c) 2016 Hupu Inc. All Rights Reserved." );
     //php_info_print_table_end();
@@ -111,7 +111,7 @@ PHP_MINFO_FUNCTION(hlfs)
 	*/
 }
 
-PHP_FUNCTION(hlfs_query_svr)
+PHP_FUNCTION(hlbs_query_svr)
 {
     double iTimeOut   = 0;
 
@@ -172,7 +172,7 @@ PHP_FUNCTION(hlfs_query_svr)
  * <0 上报失败
  * =0 上报成功
  */
-PHP_FUNCTION(hlfs_notify_res)
+PHP_FUNCTION(hlbs_notify_res)
 {
     long iInterfRet   = 0;	//结果
     long iUsetimeUsec = 0;	//延时
@@ -245,7 +245,7 @@ PHP_FUNCTION(hlfs_notify_res)
 	}
 }
 
-PHP_FUNCTION(hlfs_notify_num)
+PHP_FUNCTION(hlbs_notify_num)
 {
 	int argc = ZEND_NUM_ARGS();
 	long gid;
@@ -254,6 +254,6 @@ PHP_FUNCTION(hlfs_notify_num)
 	if (zend_parse_parameters(argc TSRMLS_CC, "ll", &gid, &xid) == FAILURE) 
 		return;
 
-	php_error(E_WARNING, "hlfs_notify_num: not yet implemented");
+	php_error(E_WARNING, "hlbs_notify_num: not yet implemented");
 }
 

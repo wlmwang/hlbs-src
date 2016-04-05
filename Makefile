@@ -8,7 +8,7 @@
 # Makefile.
 #
 
-SERVER := routerserver agentserver agentcmd
+SERVER := routerserver agentserver
 
 all:
 	for d in $(SERVER); do echo; echo "compile $$d now"; echo; $(MAKE) clean dir all -C $$d; done

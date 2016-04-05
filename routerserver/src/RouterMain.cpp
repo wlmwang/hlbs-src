@@ -10,7 +10,7 @@
 #include "RouterMaster.h"
 
 //工作目录
-#define PREFIX  "/home/hlfs/disvr/routerserver/bin"
+#define PREFIX  "/usr/local/hlfs/routerserver/bin"
 
 int main(int argc, const char *argv[])
 {

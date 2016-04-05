@@ -56,3 +56,5 @@ dir:
 	-mkdir ./debug
 	chmod 755 -R ./debug
 
+install:
+	-mv -f ./debug/libagent_api.so /usr/lib
