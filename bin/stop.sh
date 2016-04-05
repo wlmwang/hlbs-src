@@ -13,8 +13,9 @@ kill_proc()
 	echo
 }
 
-kill_proc routersvrd
-kill_proc agentsvrd
+#kill_proc routersvrd
+#kill_proc agentsvrd
+kill_proc HLFS
 
 echo "delete share memory" 
 shmid=`ipcs -m | grep -w $USER | awk '$6==0{printf " -m  " $2  " "}'` 
