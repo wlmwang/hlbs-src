@@ -116,7 +116,7 @@ int wPing::SetRecvTimeout(float fTimeout)
 
 int wPing::Ping(const char *pIp)
 {
-	if (mFD == FD_UNKNOWN)
+	if (pIp == NULL || mFD == FD_UNKNOWN)
 	{
 		return -1;
 	}
@@ -125,23 +125,21 @@ int wPing::Ping(const char *pIp)
 	bzero(&mDestAddr, sizeof(mDestAddr));
 	mDestAddr.sin_family = AF_INET;
 	
-	struct hostent *host;
 	unsigned long inaddr = 0l;
-	if (inaddr = inet_addr(mStrIp.c_str()) == INADDR_NONE)
+	if ((inaddr = inet_addr(mStrIp.c_str())) == INADDR_NONE)	//是主机名 TODO
 	{
-		//是主机名 TODO
+		//struct hostent *host;
 		//if ((host = gethostbyname(mStrIp.c_str())) == NULL)
 		{
 			return -1;
 		}
 		memcpy((char *)&mDestAddr.sin_addr, host->h_addr, host->h_length);
 	}
-	else
+	else	//是ip地址
 	{
-		//是ip地址
-		memcpy((char *)&mDestAddr, (char *) &inaddr, host->h_length);
+		mDestAddr.sin_addr.s_addr = inaddr;
 	}
-	
+
 	//发送所有ICMP报文
     if (SendPacket() == -1)
     {
@@ -239,7 +237,6 @@ int wPing::RecvPacket()
         return -2;
 	}
 
-    //gettimeofday(&mRecvtv, NULL);
     int iRet = Unpack(mRecvpacket, iLen);
     if (iRet < 0)
 	{
@@ -256,22 +253,21 @@ int wPing::RecvPacket()
 /** 设置ICMP请求报头 */
 int wPing::Pack()
 {
-	struct icmp *icmp;
 	memset(mSendpacket, 0, sizeof(mSendpacket));
-	icmp = (struct icmp*) mSendpacket;
+	struct icmp *icmp = (struct icmp*) mSendpacket;
+
 	icmp->icmp_type = ICMP_ECHO;
 	icmp->icmp_code = 0;
-	icmp->icmp_cksum = 0;
-	icmp->icmp_seq = mSeqNum++;
 	icmp->icmp_id = mPid;
+	icmp->icmp_seq = mSeqNum++;
 	memset(icmp->icmp_data, 0xa5, PDATA_SIZE);
-	icmp->icmp_data[0] = 5;
-	//ICMP数据字段为当前时间截
-	//gettimeofday((struct timeval *)icmp->icmp_data, NULL);
+	icmp->icmp_data[0] = ICMP_DATA;
+	//gettimeofday((struct timeval *)icmp->icmp_data, NULL);	//数据字段为当前时间截
 	
 	int iLen = 8 + PDATA_SIZE;
 	
 	//校验算法
+	icmp->icmp_cksum = 0;
 	icmp->icmp_cksum = CalChksum((unsigned short *)icmp, iLen);
 	return iLen;
 }
@@ -309,7 +305,7 @@ int wPing::Unpack(char *pBuffer, int iLen)
 	}
 	
 	//确保所接收的是我所发的的ICMP的回应
-	if (icmp->icmp_type == ICMP_ECHOREPLY)
+	if (icmp->icmp_type == ICMP_ECHOREPLY)	//TODO 本机会返回8
 	{
 		if (icmp->icmp_id != mPid)
 		{
