@@ -15,11 +15,13 @@
 
 #架构
 1）CGI使用步骤：
+ 
  a) CGI从AgentSvrd获取某一类(GID、XID)Svr服务的HOST/PORT。一般使用PHP扩展。
  b) 然后对该Svr的HOST/PORT进行直连访问。
  c) 访问结束后，CGI将本次访问结果（成功与否）、微妙时延上报至本地AgentSvrd（AgentSvrd需与CGI同处在同一台机器，即一一对应）。
 
 2）功能列表
+ 
  a) RouterSvrd
  - 接受并验证所有连接的AgentSvrd，记录日志中。
  - 对所有连接的AgentSvrd保存心跳检测，心跳异常，记录到日志中。
@@ -37,6 +39,7 @@
 
 #算法
 1）路由选择算法
+
  a) 各Svr节点负载W(k)计算。（k为某一Svr节点,0…n某一(GID,XID)所对应的所有节点）
 
     W(k) = delay_load(k) * ok_load(k) * weight_load(k) * f(rate_weight) * f(delay_weight)
@@ -54,6 +57,7 @@
  - 由于第一个周期没有历史统计数据，W(k)全部预设为1，各路由的预取数也为1，此时为严格的round robin算法。
 
 2）路由选择
+
  a) 按 W(k)作为各节点负载（load）进行Weighted Round Robin加权轮询（选择 负载W(k)*调用次数 最低的作为预选结果）
  b) 如果所选择的路由过载（请求数超出门限），则：
  - 若在当前周期中无错误，则选择当前路由，但仅分配一次（预取数为1）。
