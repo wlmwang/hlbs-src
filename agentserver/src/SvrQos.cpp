@@ -307,7 +307,7 @@ int SvrQos::GetRouteNode(struct SvrNet_t& stSvr)
 	map<struct SvrKind_t,  multimap<float, struct SvrNode_t>* >::iterator rtIt = mRouteTable.find(stNode);
 
 	//反向注册路由
-	if(rtIt == mRouteTable.end())
+	if (rtIt == mRouteTable.end())
 	{
 		LOG_ERROR(ELOG_KEY, "[svr] GetRouteNode invalid gid=%d xid=%d",stSvr.mGid,stSvr.mXid);
 		if (stSvr.mGid > 0 && stSvr.mXid > 0)
@@ -324,7 +324,7 @@ int SvrQos::GetRouteNode(struct SvrNet_t& stSvr)
     }
     
     multimap<float, struct SvrNode_t>* pTable = rtIt->second;
-	if(pTable == NULL || pTable->empty())
+	if (pTable == NULL || pTable->empty())
 	{
 		LOG_ERROR(ELOG_KEY, "[svr] GetRouteNode failed. gix(%d) xid(%d) svr is empty", stSvr.mGid,stSvr.mXid);
 		return -1;
@@ -1200,7 +1200,7 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 		
 		//mProbeBegin>0 才打开网络层探测
 		if (mDownCfg.mProbeBegin > 0 && iCurTm > it->mStopTime + mDownCfg.mProbeBegin)
-		{	
+		{
 			struct DetectNode_t stDetectNode(it->mNet.mHost, it->mNet.mPort, iCurTm, iCurTm + mDownCfg.mProbeNodeExpireTime);
 			iRet = mDetectThread->GetDetectResult(stDetectNode, stRes);
 			
@@ -1252,7 +1252,7 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 		}
 
 		//达到恢复条件，如果网络探测失败，推迟恢复
-		if((mDownCfg.mProbeBegin > 0) && (-1 == iDetectStat))
+		if ((mDownCfg.mProbeBegin > 0) && (-1 == iDetectStat))
 		{
 	        it++; 
 	        continue;

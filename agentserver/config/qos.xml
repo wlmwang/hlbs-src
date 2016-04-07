@@ -15,10 +15,8 @@
 	<!--并发量的配置信息-->
 	<LIST LIST_MAX="100" LIST_MIN="10" LIST_ERR_MIN="0.001" LIST_EXTEND_RATE="0.2" LIST_TIMEOUT="2"/>
 
-	<!--宕机恢复配置-->
-	<!--
-	<DOWN />
-	-->
+	<!--宕机控制&恢复配置-->
+	<DOWN BEGIN="3" INTERVAL="10" EXPIRE="600" TIMES="3" REQ_COUNT="1000" DOWN_TIME="600" DOWN_ERR_REQ="10" DOWN_ERR_RATE="0.5"/>
 
 	<!--时延配置-->
 	<DELAY>

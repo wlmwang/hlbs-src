@@ -168,18 +168,15 @@ void AgentConfig::GetQosConf()
 
 	/** 成功率、时延比例配置 */
 	pElement = pRoot->FirstChildElement("FACTOR");
+	const char *szRate = NULL, *szDelay = NULL;
 	if(NULL != pElement)
 	{
-		const char *szRate = pElement->Attribute("RATE_WEIGHT");
-		const char *szDelay = pElement->Attribute("DELAY_WEIGHT");
-		mSvrQos->mRateWeight = szRate != NULL ? (atoi(szRate)>0 ? atoi(szRate):7) : 7;
-		mSvrQos->mDelayWeight = szDelay != NULL ? (atoi(szDelay)>0 ? atoi(szDelay):1) : 1;
+		szRate = pElement->Attribute("RATE_WEIGHT");
+		szDelay = pElement->Attribute("DELAY_WEIGHT");
 	}
-	else
-	{
-		mSvrQos->mRateWeight = 7;
-		mSvrQos->mDelayWeight = 1;
-	}
+	mSvrQos->mRateWeight = szRate != NULL ? (atoi(szRate)>0 ? atoi(szRate):7) : 7;
+	mSvrQos->mDelayWeight = szDelay != NULL ? (atoi(szDelay)>0 ? atoi(szDelay):1) : 1;
+
 	/** rate 需在 0.01-100 之间*/
     float rate = (float) mSvrQos->mRateWeight / (float) mSvrQos->mDelayWeight;
     if(rate > 100000)
@@ -195,83 +192,71 @@ void AgentConfig::GetQosConf()
 	
 	/** 路由重建时间 */
 	pElement = pRoot->FirstChildElement("CFG");
+	const char *szType = NULL, *szRebuild = NULL;
 	if(NULL != pElement)
 	{
-		const char *szType = pElement->Attribute("TYPE");
-		const char *szRebuild = pElement->Attribute("REBUILD");
-		mSvrQos->mRebuildTm = szRebuild != NULL ? (atoi(szRebuild)>0 ? atoi(szRebuild):60) : 60;
+		szType = pElement->Attribute("TYPE");
+		szRebuild = pElement->Attribute("REBUILD");
 	}
-	else
-	{
-		mSvrQos->mRebuildTm = 60;
-	}
+	mSvrQos->mRebuildTm = szRebuild != NULL ? (atoi(szRebuild)>0 ? atoi(szRebuild):60) : 60;
 
 	/** 访问量配置 */
 	pElement = pRoot->FirstChildElement("REQ");
+	const char *szReqMax = NULL, *szReqMin = NULL, *szReqErrMin = NULL, *szReqExtendRate = NULL, *szPreTime = NULL;
 	if(NULL != pElement)
 	{
-		const char *szReqMax = pElement->Attribute("REQ_MAX");
-		const char *szReqMin = pElement->Attribute("REQ_MIN");
-		const char *szReqErrMin = pElement->Attribute("REQ_ERR_MIN");
-		const char *szReqExtendRate = pElement->Attribute("REQ_EXTEND_RATE");
-		const char *szPreTime = pElement->Attribute("PRE_TIME");
+		szReqMax = pElement->Attribute("REQ_MAX");
+		szReqMin = pElement->Attribute("REQ_MIN");
+		szReqErrMin = pElement->Attribute("REQ_ERR_MIN");
+		szReqExtendRate = pElement->Attribute("REQ_EXTEND_RATE");
+		szPreTime = pElement->Attribute("PRE_TIME");
+	}
+	mSvrQos->mReqCfg.mReqMax = szReqMax != NULL ? (atoi(szReqMax)>0 ? atoi(szReqMax):10000) : 10000;
+	mSvrQos->mReqCfg.mReqMin = szReqMin != NULL ? (atoi(szReqMin)>0 ? atoi(szReqMin):10) : 10;
+	mSvrQos->mReqCfg.mReqErrMin = szReqErrMin != NULL ? (atof(szReqErrMin)>0 ? atof(szReqErrMin):0.5) : 0.5;
+	mSvrQos->mReqCfg.mReqExtendRate = szReqExtendRate != NULL ? (atof(szReqExtendRate)>0 ? atof(szReqExtendRate):0.2) : 0.2;
+	mSvrQos->mReqCfg.mPreTime = szPreTime != NULL ? (atoi(szPreTime)>0 ? atoi(szPreTime):4) : 4;
 
-		mSvrQos->mReqCfg.mReqMax = szReqMax != NULL ? (atoi(szReqMax)>0 ? atoi(szReqMax):10000) : 10000;
-		mSvrQos->mReqCfg.mReqMin = szReqMin != NULL ? (atoi(szReqMin)>0 ? atoi(szReqMin):10) : 10;
-		mSvrQos->mReqCfg.mReqErrMin = szReqErrMin != NULL ? (atof(szReqErrMin)>0 ? atof(szReqErrMin):0.5) : 0.5;
-		mSvrQos->mReqCfg.mReqExtendRate = szReqExtendRate != NULL ? (atof(szReqExtendRate)>0 ? atof(szReqExtendRate):0.2) : 0.2;
-		mSvrQos->mReqCfg.mPreTime = szPreTime != NULL ? (atoi(szPreTime)>0 ? atoi(szPreTime):4) : 4;
-	}
-	else
-	{
-		mSvrQos->mReqCfg.mReqMax = 10000;
-		mSvrQos->mReqCfg.mReqMin = 10;
-		mSvrQos->mReqCfg.mReqErrMin = 0.5;
-		mSvrQos->mReqCfg.mReqExtendRate = 0.2;
-		mSvrQos->mReqCfg.mPreTime = 4;
-	}
 	mSvrQos->mReqCfg.mRebuildTm = mSvrQos->mRebuildTm;
 
 	/** 并发量配置 */
 	pElement = pRoot->FirstChildElement("LIST");
+	const char *szListMax = NULL, *szListMin = NULL, *szListErrMin = NULL, *szListExtendRate = NULL, *szTimeout = NULL;
 	if(NULL != pElement)
 	{
-		const char *szListMax = pElement->Attribute("LIST_MAX");
-		const char *szListMin = pElement->Attribute("LIST_MIN");
-		const char *szListErrMin = pElement->Attribute("LIST_ERR_MIN");
-		const char *szListExtendRate = pElement->Attribute("LIST_EXTEND_RATE");
-		const char *szTimeout = pElement->Attribute("LIST_TIMEOUT");
-
-		mSvrQos->mListCfg.mListMax = szListMax != NULL ? (atoi(szListMax)>0 ? atoi(szListMax):400) : 400;
-		mSvrQos->mListCfg.mListMin = szListMin != NULL ? (atoi(szListMin)>0 ? atoi(szListMin):10) : 10;
-		mSvrQos->mListCfg.mListErrMin = szListErrMin != NULL ? (atof(szListErrMin)>0 ? atof(szListErrMin):0.001) : 0.001;
-		mSvrQos->mListCfg.mListExtendRate = szListExtendRate != NULL ? (atof(szListExtendRate)>0 ? atof(szListExtendRate):0.2) : 0.2;
+		szListMax = pElement->Attribute("LIST_MAX");
+		szListMin = pElement->Attribute("LIST_MIN");
+		szListErrMin = pElement->Attribute("LIST_ERR_MIN");
+		szListExtendRate = pElement->Attribute("LIST_EXTEND_RATE");
+		szTimeout = pElement->Attribute("LIST_TIMEOUT");
 	}
-	else
-	{
-		mSvrQos->mListCfg.mListMax = 400;
-		mSvrQos->mListCfg.mListMin = 10;
-		mSvrQos->mListCfg.mListErrMin = 0.001;
-		mSvrQos->mListCfg.mListExtendRate = 0.2;
-	}
+	mSvrQos->mListCfg.mListMax = szListMax != NULL ? (atoi(szListMax)>0 ? atoi(szListMax):400) : 400;
+	mSvrQos->mListCfg.mListMin = szListMin != NULL ? (atoi(szListMin)>0 ? atoi(szListMin):10) : 10;
+	mSvrQos->mListCfg.mListErrMin = szListErrMin != NULL ? (atof(szListErrMin)>0 ? atof(szListErrMin):0.001) : 0.001;
+	mSvrQos->mListCfg.mListExtendRate = szListExtendRate != NULL ? (atof(szListExtendRate)>0 ? atof(szListExtendRate):0.2) : 0.2;
 
 	/** 宕机配置 */
 	pElement = pRoot->FirstChildElement("DOWN");
+	const char *szBegin = NULL, *szInterval = NULL, *szExpire = NULL, *szTimes = NULL, *szReqCount = NULL, *szDownTime = NULL, *szDownErrReq = NULL, *szDownErrRate = NULL;
 	if(NULL != pElement)
 	{
-		//TODO
+		szBegin = pElement->Attribute("BEGIN");
+		szInterval = pElement->Attribute("INTERVAL");
+		szExpire = pElement->Attribute("EXPIRE");
+		szTimes = pElement->Attribute("TIMES");
+		szReqCount = pElement->Attribute("REQ_COUNT");
+		szDownTime = pElement->Attribute("DOWN_TIME");
+		szDownErrReq = pElement->Attribute("DOWN_ERR_REQ");
+		szDownErrRate = pElement->Attribute("DOWN_ERR_RATE");
 	}
-	else
-	{
-		mSvrQos->mDownCfg.mReqCountTrigerProbe = 100000;
-		mSvrQos->mDownCfg.mDownTimeTrigerProbe = 600;
-		mSvrQos->mDownCfg.mProbeTimes = 3;
-		mSvrQos->mDownCfg.mPossibleDownErrReq = 10;
-		mSvrQos->mDownCfg.mPossbileDownErrRate = 0.5;
-		mSvrQos->mDownCfg.mProbeBegin = 3;
-		mSvrQos->mDownCfg.mProbeInterval = 10;
-		mSvrQos->mDownCfg.mProbeNodeExpireTime = 600;
-	}
+	mSvrQos->mDownCfg.mProbeBegin = szBegin != NULL ? (atoi(szBegin)>0 ? atoi(szBegin):3) : 3;
+	mSvrQos->mDownCfg.mProbeInterval = szInterval != NULL ? (atoi(szInterval)>0 ? atoi(szInterval):10) : 10;
+	mSvrQos->mDownCfg.mProbeNodeExpireTime = szExpire != NULL ? (atoi(szExpire)>0 ? atoi(szExpire):600) : 600;
+	mSvrQos->mDownCfg.mProbeTimes = szTimes != NULL ? (atoi(szTimes)>0 ? atoi(szTimes):3) : 3;
+	mSvrQos->mDownCfg.mReqCountTrigerProbe = szReqCount != NULL ? (atoi(szReqCount)>0 ? atoi(szReqCount):100000) : 100000;
+	mSvrQos->mDownCfg.mDownTimeTrigerProbe = szDownTime != NULL ? (atoi(szDownTime)>0 ? atoi(szDownTime):600) : 600;
+	mSvrQos->mDownCfg.mPossibleDownErrReq = szDownErrReq != NULL ? (atoi(szDownErrReq)>0 ? atoi(szDownErrReq):10) : 10;
+	mSvrQos->mDownCfg.mPossbileDownErrRate = szDownErrRate != NULL ? (atof(szDownErrRate)>0 ? atof(szDownErrRate):0.5) : 0.5;
 
 	if(!(mSvrQos->mReqCfg.mReqExtendRate > 0.001 && mSvrQos->mReqCfg.mReqExtendRate < 101))
 	{

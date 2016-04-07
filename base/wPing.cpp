@@ -128,7 +128,7 @@ int wPing::Ping(const char *pIp)
 	unsigned long inaddr = 0l;
 	if ((inaddr = inet_addr(mStrIp.c_str())) == INADDR_NONE)	//是主机名 TODO
 	{
-		//struct hostent *host;
+		struct hostent *host;
 		//if ((host = gethostbyname(mStrIp.c_str())) == NULL)
 		{
 			return -1;
