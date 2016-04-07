@@ -1300,7 +1300,7 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 	}
 
     if(!vDetectNodeadd.empty()) mDetectThread->AddDetect(vDetectNodeadd);
-    if(!vDetectNodedel.empty()) mDetectThread->DelDetect(vDetectNodeadd);
+    if(!vDetectNodedel.empty()) mDetectThread->DelDetect(vDetectNodedel);
 	
 	return 0;
 }
