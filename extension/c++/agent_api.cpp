@@ -14,7 +14,7 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 	stCmd.mGid = stSvr.mGid;
 	stCmd.mXid = stSvr.mXid;
 	
-	if(g_handle.mSock == NULL || g_handle.mTask == NULL)
+	//if (g_handle.mSock == NULL || g_handle.mTask == NULL)
 	{
 		if(ConnectAgent(&g_handle) < 0)
 		{
@@ -58,7 +58,7 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 	stCmd.mCaller.mReqUsetimeUsec = iUsetimeUsec;
 	memcpy(stCmd.mCaller.mHost, stSvr.mHost, strlen(stSvr.mHost) + 1);
 
-	if(g_handle.mSock == NULL || g_handle.mTask == NULL)
+	//if (g_handle.mSock == NULL || g_handle.mTask == NULL)
 	{
 		if(ConnectAgent(&g_handle) < 0)
 		{
