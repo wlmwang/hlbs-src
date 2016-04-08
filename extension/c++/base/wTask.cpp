@@ -201,7 +201,11 @@ int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 			usleep(iSleep);
 			continue;
 		}
-
+		if (iRecvLen < iCmdMsgLen)
+		{
+			break;
+		}
+		
 		pTmpCmd = (struct wCommand*) (mTmpRecvMsgBuff + sizeof(int));
 		if (pTmpCmd != NULL && pTmpCmd->GetCmd() == CMD_NULL && pTmpCmd->GetPara() == PARA_NULL)	//¹ıÂËµôĞÄÌø
 		{
