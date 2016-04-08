@@ -34,7 +34,7 @@ int GPSvr()
 	stSvr.mXid = 2;
 
 	string s;
-	cout << "res:" << QueryNode(stSvr, 0.2, s) << endl;
+	cout << "res:" << QueryNode(stSvr, 30, s) << endl;
 	cout << "host:" << stSvr.mHost << endl;
 	cout << "port:" << stSvr.mPort << endl;
 
@@ -46,8 +46,6 @@ int GPSvr()
 
 int main(int argc,char **argv)
 {
-	//Get();
-	//Post();
 	GPSvr();
 	return 0;
 }
