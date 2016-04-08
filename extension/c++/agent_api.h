@@ -14,7 +14,7 @@
 #include "Svr.h"
 #include "SvrCmd.h"
 
-#define AGENT_HOST "192.168.8.13"
+#define AGENT_HOST "0.0.0.0"
 #define AGENT_PORT 10007
 
 struct postHandle_t
