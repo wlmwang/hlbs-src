@@ -66,7 +66,7 @@ void RouterMaster::PrepareRun()
     mPidFile.FileName() = LOCK_PATH;
 
 	//worker进程个数
-	mWorkerNum = 4;
+	//mWorkerNum = 4;
     
     //准备工作（创建、绑定服务器Listen Socket）
     mServer->PrepareMaster(mConfig->mIPAddr, mConfig->mPort);
