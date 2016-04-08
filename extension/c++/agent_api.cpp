@@ -28,7 +28,7 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 		{
 			//接受返回
 			char pBuffer[sizeof(struct SvrResData_t)];
-			int iLen = g_handle.mTask->SyncRecv(pBuffer, sizeof(struct SvrResData_t));
+			int iLen = g_handle.mTask->SyncRecv(pBuffer, sizeof(struct SvrResData_t), iTimeOut);
 			if (iLen > 0)
 			{
 				SvrResData_t *pRes = (SvrResData_t*) pBuffer;
@@ -79,6 +79,7 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 				struct SvrResReport_t *pRes = (struct SvrResReport_t*) pBuffer;
 				return pRes->mCode;
 			}
+			return -3;
 		}
 		return -2;
 	}
