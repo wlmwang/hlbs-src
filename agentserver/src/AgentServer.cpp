@@ -1,7 +1,7 @@
 
 /**
- * Copyright (C) Anny.
- * Copyright (C) Disvr, Inc.
+ * Copyright (C) Anny Wang.
+ * Copyright (C) Hupu, Inc.
  */
 
 #include "AgentServer.h"

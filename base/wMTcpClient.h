@@ -1,7 +1,7 @@
 
 /**
- * Copyright (C) Anny.
- * Copyright (C) Disvr, Inc.
+ * Copyright (C) Anny Wang.
+ * Copyright (C) Hupu, Inc.
  */
 
 #ifndef _W_MTCP_CLIENT_H_

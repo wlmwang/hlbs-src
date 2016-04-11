@@ -1,7 +1,7 @@
 
 /**
  * Copyright (C) Anny.
- * Copyright (C) Disvr, Inc.
+ * Copyright (C) Hupu, Inc.
  */
 
 #ifndef _DETECT_THREAD_H_
