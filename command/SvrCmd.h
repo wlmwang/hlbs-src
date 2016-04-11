@@ -60,8 +60,8 @@ struct SvrReqGXid_t : public SvrReqCmd_s
 {
 	SvrReqGXid_t() : SvrReqCmd_s(SVR_REQ_GXID), mGid(0),mXid(0) {}
 	
-	WORD mGid;
-	WORD mXid;
+	SDWORD mGid;
+	SDWORD mXid;
 };
 
 /** 上报数据结构 */
