@@ -672,7 +672,7 @@ int SvrQos::ReqRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat)
 		pSvrStat->mInfo.mLastReqSuc = 0;
 	}
 
-	//当前周期无请求，重置成功率为1
+	//上个周期无请求，重置成功率为1
     if (iReqAll <= 0 && iErrCount + iSucCount <= 0)
 	{
         pSvrStat->mInfo.mOkRate = 1;
@@ -706,7 +706,7 @@ int SvrQos::ReqRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat)
         }
 		else
 		{
-            if(pSvrStat->mInfo.mAvgTm && pSvrStat->mInfo.mAvgTm < DELAY_MAX)
+            if (pSvrStat->mInfo.mAvgTm && pSvrStat->mInfo.mAvgTm < DELAY_MAX)
 			{
                 pSvrStat->mInfo.mAvgTm = 2 * pSvrStat->mInfo.mAvgTm; 	//延时增加一倍
             }
@@ -719,7 +719,7 @@ int SvrQos::ReqRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat)
 
 	//调整请求门限值mReqLimit
 	//路由的过载判断逻辑修改为：路由的当前周期错误率超过配置的错误率阀值时才判断为过载
-	if(pSvrStat->mReqCfg.mReqLimit <= 0)
+	if (pSvrStat->mReqCfg.mReqLimit <= 0)
 	{
 		if(iReqAll > pSvrStat->mReqCfg.mReqMin)
 		{
@@ -763,7 +763,7 @@ int SvrQos::ReqRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat)
             }
         }
     }
-	else	//门限收缩(可能原因为：上周期存在过度扩张)，需要按有效错误率收缩门限
+	else	//门限收缩
 	{
 		if(pSvrStat->mInfo.mOkRate > 0)
 		{
@@ -791,7 +791,7 @@ int SvrQos::ReqRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat)
 
 		if (iReqAll <= pSvrStat->mReqCfg.mReqMin)
 		{
-			pSvrStat->mInfo.mLastErr = false;
+			pSvrStat->mInfo.mLastErr = false;	//不存在过度扩张
 		}
 	}
 
@@ -942,7 +942,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
     	fAvgErrRate = si.mAvgErrRate;	//平均错误率
 
     	iRouteTotalReq += iReqAll - iReqRej;
-    	if(iReqAll < iReqSuc + iReqErrRet + iReqErrTm) 
+    	if (iReqAll < iReqSuc + iReqErrRet + iReqErrTm) 
     	{
     		iReqAll = iReqSuc + iReqErrRet + iReqErrTm;	//重置总请求数
     	}

@@ -142,6 +142,10 @@ void RouterConfig::GetSvrConf()
 				stSvr.mWeight = szWeight != NULL ? atoi(szWeight): stSvr.mWeight;
 				stSvr.mVersion = szVersion != NULL ? atoi(szVersion): stSvr.mVersion;
 				
+				if (stSvr.mWeight == 0)
+				{
+					continue;
+				}
 				mSvrQos->SaveNode(stSvr);
 			}
 			else

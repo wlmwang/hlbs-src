@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <QOS>
 	
-	<CFG TYPE="REQ" REBUILD="60"/>
+	<CFG TYPE="REQ" REBUILD="30"/>
 
 	<!--成功率权重 时延权重-->
 	<FACTOR RATE_WEIGHT="7" DELAY_WEIGHT="1"/>
