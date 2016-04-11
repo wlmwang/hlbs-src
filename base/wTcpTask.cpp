@@ -35,7 +35,7 @@ int wTcpTask::Heartbeat()
 
 int wTcpTask::HeartbeatOutTimes()
 {
-	return mHeartbeatTimes > 30;
+	return mHeartbeatTimes > 10;
 }
 
 int wTcpTask::VerifyConn()
