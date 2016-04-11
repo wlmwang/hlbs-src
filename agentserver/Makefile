@@ -17,7 +17,7 @@ COMMANDPATH=../command
 
 CXX=g++
 
-CXXFLAGS=-g -std=c++11 -Wno-invalid-offsetof -DUSE_LOG4CPP -DLINUX #-D_DEBUG_ #-D_MEM_CHECK #--extra-libs=-lgcc
+CXXFLAGS=-g -std=c++11 -Wno-invalid-offsetof -DUSE_LOG4CPP -DLINUX -D_DEBUG_ #-D_MEM_CHECK #--extra-libs=-lgcc
 
 LIBS=-llog4cpp -ltinyxml -lpthread
 INCPATH=-I./$(BASEPATH) -I/usr/local/include/log4cpp -I./$(LIBPATH)/tinyxml -I./$(COMMANDPATH)

@@ -108,7 +108,7 @@ ${OUTPUT}: ${OBJS}
 	${LD} -o $@ ${LDFLAGS} ${OBJS} ${LIBS} ${EXTRA_LIBS}
 
 ${LIB}: ${LIBOBJS}
-  ${LD} -shared -o $@ ${LDFLAGS} ${LIBOBJS}
+	${LD} -shared -o $@ ${LDFLAGS} ${LIBOBJS}
 
 #****************************************************************************
 # common rules
@@ -131,7 +131,7 @@ depend:
 	#makedepend ${INCS} ${SRCS}
 
 install:
-  mv -r ${LIB} /usr/local/lib
+	-mv -f ${LIB} /usr/local/lib
 
 tinyxml.o: tinyxml.h tinystr.h
 tinyxmlparser.o: tinyxml.h tinystr.h
