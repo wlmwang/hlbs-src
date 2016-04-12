@@ -36,6 +36,7 @@ class wSocket : public wIO
 		virtual ssize_t SendBytes(char *vArray, size_t vLen);
 
 		int Open();
+		int SetKeepAlive(int iIdle = 5, int iIntvl = 1, int iCnt = 10);	//tcp保活
 		int Bind(string sIpAddr ,unsigned int nPort);
 		int Listen(string sIpAddr ,unsigned int nPort);
 		int Connect(string sIpAddr ,unsigned int nPort, float fTimeout = 30);

@@ -26,16 +26,20 @@ void wTcpTask::Initialize()
 
 int wTcpTask::Heartbeat()
 {
-	wCommand vCmd;
-	SyncSend((char*)&vCmd, sizeof(vCmd));
-
 	mHeartbeatTimes++;
-	return -1;
+	wCommand vCmd;
+	int iRet = SyncSend((char*)&vCmd, sizeof(vCmd));
+	return iRet;
 }
 
 int wTcpTask::HeartbeatOutTimes()
 {
-	return mHeartbeatTimes > 10;
+	return mHeartbeatTimes > KEEPALIVE_CNT;
+}
+
+int wTcpTask::ClearbeatOutTimes()
+{
+	mHeartbeatTimes = 0;
 }
 
 int wTcpTask::VerifyConn()

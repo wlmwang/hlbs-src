@@ -14,7 +14,7 @@ template <typename TASK>
 void wMTcpClient<TASK>::Initialize()
 {
 	mLastTicker = GetTickCount();
-	mIsCheckTimer = true;
+	mIsCheckTimer = false;
 	mTcpClientCount = 0;
 	mTimeout = 10;
 	mEpollFD = -1;
@@ -133,6 +133,11 @@ wTcpClient<TASK>* wMTcpClient<TASK>::CreateClient(int iType, string sClientName,
 	if(iRet >= 0)
 	{
 		pTcpClient->PrepareStart();	//准备启动
+
+		if (mIsCheckTimer)	//是否启用心跳
+		{
+			pTcpClient->IsCheckTimer() = true;
+		}
 		return pTcpClient;
 	}
 	LOG_DEBUG(ELOG_KEY, "[startup] CreateClient connect to (%s)server faild!",sClientName.c_str());

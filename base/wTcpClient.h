@@ -42,8 +42,9 @@ class wTcpClient
 		string &ClientName() { return mClientName; }
 		bool IsRunning() { return mStatus = CLIENT_RUNNING; }
 		CLIENT_STATUS &Status() { return mStatus; }
+		bool &IsCheckTimer() { return mIsCheckTimer;}
 		int Type() { return mType; }
-		
+
 		virtual wTcpTask* NewTcpTask(wIO *pIO);
 		wTcpTask* TcpTask() { return mTcpTask; }
 		

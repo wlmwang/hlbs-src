@@ -18,7 +18,7 @@ void wTcpClient<T>::Initialize()
 	mStatus = CLIENT_INIT;
 	mLastTicker = GetTickCount();
 	mReconnectTimer = wTimer(KEEPALIVE_TIME);
-	mIsCheckTimer = true;
+	mIsCheckTimer = false;
 	mReconnectTimes = 0;
 	mClientName = "";
 	mType = 0;
@@ -54,7 +54,7 @@ int wTcpClient<T>::ReConnectToServer()
 template <typename T>
 int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 {
-	if(vIPAddress == NULL || vPort == 0) 
+	if (vIPAddress == NULL || vPort == 0) 
 	{
 		return -1;
 	}
@@ -80,7 +80,7 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 	LOG_DEBUG(ELOG_KEY, "[runtime] connect to %s:%d successfully", vIPAddress, vPort);
 	
 	mTcpTask = NewTcpTask(pSocket);
-	if(NULL != mTcpTask)
+	if (NULL != mTcpTask)
 	{
 		if (mTcpTask->Verify() < 0 || mTcpTask->VerifyConn() < 0)
 		{
@@ -89,7 +89,7 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 			return -1;
 		}
 		mTcpTask->Status() = TASK_RUNNING;
-		if(mTcpTask->IO()->SetNonBlock() < 0) 
+		if (mTcpTask->IO()->SetNonBlock() < 0) 
 		{
 			LOG_ERROR(ELOG_KEY, "[runtime] set non block failed: %d, close it", iSocketFD);
 			SAFE_DELETE(mTcpTask);
@@ -117,14 +117,14 @@ void wTcpClient<T>::CheckTimer()
 {
 	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mLastTicker);
 
-	if(iInterval < 100) 	//100ms
+	if (iInterval < 100) 	//100ms
 	{
 		return;
 	}
 
 	mLastTicker += iInterval;
 	
-	if(mReconnectTimer.CheckTimer(iInterval))
+	if (mReconnectTimer.CheckTimer(iInterval))
 	{
 		CheckReconnect();
 	}
@@ -134,7 +134,7 @@ template <typename T>
 void wTcpClient<T>::CheckReconnect()
 {
 	unsigned long long iNowTime = GetTickCount();
-	unsigned long long iIntervalTime;
+	//unsigned long long iIntervalTime;
 	if (mTcpTask == NULL)
 	{
 		return;
@@ -146,15 +146,32 @@ void wTcpClient<T>::CheckReconnect()
 	}
 	
 	//心跳检测
-	iIntervalTime = iNowTime - mTcpTask->IO()->SendTime();	//上一次发送心跳时间间隔
-	if (iIntervalTime >= CHECK_CLIENT_TIME)
+	//iIntervalTime = iNowTime - mTcpTask->IO()->SendTime();	//上一次发送心跳时间间隔
+	//if (iIntervalTime >= CHECK_CLIENT_TIME)
 	{
-		if(mTcpTask->Heartbeat() < 0 && mTcpTask->HeartbeatOutTimes())
+		if (mIsCheckTimer == true)	//使用业务层心跳机制
 		{
-			mStatus = CLIENT_QUIT;
-			LOG_INFO(ELOG_KEY, "[runtime] disconnect server : out of heartbeat times");
+			mTcpTask->Heartbeat();
+			if (mTcpTask->HeartbeatOutTimes())
+			{
+				mStatus = CLIENT_QUIT;
+				LOG_INFO(ELOG_KEY, "[runtime] disconnect server : out of heartbeat times");
+			}
 		}
-		else if(mTcpTask->IO() != NULL && mTcpTask->IO()->FD() < 0)
+		else	//使用keepalive保活机制
+		{
+			if (mTcpTask->Heartbeat() > 0)
+			{
+				mTcpTask->ClearbeatOutTimes();
+			}
+			if (mTcpTask->HeartbeatOutTimes())
+			{
+				mStatus = CLIENT_QUIT;
+				LOG_INFO(ELOG_KEY, "[runtime] disconnect server : out of keepalive times");
+			}
+		}
+		
+		if (mTcpTask->IO() != NULL && mTcpTask->IO()->FD() < 0)
 		{
 			if (ReConnectToServer() == 0)
 			{

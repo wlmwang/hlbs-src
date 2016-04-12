@@ -15,12 +15,12 @@
 #include "wSingleton.h"
 #include "wTask.h"
 #include "wIO.h"
-#include "wTcpServer.h"
+#include "wServer.h"
 #include "RouterConfig.h"
 #include "RouterServerTask.h"
 #include "RouterChannelTask.h"
 
-class RouterServer: public wTcpServer<RouterServer>
+class RouterServer: public wServer<RouterServer>
 {
 	public:
 		RouterServer();

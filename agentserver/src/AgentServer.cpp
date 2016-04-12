@@ -6,7 +6,7 @@
 
 #include "AgentServer.h"
 
-AgentServer::AgentServer() : wTcpServer<AgentServer>("路由服务器")
+AgentServer::AgentServer() : wServer<AgentServer>("路由服务器")
 {
 	mConfig = NULL;
 	mInShm = NULL;
@@ -32,7 +32,6 @@ void AgentServer::Initialize()
 {
 	mTicker = GetTickCount();
 	mConfig = AgentConfig::Instance();
-	
 	mRouterConn = new wMTcpClient<AgentClientTask>();
 	mDetectThread = DetectThread::Instance();
 	

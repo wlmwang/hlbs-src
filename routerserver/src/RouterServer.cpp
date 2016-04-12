@@ -6,7 +6,7 @@
 
 #include "RouterServer.h"
 
-RouterServer::RouterServer() : wTcpServer<RouterServer>("路由服务器")
+RouterServer::RouterServer() : wServer<RouterServer>("路由服务器")
 {
 	Initialize();
 }
@@ -57,7 +57,6 @@ void RouterServer::CheckModSvr()
 		{
 			//LOG_DEBUG(ELOG_KEY, "[runtime] sync new or change(version) svr gid=%d xid=%d host=%s port=%d weight=%d ver=%d",
 			//	stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight,stSvr.mVersion);
-
 			Broadcast((char *)&stSvr, sizeof(stSvr));	//广播所有agent
 		}
 	}
