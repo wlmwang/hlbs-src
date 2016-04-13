@@ -4,19 +4,33 @@
  * Copyright (C) Hupu, Inc.
  */
 
+/**
+ * code is far away from bug with the animal protecting
+ *  ┏┓　　　┏┓
+ *┏┛┻━━━┛┻┓
+ *┃　　　　　　　┃ 　
+ *┃　　　━　　　┃
+ *┃　┳┛　┗┳　┃
+ *┃　　　　　　　┃
+ *┃　　　┻　　　┃
+ *┃　　　　　　　┃
+ *┗━┓　　　┏━┛
+ *　　┃　　　┃神兽保佑
+ *　　┃　　　┃代码无BUG！
+ *　　┃　　　┗━━━┓
+ *　　┃　　　　　　　┣┓
+ *　　┃　　　　　　　┏┛
+ *　　┗┓┓┏━┳┓┏┛
+ *　　　┃┫┫　┃┫┫
+ *　　　┗┻┛　┗┻┛ 
+ *
+ */
+
 #ifndef _W_CORE_H_
 #define _W_CORE_H_
 
 #include "wLinux.h"
 #include "wDef.h"
-
-//#include "wAssert.h"
-//#include "wLog.h"
-//#include "wMisc.h"
-//#include "wSingleton.h"
-//#include "wNoncopyable.h"
-//#include "wMemPool.h"
-//#include "wMemCheck.h"
 
 #define ALIGNMENT	sizeof(unsigned long)
 #define ALIGN(d, a)		(((d) + (a - 1)) & ~(a - 1))

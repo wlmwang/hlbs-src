@@ -29,10 +29,21 @@ int wSocket::Open()
 	}
 
 	int iFlags = 1;
-	struct linger stLing = {0,0};
-	setsockopt(mFD, SOL_SOCKET, SO_REUSEADDR, &iFlags, sizeof(iFlags));
-	setsockopt(mFD, SOL_SOCKET, SO_LINGER, &stLing, sizeof(stLing));	//优雅断开
-	
+	if (setsockopt(mFD, SOL_SOCKET, SO_REUSEADDR, &iFlags, sizeof(iFlags)) == -1)	//端口重用
+	{
+		mErr = errno;
+		Close();
+		return -1;
+	}
+
+	struct linger stLing = {0, 0};
+	if (setsockopt(mFD, SOL_SOCKET, SO_LINGER, &stLing, sizeof(stLing)) == -1)	//优雅断开
+	{
+		mErr = errno;
+		Close();
+		return -1;
+	}
+
 	if (SetKeepAlive(KEEPALIVE_TIME, KEEPALIVE_TIME, KEEPALIVE_CNT) < 0)	//启用保活机制
 	{
 		return -1;
@@ -79,10 +90,10 @@ int wSocket::Listen(string sIpAddr ,unsigned int nPort)
 		return -1;
 	}
 
-	//setsockopt socket : 设置发送缓冲大小4M
+	//设置发送缓冲大小4M
 	int iOptLen = sizeof(socklen_t);
 	int iOptVal = 0x400000;
-	if (setsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) < -1)
+	if (setsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) == -1)
 	{
 		mErr = errno;
 		Close();
@@ -119,44 +130,36 @@ int wSocket::Connect(string sIpAddr ,unsigned int nPort, float fTimeout)
 
 	socklen_t iOptVal = 100*1024;
 	socklen_t iOptLen = sizeof(socklen_t);
-	if (setsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) != 0)
-	{
-		mErr = errno;
-		Close();
-		return -1;
-	}
-	if (getsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (void *)&iOptVal, &iOptLen) != 0)
+	if (setsockopt(mFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) == -1)
 	{
 		mErr = errno;
 		Close();
 		return -1;
 	}
 
+	//超时设置
 	if (fTimeout > 0)
 	{
-		if(SetNonBlock() < 0)
+		if (SetNonBlock() < 0)
 		{
 			SetSendTimeout(fTimeout);	//linux平台下可用
 		}
 	}
 
 	int iRet = connect(mFD, (const struct sockaddr *)&stSockAddr, sizeof(stSockAddr));
-	int iLen , iVal;
 	if (fTimeout > 0 && iRet < 0)
 	{
-		mErr = errno;
-		if (mErr == EINPROGRESS)	//连接建立，建立启动但是尚未完成
+		if (errno == EINPROGRESS)	//建立启动但是尚未完成
 		{
+			int iLen, iVal, iRet;
 			struct pollfd stFD;
-			int iTimeout = fTimeout * 1000000;
-
+			int iTimeout = fTimeout * 1000000;	//微妙
 			while (true)
 			{
 				stFD.fd = mFD;
                 stFD.events = POLLIN | POLLOUT;
                 iRet = poll(&stFD, 1, iTimeout);
-
-                if(iRet == -1)
+                if (iRet == -1)
                 {
                 	mErr = errno;
                     if(mErr == EINTR)
@@ -168,8 +171,8 @@ int wSocket::Connect(string sIpAddr ,unsigned int nPort, float fTimeout)
                 }
                 else if(iRet == 0)
                 {
-                	//tcp connect timeout millisecond=%d
                     Close();
+                    LOG_ERROR(ELOG_KEY, "[runtime] tcp connect timeout millisecond=%d", iTimeout);
                     return ERR_TIMEO;
                 }
                 else
@@ -178,16 +181,16 @@ int wSocket::Connect(string sIpAddr ,unsigned int nPort, float fTimeout)
                     iRet = getsockopt(mFD, SOL_SOCKET, SO_ERROR, (char*)&iVal, (socklen_t*)&iLen);
                     if(iRet == -1)
                     {
-                    	//ip=%s:%u, tcp connect getsockopt errno=%d,%s
+                    	mErr = errno;
                         Close();
-                        mErr = errno;
+                        LOG_ERROR(ELOG_KEY, "[runtime] ip=%s:%d, tcp connect getsockopt errno=%d,%s", mHost, mPort, mErr, strerror(mErr));
                         return -1;
                     }
                     if(iVal > 0)
                     {
-                    	//ip=%s:%u, tcp connect fail errno=%d,%s
+                    	mErr = errno;
+                        LOG_ERROR(ELOG_KEY, "[runtime] ip=%s:%d, tcp connect fail errno=%d,%s", mHost, mPort, mErr, strerror(mErr));
                         Close();
-                        mErr = errno;
                         return -1;
                     }
                     break;	//连接成功
@@ -196,7 +199,8 @@ int wSocket::Connect(string sIpAddr ,unsigned int nPort, float fTimeout)
 		}
 		else
 		{
-			//ip=%s:%u, tcp connect directly errno=%d,%s
+			mErr = errno;
+            LOG_ERROR(ELOG_KEY, "[runtime] ip=%s:%d, tcp connect directly errno=%d,%s", mHost, mPort, mErr, strerror(mErr));
 			Close();
 			return -1;
 		}
@@ -216,8 +220,7 @@ int wSocket::Accept(struct sockaddr* pClientSockAddr, socklen_t *pSockAddrSize)
 	}
 
 	int iNewFD = 0;
-	do
-	{
+	do {
 		iNewFD = accept(mFD, pClientSockAddr, pSockAddrSize);
 		if (iNewFD < 0)
 		{
@@ -240,10 +243,10 @@ int wSocket::Accept(struct sockaddr* pClientSockAddr, socklen_t *pSockAddrSize)
 		return -1;
 	}
 
-	//setsockopt socket：设置发送缓冲大小3M
+	//设置发送缓冲大小3M
 	int iOptLen = sizeof(socklen_t);
 	int iOptVal = 0x300000;
-	if (setsockopt(iNewFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) < -1)
+	if (setsockopt(iNewFD, SOL_SOCKET, SO_SNDBUF, (const void *)&iOptVal, iOptLen) == -1)
 	{
 		mErr = errno;
 		return -1;
@@ -343,7 +346,7 @@ int wSocket::SetKeepAlive(int iIdle, int iIntvl, int iCnt)
 
     //Linux Kernel 2.6.37
     //如果发送出去的数据包在十秒内未收到ACK确认，则下一次调用send或者recv，则函数会返回-1，errno设置为ETIMEOUT
-    unsigned int iTimeout = 10000;	//10s
+    unsigned int iTimeout = 10000;
 	if (setsockopt(mFD, IPPROTO_TCP, TCP_USER_TIMEOUT, &iTimeout, sizeof(iTimeout)) == -1)  
     {
     	mErr = errno;
@@ -370,7 +373,7 @@ ssize_t wSocket::RecvBytes(char *vArray, size_t vLen)
 		}
 		else if (iRecvLen == 0)	//关闭
 		{
-			return -999;
+			return -99;	//FIN
 		}
 		else
 		{

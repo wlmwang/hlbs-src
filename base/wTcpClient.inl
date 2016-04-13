@@ -17,6 +17,7 @@ void wTcpClient<T>::Initialize()
 {
 	mStatus = CLIENT_INIT;
 	mLastTicker = GetTickCount();
+	mCheckTimer = wTimer(KEEPALIVE_TIME);
 	mReconnectTimer = wTimer(KEEPALIVE_TIME);
 	mIsCheckTimer = false;
 	mReconnectTimes = 0;
@@ -64,19 +65,16 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 	int iSocketFD = pSocket->Open();
 	if (iSocketFD < 0)
 	{
-		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] create socket failed: %s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[runtime] create socket failed: %s", strerror(pSocket->Errno()));
 		return -1;
 	}
 
 	int iRet = pSocket->Connect(vIPAddress, vPort);
 	if (iRet < 0)
 	{
-		mErr = errno;
 		LOG_ERROR(ELOG_KEY, "[runtime] connect to server port(%d) failed: %s", vPort, strerror(pSocket->Errno()));
 		return -1;
 	}
-
 	LOG_DEBUG(ELOG_KEY, "[runtime] connect to %s:%d successfully", vIPAddress, vPort);
 	
 	mTcpTask = NewTcpTask(pSocket);
@@ -116,14 +114,16 @@ template <typename T>
 void wTcpClient<T>::CheckTimer()
 {
 	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mLastTicker);
-
 	if (iInterval < 100) 	//100ms
 	{
 		return;
 	}
 
 	mLastTicker += iInterval;
-	
+	if(mCheckTimer.CheckTimer(iInterval))
+	{
+		CheckTimeout();
+	}
 	if (mReconnectTimer.CheckTimer(iInterval))
 	{
 		CheckReconnect();
@@ -131,10 +131,15 @@ void wTcpClient<T>::CheckTimer()
 }
 
 template <typename T>
-void wTcpClient<T>::CheckReconnect()
+void wTcpClient<T>::CheckTimeout()
 {
+	if (!mIsCheckTimer)
+	{
+		return;
+	}
+
 	unsigned long long iNowTime = GetTickCount();
-	//unsigned long long iIntervalTime;
+	unsigned long long iIntervalTime;
 	if (mTcpTask == NULL)
 	{
 		return;
@@ -146,19 +151,20 @@ void wTcpClient<T>::CheckReconnect()
 	}
 	
 	//心跳检测
-	//iIntervalTime = iNowTime - mTcpTask->IO()->SendTime();	//上一次发送心跳时间间隔
-	//if (iIntervalTime >= CHECK_CLIENT_TIME)
+	iIntervalTime = iNowTime - mTcpTask->IO()->SendTime();	//上一次发送时间间隔
+	if (iIntervalTime >= KEEPALIVE_TIME)
 	{
 		if (mIsCheckTimer == true)	//使用业务层心跳机制
 		{
 			mTcpTask->Heartbeat();
 			if (mTcpTask->HeartbeatOutTimes())
 			{
-				mStatus = CLIENT_QUIT;
-				LOG_INFO(ELOG_KEY, "[runtime] disconnect server : out of heartbeat times");
+				//mStatus = CLIENT_QUIT;
+				mTcpTask->IO()->FD() = FD_UNKNOWN;
+				LOG_DEBUG(ELOG_KEY, "[runtime] disconnect server : out of heartbeat times");
 			}
 		}
-		else	//使用keepalive保活机制
+		else	//使用keepalive保活机制（此逻辑一般不会被激活。也不必在业务层发送心跳，否则就失去了keepalive原始意义）
 		{
 			if (mTcpTask->Heartbeat() > 0)
 			{
@@ -166,20 +172,41 @@ void wTcpClient<T>::CheckReconnect()
 			}
 			if (mTcpTask->HeartbeatOutTimes())
 			{
-				mStatus = CLIENT_QUIT;
-				LOG_INFO(ELOG_KEY, "[runtime] disconnect server : out of keepalive times");
+				//mStatus = CLIENT_QUIT;
+				mTcpTask->IO()->FD() = FD_UNKNOWN;
+				LOG_DEBUG(ELOG_KEY, "[runtime] disconnect server : out of keepalive times");
 			}
 		}
-		
-		if (mTcpTask->IO() != NULL && mTcpTask->IO()->FD() < 0)
+	}
+}
+
+template <typename T>
+void wTcpClient<T>::CheckReconnect()
+{
+	unsigned long long iNowTime = GetTickCount();
+	unsigned long long iIntervalTime;
+	if (mTcpTask == NULL)
+	{
+		return;
+	}
+	SOCK_TYPE sockType = mTcpTask->IO()->SockType();
+	if (sockType != SOCK_CONNECT)
+	{
+		return;
+	}
+	
+	iIntervalTime = iNowTime - mTcpTask->IO()->SendTime();	//上一次发送时间间隔
+	if (iIntervalTime >= KEEPALIVE_TIME)
+	{
+		if (mTcpTask->IO() != NULL && mTcpTask->IO()->FD() == FD_UNKNOWN)
 		{
 			if (ReConnectToServer() == 0)
 			{
-				//LOG_ERROR("server", "[reconnect] success to reconnect : ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
+				LOG_INFO(ELOG_KEY, "[reconnect] success to reconnect : ip(%s) port(%d)", mTcpTask->IO()->Host().c_str(), mTcpTask->IO()->Port());
 			}
 			else
 			{
-				//LOG_ERROR("server", "[reconnect] failed to reconnect : ip(%s) port(%d)", mTcpTask->Socket()->IPAddr().c_str(), mTcpTask->Socket()->Port());
+				LOG_ERROR(ELOG_KEY, "[reconnect] failed to reconnect : ip(%s) port(%d)", mTcpTask->IO()->Host().c_str(), mTcpTask->IO()->Port());
 			}
 		}
 	}

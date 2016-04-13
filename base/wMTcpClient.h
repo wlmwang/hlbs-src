@@ -79,7 +79,6 @@ class wMTcpClient : private wNoncopyable
 		
 		//定时记录器
 		unsigned long long mLastTicker;	//服务器当前时间
-		bool mIsCheckTimer;
         
 		std::map<int, vector<wTcpClient<TASK>*> > mTcpClientPool;	//每种类型客户端，可挂载多个连接
 		int mErr;

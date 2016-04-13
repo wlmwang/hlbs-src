@@ -9,9 +9,6 @@
 #include "RouterConfig.h"
 #include "RouterMaster.h"
 
-//工作目录
-#define PREFIX  "/usr/local/hlbs/routerserver/bin"
-
 int main(int argc, const char *argv[])
 {
 	//config

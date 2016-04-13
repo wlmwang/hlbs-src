@@ -104,11 +104,6 @@ enum TASK_STATUS
 #define USER  "nobody"
 #define GROUP  "nobody"
 
-/**
- * 框架用于一对多项目时，目录定义放入具体项目中定义
- */
-//#define PREFIX  "/usr/local/disvr/server"
-//#define CONF_PREFIX  "../config/"
 #define PID_PATH  "../log/disvr.pid"
 #define LOCK_PATH  "../log/disvr.lock"
 #define WAIT_MUTEX	"../log/wait_mutex.bin"	//worker惊群锁
