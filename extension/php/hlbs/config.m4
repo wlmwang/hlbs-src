@@ -65,7 +65,7 @@ if test "$PHP_HLBS" != "no"; then
   PHP_ADD_LIBRARY_WITH_PATH(agent_api, /usr/lib, HLBS_SHARED_LIBADD) 
   PHP_NEW_EXTENSION(hlbs, hlbs.cpp, $ext_shared)
 
-  PHP_ADD_INCLUDE(/usr/local/hlbs/extension/c++/base)
-  PHP_ADD_INCLUDE(/usr/local/hlbs/extension/c++)
+  PHP_ADD_INCLUDE(./c++/base)
+  PHP_ADD_INCLUDE(./c++)
   
 fi

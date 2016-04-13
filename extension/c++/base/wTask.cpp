@@ -48,6 +48,7 @@ int wTask::TaskRecv()
 	
 	if(iRecvLen <= 0)
 	{
+		LOG_ERROR(ELOG_KEY, "[runtime] recv data invalid len: %d, fd(%d)", iRecvLen, mIO->FD());
 		return iRecvLen;	
 	}
 	mRecvBytes += iRecvLen;	
@@ -205,7 +206,7 @@ int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 		{
 			break;
 		}
-		
+
 		pTmpCmd = (struct wCommand*) (mTmpRecvMsgBuff + sizeof(int));
 		if (pTmpCmd != NULL && pTmpCmd->GetCmd() == CMD_NULL && pTmpCmd->GetPara() == PARA_NULL)	//¹ýÂËµôÐÄÌø
 		{
@@ -238,4 +239,12 @@ int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 	}
 	memcpy(pCmd, mTmpRecvMsgBuff + sizeof(int), iLen);
 	return iRecvLen - sizeof(int);
+}
+
+int wTask::Heartbeat()
+{
+	mHeartbeatTimes++;
+	wCommand vCmd;
+	int iRet = SyncSend((char*)&vCmd, sizeof(vCmd));
+	return iRet;
 }

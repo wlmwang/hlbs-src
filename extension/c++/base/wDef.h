@@ -31,10 +31,8 @@
 #define MEM_POOL_MAX 16777216 /* 16m */
 
 //心跳包间隔时间
-#define KEEPALIVE_TIME 3000 /* 3*1000 */
-
-//服务器检测心跳时间
-#define CHECK_CLIENT_TIME 5000 /* 5*1000 */
+#define KEEPALIVE_TIME 3000 /* 1*1000 */
+#define KEEPALIVE_CNT 5
 
 //超时时间
 #define WAITRES_TIME 30000 /* 30*1000 */
@@ -103,11 +101,6 @@ enum TASK_STATUS
 #define USER  "nobody"
 #define GROUP  "nobody"
 
-/**
- * 框架用于一对多项目时，目录定义放入具体项目中定义
- */
-//#define PREFIX  "/usr/local/disvr/server"
-//#define CONF_PREFIX  "../config/"
 #define PID_PATH  "../log/disvr.pid"
 #define LOCK_PATH  "../log/disvr.lock"
 #define WAIT_MUTEX	"../log/wait_mutex.bin"	//worker惊群锁

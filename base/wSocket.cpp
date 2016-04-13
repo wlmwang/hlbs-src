@@ -183,13 +183,13 @@ int wSocket::Connect(string sIpAddr ,unsigned int nPort, float fTimeout)
                     {
                     	mErr = errno;
                         Close();
-                        LOG_ERROR(ELOG_KEY, "[runtime] ip=%s:%d, tcp connect getsockopt errno=%d,%s", mHost, mPort, mErr, strerror(mErr));
+                        LOG_ERROR(ELOG_KEY, "[runtime] ip=%s:%d, tcp connect getsockopt errno=%d,%s", mHost.c_str(), mPort, mErr, strerror(mErr));
                         return -1;
                     }
                     if(iVal > 0)
                     {
                     	mErr = errno;
-                        LOG_ERROR(ELOG_KEY, "[runtime] ip=%s:%d, tcp connect fail errno=%d,%s", mHost, mPort, mErr, strerror(mErr));
+                        LOG_ERROR(ELOG_KEY, "[runtime] ip=%s:%d, tcp connect fail errno=%d,%s", mHost.c_str(), mPort, mErr, strerror(mErr));
                         Close();
                         return -1;
                     }
@@ -200,7 +200,7 @@ int wSocket::Connect(string sIpAddr ,unsigned int nPort, float fTimeout)
 		else
 		{
 			mErr = errno;
-            LOG_ERROR(ELOG_KEY, "[runtime] ip=%s:%d, tcp connect directly errno=%d,%s", mHost, mPort, mErr, strerror(mErr));
+            LOG_ERROR(ELOG_KEY, "[runtime] ip=%s:%d, tcp connect directly errno=%d,%s", mHost.c_str(), mPort, mErr, strerror(mErr));
 			Close();
 			return -1;
 		}
@@ -346,12 +346,15 @@ int wSocket::SetKeepAlive(int iIdle, int iIntvl, int iCnt)
 
     //Linux Kernel 2.6.37
     //如果发送出去的数据包在十秒内未收到ACK确认，则下一次调用send或者recv，则函数会返回-1，errno设置为ETIMEOUT
+#ifdef TCP_USER_TIMEOUT
     unsigned int iTimeout = 10000;
 	if (setsockopt(mFD, IPPROTO_TCP, TCP_USER_TIMEOUT, &iTimeout, sizeof(iTimeout)) == -1)  
     {
     	mErr = errno;
-        //return -1;
+        return -1;
     }
+#endif
+    
     return 0;
 }
 

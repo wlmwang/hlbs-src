@@ -30,9 +30,9 @@ class wTask : private wNoncopyable
 		virtual int VerifyConn() { return 0;}	//验证接收到连接
 		virtual int Verify() {return 0;}		//发送连接验证请求
 		
-		virtual int Heartbeat() { return 0; }
-		virtual int HeartbeatOutTimes() { return 0; }
-		
+		virtual int Heartbeat();
+		virtual int HeartbeatOutTimes() { return mHeartbeatTimes > KEEPALIVE_CNT; }
+		virtual int ClearbeatOutTimes() { return mHeartbeatTimes = 0; }
 		/**
 		 *  处理接受到数据
 		 *  每条消息大小[2b,128k)

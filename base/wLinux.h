@@ -33,16 +33,7 @@
 #include <grp.h>
 
 //#include <dirent.h>
-
 //#include <sys/mman.h>
-
-//#include <sys/socket.h>
-//#include <netinet/in.h>
-//#include <netinet/tcp.h>
-//#include <arpa/inet.h>
-//#include <sys/un.h>
-
-//#include <sys/epoll.h>
 
 #include <stdio.h>
 #include <iostream>
