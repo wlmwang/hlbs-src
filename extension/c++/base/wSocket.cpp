@@ -372,7 +372,7 @@ ssize_t wSocket::RecvBytes(char *vArray, size_t vLen)
 		}
 		else if (iRecvLen == 0)	//关闭
 		{
-			return -99;	//FIN
+			return ERR_CLOSED;	//FIN
 		}
 		else
 		{

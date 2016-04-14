@@ -247,6 +247,7 @@ void wMTcpClient<TASK>::Recv()
 	int iType = 0;
 
 	int iFD = FD_UNKNOWN;
+	int iLenOrErr;
 	TASK_TYPE taskType;
 	SOCK_TYPE sockType;
 	SOCK_STATUS sockStatus;
@@ -291,9 +292,20 @@ void wMTcpClient<TASK>::Recv()
 			if (mEpollEventPool[i].events & EPOLLIN)
 			{
 				//套接口准备好了读取操作
-				if (pTask->TaskRecv() < 0)
+				if ((iLenOrErr = pTask->TaskRecv()) < 0)
 				{
-					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or server-socket closed: %s", strerror(pTask->IO()->Errno()));
+					if (iLenOrErr == ERR_CLOSED)
+					{
+						LOG_DEBUG(ELOG_KEY, "[runtime] tcp socket closed by client");
+					}
+					else if(iLenOrErr == ERR_MSGLEN)
+					{
+						LOG_ERROR(ELOG_KEY, "[runtime] recv message invalid len");
+					}
+					else
+					{
+						LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or server-socket closed: %s", strerror(pTask->IO()->Errno()));
+					}
 					if (RemoveEpoll(pClient) >= 0)
 					{
 						RemoveTcpClientPool(iType, pClient);

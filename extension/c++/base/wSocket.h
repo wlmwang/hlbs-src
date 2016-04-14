@@ -17,8 +17,6 @@
 #include "wIO.h"
 #include "wMisc.h"
 
-#define ERR_TIMEO -4	//connect连接超时
-
 /**
  *  网络TCP套接字的基础类
  */
