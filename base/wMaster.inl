@@ -148,9 +148,9 @@ void wMaster<T>::HandleSignal()
 	int sigio = 0;
 	int iLive = 1;
 
-	if(delay) 
+	if (delay) 
 	{
-		if(g_sigalrm) 
+		if (g_sigalrm) 
 		{
 			sigio = 0;
 			delay *= 2;
@@ -165,7 +165,7 @@ void wMaster<T>::HandleSignal()
 		itv.it_value.tv_usec = (delay % 1000 ) * 1000;
 
 		//设置定时器，以系统真实时间来计算，送出SIGALRM信号
-		if(setitimer(ITIMER_REAL, &itv, NULL) == -1) 
+		if (setitimer(ITIMER_REAL, &itv, NULL) == -1) 
 		{
 			mErr = errno;
 			LOG_ERROR(ELOG_KEY, "[runtime] setitimer() failed: %s", strerror(mErr));
@@ -177,7 +177,7 @@ void wMaster<T>::HandleSignal()
 	stSigset.Suspend();
 	
 	//SIGCHLD有worker退出
-	if(g_reap)
+	if (g_reap)
 	{
 		LOG_ERROR(ELOG_KEY, "[runtime] reap children");
 		
@@ -195,9 +195,9 @@ void wMaster<T>::HandleSignal()
 	
 	//收到SIGTERM信号或SIGINT信号(g_terminate ==1)
 	//通知所有worker退出，并且等待worker退出 
-	if(g_terminate)
+	if (g_terminate)
 	{
-		if(delay == 0) 
+		if (delay == 0) 
 		{
 			delay = 50;     //设置延时
 		}
@@ -221,7 +221,7 @@ void wMaster<T>::HandleSignal()
 		return;
 	}
 
-	if(g_quit)
+	if (g_quit)
 	{
 		SignalWorker(SIGQUIT);
 		//关闭所有监听socket
@@ -234,12 +234,14 @@ void wMaster<T>::HandleSignal()
 		LOG_DEBUG(ELOG_KEY, "[runtime] reconfiguring");
 		g_reconfigure = 0;
 		
-		PrepareStart();	//重新初始化配置
+		//PrepareStart();	//重新初始化主进程配置
 		WorkerStart(mWorkerNum, PROCESS_JUST_SPAWN);	//重启worker
 		
 		/* allow new processes to start */
 		usleep(100*1000);	//100ms
 		
+		LOG_DEBUG(ELOG_KEY, "[runtime] recycle old worker status");
+
 		iLive = 1;
 		SignalWorker(SIGTERM);	//关闭原来worker进程
 	}
@@ -370,7 +372,7 @@ void wMaster<T>::SignalWorker(int iSigno)
 		
         if(!other)
 		{
-	        LOG_DEBUG(ELOG_KEY, "[runtime] pass signal channel s:%i pid:%P to:%P", 
+	        LOG_DEBUG(ELOG_KEY, "[runtime] pass signal channel s:%i pid:%d to:%d", 
 	        	pCh->mSlot, pCh->mPid, mWorkerPool[i]->mPid);
 
 	        /* TODO: EAGAIN */

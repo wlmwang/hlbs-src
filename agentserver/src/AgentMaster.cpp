@@ -33,13 +33,13 @@ void AgentMaster::PrepareRun()
 
     //config、server对象
     mConfig = AgentConfig::Instance();
-    if(mConfig == NULL) 
+    if (mConfig == NULL) 
     {
         LOG_ERROR(ELOG_KEY, "[startup] Get AgentConfig instance failed");
         exit(1);
     }
     mServer = AgentServer::Instance();
-    if(mServer == NULL) 
+    if (mServer == NULL) 
     {
         LOG_ERROR(ELOG_KEY, "[startup] Get AgentServer instance failed");
         exit(1);

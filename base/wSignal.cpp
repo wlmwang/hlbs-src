@@ -117,7 +117,7 @@ void SignalHandler(int signo)
 			break;
 	}
 	
-	LOG_DEBUG(ELOG_KEY, "signal %d (%s) received%s", signo, sig->mSigname, action.c_str());
+	LOG_DEBUG(ELOG_KEY, "[signal] signal %d (%s) received%s", signo, sig->mSigname, action.c_str());
     errno = err;
 }
 

@@ -25,7 +25,7 @@ void RouterWorker::Initialize()
 void RouterWorker::PrepareRun()
 {
 	mConfig = RouterConfig::Instance();
-	if(mConfig == NULL) 
+	if (mConfig == NULL) 
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Get RouterConfig instance failed");
 		exit(2);
@@ -37,7 +37,7 @@ void RouterWorker::PrepareRun()
 	mConfig->GetQosConf();
 
 	mServer = RouterServer::Instance();
-	if(mServer == NULL) 
+	if (mServer == NULL) 
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Get RouterServer instance failed");
 		exit(2);

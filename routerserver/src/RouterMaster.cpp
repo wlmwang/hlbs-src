@@ -33,13 +33,13 @@ void RouterMaster::PrepareRun()
 
     //config、server对象
     mConfig = RouterConfig::Instance();
-    if(mConfig == NULL) 
+    if (mConfig == NULL) 
     {
         LOG_ERROR(ELOG_KEY, "[startup] Get RouterConfig instance failed");
         exit(2);
     }
     mServer = RouterServer::Instance();
-    if(mServer == NULL) 
+    if (mServer == NULL) 
     {
         LOG_ERROR(ELOG_KEY, "[startup] Get RouterServer instance failed");
         exit(2);
@@ -64,13 +64,9 @@ void RouterMaster::PrepareRun()
 
     //pid文件名
     mPidFile.FileName() = LOCK_PATH;
-
-	//worker进程个数
-	//mWorkerNum = 4;
     
     //准备工作（创建、绑定服务器Listen Socket）
     mServer->PrepareMaster(mConfig->mIPAddr, mConfig->mPort);
-
 }
 
 void RouterMaster::Run()
