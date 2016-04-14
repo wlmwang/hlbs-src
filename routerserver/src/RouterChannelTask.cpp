@@ -51,7 +51,7 @@ int RouterChannelTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer
 	}
 	else
 	{
-		LOG_DEBUG(ELOG_KEY, "[runtime] unix message, diapath cmd(%d) parm(%d)", pCommand->GetCmd(), pCommand->GetPara());
+		LOG_DEBUG(ELOG_KEY, "[runtime] unix message, dispath cmd(%d) parm(%d)", pCommand->GetCmd(), pCommand->GetPara());
 
 		auto pF = mDispatch.GetFuncT("RouterChannelTask", pCommand->GetId());
 
@@ -72,7 +72,7 @@ int RouterChannelTask::ChannelOpen(char *pBuffer, int iLen)
 	RouterMaster *pMaster = RouterMaster::Instance();
 	
 	ChannelReqOpen_t *pCh = (struct ChannelReqOpen_t* )pBuffer;
-	if(pMaster->mWorkerPool != NULL && pMaster->mWorkerPool[pCh->mSlot])
+	if (pMaster->mWorkerPool != NULL && pMaster->mWorkerPool[pCh->mSlot])
 	{	
 		LOG_DEBUG(ELOG_KEY, "[runtime] get channel s:%i pid:%d fd:%d",pCh->mSlot, pCh->mPid, pCh->mFD);
 		
@@ -88,9 +88,9 @@ int RouterChannelTask::ChannelClose(char *pBuffer, int iLen)
 	RouterMaster *pMaster = RouterMaster::Instance();
 	
 	ChannelReqClose_t *pCh = (struct ChannelReqClose_t* )pBuffer;
-	if(pMaster->mWorkerPool != NULL && pMaster->mWorkerPool[pCh->mSlot])
+	if (pMaster->mWorkerPool != NULL && pMaster->mWorkerPool[pCh->mSlot])
 	{
-		LOG_DEBUG(ELOG_KEY, "[runtime] close channel s:%i pid:%P our:%P fd:%d",
+		LOG_DEBUG(ELOG_KEY, "[runtime] close channel s:%i pid:%d our:%d fd:%d",
 				pCh->mSlot, pCh->mPid, pMaster->mWorkerPool[pCh->mSlot]->mPid,
 				pMaster->mWorkerPool[pCh->mSlot]->mCh[0]);
 		

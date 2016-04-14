@@ -93,7 +93,7 @@ void wServer<T>::PrepareMaster(string sIpAddr, unsigned int nPort)
 template <typename T>
 void wServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 {
-	LOG_INFO(ELOG_KEY, "[startup] Master start succeed");
+	LOG_INFO(ELOG_KEY, "[startup] worker start succeed");
 	
 	mStatus = SERVER_RUNNING;	
 	//初始化epoll

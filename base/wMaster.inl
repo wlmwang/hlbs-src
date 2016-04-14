@@ -157,7 +157,7 @@ void wMaster<T>::HandleSignal()
 			g_sigalrm = 0;
 		}
 		
-		LOG_ERROR(ELOG_KEY, "[runtime] termination cycle: %d", delay);
+		LOG_ERROR(ELOG_KEY, "[signal] termination cycle: %d", delay);
 
 		itv.it_interval.tv_sec = 0;
 		itv.it_interval.tv_usec = 0;
@@ -168,7 +168,7 @@ void wMaster<T>::HandleSignal()
 		if (setitimer(ITIMER_REAL, &itv, NULL) == -1) 
 		{
 			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[runtime] setitimer() failed: %s", strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[signal] setitimer() failed: %s", strerror(mErr));
 		}
 	}
 
@@ -179,7 +179,7 @@ void wMaster<T>::HandleSignal()
 	//SIGCHLD有worker退出
 	if (g_reap)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] reap children");
+		LOG_ERROR(ELOG_KEY, "[signal] reap children");
 		
 		g_reap = 0;
 		ProcessGetStatus();
@@ -212,7 +212,7 @@ void wMaster<T>::HandleSignal()
 		{
 			//延时已到，给所有worker发送SIGKILL信号，强制杀死worker
 			SignalWorker(SIGKILL);
-		} 
+		}
 		else 
 		{
 			//给所有worker发送SIGTERM信号，通知worker退出
@@ -231,7 +231,7 @@ void wMaster<T>::HandleSignal()
 	//收到SIGHUP信号
 	if (g_reconfigure) 
 	{
-		LOG_DEBUG(ELOG_KEY, "[runtime] reconfiguring");
+		LOG_DEBUG(ELOG_KEY, "[signal] reconfiguring");
 		g_reconfigure = 0;
 		
 		//PrepareStart();	//重新初始化主进程配置
@@ -240,7 +240,7 @@ void wMaster<T>::HandleSignal()
 		/* allow new processes to start */
 		usleep(100*1000);	//100ms
 		
-		LOG_DEBUG(ELOG_KEY, "[runtime] recycle old worker status");
+		LOG_DEBUG(ELOG_KEY, "[signal] recycle old worker status");
 
 		iLive = 1;
 		SignalWorker(SIGTERM);	//关闭原来worker进程
@@ -256,15 +256,18 @@ int wMaster<T>::ReapChildren()
 	int iLive = 0;
 	for (int i = 0; i < mWorkerNum; i++) 
     {
+        LOG_DEBUG(ELOG_KEY, "[signal] reapchild pid(%d),exited(%d),exiting(%d),detached(%d),respawn(%d)", 
+        	mWorkerPool[i]->mPid, mWorkerPool[i]->mExited, mWorkerPool[i]->mExiting, mWorkerPool[i]->mDetached, mWorkerPool[i]->mRespawn);
+        
         if (mWorkerPool[i]->mPid == -1)
         {
             continue;
         }
-		
-		if(mWorkerPool[i]->mExited)	//已退出
+
+		if (mWorkerPool[i]->mExited)	//已退出
 		{
 			//非分离，就同步文件描述符
-			if(!mWorkerPool[i]->mDetached)
+			if (!mWorkerPool[i]->mDetached)
 			{
 				mWorkerPool[i]->mCh.Close();	//关闭channel
 				
@@ -276,13 +279,13 @@ int wMaster<T>::ReapChildren()
 			}
 			
 			//重启
-			if(mWorkerPool[i]->mRespawn || !mWorkerPool[i]->mExiting
+			if (mWorkerPool[i]->mRespawn || !mWorkerPool[i]->mExiting
 				|| !g_terminate || !g_quit)
 			{
 				pid = SpawnWorker(mWorkerPool[i]->mData, sProcessTitle, i);
-				if(pid == -1)
+				if (pid == -1)
 				{
-					LOG_ERROR(ELOG_KEY, "[runtime] could not respawn %d", i);
+					LOG_ERROR(ELOG_KEY, "[signal] could not respawn %d", i);
 					continue;
 				}
 				
@@ -338,7 +341,7 @@ void wMaster<T>::SignalWorker(int iSigno)
 	struct ChannelReqCmd_s* pCh;
 	struct ChannelReqQuit_t stChOpen;
 	struct ChannelReqTerminate_t stChClose;
-	switch(iSigno)
+	switch (iSigno)
 	{
 		case SIGQUIT:
 			pCh = &stChOpen;
@@ -372,7 +375,7 @@ void wMaster<T>::SignalWorker(int iSigno)
 		
         if(!other)
 		{
-	        LOG_DEBUG(ELOG_KEY, "[runtime] pass signal channel s:%i pid:%d to:%d", 
+	        LOG_DEBUG(ELOG_KEY, "[signal] pass signal channel s:%i pid:%d to:%d", 
 	        	pCh->mSlot, pCh->mPid, mWorkerPool[i]->mPid);
 
 	        /* TODO: EAGAIN */
@@ -387,13 +390,13 @@ void wMaster<T>::SignalWorker(int iSigno)
 			}
 		}
 					   
-		LOG_ERROR(ELOG_KEY, "[runtime] kill (%d, %d)", mWorkerPool[i]->mPid, iSigno);
+		LOG_ERROR(ELOG_KEY, "[signal] kill (%d, %d)", mWorkerPool[i]->mPid, iSigno);
 		
         if (kill(mWorkerPool[i]->mPid, iSigno) == -1) 
 		{
             mErr = errno;
 			
-			LOG_ERROR(ELOG_KEY, "[runtime] kill(%d, %d) failed:%s", mWorkerPool[i]->mPid, iSigno, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[signal] kill(%d, %d) failed:%s", mWorkerPool[i]->mPid, iSigno, strerror(mErr));
             if (mErr == ESRCH) 
 			{
                 mWorkerPool[i]->mExited = 1;
@@ -471,7 +474,7 @@ template <typename T>
 pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
 {
 	int s;
-	if(type >= 0)
+	if (type >= 0)
 	{
 		s = type;
 	}
@@ -479,7 +482,7 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
 	{
 		for (s = 0; s < mWorkerNum; ++s)
 		{
-			if(mWorkerPool[s]->mPid == -1)
+			if (mWorkerPool[s]->mPid == -1)
 			{
 				break;
 			}
@@ -488,7 +491,7 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
 	mSlot = s;
 
 	wWorker *pWorker = mWorkerPool[mSlot];
-	if(pWorker->InitChannel() < 0)
+	if (pWorker->InitChannel() < 0)
 	{
 		mErr = errno;
 		LOG_ERROR(ELOG_KEY, "[runtime] socketpair() failed while spawning: %s", strerror(mErr));
@@ -541,7 +544,7 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
     pWorker->mSlot = mSlot;
     pWorker->mPid = pid;
 	
-	if(type >= 0)
+	if (type >= 0)
 	{
 		return pid;
 	}
@@ -595,7 +598,7 @@ void wMaster<T>::DeletePidFile()
     if (mPidFile.Unlink() == -1) 
     {
     	mErr = errno;
-    	LOG_ERROR(ELOG_KEY, "unlink %s failed:%s", mPidFile.FileName().c_str(), strerror(mErr));
+    	LOG_ERROR(ELOG_KEY, "[runtime] unlink %s failed:%s", mPidFile.FileName().c_str(), strerror(mErr));
 		return;
     }
 	return;
@@ -611,7 +614,7 @@ void wMaster<T>::InitSignals()
 		if(stSignal.AddSig_t(pSig) == -1)
 		{
 			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[runtime] sigaction(%s) failed(ignored):(%s)", pSig->mSigname, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[signal] sigaction(%s) failed(ignored):(%s)", pSig->mSigname, strerror(mErr));
 		}
 	}
 }
@@ -624,65 +627,65 @@ void wMaster<T>::ProcessGetStatus()
 	int one = 0;
 	pid_t	pid;
 	int status;
-    while(true)
+    while (true)
 	{
         pid = waitpid(-1, &status, WNOHANG);
 
-        if(pid == 0) 
+        if (pid == 0) 
 		{
             return;
         }
 		
-        if(pid == -1) 
+        if (pid == -1) 
 		{
             mErr = errno;
 			
-            if(mErr == EINTR) 
+            if (mErr == EINTR) 
 			{
                 continue;
             }
 
-            if(mErr == ECHILD && one) 
+            if (mErr == ECHILD && one) 
 			{
                 return;
             }
 
-            if(mErr == ECHILD) 
+            if (mErr == ECHILD) 
 			{
-				LOG_ERROR(ELOG_KEY, "[runtime] waitpid() failed:%s", strerror(mErr));
+				LOG_ERROR(ELOG_KEY, "[signal] waitpid() failed:%s", strerror(mErr));
                 return;
             }
 			
-			LOG_ERROR(ELOG_KEY, "[runtime] waitpid() failed:%s", strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[signal] waitpid() failed:%s", strerror(mErr));
             return;
         }
 		
         one = 1;
 		int i;
-		for(i = 0; i < mWorkerNum; ++i)
+		for (i = 0; i < mWorkerNum; ++i)
 		{
 			if (mWorkerPool[i]->mPid == pid)
 			{
                 mWorkerPool[i]->mStat = status;
-                mWorkerPool[i]->mExited = 1;
+                mWorkerPool[i]->mExited = 1;	//退出
                 process = mWorkerPool[i]->mName;
                 break;
 			}
 		}
 		
-        if(WTERMSIG(status)) 
+        if (WTERMSIG(status)) 
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] %s %d exited on signal %d%s", process, pid, WTERMSIG(status), WCOREDUMP(status) ? " (core dumped)" : "");
+			LOG_ERROR(ELOG_KEY, "[signal] %s %d exited on signal %d%s", process, pid, WTERMSIG(status), WCOREDUMP(status) ? " (core dumped)" : "");
         }
 		else
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] %s %d exited with code %d", process, pid, WTERMSIG(status));
+			LOG_ERROR(ELOG_KEY, "[signal] %s %d exited with code %d", process, pid, WTERMSIG(status));
         }
 		
 		//退出后不重启
-        if(WEXITSTATUS(status) == 2 && mWorkerPool[i]->mRespawn) 
+        if (WEXITSTATUS(status) == 2 && mWorkerPool[i]->mRespawn) 
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] %s %d exited with fatal code %d and cannot be respawned", process, pid, WTERMSIG(status));			
+			LOG_ERROR(ELOG_KEY, "[signal] %s %d exited with fatal code %d and cannot be respawned", process, pid, WTERMSIG(status));
             mWorkerPool[i]->mRespawn = 0;
         }
     }

@@ -52,7 +52,7 @@ class wWorker : public wNoncopyable
 		char mWorkingDir[255];	//工作目录
 		
 		char *mName;	//进程名
-		void* mData;	//进程参数
+		void *mData;	//进程参数
 		int mDetached;	//是否已分离
 		int mExited;	//已退出 进程表mWorkerPool已回收
 		int mExiting;	//正在退出

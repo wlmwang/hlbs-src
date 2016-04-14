@@ -54,6 +54,7 @@ void wWorker::Initialize()
 	mExiting = 0;
 	mRespawn = PROCESS_NORESPAWN;
 	mData = NULL;
+	mName = NULL;
 
 	mWorkerNum = 0;
 	mWorkerPool = NULL;

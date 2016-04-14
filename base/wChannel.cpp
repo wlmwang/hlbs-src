@@ -19,6 +19,7 @@ void wChannel::Initialize()
 	mCh[0] = mCh[1] = FD_UNKNOWN;
 	mIOType = TYPE_SOCK;
 	mTaskType = TASK_UNIX;
+    mSockType = SOCK_CONNECT;
 }
 
 void wChannel::Close()
