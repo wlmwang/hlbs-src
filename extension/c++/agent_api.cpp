@@ -14,9 +14,9 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 	stCmd.mGid = stSvr.mGid;
 	stCmd.mXid = stSvr.mXid;
 	
-	//if (g_handle.mSock == NULL || g_handle.mTask == NULL)
+	//if (TestConnect() != 0)
 	{
-		if(ConnectAgent(&g_handle) < 0)
+		if (ConnectAgent(&g_handle) < 0)
 		{
 			return -1;
 		}
@@ -24,7 +24,7 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 	if (g_handle.mSock != NULL && g_handle.mTask != NULL)
 	{
 		//查询请求
-		if(g_handle.mTask->SyncSend((char*)&stCmd, sizeof(stCmd)) > 0)
+		if (g_handle.mTask->SyncSend((char*)&stCmd, sizeof(stCmd)) > 0)
 		{
 			//接受返回
 			char pBuffer[sizeof(struct SvrResData_t)];
@@ -58,9 +58,9 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 	stCmd.mCaller.mReqUsetimeUsec = iUsetimeUsec;
 	memcpy(stCmd.mCaller.mHost, stSvr.mHost, strlen(stSvr.mHost) + 1);
 
-	//if (g_handle.mSock == NULL || g_handle.mTask == NULL)
+	//if (TestConnect() != 0)
 	{
-		if(ConnectAgent(&g_handle) < 0)
+		if (ConnectAgent(&g_handle) < 0)
 		{
 			return -1;
 		}
@@ -69,7 +69,7 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 	if (g_handle.mSock != NULL && g_handle.mTask != NULL)
 	{
 		//上报请求
-		if(g_handle.mTask->SyncSend((char*)&stCmd, sizeof(stCmd)) > 0)
+		if (g_handle.mTask->SyncSend((char*)&stCmd, sizeof(stCmd)) > 0)
 		{
 			//接受返回
 			char pBuffer[sizeof(struct SvrResReport_t)];
@@ -106,10 +106,27 @@ int ConnectAgent(struct postHandle_t *pHandle)
 	return -1;
 }
 
+/** 忽略errno 统一断开重连*/
+int TestConnect(struct postHandle_t *pHandle)
+{
+	if (pHandle != NULL && pHandle->mSock != NULL && pHandle->mTask != NULL)
+	{
+		struct wCommand stCmd;
+		if (pHandle->mTask->SyncSend((char*)&stCmd, sizeof(stCmd)) <= 0)
+		{
+			Release(pHandle);
+			return -1;
+		}
+		return 0;
+	}
+	return -1;
+}
+
 void Release(struct postHandle_t *pHandle)
 {
-	if(pHandle != NULL)
+	if (pHandle != NULL)
 	{
 		SAFE_DELETE(pHandle->mSock);
+		SAFE_DELETE(pHandle->mTask);
 	}
 }

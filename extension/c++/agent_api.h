@@ -35,6 +35,8 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 int NotifyCallerNum(const struct SvrNet_t &stSvr, int iReqCount);
 
 int ConnectAgent(struct postHandle_t *pHandle);
+int TestConnect(struct postHandle_t *pHandle);
+
 void Release(struct postHandle_t *pHandle);
 
 #endif
