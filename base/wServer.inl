@@ -242,7 +242,7 @@ void wServer<T>::Start(bool bDaemon)
 	do {
 		Recv();
 		Run();
-		if (mIsCheckTimer) CheckTimer();
+		CheckTimer();
 	} while(IsRunning() && bDaemon);
 }
 

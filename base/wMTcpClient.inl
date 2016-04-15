@@ -14,6 +14,7 @@ template <typename TASK>
 void wMTcpClient<TASK>::Initialize()
 {
 	mLastTicker = GetTickCount();
+	mCheckTimer = wTimer(KEEPALIVE_TIME);
 	mTcpClientCount = 0;
 	mTimeout = 10;
 	mEpollFD = -1;
@@ -207,6 +208,22 @@ int wMTcpClient<TASK>::AddToEpoll(wTcpClient<TASK> *pTcpClient, int iEvent)
 template <typename TASK>
 void wMTcpClient<TASK>::CheckTimer()
 {
+	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mLastTicker);
+	if (iInterval < 100) 	//100ms
+	{
+		return;
+	}
+
+	mLastTicker += iInterval;
+	if(mCheckTimer.CheckTimer(iInterval))
+	{
+		CheckTimeout();
+	}
+}
+
+template <typename TASK>
+void wMTcpClient<TASK>::CheckTimeout()
+{
     typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClientPool.begin();
 	for (mt; mt != mTcpClientPool.end(); mt++)
 	{
@@ -270,20 +287,14 @@ void wMTcpClient<TASK>::Recv()
 		if (!pClient->IsRunning() || !pTask->IsRunning())	//多数是超时设置
 		{
 			LOG_ERROR(ELOG_KEY, "[runtime] task status is quit, fd(%d), close it", iFD);
-			if (RemoveEpoll(pClient) >= 0)
-			{
-				RemoveTcpClientPool(iType, pClient);
-			}
+			pClient->Status() = CLIENT_QUIT;
 			continue;
 		}
 		if (mEpollEventPool[i].events & (EPOLLERR | EPOLLPRI))
 		{
 			mErr = errno;
 			LOG_ERROR(ELOG_KEY, "[runtime] epoll event recv error from fd(%d): %s, close it", iFD, strerror(mErr));
-			if (RemoveEpoll(pClient) >= 0)
-			{
-				RemoveTcpClientPool(iType, pClient);
-			}
+			pClient->Status() = CLIENT_QUIT;
 			continue;
 		}
 
@@ -296,7 +307,7 @@ void wMTcpClient<TASK>::Recv()
 				{
 					if (iLenOrErr == ERR_CLOSED)
 					{
-						LOG_DEBUG(ELOG_KEY, "[runtime] tcp socket closed by client");
+						LOG_DEBUG(ELOG_KEY, "[runtime] tcp socket closed by server");
 					}
 					else if(iLenOrErr == ERR_MSGLEN)
 					{
@@ -306,10 +317,8 @@ void wMTcpClient<TASK>::Recv()
 					{
 						LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or server-socket closed: %s", strerror(pTask->IO()->Errno()));
 					}
-					if (RemoveEpoll(pClient) >= 0)
-					{
-						RemoveTcpClientPool(iType, pClient);
-					}
+					//pClient->Status() = CLIENT_QUIT;
+					pTask->IO()->FD() = FD_UNKNOWN;		//给重连做准备
 				}
 			}
 			else if (mEpollEventPool[i].events & EPOLLOUT)
@@ -318,10 +327,8 @@ void wMTcpClient<TASK>::Recv()
 				if (pTask->TaskSend() < 0)
 				{
 					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLOUT(write) failed: %s", strerror(pTask->IO()->Errno()));
-					if (RemoveEpoll(pClient) >= 0)
-					{
-						RemoveTcpClientPool(iType, pClient);
-					}
+					//pClient->Status() = CLIENT_QUIT;
+					pTask->IO()->FD() = FD_UNKNOWN;		//给重连做准备
 				}
 			}
 		}
