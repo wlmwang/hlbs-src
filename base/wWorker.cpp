@@ -48,11 +48,12 @@ void wWorker::Initialize()
 		exit(2);
 	}
 #endif
-
+	
+	mRespawn = PROCESS_NORESPAWN;
+	mJustSpawn = PROCESS_JUST_SPAWN;
 	mDetached = 0;
 	mExited = 0;
 	mExiting = 0;
-	mRespawn = PROCESS_NORESPAWN;
 	mData = NULL;
 	mName = NULL;
 

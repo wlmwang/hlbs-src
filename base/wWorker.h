@@ -57,6 +57,7 @@ class wWorker : public wNoncopyable
 		int mExited;	//已退出 进程表mWorkerPool已回收
 		int mExiting;	//正在退出
 		int mRespawn;	//worker启动模式。退出是否重启
+		int mJustSpawn;
 		int mStat;		//waitpid子进程退出状态
 		
 		WORKER_STATUS mStatus;

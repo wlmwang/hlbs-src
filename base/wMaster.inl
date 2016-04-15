@@ -372,11 +372,20 @@ void wMaster<T>::SignalWorker(int iSigno)
 	
 	for (int i = 0; i < mWorkerNum; i++) 
     {
+        LOG_DEBUG(ELOG_KEY, "[signal] child: %d %d e:%d t:%d d:%d r:%d j:%d", 
+        	i, mWorkerPool[i]->mPid, mWorkerPool[i]->mExiting, mWorkerPool[i]->mExited, mWorkerPool[i]->mDetached, mWorkerPool[i]->mRespawn, mWorkerPool[i]->mJustSpawn);
+
         if (mWorkerPool[i]->mDetached || mWorkerPool[i]->mPid == -1) 
 		{
             continue;
         }
         
+        if (mWorkerPool[i]->mJustSpawn)
+        {
+        	mWorkerPool[i]->mJustSpawn = 0;
+        	continue;
+        }
+
 		if (mWorkerPool[i]->mExiting && iSigno == SIGQUIT)
         {
             continue;
@@ -384,9 +393,6 @@ void wMaster<T>::SignalWorker(int iSigno)
 		
         if(!other)
 		{
-	        LOG_DEBUG(ELOG_KEY, "[signal] pass signal channel s:%i pid:%d to:%d", 
-	        	pCh->mSlot, pCh->mPid, mWorkerPool[i]->mPid);
-
 	        /* TODO: EAGAIN */
 			memcpy(pStart + sizeof(int), (char *)pCh, size);
 			if (mWorkerPool[i]->mCh.SendBytes(pStart, size + sizeof(int)) >= 0)
@@ -564,22 +570,29 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
     {
     	case PROCESS_NORESPAWN:
     		pWorker->mRespawn = 0;
+    		pWorker->mJustSpawn = 0;
     		pWorker->mDetached = 0;
     		break;
 
     	case PROCESS_RESPAWN:
     		pWorker->mRespawn = 1;
+    		pWorker->mJustSpawn = 0;
     		pWorker->mDetached = 0;
     		break;
-    	/*
+    	
     	case PROCESS_JUST_SPAWN:
     		pWorker->mRespawn = 0;
     		pWorker->mJustSpawn = 1;
+    		pWorker->mDetached = 0;    	
+
+    	case PROCESS_JUST_RESPAWN:
+    		pWorker->mRespawn = 1;
+    		pWorker->mJustSpawn = 1;
     		pWorker->mDetached = 0;
-    	*/
     
     	case PROCESS_DETACHED:
     		pWorker->mRespawn = 0;
+    		pWorker->mJustSpawn = 0;
     		pWorker->mDetached = 1;
     }
 	
