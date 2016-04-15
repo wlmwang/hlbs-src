@@ -44,6 +44,7 @@ void RouterMaster::PrepareRun()
         LOG_ERROR(ELOG_KEY, "[startup] Get RouterServer instance failed");
         exit(2);
     }
+    ReconfigMaster();
 
     //进程标题
     size = strlen(sProcessTitle) + 1;
@@ -74,6 +75,17 @@ void RouterMaster::PrepareRun()
 void RouterMaster::Run()
 {
 	//
+}
+
+void RouterMaster::ReconfigMaster()
+{
+    if (mConfig == NULL) 
+    {
+        return;
+    }
+    mConfig->GetBaseConf();
+    mConfig->GetSvrConf();
+    mConfig->GetQosConf();
 }
 
 wWorker* RouterMaster::NewWorker(int iSlot)

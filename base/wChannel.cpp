@@ -19,7 +19,7 @@ void wChannel::Initialize()
 	mCh[0] = mCh[1] = FD_UNKNOWN;
 	mIOType = TYPE_SOCK;
 	mTaskType = TASK_UNIX;
-    mSockType = SOCK_CONNECT;
+    mSockType = SOCK_CONNECT;   //都标识为connect socket，方便wServer使用tcp socket处理方式处理Unix socket
 }
 
 void wChannel::Close()
@@ -108,10 +108,10 @@ ssize_t wChannel::SendBytes(char *vArray, size_t vLen)
 	
     if (pChannel->mFD == -1) 
     {
-        msg.msg_control = NULL;		
-        msg.msg_controllen = 0;		
-    } 
-    else 
+        msg.msg_control = NULL;
+        msg.msg_controllen = 0;
+    }
+    else
     {
         msg.msg_control = (caddr_t) &cmsg;	//typedef void* caddr_t;
         msg.msg_controllen = sizeof(cmsg);
@@ -209,31 +209,37 @@ ssize_t wChannel::RecvBytes(char *vArray, size_t vLen)
 		LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() returned zero");
         return -1;
     }
-
-    //获取文件描述符
-    ChannelReqCmd_s *pChannel = (ChannelReqCmd_s*) (vArray + sizeof(int));
-    LOG_DEBUG(ELOG_KEY, "[runtime] receive channel success cmd(%d) fd(%d)", (int) pChannel->GetCmd(), pChannel->mFD);
-
-    if (pChannel->GetCmd() == CMD_CHANNEL_REQ)	//channel请求 
-    {
-        if (cmsg.cm.cmsg_len < (socklen_t) CMSG_LEN(sizeof(int))) 
-        {
-			LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() returned too small ancillary data");
-            return -1;
-        }
-
-        if (cmsg.cm.cmsg_level != SOL_SOCKET || cmsg.cm.cmsg_type != SCM_RIGHTS)
-        {
-			LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() returned invalid ancillary data");
-            return -1;
-        }
-		
-        memcpy(&pChannel->mFD, CMSG_DATA(&cmsg.cm), sizeof(int));	//文件描述符
-    }
-	
+    
     if (msg.msg_flags & (MSG_TRUNC|MSG_CTRUNC)) 
     {
-		LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() truncated data");
+        LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() truncated data");
+    }
+
+    //是否是打开fd文件描述符channel
+    int iChLen = sizeof(struct ChannelReqOpen_t);
+
+    if (n == iChLen + sizeof(int))
+    {
+        struct ChannelReqOpen_t *pChannel = (struct ChannelReqOpen_t*) (vArray + sizeof(int));
+
+        LOG_DEBUG(ELOG_KEY, "[runtime] receive channel success cmd(%d) para(%d) fd(%d)", (int) pChannel->GetCmd(), (int) pChannel->GetPara(), pChannel->mFD);
+        
+        if (pChannel->GetCmd() == CMD_CHANNEL_REQ && pChannel->GetPara() == CHANNEL_REQ_OPEN)
+        {
+            if (cmsg.cm.cmsg_len < (socklen_t) CMSG_LEN(sizeof(int))) 
+            {
+                LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() returned too small ancillary data");
+                return -1;
+            }
+
+            if (cmsg.cm.cmsg_level != SOL_SOCKET || cmsg.cm.cmsg_type != SCM_RIGHTS)
+            {
+                LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() returned invalid ancillary data");
+                return -1;
+            }
+            
+            memcpy(&pChannel->mFD, CMSG_DATA(&cmsg.cm), sizeof(int));   //文件描述符
+        }
     }
 	
     return n;

@@ -45,6 +45,12 @@ void wMaster<T>::Initialize()
 }
 
 template <typename T>
+void wMaster<T>::ReconfigMaster()
+{
+	//
+}
+
+template <typename T>
 void wMaster<T>::PrepareRun()
 {
 	//
@@ -179,23 +185,22 @@ void wMaster<T>::HandleSignal()
 	//SIGCHLD有worker退出
 	if (g_reap)
 	{
-		LOG_ERROR(ELOG_KEY, "[signal] reap children");
-		
 		g_reap = 0;
+
+		LOG_ERROR(ELOG_KEY, "[signal] reap children");
 		ProcessGetStatus();
 		iLive = ReapChildren();
 	}
 	
-	//worker都退出,且收到了SIGTERM信号或SIGINT信号(g_terminate ==1)
-	//或SIGQUIT信号(g_quit == 1),则master退出
+	//worker都退出，且收到了SIGTERM信号或SIGINT信号(g_terminate ==1) 或SIGQUIT信号(g_quit == 1),则master退出
 	if (!iLive && (g_terminate || g_quit)) 
 	{
+		LOG_ERROR(ELOG_KEY, "[signal] exit master");
 		MasterExit();
 	}
 	
-	//收到SIGTERM信号或SIGINT信号(g_terminate ==1)
-	//通知所有worker退出，并且等待worker退出 
-	if (g_terminate)
+	//收到SIGTERM信号或SIGINT信号(g_terminate ==1)，通知所有worker退出，并且等待worker退出
+	if (g_terminate)	//平滑退出
 	{
 		if (delay == 0) 
 		{
@@ -221,10 +226,11 @@ void wMaster<T>::HandleSignal()
 		return;
 	}
 
-	if (g_quit)
+	if (g_quit)		//强制退出
 	{
 		SignalWorker(SIGQUIT);
 		//关闭所有监听socket
+		//...
 		return;
 	}
 	
@@ -234,7 +240,7 @@ void wMaster<T>::HandleSignal()
 		LOG_DEBUG(ELOG_KEY, "[signal] reconfiguring");
 		g_reconfigure = 0;
 		
-		//PrepareStart();	//重新初始化主进程配置
+		ReconfigMaster();	//重新初始化主进程配置
 		WorkerStart(mWorkerNum, PROCESS_JUST_SPAWN);	//重启worker
 		
 		/* allow new processes to start */
@@ -278,9 +284,8 @@ int wMaster<T>::ReapChildren()
 				PassCloseChannel(&stCh);
 			}
 			
-			//重启
-			if (mWorkerPool[i]->mRespawn || !mWorkerPool[i]->mExiting
-				|| !g_terminate || !g_quit)
+			//重启worker
+			if (mWorkerPool[i]->mRespawn && !mWorkerPool[i]->mExiting && !g_terminate && !g_quit)
 			{
 				pid = SpawnWorker(mWorkerPool[i]->mData, sProcessTitle, i);
 				if (pid == -1)
@@ -302,6 +307,10 @@ int wMaster<T>::ReapChildren()
             if (i != mWorkerNum - 1) 
 			{
                 mWorkerPool[i]->mPid = -1;
+            }
+            else
+            {
+            	//mWorkerNum--;
             }
 		}
 		else if (mWorkerPool[i]->mExiting || !mWorkerPool[i]->mDetached) 
@@ -529,7 +538,7 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
 	    case 0:
 	    	//worker进程
 	        pWorker->InitWorker(mWorkerNum, mWorkerPool, mUseMutex, mShmAddr, mMutex, mDelay);
-	        pWorker->PrepareStart(mSlot, type, pData);
+	        pWorker->PrepareStart(mSlot, type, title, pData);
 	        pWorker->Start();
 	        _exit(0);	//TODO 进程退出
 	        break;
@@ -538,30 +547,40 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
 	        break;
     }
 
-    LOG_DEBUG(ELOG_KEY, "[runtime] start %s %d", title, pid);
+    LOG_DEBUG(ELOG_KEY, "[runtime] start %s [%d] %d", title, mSlot, pid);
     
     //更新进程表
     pWorker->mSlot = mSlot;
     pWorker->mPid = pid;
+	pWorker->mExited = 0;
+	pWorker->mExiting = 0;
 	
 	if (type >= 0)
 	{
 		return pid;
 	}
-	
+
     switch (type)
     {
     	case PROCESS_NORESPAWN:
-    		pWorker->mRespawn = 1;
+    		pWorker->mRespawn = 0;
+    		pWorker->mDetached = 0;
     		break;
 
     	case PROCESS_RESPAWN:
     		pWorker->mRespawn = 1;
+    		pWorker->mDetached = 0;
     		break;
     	/*
-    	case PROCESS_DETACHED:
-    		pWorker->mDetached = 1;
+    	case PROCESS_JUST_SPAWN:
+    		pWorker->mRespawn = 0;
+    		pWorker->mJustSpawn = 1;
+    		pWorker->mDetached = 0;
     	*/
+    
+    	case PROCESS_DETACHED:
+    		pWorker->mRespawn = 0;
+    		pWorker->mDetached = 1;
     }
 	
     return pid;

@@ -62,6 +62,8 @@
 #define PROCESS_NORESPAWN     -1	//子进程退出时，父进程不再创建
 #define PROCESS_JUST_SPAWN    -2	//正在重启
 #define PROCESS_RESPAWN       -3	//子进程异常退出时，master会重新创建它
+#define PROCESS_JUST_RESPAWN  -4
+#define PROCESS_DETACHED      -5    
 
 #define MAX_PROCESSES         1024
 

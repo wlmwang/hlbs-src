@@ -118,20 +118,20 @@ void wServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 	}
 
 	//Unix Socket 添加到epoll中（worker自身channel[1]被监听）
-	if(pWorker != NULL)
+	if (pWorker != NULL)
 	{
 		mWorker = pWorker;
 		
-		if(mWorker->mWorkerPool != NULL)
+		if (mWorker->mWorkerPool != NULL)
 		{
 			mChannelSock = &mWorker->mWorkerPool[mWorker->mSlot]->mCh;	//当前worker进程表项
-			if(mChannelSock != NULL)
+			if (mChannelSock != NULL)
 			{
 				//new unix task
 				mChannelSock->IOFlag() = FLAG_RECV;
 				
 				mTask = NewChannelTask(mChannelSock);
-				if(NULL != mTask)
+				if (NULL != mTask)
 				{
 					mTask->Status() = TASK_RUNNING;
 					if (AddToEpoll(mTask) >= 0)
@@ -150,33 +150,33 @@ void wServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 	
 	//进入服务主循环
 	do {
+		if (mExiting)	//退出
+		{
+			LOG_ERROR(ELOG_KEY, "[rumtime] worker exiting");
+			WorkerExit();
+		}
 		Recv();
-		Run();
 		HandleSignal();
+		Run();
 		if (mIsCheckTimer) CheckTimer();
-	} while(IsRunning() && bDaemon);
+	} while (IsRunning() && bDaemon);
 }
 
 template <typename T>
 void wServer<T>::HandleSignal()
-{
-	if(mExiting)
-	{
-		WorkerExit();
-	}
-	
-	if(g_terminate)
+{	
+	if (g_terminate)	//直接退出
 	{
 		LOG_ERROR(ELOG_KEY, "[rumtime] worker exiting");
 		WorkerExit();
 	}
 	
-	if(g_quit)
+	if (g_quit)		//平滑退出
 	{
 		g_quit = 0;
+
 		LOG_ERROR(ELOG_KEY, "[rumtime] gracefully shutting down");
-		
-		if(!mExiting)
+		if (!mExiting)	//关闭listen socket、idle connect socket
 		{
 			mExiting = 1;
 			mListenSock->Close();
@@ -187,12 +187,12 @@ void wServer<T>::HandleSignal()
 template <typename T>
 void wServer<T>::WorkerExit()
 {
-	if(mExiting)
+	if (mExiting)	//关闭池
 	{
 		//
 	}
-	
-	LOG_ERROR(ELOG_KEY, "[rumtime] exit");
+
+	LOG_ERROR(ELOG_KEY, "[rumtime] worker exit");
 	exit(0);
 }
 

@@ -62,7 +62,8 @@ class wMaster : public wSingleton<T>
 		 */
 		virtual void PrepareRun();
 		virtual void Run();
-		
+		virtual void ReconfigMaster();
+
 		/**
 		 *  注册信号回调
 		 *  可重写全局变量g_signals，实现自定义信号处理
