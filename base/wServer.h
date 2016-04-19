@@ -57,7 +57,8 @@ class wServer: public wSingleton<T>
 		 */
 		void PrepareMaster(string sIpAddr ,unsigned int nPort);	
 		void WorkerStart(wWorker *pWorker = NULL, bool bDaemon = true);
-		int AcceptMutex();
+		int AcceptMutexLock();
+		int AcceptMutexUnlock();
 		virtual void HandleSignal();
 		void WorkerExit();
 		

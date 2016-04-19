@@ -120,10 +120,17 @@ void wMaster<T>::MasterStart()
 	if(mUseMutex == 1)
 	{
 		mShmAddr = new wShm(WAIT_MUTEX, 'a', sizeof(wShmtx));
-		mShmAddr->CreateShm();
-
+		if (mShmAddr->CreateShm() == NULL)
+		{
+			LOG_ERROR(ELOG_KEY, "[runtime] CreateShm failed");
+			return;
+		}
 		mMutex = new wShmtx();
-		mMutex->Create(mShmAddr);
+		if (mMutex->Create(mShmAddr) < 0)
+		{
+			LOG_ERROR(ELOG_KEY, "[runtime] init Sem failed");
+			return;
+		}
 	}
 	
     //启动worker进程

@@ -356,18 +356,50 @@ int wServer<T>::AddToTaskPool(wTask* pTask)
 }
 
 template <typename T>
-int wServer<T>::AcceptMutex()
+int wServer<T>::AcceptMutexLock()
 {
+	return 0;
+	if (mWorker != NULL && mWorker->mMutex)
+	{
+		if (mWorker->mMutexHeld == 1)
+		{
+			return 0;
+		}
+		if (mWorker->mMutex->TryLock() == 0)
+		{
+			mWorker->mMutexHeld = 1;
+			return 0;
+		}
+		return -1;
+	}
+	return 0;
+}
+
+template <typename T>
+int wServer<T>::AcceptMutexUnlock()
+{
+	return 0;
+	if (mWorker != NULL && mWorker->mMutex)
+	{
+		if (mWorker->mMutexHeld == 0)
+		{
+			return 0;
+		}
+		if (mWorker->mMutex->Unlock() == 0)
+		{
+			mWorker->mMutexHeld = 0;
+			return 0;
+		}
+		return -1;
+	}
 	return 0;
 }
 
 template <typename T>
 void wServer<T>::Recv()
 {
-	/**
-	 * 惊群锁
-	 */
-	if (AcceptMutex() != 0)
+	//申请惊群锁
+	if (AcceptMutexLock() != 0)
 	{
 		return;
 	}
@@ -428,7 +460,7 @@ void wServer<T>::Recv()
 		if (iOType == TYPE_SOCK && sockType == SOCK_LISTEN)
 		{
 			if (mEpollEventPool[i].events & EPOLLIN)
-			{
+			{	
 				AcceptConn();	//accept connect
 			}
 		}
@@ -477,6 +509,9 @@ void wServer<T>::Recv()
 			}
 		}
 	}
+
+	//释放惊群锁
+	AcceptMutexUnlock();
 }
 
 template <typename T>

@@ -34,6 +34,8 @@ class wShmtx : private wNoncopyable
 		
 		int Lock();
 
+		int Unlock();
+
 		int TryLock();
 
 		//自旋争抢锁

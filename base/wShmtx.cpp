@@ -32,7 +32,7 @@ int wShmtx::Create(wShm *pShm, int iSpin)
 	}
 	mSem = (wSem *) pAddr;
 	mSpin = iSpin;
-	return 0;
+	return mSem->Initialize();
 }
 
 int wShmtx::Lock()
@@ -42,6 +42,15 @@ int wShmtx::Lock()
 		return -1;
 	}
 	return mSem->Wait();
+}
+
+int wShmtx::Unlock()
+{
+	if (mSem == NULL)
+	{
+		return -1;
+	}
+	return mSem->Post();
 }
 
 int wShmtx::TryLock()
