@@ -111,7 +111,7 @@ int SvrQos::DelNode(struct SvrNet_t& stSvr)
     map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
     if (mapReqIt == mMapReqSvr.end())
 	{
-		LOG_ERROR(ELOG_KEY, "[svr] del node failed(cannot find svr) gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
+		LOG_ERROR(ELOG_KEY, "[svr] DelNode failed(cannot find svr) gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
         return -1;
     }
     SvrStat_t* pSvrStat = mapReqIt->second;
@@ -125,7 +125,7 @@ int SvrQos::DelNode(struct SvrNet_t& stSvr)
 /** 调用数上报 */
 int SvrQos::NotifyNode(struct SvrNet_t& stSvr)
 {
-	LOG_DEBUG(ELOG_KEY, "[svr] notify node start gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
+	LOG_DEBUG(ELOG_KEY, "[svr] NotifyNode start gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
     
     map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
     if (mapReqIt == mMapReqSvr.end())
@@ -228,7 +228,7 @@ int SvrQos::QueryNode(struct SvrNet_t& stSvr)
 {	
 	int iAck = GetRouteNode(stSvr);
 	
-	LOG_DEBUG(ELOG_KEY, "[svr] QueryNode(%d) Svr:gid(%d),xid(%d),host(%s),port(%d),weight(%d)",iAck,stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
+	LOG_DEBUG(ELOG_KEY, "[svr] QueryNode result(%d) Svr:gid(%d),xid(%d),host(%s),port(%d),weight(%d)",iAck,stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
 	
 	/** for test */
 	LogAllNode();
@@ -415,7 +415,7 @@ int SvrQos::GetRouteNode(struct SvrNet_t& stSvr)
                 it->second.mStat->mInfo.mReqRej++;
                 it->second.mStat->mInfo.mSReqRej++;
 
-                LOG_ERROR(ELOG_KEY, "[svr] GetRouteNode overload gid=%d xid=%d host=%s port=%hu rej=%d",
+                LOG_ERROR(ELOG_KEY, "[svr] Overload GetRouteNode gid=%d xid=%d host=%s port=%hu rej=%d",
                 	stSvr.mGid,stSvr.mXid,it->second.mNet.mHost,it->second.mNet.mPort,it->second.mStat->mInfo.mSReqRej);
                 return -1;
             }
@@ -508,7 +508,7 @@ int SvrQos::RouteCheck(struct SvrStat_t* pSvrStat, struct SvrNet_t& stNode, doub
 		if (fErrRate > pSvrStat->mReqCfg.mReqErrMin)
 		{
 			//pSvrStat->mInfo.mReqRej++; //当真正发生过载的时候才对选定的路由的拒绝数加1
-			LOG_ERROR(ELOG_KEY, "[svr] RouteCheck return overload gid=%d xid=%d host:%s port:%hu", stNode.mGid,stNode.mXid,stNode.mHost,stNode.mPort);
+			LOG_ERROR(ELOG_KEY, "[svr] Overload RouteCheck gid=%d xid=%d host:%s port:%d", stNode.mGid,stNode.mXid,stNode.mHost,stNode.mPort);
 
 		    pSvrStat->mInfo.mReqAll--; 
 		    pSvrStat->mInfo.mSReqAll--;
@@ -603,7 +603,7 @@ int SvrQos::RouteCheck(struct SvrStat_t* pSvrStat, struct SvrNet_t& stNode, doub
     pSvrStat->mInfo.mSPreAll += iSuc;
     stNode.mPre = iSuc;
 
-    LOG_DEBUG(ELOG_KEY, "[svr] RouteCheck gid=%d xid=%d host:%s port:%hu at end return 0 pre(%d)", stNode.mGid,stNode.mXid,stNode.mHost,stNode.mPort,stNode.mPre);
+    LOG_DEBUG(ELOG_KEY, "[svr] RouteCheck at end return 0 gid=%d xid=%d host:%s port:%d pre(%d)", stNode.mGid,stNode.mXid,stNode.mHost,stNode.mPort,stNode.mPre);
     return 0;
 }
 
@@ -804,10 +804,10 @@ int SvrQos::ReqRebuild(struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat)
 	{
 		pSvrStat->mReqCfg.mReqLimit = pSvrStat->mReqCfg.mReqMin + 1;	//宕机门限设置最小值
         
-        LOG_ERROR(ELOG_KEY, "[svr] gid=%d xid=%d host=%s port=%hu weight=%d continuous errcount[%d]>=cfg[%d] or _err_rate[%f]>cfg_rate[%f], req_limit set to[%d]", 
-        	stSvr.mGid, stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight,
+        LOG_ERROR(ELOG_KEY, "[svr] ReqRebuild continuous errcount[%d]>=cfg[%d] or _err_rate[%f]>cfg_rate[%f], req_limit set to[%d], gid=%d xid=%d host=%s port=%d weight=%d", 
         	pSvrStat->mInfo.mContErrCount,mDownCfg.mPossibleDownErrReq,
-        	fErrRate,mDownCfg.mPossbileDownErrRate,pSvrStat->mReqCfg.mReqLimit);		
+        	fErrRate,mDownCfg.mPossbileDownErrRate,pSvrStat->mReqCfg.mReqLimit,
+        	stSvr.mGid, stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
 	}
 
     //硬的限制：不可超出[req_min, req_max]的范围
@@ -969,7 +969,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
     	else
     	{
     		//节点过载
-	        LOG_ERROR(ELOG_KEY, "[svr] RebuildRoute one node ready to overload, gid(%d),xid(%d),host(%s),port(%d),limit(%d),reqall(%d),reqsuc(%d),reqrej(%d),err(%d),errtm(%d), service err rate[%f][%f]>config err_rate[%f]",
+	        LOG_ERROR(ELOG_KEY, "[svr] Overload(one ready) RebuildRoute, gid(%d),xid(%d),host(%s),port(%d),limit(%d),reqall(%d),reqsuc(%d),reqrej(%d),err(%d),errtm(%d), service err rate[%f][%f]>config err_rate[%f]",
 	        	stItem.mGid,stItem.mXid,it->second.mNet.mHost,it->second.mNet.mPort,
 	        	it->second.mStat->mReqCfg.mReqLimit,iReqAll,iReqSuc,iReqRej,iReqErrRet,iReqErrTm,fNodeErrRate,fAvgErrRate,fCfgErrRate);
     		
@@ -1003,7 +1003,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
     	stKind.mPsubCycCount++;
     	mAvgErrRate = stKind.mPtotalErrRate / stKind.mPsubCycCount;
 
-	    LOG_ERROR(ELOG_KEY, "[svr] RebuildRoute all node ready to overload,gid(%d),xid(%d),avg err rate=%f, all service err rate>config err_rate[%f]",
+	    LOG_ERROR(ELOG_KEY, "[svr] Overload(all ready) RebuildRoute, gid(%d),xid(%d),avg err rate=%f, all service err rate>config err_rate[%f]",
 	    	stItem.mGid,stItem.mXid,fAvgErrRate,fCfgErrRate);
     	
     	//通知 TODO
@@ -1105,9 +1105,9 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
             	mAvgErrRate = 0;
             }
         }
-	    LOG_ERROR(ELOG_KEY, "[svr] RebuildRoute all overload, mod=%d cmd=%d avg err rate=%f, all req to min>config err_rate[%f]",
+	    LOG_ERROR(ELOG_KEY, "[svr] Overload(all) RebuildRoute, mod=%d cmd=%d avg err rate=%f, all req to min>config err_rate[%f]",
 	    	stItem.mGid,stItem.mXid,mAvgErrRate,fCfgErrRate);
- 	
+
         //通知 TODO
 	}
 
@@ -1143,8 +1143,8 @@ int SvrQos::AddErrRoute(struct SvrKind_t& stItem, struct SvrNode_t& stNode)
 	}
 
 	time_t nowTm = time(NULL);
-	
-	LOG_DEBUG(ELOG_KEY, "[svr] AddErrRoute node overload, exist count=%d: gid=%d xid=%d host=%s port=%u stop_time=%d limit=%d",
+
+	LOG_DEBUG(ELOG_KEY, "[svr] Overload AddErrRoute node, exist count=%d: mod=%d cmd=%d ip=%s port=%u stop_time=%d limit=%d",
 		iErrCount+1,stNode.mNet.mGid,stNode.mNet.mXid,stNode.mNet.mHost,stNode.mNet.mPort,nowTm - stNode.mStopTime,stNode.mStat->mReqCfg.mReqLimit);
     	
 	//record down server
@@ -1367,7 +1367,7 @@ int SvrQos::DelRouteNode(struct SvrNet_t& stSvr)
 
 	if(rtIt == mRouteTable.end() && reIt == mErrTable.end())
 	{
-		LOG_ERROR(ELOG_KEY, "[svr] del route node failed(cannot find route) gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
+		LOG_ERROR(ELOG_KEY, "[svr] DelRouteNode failed(cannot find route and error) gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
         return -1;
     }
 
@@ -1400,7 +1400,7 @@ int SvrQos::DelRouteNode(struct SvrNet_t& stSvr)
         }
         else
         {
-        	LOG_ERROR(ELOG_KEY, "[svr] del node info failed(cannot find node info) gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
+        	LOG_ERROR(ELOG_KEY, "[svr] DelRouteNode failed(cannot find node info) gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
         }
 	}
 	if (reIt != mErrTable.end())
@@ -1430,7 +1430,7 @@ int SvrQos::DelRouteNode(struct SvrNet_t& stSvr)
 		}
 		else
 		{
-        	LOG_ERROR(ELOG_KEY, "[svr] del error node info failed(cannot find error node info) gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
+        	LOG_ERROR(ELOG_KEY, "[svr] DelRouteNode failed(cannot find error node info) gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
 		}
 	}
 
@@ -1439,7 +1439,7 @@ int SvrQos::DelRouteNode(struct SvrNet_t& stSvr)
 		return 0;
 	}
 
-	LOG_ERROR(ELOG_KEY, "[svr] del node info failed(nothing to do) gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
+	LOG_ERROR(ELOG_KEY, "[svr] DelRouteNode failed(nothing to do) gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
 	return -1;
 }
 

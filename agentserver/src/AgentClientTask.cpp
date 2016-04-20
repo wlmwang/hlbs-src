@@ -43,11 +43,11 @@ int AgentClientTask::VerifyConn()
 		LoginReqToken_t *pLoginRes = (LoginReqToken_t*) pBuffer;
 		if (strcmp(pLoginRes->mToken, "Anny") == 0)
 		{
-			LOG_ERROR("client", "[verify] receive client and verify success from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
+			LOG_ERROR(ELOG_KEY, "[client] receive client and verify success from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
 			mConnType = pLoginRes->mConnType;
 			return 0;
 		}
-		LOG_ERROR("client", "[verify] receive client and verify failed from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
+		LOG_ERROR(ELOG_KEY, "[client] receive client and verify failed from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
 	}
 	return -1;
 }
@@ -88,7 +88,7 @@ int AgentClientTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, 
 		}
 		else
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] client fd(%d) send a invalid msg id(%u)", mIO->FD(), pCommand->GetId());
+			LOG_ERROR(ELOG_KEY, "[system] client send a invalid msg fd(%d) id(%d)", mIO->FD(), pCommand->GetId());
 		}
 	}
 	return 0;
@@ -104,7 +104,7 @@ int AgentClientTask::InitSvrRes(char *pBuffer, int iLen)
 	{
 		for(int i = 0; i < pCmd->mNum; i++)
 		{
-			LOG_DEBUG(ELOG_KEY, "[runtime] init svr from router gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", 
+			LOG_DEBUG(ELOG_KEY, "[system] init svr from router gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", 
 				pCmd->mSvr[i].mGid, pCmd->mSvr[i].mXid, pCmd->mSvr[i].mHost, pCmd->mSvr[i].mPort, pCmd->mSvr[i].mWeight, pCmd->mSvr[i].mVersion);
 			
 			pConfig->Qos()->SaveNode(pCmd->mSvr[i]);
@@ -124,7 +124,7 @@ int AgentClientTask::ReloadSvrRes(char *pBuffer, int iLen)
 		pConfig->Qos()->CleanNode();	
 		for(int i = 0; i < pCmd->mNum; i++)
 		{
-			LOG_DEBUG(ELOG_KEY, "[runtime] reload svr from router gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", 
+			LOG_DEBUG(ELOG_KEY, "[system] reload svr from router gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", 
 				pCmd->mSvr[i].mGid, pCmd->mSvr[i].mXid, pCmd->mSvr[i].mHost, pCmd->mSvr[i].mPort, pCmd->mSvr[i].mWeight, pCmd->mSvr[i].mVersion);
 			
 			pConfig->Qos()->SaveNode(pCmd->mSvr[i]);
@@ -143,7 +143,7 @@ int AgentClientTask::SyncSvrRes(char *pBuffer, int iLen)
 	{
 		for(int i = 0; i < pCmd->mNum; i++)
 		{
-			LOG_DEBUG(ELOG_KEY, "[runtime] sync svr from router gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", 
+			LOG_DEBUG(ELOG_KEY, "[system] sync svr from router gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", 
 				pCmd->mSvr[i].mGid, pCmd->mSvr[i].mXid, pCmd->mSvr[i].mHost, pCmd->mSvr[i].mPort, pCmd->mSvr[i].mWeight, pCmd->mSvr[i].mVersion);
 			
 			pConfig->Qos()->ModNode(pCmd->mSvr[i]);

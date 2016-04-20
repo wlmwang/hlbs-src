@@ -34,7 +34,7 @@ class wMutex : private wNoncopyable
 			if (pthread_mutex_init(&mMutex, &mAttr) < 0)
 			{
 				mErr = errno;
-				LOG_ERROR(ELOG_KEY, "pthread_mutex_init failed:%s", strerror(mErr));
+				LOG_ERROR(ELOG_KEY, "[system] pthread_mutex_init failed:%s", strerror(mErr));
 				exit(2);
 			}
 		}

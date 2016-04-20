@@ -172,7 +172,7 @@ int wSocket::Connect(string sIpAddr ,unsigned int nPort, float fTimeout)
                 else if(iRet == 0)
                 {
                     Close();
-                    LOG_ERROR(ELOG_KEY, "[runtime] tcp connect timeout millisecond=%d", iTimeout);
+                    LOG_ERROR(ELOG_KEY, "[system] tcp connect timeout millisecond=%d", iTimeout);
                     return ERR_TIMEO;
                 }
                 else
@@ -183,13 +183,13 @@ int wSocket::Connect(string sIpAddr ,unsigned int nPort, float fTimeout)
                     {
                     	mErr = errno;
                         Close();
-                        LOG_ERROR(ELOG_KEY, "[runtime] ip=%s:%d, tcp connect getsockopt errno=%d,%s", mHost.c_str(), mPort, mErr, strerror(mErr));
+                        LOG_ERROR(ELOG_KEY, "[system] ip=%s:%d, tcp connect getsockopt errno=%d,%s", mHost.c_str(), mPort, mErr, strerror(mErr));
                         return -1;
                     }
                     if(iVal > 0)
                     {
                     	mErr = errno;
-                        LOG_ERROR(ELOG_KEY, "[runtime] ip=%s:%d, tcp connect fail errno=%d,%s", mHost.c_str(), mPort, mErr, strerror(mErr));
+                        LOG_ERROR(ELOG_KEY, "[system] ip=%s:%d, tcp connect fail errno=%d,%s", mHost.c_str(), mPort, mErr, strerror(mErr));
                         Close();
                         return -1;
                     }
@@ -200,7 +200,7 @@ int wSocket::Connect(string sIpAddr ,unsigned int nPort, float fTimeout)
 		else
 		{
 			mErr = errno;
-            LOG_ERROR(ELOG_KEY, "[runtime] ip=%s:%d, tcp connect directly errno=%d,%s", mHost.c_str(), mPort, mErr, strerror(mErr));
+            LOG_ERROR(ELOG_KEY, "[system] ip=%s:%d, tcp connect directly errno=%d,%s", mHost.c_str(), mPort, mErr, strerror(mErr));
 			Close();
 			return -1;
 		}
@@ -390,7 +390,7 @@ ssize_t wSocket::RecvBytes(char *vArray, size_t vLen)
 				return 0;
 			}
 			
-			LOG_ERROR(ELOG_KEY, "[runtime] recv fd(%d) error: %s", mFD, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[system] recv fd(%d) error: %s", mFD, strerror(mErr));
 			return iRecvLen;
 		}
 	}
@@ -431,7 +431,7 @@ ssize_t wSocket::SendBytes(char *vArray, size_t vLen)
 				return 0;
 			}
 			
-			LOG_ERROR(ELOG_KEY, "send fd(%d) error: %s", mFD, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[system] send fd(%d) error: %s", mFD, strerror(mErr));
 			return iSendLen;
 		}
 	}

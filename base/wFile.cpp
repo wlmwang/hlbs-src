@@ -71,7 +71,7 @@ ssize_t wFile::Read(char *pBuf, size_t nbyte, off_t offset)
 	if (n == -1)
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "pread() \"%s\" failed", mFileName.c_str());
+		LOG_ERROR(ELOG_KEY, "[system] pread() \"%s\" failed", mFileName.c_str());
 		return -1;
 	}
 
@@ -94,11 +94,11 @@ ssize_t wFile::Write(const char *pBuf, size_t nbytes, off_t offset)
 
             if (mErr == EINTR) 
             {
-                LOG_DEBUG(ELOG_KEY, "pwrite() was interrupted");
+                LOG_DEBUG(ELOG_KEY, "[system] pwrite() was interrupted");
                 continue;
             }
 
-            LOG_ERROR(ELOG_KEY, "pwrite() \"%s\" failed", mFileName.c_str());
+            LOG_ERROR(ELOG_KEY, "[system] pwrite() \"%s\" failed", mFileName.c_str());
             return -1;
         }
 

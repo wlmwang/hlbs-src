@@ -39,7 +39,7 @@ class wSem : private wNoncopyable
 			if (iRet < 0)
 			{
 				mErr = errno;
-				LOG_ERROR(ELOG_KEY, "sem_init failed: %s", strerror(mErr));
+				LOG_ERROR(ELOG_KEY, "[system] sem_init failed: %s", strerror(mErr));
 			}
 			return iRet;
 		}

@@ -6,15 +6,6 @@
 
 #include "AgentServer.h"
 
-void ServerExit()
-{
-	AgentServer *pServer = AgentServer::Instance();
-	if (pServer)
-	{
-		SAFE_DELETE(pServer);
-	}
-}
-
 AgentServer::AgentServer() : wServer<AgentServer>("路由服务器")
 {
 	mConfig = NULL;
@@ -82,7 +73,7 @@ void AgentServer::InitShm()
 	}
 	else
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Create (In) Share Memory failed");
+		LOG_ERROR(ELOG_KEY, "[system] Create (In) Share Memory failed");
 	}
 
 	mOutShm = new wShm(AGENT_SHM, 'o', MSG_QUEUE_LEN);
@@ -93,9 +84,8 @@ void AgentServer::InitShm()
 	}
 	else
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Create (Out) Share Memory failed");
+		LOG_ERROR(ELOG_KEY, "[system] Create (Out) Share Memory failed");
 	}
-	//atexit(ServerExit);
 }
 
 void AgentServer::ConnectRouter()
@@ -103,7 +93,7 @@ void AgentServer::ConnectRouter()
 	AgentConfig::RouterConf_t* pRconf = mConfig->GetOneRouterConf();	//获取一个合法Router服务器配置
 	if (pRconf == NULL)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Get RouterServer Config failed");
+		LOG_ERROR(ELOG_KEY, "[system] Get RouterServer Config failed");
 		exit(1);
 	}
 
@@ -111,10 +101,10 @@ void AgentServer::ConnectRouter()
 	bool bRet = mRouterConn->GenerateClient(SERVER_ROUTER, "ROUTER SERVER", pRconf->mIPAddr, pRconf->mPort);
 	if (!bRet)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Connect to RouterServer failed");
+		LOG_ERROR(ELOG_KEY, "[system] Connect to RouterServer failed");
 		exit(1);
 	}
-	LOG_DEBUG(ELOG_KEY, "[startup] Connect to RouterServer success, ip(%s) port(%d)", pRconf->mIPAddr, pRconf->mPort);
+	LOG_DEBUG(ELOG_KEY, "[system] Connect to RouterServer success, ip(%s) port(%d)", pRconf->mIPAddr, pRconf->mPort);
 	
 	InitSvrReq();
 }
@@ -177,13 +167,13 @@ void AgentServer::CheckQueue()
 		//取消息出错
 		if(iRet < 0) 
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] get one message from msg queue failed: %d", iRet);
+			LOG_ERROR(ELOG_KEY, "[system] get one message from msg queue failed: %d", iRet);
 			return;
 		}
 		//如果消息大小不正确
 		if(iRet != iLen) 
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] get a msg with invalid len %d from msg queue", iRet);
+			LOG_ERROR(ELOG_KEY, "[system] get a msg with invalid len %d from msg queue", iRet);
 			return;
 		}
 		

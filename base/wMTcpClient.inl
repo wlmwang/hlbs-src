@@ -105,7 +105,7 @@ int wMTcpClient<TASK>::InitEpoll()
 	if (mEpollFD < 0)
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[startup] epoll_create failed:%s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] epoll_create failed:%s", strerror(mErr));
 		return -1;
 	}
 	return mEpollFD;
@@ -137,7 +137,7 @@ wTcpClient<TASK>* wMTcpClient<TASK>::CreateClient(int iType, string sClientName,
 	}
 	SAFE_DELETE(pTcpClient);
 	
-	LOG_ERROR(ELOG_KEY, "[startup] CreateClient connect to (%s)server faild!",sClientName.c_str());
+	LOG_ERROR(ELOG_KEY, "[system] CreateClient connect to (%s)server faild!",sClientName.c_str());
 	return NULL;
 }
 
@@ -198,7 +198,7 @@ int wMTcpClient<TASK>::AddToEpoll(wTcpClient<TASK> *pTcpClient, int iEvent)
 	if (iRet < 0)
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] fd(%d) add into epoll failed: %s", iSocketFD, strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] fd(%d) add into epoll failed: %s", iSocketFD, strerror(mErr));
 		return -1;
 	}
 	return 0;
@@ -255,7 +255,7 @@ void wMTcpClient<TASK>::Recv()
 	if(iRet < 0)
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] epoll_wait failed: %s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] epoll_wait failed: %s", strerror(mErr));
 		return;
 	}
 	
@@ -286,14 +286,14 @@ void wMTcpClient<TASK>::Recv()
 		}
 		if (!pClient->IsRunning() || !pTask->IsRunning())	//多数是超时设置
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] task status is quit, fd(%d), close it", iFD);
+			LOG_ERROR(ELOG_KEY, "[system] task status is quit, fd(%d), close it", iFD);
 			pClient->Status() = CLIENT_QUIT;
 			continue;
 		}
 		if (mEpollEventPool[i].events & (EPOLLERR | EPOLLPRI))
 		{
 			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[runtime] epoll event recv error from fd(%d): %s, close it", iFD, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[system] epoll event recv error from fd(%d): %s, close it", iFD, strerror(mErr));
 			pClient->Status() = CLIENT_QUIT;
 			continue;
 		}
@@ -307,15 +307,15 @@ void wMTcpClient<TASK>::Recv()
 				{
 					if (iLenOrErr == ERR_CLOSED)
 					{
-						LOG_DEBUG(ELOG_KEY, "[runtime] tcp socket closed by server");
+						LOG_DEBUG(ELOG_KEY, "[system] tcp socket closed by server");
 					}
 					else if(iLenOrErr == ERR_MSGLEN)
 					{
-						LOG_ERROR(ELOG_KEY, "[runtime] recv message invalid len");
+						LOG_ERROR(ELOG_KEY, "[system] recv message invalid len");
 					}
 					else
 					{
-						LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or server-socket closed: %s", strerror(pTask->IO()->Errno()));
+						LOG_ERROR(ELOG_KEY, "[system] EPOLLIN(read) failed or server-socket closed: %s", strerror(pTask->IO()->Errno()));
 					}
 					//pClient->Status() = CLIENT_QUIT;
 					pTask->IO()->FD() = FD_UNKNOWN;		//给重连做准备
@@ -326,7 +326,7 @@ void wMTcpClient<TASK>::Recv()
 				//套接口准备好了写入操作
 				if (pTask->TaskSend() < 0)
 				{
-					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLOUT(write) failed: %s", strerror(pTask->IO()->Errno()));
+					LOG_ERROR(ELOG_KEY, "[system] EPOLLOUT(write) failed: %s", strerror(pTask->IO()->Errno()));
 					//pClient->Status() = CLIENT_QUIT;
 					pTask->IO()->FD() = FD_UNKNOWN;		//给重连做准备
 				}
@@ -343,7 +343,7 @@ int wMTcpClient<TASK>::RemoveEpoll(wTcpClient<TASK> *pTcpClient)
 	if (epoll_ctl(mEpollFD, EPOLL_CTL_DEL, iSocketFD, &mEpollEvent) < 0)
 	{
 		mErr = errno;
-		LOG_ERROR("error", "[runtime] epoll remove socket fd(%d) error : %s", iSocketFD, strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] epoll remove socket fd(%d) error : %s", iSocketFD, strerror(mErr));
 		return -1;
 	}
 	return 0;

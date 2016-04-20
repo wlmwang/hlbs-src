@@ -40,7 +40,7 @@ int wConfig<T>::GetOption(int argc, const char *argv[])
 		p = (char *) argv[i];
 		if (*p++ != '-') 
 		{
-			LOG_ERROR(ELOG_KEY, "invalid option: \"%s\"", argv[i]);
+			LOG_ERROR(ELOG_KEY, "[system] invalid option: \"%s\"", argv[i]);
 			return -1;
 		}
 
@@ -70,7 +70,7 @@ int wConfig<T>::GetOption(int argc, const char *argv[])
 					goto next;
 				}
 				
-				LOG_ERROR(ELOG_KEY, "option \"-h\" requires ip address");
+				LOG_ERROR(ELOG_KEY, "[system] option \"-h\" requires ip address");
 				return -1;
 				
 			case 'p':
@@ -86,7 +86,7 @@ int wConfig<T>::GetOption(int argc, const char *argv[])
 					goto next;
 				}
 				
-				LOG_ERROR(ELOG_KEY, "option \"-h\" requires port number");
+				LOG_ERROR(ELOG_KEY, "[system] option \"-h\" requires port number");
 				return -1;
 
 			case 's':
@@ -102,10 +102,10 @@ int wConfig<T>::GetOption(int argc, const char *argv[])
 					goto next;
 				}
 				
-				LOG_ERROR(ELOG_KEY, "option \"-h\" requires signal number");
+				LOG_ERROR(ELOG_KEY, "[system] option \"-h\" requires signal number");
 				return -1;	
 			default:
-				LOG_ERROR(ELOG_KEY, "invalid option: \"%c\"", *(p - 1));
+				LOG_ERROR(ELOG_KEY, "[system] invalid option: \"%c\"", *(p - 1));
 				return -1;
 			}
 		}

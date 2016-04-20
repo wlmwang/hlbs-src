@@ -43,7 +43,7 @@ void wWorker::Initialize()
 	if (GetCwd(mWorkingDir, sizeof(mWorkingDir)) == -1)
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] getcwd failed: %s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] getcwd failed: %s", strerror(mErr));
 		exit(2);
 	}
 #endif
@@ -91,7 +91,7 @@ void wWorker::PrepareStart(int iSlot, int iType, const char *pTitle, void *pData
         if (setpriority(PRIO_PROCESS, 0, mPriority) == -1) 
 		{
 			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[runtime] setpriority(%d) failed: %s", mPriority, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[system] setpriority(%d) failed: %s", mPriority, strerror(mErr));
         }
     }
 	
@@ -106,7 +106,7 @@ void wWorker::PrepareStart(int iSlot, int iType, const char *pTitle, void *pData
         if (setrlimit(RLIMIT_NOFILE, &rlmt) == -1) 
 		{
 			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[runtime] setrlimit(RLIMIT_NOFILE, %i) failed: %s", mRlimitCore, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[system] setrlimit(RLIMIT_NOFILE, %i) failed: %s", mRlimitCore, strerror(mErr));
         }
     }
 	
@@ -120,7 +120,7 @@ void wWorker::PrepareStart(int iSlot, int iType, const char *pTitle, void *pData
         if (setgid(GROUP) == -1) 
 		{
 			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[runtime] setgid(%d) failed: %s", GROUP, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[system] setgid(%d) failed: %s", GROUP, strerror(mErr));
             exit(2);
         }
 
@@ -128,14 +128,14 @@ void wWorker::PrepareStart(int iSlot, int iType, const char *pTitle, void *pData
         if (initgroups(USER, GROUP) == -1) 
 		{
 			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[runtime] initgroups(%s, %d) failed: %s", USER, GROUP, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[system] initgroups(%s, %d) failed: %s", USER, GROUP, strerror(mErr));
         }
 
         //用户ID
         if (setuid(USER) == -1) 
 		{
 			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[runtime] setuid(%d) failed: %s", USER, strerror(mErr));            
+			LOG_ERROR(ELOG_KEY, "[system] setuid(%d) failed: %s", USER, strerror(mErr));            
 			exit(2);
         }
     }
@@ -144,11 +144,11 @@ void wWorker::PrepareStart(int iSlot, int iType, const char *pTitle, void *pData
     //切换工作目录
     if (strlen(mWorkingDir) > 0) 
 	{
-		LOG_DEBUG(ELOG_KEY, "[runtime] chdir(\"%s\")", mWorkingDir);
+		LOG_DEBUG(ELOG_KEY, "[system] chdir(\"%s\")", mWorkingDir);
         if (chdir((char *)mWorkingDir) == -1) 
 		{
 			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[runtime] chdir(\"%s\") failed: %s", mWorkingDir, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[system] chdir(\"%s\") failed: %s", mWorkingDir, strerror(mErr));
 			exit(2);
         }
     }
@@ -166,7 +166,7 @@ void wWorker::PrepareStart(int iSlot, int iType, const char *pTitle, void *pData
         if (close(mWorkerPool[n]->mCh[1]) == -1) 
         {
         	mErr = errno;
-            LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed: %s", strerror(mErr));
+            LOG_ERROR(ELOG_KEY, "[system] close() channel failed: %s", strerror(mErr));
         }
     }
 
@@ -174,7 +174,7 @@ void wWorker::PrepareStart(int iSlot, int iType, const char *pTitle, void *pData
     if (close(mWorkerPool[mSlot]->mCh[0]) == -1) 
     {
     	mErr = errno;
-        LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed: %s", strerror(mErr));
+        LOG_ERROR(ELOG_KEY, "[system] close() channel failed: %s", strerror(mErr));
     }
 	
 	//worker进程中不阻塞所有信号
@@ -182,7 +182,7 @@ void wWorker::PrepareStart(int iSlot, int iType, const char *pTitle, void *pData
 	if (mSigSet.Procmask(SIG_SETMASK))
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] sigprocmask() failed: %s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] sigprocmask() failed: %s", strerror(mErr));
 	}
 
 	PrepareRun();

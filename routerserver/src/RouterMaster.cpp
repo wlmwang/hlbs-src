@@ -35,13 +35,13 @@ void RouterMaster::PrepareRun()
     mConfig = RouterConfig::Instance();
     if (mConfig == NULL) 
     {
-        LOG_ERROR(ELOG_KEY, "[startup] Get RouterConfig instance failed");
+        LOG_ERROR(ELOG_KEY, "[system] RouterConfig instance failed");
         exit(2);
     }
     mServer = RouterServer::Instance();
     if (mServer == NULL) 
     {
-        LOG_ERROR(ELOG_KEY, "[startup] Get RouterServer instance failed");
+        LOG_ERROR(ELOG_KEY, "[system] RouterServer instance failed");
         exit(2);
     }
     ReconfigMaster();
@@ -81,6 +81,7 @@ void RouterMaster::ReconfigMaster()
 {
     if (mConfig == NULL) 
     {
+        LOG_ERROR(ELOG_KEY, "[system] RouterConfig instance failed");
         return;
     }
     mConfig->GetBaseConf();

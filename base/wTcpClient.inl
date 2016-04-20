@@ -65,31 +65,31 @@ int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 	int iSocketFD = pSocket->Open();
 	if (iSocketFD < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] create socket failed: %s", strerror(pSocket->Errno()));
+		LOG_ERROR(ELOG_KEY, "[system] create socket failed: %s", strerror(pSocket->Errno()));
 		return -1;
 	}
 
 	int iRet = pSocket->Connect(vIPAddress, vPort);
 	if (iRet < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] connect to server port(%d) failed: %s", vPort, strerror(pSocket->Errno()));
+		LOG_ERROR(ELOG_KEY, "[system] connect to server port(%d) failed: %s", vPort, strerror(pSocket->Errno()));
 		return -1;
 	}
-	LOG_DEBUG(ELOG_KEY, "[runtime] connect to %s:%d successfully", vIPAddress, vPort);
+	LOG_DEBUG(ELOG_KEY, "[system] connect to %s:%d successfully", vIPAddress, vPort);
 	
 	mTcpTask = NewTcpTask(pSocket);
 	if (NULL != mTcpTask)
 	{
 		if (mTcpTask->Verify() < 0 || mTcpTask->VerifyConn() < 0)
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] connect illegal or verify timeout: %d, close it", iSocketFD);
+			LOG_ERROR(ELOG_KEY, "[system] connect illegal or verify timeout: %d, close it", iSocketFD);
 			SAFE_DELETE(mTcpTask);
 			return -1;
 		}
 		mTcpTask->Status() = TASK_RUNNING;
 		if (mTcpTask->IO()->SetNonBlock() < 0) 
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] set non block failed: %d, close it", iSocketFD);
+			LOG_ERROR(ELOG_KEY, "[system] set non block failed: %d, close it", iSocketFD);
 			SAFE_DELETE(mTcpTask);
 			return -1;
 		}
@@ -161,7 +161,7 @@ void wTcpClient<T>::CheckTimeout()
 			{
 				//mStatus = CLIENT_QUIT;
 				mTcpTask->IO()->FD() = FD_UNKNOWN;
-				LOG_DEBUG(ELOG_KEY, "[runtime] disconnect server : out of heartbeat times");
+				LOG_DEBUG(ELOG_KEY, "[system] disconnect server : out of heartbeat times");
 			}
 		}
 		else	//使用keepalive保活机制（此逻辑一般不会被激活。也不必在业务层发送心跳，否则就失去了keepalive原始意义）
@@ -174,7 +174,7 @@ void wTcpClient<T>::CheckTimeout()
 			{
 				//mStatus = CLIENT_QUIT;
 				mTcpTask->IO()->FD() = FD_UNKNOWN;
-				LOG_DEBUG(ELOG_KEY, "[runtime] disconnect server : out of keepalive times");
+				LOG_DEBUG(ELOG_KEY, "[system] disconnect server : out of keepalive times");
 			}
 		}
 	}
@@ -202,11 +202,11 @@ void wTcpClient<T>::CheckReconnect()
 		{
 			if (ReConnectToServer() == 0)
 			{
-				LOG_INFO(ELOG_KEY, "[reconnect] success to reconnect : ip(%s) port(%d)", mTcpTask->IO()->Host().c_str(), mTcpTask->IO()->Port());
+				LOG_INFO(ELOG_KEY, "[system] reconnect success: ip(%s) port(%d)", mTcpTask->IO()->Host().c_str(), mTcpTask->IO()->Port());
 			}
 			else
 			{
-				LOG_ERROR(ELOG_KEY, "[reconnect] failed to reconnect : ip(%s) port(%d)", mTcpTask->IO()->Host().c_str(), mTcpTask->IO()->Port());
+				LOG_ERROR(ELOG_KEY, "[system] reconnect failed: ip(%s) port(%d)", mTcpTask->IO()->Host().c_str(), mTcpTask->IO()->Port());
 			}
 		}
 	}
@@ -223,7 +223,7 @@ wTcpTask* wTcpClient<T>::NewTcpTask(wIO *pIO)
 	}
 	catch(std::bad_cast& vBc)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] bad_cast caught: : %s", vBc.what());
+		LOG_ERROR(ELOG_KEY, "[system] bad_cast caught: : %s", vBc.what());
 	}
 	return pTcpTask;
 }

@@ -35,13 +35,13 @@ void AgentMaster::PrepareRun()
     mConfig = AgentConfig::Instance();
     if (mConfig == NULL) 
     {
-        LOG_ERROR(ELOG_KEY, "[startup] Get AgentConfig instance failed");
+        LOG_ERROR(ELOG_KEY, "[system] Get AgentConfig instance failed");
         exit(1);
     }
     mServer = AgentServer::Instance();
     if (mServer == NULL) 
     {
-        LOG_ERROR(ELOG_KEY, "[startup] Get AgentServer instance failed");
+        LOG_ERROR(ELOG_KEY, "[system] Get AgentServer instance failed");
         exit(1);
     }
     
@@ -76,7 +76,5 @@ void AgentMaster::PrepareRun()
 void AgentMaster::Run()
 {
     //服务器开始运行
-    LOG_DEBUG(ELOG_KEY, "[startup] AgentServer start succeed");
-
     mServer->Start();
 }

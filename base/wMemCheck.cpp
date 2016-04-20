@@ -63,7 +63,7 @@ void *operator new(size_t iSize)
 	void *ptr = malloc(iSize);
 	if(ptr == NULL)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] [runtime] ret@%p: operator new(%ld) failed", ret, (long)iSize);
+		LOG_ERROR(ELOG_KEY, "[system] ret@%p: operator new(%ld) failed", ret, (long)iSize);
 	}
 	else
 	{

@@ -78,7 +78,7 @@ void wServer<T>::CleanTaskPool()
 template <typename T>
 void wServer<T>::PrepareMaster(string sIpAddr, unsigned int nPort)
 {
-	LOG_INFO(ELOG_KEY, "[startup] listen socket on ip(%s) port(%d)", sIpAddr.c_str(), nPort);
+	LOG_INFO(ELOG_KEY, "[system] listen socket on ip(%s) port(%d)", sIpAddr.c_str(), nPort);
 	
 	//初始化Listen Socket
 	if (InitListen(sIpAddr ,nPort) < 0)
@@ -93,9 +93,9 @@ void wServer<T>::PrepareMaster(string sIpAddr, unsigned int nPort)
 template <typename T>
 void wServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 {
-	LOG_INFO(ELOG_KEY, "[startup] worker start succeed");
+	LOG_INFO(ELOG_KEY, "[system] worker start succeed");
 	
-	mStatus = SERVER_RUNNING;	
+	mStatus = SERVER_RUNNING;
 	//初始化epoll
 	if (InitEpoll() < 0)
 	{
@@ -142,7 +142,7 @@ void wServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 			}
 			else
 			{
-				LOG_ERROR(ELOG_KEY, "[startup] worker pool slot(%d) illegal", mWorker->mSlot);
+				LOG_ERROR(ELOG_KEY, "[system] worker pool slot(%d) illegal", mWorker->mSlot);
 				exit(2);
 			}
 		}
@@ -152,7 +152,7 @@ void wServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 	do {
 		if (mExiting)	//退出
 		{
-			LOG_ERROR(ELOG_KEY, "[rumtime] worker exiting");
+			LOG_ERROR(ELOG_KEY, "[system] worker exiting");
 			WorkerExit();
 		}
 		Recv();
@@ -167,7 +167,7 @@ void wServer<T>::HandleSignal()
 {	
 	if (g_terminate)	//直接退出
 	{
-		LOG_ERROR(ELOG_KEY, "[rumtime] worker exiting");
+		LOG_ERROR(ELOG_KEY, "[system] worker exiting");
 		WorkerExit();
 	}
 	
@@ -175,7 +175,7 @@ void wServer<T>::HandleSignal()
 	{
 		g_quit = 0;
 
-		LOG_ERROR(ELOG_KEY, "[rumtime] gracefully shutting down");
+		LOG_ERROR(ELOG_KEY, "[system] gracefully shutting down");
 		if (!mExiting)	//关闭listen socket、idle connect socket
 		{
 			mExiting = 1;
@@ -192,14 +192,14 @@ void wServer<T>::WorkerExit()
 		//
 	}
 
-	LOG_ERROR(ELOG_KEY, "[rumtime] worker exit");
+	LOG_ERROR(ELOG_KEY, "[system] worker exit");
 	exit(0);
 }
 
 template <typename T>
 void wServer<T>::PrepareStart(string sIpAddr ,unsigned int nPort)
 {
-	LOG_INFO(ELOG_KEY, "[startup] Server Prepare start succeed");
+	LOG_INFO(ELOG_KEY, "[system] Server Prepare start succeed");
 	
 	//初始化epoll
 	if(InitEpoll() < 0)
@@ -235,7 +235,7 @@ void wServer<T>::PrepareStart(string sIpAddr ,unsigned int nPort)
 template <typename T>
 void wServer<T>::Start(bool bDaemon)
 {
-	LOG_INFO(ELOG_KEY, "[startup] Server start succeed");
+	LOG_INFO(ELOG_KEY, "[system] Server start succeed");
 	
 	mStatus = SERVER_RUNNING;	
 	//进入服务主循环
@@ -262,7 +262,7 @@ int wServer<T>::InitEpoll()
 	if (mEpollFD < 0)
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[startup] epoll_create failed:%s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] epoll_create failed:%s", strerror(mErr));
 		return -1;
 	}
 	return mEpollFD;
@@ -275,7 +275,7 @@ int wServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	int iFD = mListenSock->Open();
 	if (iFD == -1)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] listen socket open failed");
+		LOG_ERROR(ELOG_KEY, "[system] listen socket open failed");
 		SAFE_DELETE(mListenSock);
 		return -1;
 	}
@@ -284,7 +284,7 @@ int wServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	if(mListenSock->Listen(sIpAddr, nPort) < 0)
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[startup] listen failed: %s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] listen failed: %s", strerror(mErr));
 		SAFE_DELETE(mListenSock);
 		return -1;
 	}
@@ -292,7 +292,7 @@ int wServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	//nonblock
 	if(mListenSock->SetNonBlock() < 0) 
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Set non block failed: %d, close it", iFD);
+		LOG_ERROR(ELOG_KEY, "[system] Set non block failed: %d, close it", iFD);
 		SAFE_DELETE(mListenSock);
 		return -1;
 	}
@@ -332,10 +332,10 @@ int wServer<T>::AddToEpoll(wTask* pTask, int iEvents, int iOp)
 	if (iRet < 0)
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] fd(%d) add into epoll failed: %s", pTask->IO()->FD(), strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] fd(%d) add into epoll failed: %s", pTask->IO()->FD(), strerror(mErr));
 		return -1;
 	}
-	LOG_DEBUG(ELOG_KEY, "[runtime] %s fd %d events read %d write %d", iOp == EPOLL_CTL_MOD ? "mod":"add", pTask->IO()->FD(), mEpollEvent.events & EPOLLIN, mEpollEvent.events & EPOLLOUT);
+	LOG_DEBUG(ELOG_KEY, "[system] %s fd %d events read %d write %d", iOp == EPOLL_CTL_MOD ? "mod":"add", pTask->IO()->FD(), mEpollEvent.events & EPOLLIN, mEpollEvent.events & EPOLLOUT);
 	return 0;
 }
 
@@ -351,7 +351,7 @@ int wServer<T>::AddToTaskPool(wTask* pTask)
 	{
 		mEpollEventPool.reserve(mTaskCount * 2);
 	}
-	LOG_DEBUG(ELOG_KEY, "[runtime] fd(%d) add into task pool", pTask->IO()->FD());
+	LOG_DEBUG(ELOG_KEY, "[system] fd(%d) add into task pool", pTask->IO()->FD());
 	return 0;
 }
 
@@ -408,7 +408,7 @@ void wServer<T>::Recv()
 	if (iRet < 0)
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] epoll_wait failed: %s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] epoll_wait failed: %s", strerror(mErr));
 		return;
 	}
 	
@@ -438,7 +438,7 @@ void wServer<T>::Recv()
 		}
 		if (!pTask->IsRunning())	//多数是超时设置
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] task status is quit, fd(%d), close it", iFD);
+			LOG_ERROR(ELOG_KEY, "[system] task status is quit, fd(%d), close it", iFD);
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -448,7 +448,7 @@ void wServer<T>::Recv()
 		if (mEpollEventPool[i].events & (EPOLLERR | EPOLLPRI))	//出错(多数为sock已关闭)
 		{
 			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[runtime] epoll event recv error from fd(%d), close it: %s", iFD, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[system] epoll event recv error from fd(%d), close it: %s", iFD, strerror(mErr));
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -473,15 +473,15 @@ void wServer<T>::Recv()
 				{
 					if (iLenOrErr == ERR_CLOSED)
 					{
-						LOG_DEBUG(ELOG_KEY, "[runtime] tcp socket closed by client");
+						LOG_DEBUG(ELOG_KEY, "[system] tcp socket closed by client");
 					}
 					else if(iLenOrErr == ERR_MSGLEN)
 					{
-						LOG_ERROR(ELOG_KEY, "[runtime] recv message invalid len");
+						LOG_ERROR(ELOG_KEY, "[system] recv message invalid len");
 					}
 					else
 					{
-						LOG_ERROR(ELOG_KEY, "[runtime] EPOLLIN(read) failed or tcp socket closed: %s", strerror(pTask->IO()->Errno()));
+						LOG_ERROR(ELOG_KEY, "[system] EPOLLIN(read) failed or tcp socket closed: %s", strerror(pTask->IO()->Errno()));
 					}
 					if (RemoveEpoll(pTask) >= 0)
 					{
@@ -500,7 +500,7 @@ void wServer<T>::Recv()
 				//套接口准备好了写入操作
 				if (pTask->TaskSend() < 0)	//写入失败，半连接，对端读关闭
 				{
-					LOG_ERROR(ELOG_KEY, "[runtime] EPOLLOUT(write) failed or tcp socket closed: %s", strerror(pTask->IO()->Errno()));
+					LOG_ERROR(ELOG_KEY, "[system] EPOLLOUT(write) failed or tcp socket closed: %s", strerror(pTask->IO()->Errno()));
 					if (RemoveEpoll(pTask) >= 0)
 					{
 						RemoveTaskPool(pTask);
@@ -566,7 +566,7 @@ int wServer<T>::AcceptConn()
 	{
 		if (iNewFD < 0)
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] client connect failed:%s", strerror(mListenSock->Errno()));
+			LOG_ERROR(ELOG_KEY, "[system] client connect failed:%s", strerror(mListenSock->Errno()));
 		}
 	    return iNewFD;
     }
@@ -591,7 +591,7 @@ int wServer<T>::AcceptConn()
 	{
 		if(mTask->VerifyConn() < 0 || mTask->Verify())
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] connect illegal or verify timeout: %d, close it", iNewFD);
+			LOG_ERROR(ELOG_KEY, "[system] connect illegal or verify timeout: %d, close it", iNewFD);
 			SAFE_DELETE(mTask);
 			return -1;
 		}
@@ -601,7 +601,7 @@ int wServer<T>::AcceptConn()
 		{
 			AddToTaskPool(mTask);
 		}
-		LOG_DEBUG(ELOG_KEY, "[connect] client connect succeed: ip(%s) port(%d)", pSocket->Host().c_str(), pSocket->Port());
+		LOG_DEBUG(ELOG_KEY, "[system] client connect succeed: ip(%s) port(%d)", pSocket->Host().c_str(), pSocket->Port());
 	}
 	return iNewFD;
 }
@@ -614,7 +614,7 @@ int wServer<T>::RemoveEpoll(wTask* pTask)
 	if(epoll_ctl(mEpollFD, EPOLL_CTL_DEL, iFD, &mEpollEvent) < 0)
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] epoll remove socket fd(%d) error : %s", iFD, strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] epoll remove socket fd(%d) error : %s", iFD, strerror(mErr));
 		return -1;
 	}
 	return 0;
@@ -709,7 +709,7 @@ void wServer<T>::CheckTimeout()
 					//关闭无用连接
 					if (bDelTask)
 					{
-						LOG_ERROR(ELOG_KEY, "[runtime] client fd(%d) heartbeat pass limit times, close it", (*iter)->IO()->FD());
+						LOG_ERROR(ELOG_KEY, "[system] client fd(%d) heartbeat pass limit times, close it", (*iter)->IO()->FD());
 						if (RemoveEpoll(*iter) >= 0)
 						{
 							iter = RemoveTaskPool(*iter);

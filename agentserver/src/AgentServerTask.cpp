@@ -44,11 +44,11 @@ int AgentServerTask::VerifyConn()
 		LoginReqToken_t *pLoginRes = (LoginReqToken_t*) pBuffer;
 		if (strcmp(pLoginRes->mToken, "Anny") == 0)
 		{
-			LOG_ERROR("client", "[verify] receive client and verify success from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
+			LOG_ERROR("system", "[client] receive client and verify success from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
 			mConnType = pLoginRes->mConnType;
 			return 0;
 		}
-		LOG_ERROR("client", "[verify] receive client and verify failed from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
+		LOG_ERROR("system", "[client] receive client and verify failed from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
 	}
 	return -1;
 }
@@ -93,7 +93,7 @@ int AgentServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, 
 		}
 		else
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] client fd(%d) send a invalid msg id(%u)", mIO->FD(), pCommand->GetId());
+			LOG_ERROR(ELOG_KEY, "[system] client send a invalid msg fd(%d) id(%d)", mIO->FD(), pCommand->GetId());
 		}
 	}
 	return 0;
@@ -148,7 +148,7 @@ int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 		vRRt.mNum = 1;
 	}
 
-	LOG_DEBUG(ELOG_KEY, "[runtime] send svr agent num(%d) gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", vRRt.mNum,
+	LOG_DEBUG(ELOG_KEY, "[system] send svr agent num(%d) gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", vRRt.mNum,
 		vRRt.mSvr[0].mGid, vRRt.mSvr[0].mXid, vRRt.mSvr[0].mHost, vRRt.mSvr[0].mPort, vRRt.mSvr[0].mWeight, vRRt.mSvr[0].mVersion);
 	
 	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
@@ -168,7 +168,7 @@ int AgentServerTask::ReportSvr(char *pBuffer, int iLen)
 		vRRt.mCode = 1;
 	}
 
-	LOG_DEBUG(ELOG_KEY, "[runtime] send svr report %d", vRRt.mCode);
+	LOG_DEBUG(ELOG_KEY, "[system] send svr report %d", vRRt.mCode);
 	
 	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
 	return 0;

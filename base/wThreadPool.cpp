@@ -38,7 +38,7 @@ int wThreadPool::AddPool(wThread* pThread)
 	W_ASSERT(pThread != NULL, return -1);
 
 	mThreadPool.push_back(pThread);
-	LOG_DEBUG(ELOG_KEY, "[runtime] tid(%d) add into thread pool", pThread->GetTid());
+	LOG_DEBUG(ELOG_KEY, "[system] tid(%d) add into thread pool", pThread->GetTid());
 	return 0;
 }
 
