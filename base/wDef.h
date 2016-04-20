@@ -109,8 +109,8 @@ enum TASK_STATUS
 #define USER  "nobody"
 #define GROUP  "nobody"
 
-#define PID_PATH  "../log/disvr.pid"
-#define LOCK_PATH  "../log/disvr.lock"
-#define WAIT_MUTEX	"../log/wait_mutex.bin"	//worker惊群锁
+#define PID_PATH  "../log/master.pid"
+#define LOCK_PATH  "../log/master.lock"
+#define ACCEPT_MUTEX	"../log/accept.mutex"	//worker惊群锁
 
 #endif

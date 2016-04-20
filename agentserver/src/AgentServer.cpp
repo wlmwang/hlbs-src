@@ -6,6 +6,15 @@
 
 #include "AgentServer.h"
 
+void ServerExit()
+{
+	AgentServer *pServer = AgentServer::Instance();
+	if (pServer)
+	{
+		SAFE_DELETE(pServer);
+	}
+}
+
 AgentServer::AgentServer() : wServer<AgentServer>("路由服务器")
 {
 	mConfig = NULL;
@@ -86,6 +95,7 @@ void AgentServer::InitShm()
 	{
 		LOG_ERROR(ELOG_KEY, "[startup] Create (Out) Share Memory failed");
 	}
+	//atexit(ServerExit);
 }
 
 void AgentServer::ConnectRouter()

@@ -30,7 +30,7 @@ int main(int argc, const char *argv[])
 	//daemon
 	if (pConfig->mDaemon == 1)
 	{
-		if (InitDaemon(LOCK_PATH) < 0)
+		if (InitDaemon("../log/hlbs.lock") < 0)
 		{
 			LOG_ERROR(ELOG_KEY, "[startup] Create daemon failed!");
 			exit(2);

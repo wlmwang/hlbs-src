@@ -65,8 +65,10 @@ void AgentMaster::PrepareRun()
         p = Cpystrn(p, (u_char *) mConfig->mProcTitle->mArgv[i], size);
     }
 
-	mConfig->mProcTitle->Setproctitle(mTitle, "HLFS: ");
+	mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");
 
+    mPidFile.FileName() = "../log/hlbs.pid";
+    
     //准备工作
     mServer->PrepareStart(mConfig->mIPAddr, mConfig->mPort);
 }

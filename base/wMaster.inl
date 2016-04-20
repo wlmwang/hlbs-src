@@ -36,7 +36,7 @@ void wMaster<T>::Initialize()
 	mWorkerPool = NULL;
 	mShmAddr = NULL;
 	mMutex = NULL;
-	mUseMutex = 1;
+	mUseMutex = 0;	//暂不使用。wServer类中统一了所有IO对象事件（tcp socket、Unix socket、pipe、normal file），不能简单使用惊群方案。
 	mMutexHeld = 0;
 	mDelay = 500;
 	mPid = getpid();
@@ -74,7 +74,20 @@ void wMaster<T>::PrepareStart()
 template <typename T>
 void wMaster<T>::SingleStart()
 {
-	mProcess = PROCESS_SINGLE;
+	mProcess = PROCESS_SINGLE;	
+	CreatePidFile();
+	
+	//恢复默认信号处理
+	wSignal stSig(SIG_DFL);
+	stSig.AddSigno(SIGINT);
+	stSig.AddSigno(SIGHUP);
+	stSig.AddSigno(SIGQUIT);
+	stSig.AddSigno(SIGTERM);
+	stSig.AddSigno(SIGCHLD);
+	stSig.AddSigno(SIGPIPE);
+	stSig.AddSigno(SIGTTIN);
+	stSig.AddSigno(SIGTTOU);
+	
 	Run();
 }
 
@@ -87,7 +100,6 @@ void wMaster<T>::MasterStart()
 		LOG_ERROR(ELOG_KEY, "[runtime] no more than %d processes can be spawned:", mWorkerNum);
 		return;
 	}
-	
 	InitSignals();
 	CreatePidFile();
 	
@@ -119,7 +131,7 @@ void wMaster<T>::MasterStart()
 	//防敬群锁
 	if(mUseMutex == 1)
 	{
-		mShmAddr = new wShm(WAIT_MUTEX, 'a', sizeof(wShmtx));
+		mShmAddr = new wShm(ACCEPT_MUTEX, 'a', sizeof(wShmtx));
 		if (mShmAddr->CreateShm() == NULL)
 		{
 			LOG_ERROR(ELOG_KEY, "[runtime] CreateShm failed");
@@ -138,7 +150,7 @@ void wMaster<T>::MasterStart()
 
 	//master进程 信号处理
 	while (true)
-	{	
+	{
 		HandleSignal();
 		Run();
 	}
@@ -146,9 +158,14 @@ void wMaster<T>::MasterStart()
 
 template <typename T>
 void wMaster<T>::MasterExit()
-{
-    DeletePidFile();
-	
+{	
+	if (mUseMutex == 1)
+	{
+		SAFE_DELETE(mShmAddr);
+		SAFE_DELETE(mMutex);
+	}
+	DeletePidFile();
+    
     LOG_ERROR(ELOG_KEY, "[runtime] master exit");
 	exit(0);
 }
@@ -550,6 +567,7 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
 			
 	    case 0:
 	    	//worker进程
+	        mProcess = PROCESS_WORKER;
 	        pWorker->InitWorker(mWorkerNum, mWorkerPool, mUseMutex, mShmAddr, mMutex, mDelay);
 	        pWorker->PrepareStart(mSlot, type, title, pData);
 	        pWorker->Start();
@@ -611,7 +629,7 @@ int wMaster<T>::CreatePidFile()
 {
 	if (mPidFile.FileName().size() <= 0)
 	{
-		mPidFile.FileName() = "master.pid";
+		mPidFile.FileName() = PID_PATH;
 	}
     if (mPidFile.Open(O_RDWR| O_CREAT) == -1) 
     {

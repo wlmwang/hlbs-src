@@ -61,12 +61,12 @@ void RouterMaster::PrepareRun()
         *p++ = ' ';
         p = Cpystrn(p, (u_char *) mConfig->mProcTitle->mArgv[i], size);
     }
-	mConfig->mProcTitle->Setproctitle(mTitle, "HLFS: ");
+	mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");
 
     //pid文件名
-    mPidFile.FileName() = LOCK_PATH;
+    mPidFile.FileName() = "../log/hlbs.pid";
     
-    mWorkerNum = 4;
+    //mWorkerNum = 4;   //worker个数
     
     //准备工作（创建、绑定服务器Listen Socket）
     mServer->PrepareMaster(mConfig->mIPAddr, mConfig->mPort);

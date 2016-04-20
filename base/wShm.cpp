@@ -47,6 +47,7 @@ char *wShm::CreateShm()
 		return NULL;
 	}
 	close(iFD);
+	//unlink(mFilename);
 
 	mKey = ftok(mFilename, mPipeId);
 	if (mKey < 0) 

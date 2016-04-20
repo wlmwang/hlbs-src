@@ -30,7 +30,6 @@ void wWorker::Close()
 
 void wWorker::Initialize() 
 {
-	mProcess = PROCESS_WORKER;
 	mStatus = WORKER_INIT;
 	mPid = -1;	//此时worker还未生成
 	mUid = 0;

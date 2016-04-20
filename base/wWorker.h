@@ -43,7 +43,6 @@ class wWorker : public wNoncopyable
 		int InitChannel();
 	
 	public:
-		int mProcess;
 		pid_t mPid;
 		uid_t mUid;
 		gid_t mGid;

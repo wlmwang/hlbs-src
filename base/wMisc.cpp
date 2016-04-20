@@ -111,6 +111,10 @@ int Ngcd(int *arr, int n)
 int InitDaemon(const char *filename)
 {
 	//打开需要锁定的文件
+	if (filename == NULL)
+	{
+		filename = LOCK_PATH;
+	}
 	int lock_fd = open(filename, O_RDWR|O_CREAT, 0640);
 	if (lock_fd < 0) 
 	{
@@ -138,7 +142,6 @@ int InitDaemon(const char *filename)
 
 	//忽略以下信号
 	wSignal stSig(SIG_IGN);
-	
 	stSig.AddSigno(SIGINT);
 	stSig.AddSigno(SIGHUP);
 	stSig.AddSigno(SIGQUIT);
@@ -159,6 +162,6 @@ int InitDaemon(const char *filename)
 	}
 	umask(0);
 	
-	unlink(filename);
+	//unlink(filename);
 	return 0;
 }

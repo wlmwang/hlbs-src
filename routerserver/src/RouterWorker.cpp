@@ -43,7 +43,7 @@ void RouterWorker::PrepareRun()
 		exit(2);
 	}
 
-	mConfig->mProcTitle->Setproctitle("worker process", "HLFS: ");
+	mConfig->mProcTitle->Setproctitle("worker process", "HLBS: ");
 }
 
 void RouterWorker::Run()
