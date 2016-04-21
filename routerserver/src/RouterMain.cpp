@@ -62,7 +62,7 @@ int main(int argc, const char *argv[])
 		LOG_ERROR(ELOG_KEY, "[system] RouterMaster instance failed");
 		exit(2);
 	}
-	atexit(ServerExit);
+	//atexit(ServerExit);
 
 	pMaster->PrepareStart();
 	pMaster->MasterStart();

@@ -63,7 +63,7 @@ int main(int argc, const char *argv[])
 		LOG_ERROR(ELOG_KEY, "[system] AgentMaster instance failed");
 		exit(2);
 	}
-	atexit(ServerExit);
+	//atexit(ServerExit);
 
 	pMaster->PrepareStart();
 	pMaster->SingleStart();

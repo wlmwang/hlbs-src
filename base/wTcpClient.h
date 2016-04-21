@@ -61,6 +61,7 @@ class wTcpClient : private wNoncopyable
 		wTimer mReconnectTimer;
 		int mReconnectTimes;
 		bool mIsCheckTimer;
+		bool mIsReconnect;
 
 		int mErr;
 };

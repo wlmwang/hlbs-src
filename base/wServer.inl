@@ -42,40 +42,6 @@ void wServer<T>::Initialize()
 }
 
 template <typename T>
-void wServer<T>::Final()
-{
-	CleanEpoll();
-	CleanTaskPool();
-}
-
-template <typename T>
-void wServer<T>::CleanEpoll()
-{
-	if (mEpollFD != -1)
-	{
-		close(mEpollFD);
-	}
-	mEpollFD = -1;
-	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
-	mEpollEventPool.clear();
-}
-
-template <typename T>
-void wServer<T>::CleanTaskPool()
-{
-	if (mTaskPool.size() > 0)
-	{
-		vector<wTask*>::iterator iter;
-		for (iter = mTaskPool.begin(); iter != mTaskPool.end(); iter++)
-		{
-			SAFE_DELETE(*iter);
-		}
-	}
-	mTaskPool.clear();
-	mTaskCount = 0;
-}
-
-template <typename T>
 void wServer<T>::PrepareMaster(string sIpAddr, unsigned int nPort)
 {
 	LOG_INFO(ELOG_KEY, "[system] listen socket on ip(%s) port(%d)", sIpAddr.c_str(), nPort);
@@ -115,6 +81,12 @@ void wServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 		{
 			AddToTaskPool(mTask);
 		}
+		else
+		{
+			mTask->DeleteIO();
+			SAFE_DELETE(mTask);
+			exit(2);
+		}
 	}
 
 	//Unix Socket 添加到epoll中（worker自身channel[1]被监听）
@@ -138,6 +110,11 @@ void wServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 					{
 						AddToTaskPool(mTask);
 					}
+					else
+					{
+						SAFE_DELETE(mTask);
+						exit(2);
+					}
 				}
 			}
 			else
@@ -158,7 +135,7 @@ void wServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
 		Recv();
 		HandleSignal();
 		Run();
-		if (mIsCheckTimer) CheckTimer();
+		CheckTimer();
 	} while (IsRunning() && bDaemon);
 }
 
@@ -225,6 +202,12 @@ void wServer<T>::PrepareStart(string sIpAddr ,unsigned int nPort)
 		if (AddToEpoll(mTask) >= 0)
 		{
 			AddToTaskPool(mTask);
+		}
+		else
+		{
+			mTask->DeleteIO();
+			SAFE_DELETE(mTask);
+			exit(2);
 		}
 	}
 	
@@ -592,6 +575,7 @@ int wServer<T>::AcceptConn()
 		if(mTask->VerifyConn() < 0 || mTask->Verify())
 		{
 			LOG_ERROR(ELOG_KEY, "[system] connect illegal or verify timeout: %d, close it", iNewFD);
+			mTask->DeleteIO();
 			SAFE_DELETE(mTask);
 			return -1;
 		}
@@ -601,9 +585,53 @@ int wServer<T>::AcceptConn()
 		{
 			AddToTaskPool(mTask);
 		}
+		else
+		{
+			mTask->DeleteIO();
+			SAFE_DELETE(mTask);
+			return -1;
+		}
 		LOG_DEBUG(ELOG_KEY, "[system] client connect succeed: ip(%s) port(%d)", pSocket->Host().c_str(), pSocket->Port());
 	}
 	return iNewFD;
+}
+
+template <typename T>
+void wServer<T>::Final()
+{
+	CleanEpoll();
+	CleanTaskPool();
+}
+
+template <typename T>
+void wServer<T>::CleanEpoll()
+{
+	if (mEpollFD != -1)
+	{
+		close(mEpollFD);
+	}
+	mEpollFD = -1;
+	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
+	mEpollEventPool.clear();
+}
+
+template <typename T>
+void wServer<T>::CleanTaskPool()
+{
+	if (mTaskPool.size() > 0)
+	{
+		vector<wTask*>::iterator it;
+		for (it = mTaskPool.begin(); it != mTaskPool.end(); it++)
+		{
+	    	if ((*it)->IO()->TaskType() != TASK_UNIX)
+	    	{
+	    		(*it)->DeleteIO();
+	    	}
+			SAFE_DELETE(*it);
+		}
+	}
+	mTaskPool.clear();
+	mTaskCount = 0;
 }
 
 template <typename T>
