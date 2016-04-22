@@ -93,6 +93,7 @@ int NotifyCallerNum(const struct SvrNet_t &stSvr, int iReqCount)
 
 int ConnectAgent(struct postHandle_t *pHandle)
 {
+	Release(pHandle);
 	pHandle->mSock = new wSocket();
 	if(pHandle->mSock->Open() >= 0)
 	{
@@ -124,9 +125,15 @@ int TestConnect(struct postHandle_t *pHandle)
 
 void Release(struct postHandle_t *pHandle)
 {
-	if (pHandle != NULL)
+	if (pHandle)
 	{
-		SAFE_DELETE(pHandle->mSock);
-		SAFE_DELETE(pHandle->mTask);
+		if (pHandle->mSock)
+		{
+			SAFE_DELETE(pHandle->mSock);
+		}
+		if (pHandle->mTask)
+		{
+			SAFE_DELETE(pHandle->mTask);
+		}
 	}
 }
