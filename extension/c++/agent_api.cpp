@@ -6,19 +6,20 @@
 
 #include "agent_api.h"
 
-struct postHandle_t g_handle;
+struct postHandle_t g_handle = {NULL, NULL};
 
 int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 {
 	struct SvrReqGXid_t stCmd;
 	stCmd.mGid = stSvr.mGid;
 	stCmd.mXid = stSvr.mXid;
-	
-	if (TestConnect(&g_handle) != 0)
+	int iRet = -1;
+
+	//if (TestConnect(&g_handle) != 0)
 	{
 		if (ConnectAgent(&g_handle) < 0)
 		{
-			return -1;
+			return iRet;
 		}
 	}
 	if (g_handle.mSock != NULL && g_handle.mTask != NULL)
@@ -34,23 +35,31 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 				SvrResData_t *pRes = (SvrResData_t*) pBuffer;
 				if (pRes->mNum == 1)
 				{
-					Release(&g_handle);
 					stSvr.mPort = pRes->mSvr[0].mPort;
 					memcpy(stSvr.mHost, pRes->mSvr[0].mHost, strlen(pRes->mSvr[0].mHost) + 1);
-					return 0;
+					iRet = 0;
 				}
 			}
-			return -3;
+			else
+			{
+				iRet = -3;
+			}
 		}
-		return -2;
+		else
+		{
+			iRet = -2;
+		}
 	}
-	return -1;
+
+	Release(&g_handle);
+	return iRet;
 }
 
 int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetimeUsec, string &sErr)
 {
 	struct SvrReqReport_t stCmd;
-
+	int iRet = -1;
+	
 	stCmd.mCaller.mCalledGid = stSvr.mGid;
 	stCmd.mCaller.mCalledXid = stSvr.mXid;
 	stCmd.mCaller.mPort = stSvr.mPort;
@@ -59,11 +68,11 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 	stCmd.mCaller.mReqUsetimeUsec = iUsetimeUsec;
 	memcpy(stCmd.mCaller.mHost, stSvr.mHost, strlen(stSvr.mHost) + 1);
 
-	if (TestConnect(&g_handle) != 0)
+	//if (TestConnect(&g_handle) != 0)
 	{
 		if (ConnectAgent(&g_handle) < 0)
 		{
-			return -1;
+			return iRet;
 		}
 	}
 
@@ -79,13 +88,21 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 			{
 				Release(&g_handle);
 				struct SvrResReport_t *pRes = (struct SvrResReport_t*) pBuffer;
-				return pRes->mCode;
+				iRet = pRes->mCode;
 			}
-			return -3;
+			else
+			{
+				iRet = -3;
+			}
 		}
-		return -2;
+		else
+		{
+			iRet = -2;
+		}
 	}
-	return -1;
+
+	Release(&g_handle);
+	return iRet;
 }
 
 int NotifyCallerNum(const struct SvrNet_t &stSvr, int iReqCount)
@@ -94,7 +111,9 @@ int NotifyCallerNum(const struct SvrNet_t &stSvr, int iReqCount)
 }
 
 int ConnectAgent(struct postHandle_t *pHandle)
-{
+{	
+	Release(pHandle);
+
 	pHandle->mSock = new wSocket();
 	if(pHandle->mSock->Open() >= 0)
 	{
@@ -103,8 +122,10 @@ int ConnectAgent(struct postHandle_t *pHandle)
 			pHandle->mTask = new wTask(pHandle->mSock);
 			return 0;
 		}
+		Release(pHandle);
 		return -2;
 	}
+	Release(pHandle);
 	return -1;
 }
 
