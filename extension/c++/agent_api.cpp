@@ -14,7 +14,7 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 	stCmd.mGid = stSvr.mGid;
 	stCmd.mXid = stSvr.mXid;
 	
-	//if (TestConnect() != 0)
+	if (TestConnect(&g_handle) != 0)
 	{
 		if (ConnectAgent(&g_handle) < 0)
 		{
@@ -32,8 +32,9 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 			if (iLen > 0)
 			{
 				SvrResData_t *pRes = (SvrResData_t*) pBuffer;
-				if(pRes->mNum == 1)
+				if (pRes->mNum == 1)
 				{
+					Release(&g_handle);
 					stSvr.mPort = pRes->mSvr[0].mPort;
 					memcpy(stSvr.mHost, pRes->mSvr[0].mHost, strlen(pRes->mSvr[0].mHost) + 1);
 					return 0;
@@ -58,7 +59,7 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 	stCmd.mCaller.mReqUsetimeUsec = iUsetimeUsec;
 	memcpy(stCmd.mCaller.mHost, stSvr.mHost, strlen(stSvr.mHost) + 1);
 
-	//if (TestConnect() != 0)
+	if (TestConnect(&g_handle) != 0)
 	{
 		if (ConnectAgent(&g_handle) < 0)
 		{
@@ -76,6 +77,7 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 			int iLen = g_handle.mTask->SyncRecv(pBuffer, sizeof(struct SvrResReport_t));
 			if (iLen > 0)
 			{
+				Release(&g_handle);
 				struct SvrResReport_t *pRes = (struct SvrResReport_t*) pBuffer;
 				return pRes->mCode;
 			}
@@ -93,7 +95,6 @@ int NotifyCallerNum(const struct SvrNet_t &stSvr, int iReqCount)
 
 int ConnectAgent(struct postHandle_t *pHandle)
 {
-	Release(pHandle);
 	pHandle->mSock = new wSocket();
 	if(pHandle->mSock->Open() >= 0)
 	{
