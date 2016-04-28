@@ -51,8 +51,6 @@ int RouterChannelTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer
 	}
 	else
 	{
-		LOG_DEBUG(ELOG_KEY, "[runtime] unix message, diapath cmd(%d) parm(%d)", pCommand->GetCmd(), pCommand->GetPara());
-
 		auto pF = mDispatch.GetFuncT("RouterChannelTask", pCommand->GetId());
 
 		if (pF != NULL)
@@ -61,7 +59,7 @@ int RouterChannelTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer
 		}
 		else
 		{
-			LOG_ERROR("default", "[runtime] client fd(%d) send a invalid msg id(%u)", mIO->FD(), pCommand->GetId());
+			LOG_ERROR(ELOG_KEY, "[system] client send a invalid msg fd(%d) id(%d)", mIO->FD(), pCommand->GetId());
 		}
 	}
 	return 0;
@@ -72,10 +70,10 @@ int RouterChannelTask::ChannelOpen(char *pBuffer, int iLen)
 	RouterMaster *pMaster = RouterMaster::Instance();
 	
 	ChannelReqOpen_t *pCh = (struct ChannelReqOpen_t* )pBuffer;
-	if(pMaster->mWorkerPool != NULL && pMaster->mWorkerPool[pCh->mSlot])
+	if (pMaster->mWorkerPool != NULL && pMaster->mWorkerPool[pCh->mSlot])
 	{	
-		LOG_DEBUG(ELOG_KEY, "[runtime] get channel s:%i pid:%d fd:%d",pCh->mSlot, pCh->mPid, pCh->mFD);
-		
+		LOG_DEBUG(ELOG_KEY, "[system] get channel s:%i pid:%d fd:%d",pCh->mSlot, pCh->mPid, pCh->mFD);
+
 		pMaster->mWorkerPool[pCh->mSlot]->mPid = pCh->mPid;
 		pMaster->mWorkerPool[pCh->mSlot]->mCh[0] = pCh->mFD;
 	}
@@ -88,15 +86,15 @@ int RouterChannelTask::ChannelClose(char *pBuffer, int iLen)
 	RouterMaster *pMaster = RouterMaster::Instance();
 	
 	ChannelReqClose_t *pCh = (struct ChannelReqClose_t* )pBuffer;
-	if(pMaster->mWorkerPool != NULL && pMaster->mWorkerPool[pCh->mSlot])
+	if (pMaster->mWorkerPool != NULL && pMaster->mWorkerPool[pCh->mSlot])
 	{
-		LOG_DEBUG(ELOG_KEY, "[runtime] close channel s:%i pid:%P our:%P fd:%d",
+		LOG_DEBUG(ELOG_KEY, "[system] close channel s:%i pid:%d our:%d fd:%d",
 				pCh->mSlot, pCh->mPid, pMaster->mWorkerPool[pCh->mSlot]->mPid,
 				pMaster->mWorkerPool[pCh->mSlot]->mCh[0]);
 		
 		if (close(pMaster->mWorkerPool[pCh->mSlot]->mCh[0]) == -1) 
 		{
-			LOG_DEBUG(ELOG_KEY, "[runtime] close() channel failed: %s", strerror(errno));
+			LOG_DEBUG(ELOG_KEY, "[system] close() channel failed: %s", strerror(errno));
 		}
 		pMaster->mWorkerPool[pCh->mSlot]->mCh[0] = FD_UNKNOWN; //-1
 	}

@@ -9,13 +9,13 @@
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <poll.h>
 
 #include "wCore.h"
 #include "wIO.h"
 #include "wMisc.h"
-
-#define ERR_TIMEO -4	//connect连接超时
 
 /**
  *  网络TCP套接字的基础类
@@ -35,6 +35,7 @@ class wSocket : public wIO
 		virtual ssize_t SendBytes(char *vArray, size_t vLen);
 
 		int Open();
+		int SetKeepAlive(int iIdle = 5, int iIntvl = 1, int iCnt = 10);	//tcp保活
 		int Bind(string sIpAddr ,unsigned int nPort);
 		int Listen(string sIpAddr ,unsigned int nPort);
 		int Connect(string sIpAddr ,unsigned int nPort, float fTimeout = 30);

@@ -16,7 +16,7 @@
 #include "wTimer.h"
 #include "wLog.h"
 #include "wMisc.h"
-#include "wTcpServer.h"
+#include "wServer.h"
 #include "wMTcpClient.h"
 #include "wShm.h"
 #include "wMsgQueue.h"
@@ -26,7 +26,7 @@
 #include "AgentServerTask.h"
 #include "DetectThread.h"
 
-class AgentServer: public wTcpServer<AgentServer>
+class AgentServer: public wServer<AgentServer>
 {
 	public:
 		AgentServer();

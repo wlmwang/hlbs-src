@@ -38,20 +38,21 @@ wShm::~wShm()
 
 char *wShm::CreateShm()
 {
-	LOG_DEBUG(ELOG_KEY, "[runtime] try to alloc %lld bytes of share memory", mSize);
+	LOG_DEBUG(ELOG_KEY, "[system] try to alloc %lld bytes of share memory", mSize);
 	
 	int iFD = open(mFilename, O_CREAT);
 	if (iFD < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] open file(%s) failed: %s", mFilename, strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[system] open file(%s) failed: %s", mFilename, strerror(errno));
 		return NULL;
 	}
 	close(iFD);
+	//unlink(mFilename);
 
 	mKey = ftok(mFilename, mPipeId);
 	if (mKey < 0) 
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] create memory (ftok) failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[system] create memory (ftok) failed: %s", strerror(errno));
 		return NULL;
 	}
 
@@ -63,11 +64,11 @@ char *wShm::CreateShm()
 	{
 		if (errno != EEXIST) 
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] alloc share memory failed: %s", strerror(errno));
+			LOG_ERROR(ELOG_KEY, "[system] alloc share memory failed: %s", strerror(errno));
 			return 0;
 		}
 
-		LOG_DEBUG(ELOG_KEY, "[runtime] share memory is exist now, try to attach it");
+		LOG_DEBUG(ELOG_KEY, "[system] share memory is exist now, try to attach it");
 
 		//如果该内存已经被申请，则申请访问控制它
 		mShmId = shmget(mKey, mSize, 0666);
@@ -75,7 +76,7 @@ char *wShm::CreateShm()
 		//如果失败
 		if (mShmId < 0) 
 		{
-			LOG_DEBUG(ELOG_KEY, "[runtime] attach to share memory failed: %s, try to touch it", strerror(errno));
+			LOG_DEBUG(ELOG_KEY, "[system] attach to share memory failed: %s, try to touch it", strerror(errno));
 			
 			//猜测是否是该内存大小太小，先获取内存ID
 			mShmId = shmget(mKey, 0, 0666);
@@ -83,17 +84,17 @@ char *wShm::CreateShm()
 			//如果失败，则无法操作该内存，只能退出
 			if (mShmId < 0) 
 			{
-				LOG_ERROR(ELOG_KEY, "[runtime] touch to share memory failed: %s", strerror(errno));
+				LOG_ERROR(ELOG_KEY, "[system] touch to share memory failed: %s", strerror(errno));
 				return 0;
 			}
 			else 
 			{
-				LOG_DEBUG(ELOG_KEY, "[runtime] remove the exist share memory %d", mShmId);
+				LOG_DEBUG(ELOG_KEY, "[system] remove the exist share memory %d", mShmId);
 
 				//如果成功，则先删除原内存
 				if (shmctl(mShmId, IPC_RMID, NULL) < 0) 
 				{
-					LOG_ERROR(ELOG_KEY, "[runtime] remove share memory failed: %s", strerror(errno));
+					LOG_ERROR(ELOG_KEY, "[system] remove share memory failed: %s", strerror(errno));
 					return 0;
 				}
 
@@ -101,23 +102,23 @@ char *wShm::CreateShm()
 				mShmId = shmget(mKey, mSize, IPC_CREAT|IPC_EXCL|0666);
 				if (mShmId < 0) 
 				{
-					LOG_ERROR(ELOG_KEY, "[runtime] alloc share memory failed again: %s", strerror(errno));
+					LOG_ERROR(ELOG_KEY, "[system] alloc share memory failed again: %s", strerror(errno));
 					return 0;
 				}
 			}
 		}
 		else
 		{
-			LOG_DEBUG(ELOG_KEY, "[runtime] attach to share memory succeed");
+			LOG_DEBUG(ELOG_KEY, "[system] attach to share memory succeed");
 		}
 	}
 
-	LOG_DEBUG(ELOG_KEY, "[runtime] alloc %lld bytes of share memory succeed", mSize);
+	LOG_DEBUG(ELOG_KEY, "[system] alloc %lld bytes of share memory succeed", mSize);
 	
 	char *pAddr = (char *)shmat(mShmId, NULL, 0);
     if (pAddr == (char *)-1) 
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] shmat failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[system] shmat failed: %s", strerror(errno));
 		return 0;
     }
 
@@ -131,13 +132,13 @@ char *wShm::CreateShm()
 
 char *wShm::AttachShm()
 {
-	LOG_DEBUG(ELOG_KEY, "[runtime] try to attach %lld bytes of share memory", mSize);
+	LOG_DEBUG(ELOG_KEY, "[system] try to attach %lld bytes of share memory", mSize);
 	
 	//把需要申请共享内存的key值申请出来
 	mKey = ftok(mFilename, mPipeId);
 	if (mKey < 0) 
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] create memory (ftok) failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[system] create memory (ftok) failed: %s", strerror(errno));
 		return 0;
 	}
 
@@ -145,14 +146,14 @@ char *wShm::AttachShm()
 	int mShmId = shmget(mKey, mSize, 0666);
 	if(mShmId < 0) 
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] attach to share memory failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[system] attach to share memory failed: %s", strerror(errno));
 		return 0;
 	}
 	
 	char *pAddr = (char *)shmat(mShmId, NULL, 0);
     if (pAddr == (char *) -1) 
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] shmat() failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[system] shmat() failed: %s", strerror(errno));
 		return 0;
     }
 	
@@ -165,7 +166,7 @@ char *wShm::AllocShm(size_t size)
 {
 	if (mShmhead == NULL)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] shm need exec function CreateShm or AttachShm first");
+		LOG_ERROR(ELOG_KEY, "[system] shm need exec function CreateShm or AttachShm first");
 		return NULL;
 	}
 
@@ -176,30 +177,30 @@ char *wShm::AllocShm(size_t size)
 		memset(pAddr, 0, size);
 		return pAddr;
 	}
-	LOG_ERROR(ELOG_KEY, "[runtime] alloc(%d) shm failed,shm space not enough, real free(%d)", size, mShmhead->mEnd - mShmhead->mUsedOff);
+	LOG_ERROR(ELOG_KEY, "[system] alloc(%d) shm failed,shm space not enough, real free(%d)", size, mShmhead->mEnd - mShmhead->mUsedOff);
 	return NULL;
 }
 
 void wShm::FreeShm()
 {
-	LOG_DEBUG(ELOG_KEY, "[runtime] free %lld bytes of share memory", mSize);
+	LOG_DEBUG(ELOG_KEY, "[system] free %lld bytes of share memory", mSize);
 	
 	if(mShmhead == NULL || mShmhead->mStart == NULL)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] free shm failed: shm head illegal");
+		LOG_ERROR(ELOG_KEY, "[system] free shm failed: shm head illegal");
 		return;
 	}
 
 	//对共享操作结束，分离该shmid_ds与该进程关联计数器
     if (shmdt(mShmhead->mStart) == -1)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] shmdt(%d) failed", mShmhead->mStart);
+		LOG_ERROR(ELOG_KEY, "[system] shmdt(%d) failed", mShmhead->mStart);
     }
 	
 	//删除该shmid_ds共享存储段（全部进程结束才会真正删除）
     if (shmctl(mShmId, IPC_RMID, NULL) == -1)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] remove share memory failed: %s", strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[system] remove share memory failed: %s", strerror(errno));
     }
 	//unlink(mFilename);
 }

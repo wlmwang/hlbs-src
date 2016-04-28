@@ -24,20 +24,6 @@ void wTcpTask::Initialize()
 	mHeartbeatTimes = 0;
 }
 
-int wTcpTask::Heartbeat()
-{
-	wCommand vCmd;
-	SyncSend((char*)&vCmd, sizeof(vCmd));
-
-	mHeartbeatTimes++;
-	return -1;
-}
-
-int wTcpTask::HeartbeatOutTimes()
-{
-	return mHeartbeatTimes > 10;
-}
-
 int wTcpTask::VerifyConn()
 {
 	return 0;

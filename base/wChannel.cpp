@@ -19,6 +19,7 @@ void wChannel::Initialize()
 	mCh[0] = mCh[1] = FD_UNKNOWN;
 	mIOType = TYPE_SOCK;
 	mTaskType = TASK_UNIX;
+    mSockType = SOCK_CONNECT;   //都标识为connect socket，方便wServer使用tcp socket处理方式处理Unix socket
 }
 
 void wChannel::Close()
@@ -26,12 +27,12 @@ void wChannel::Close()
     if (mCh[0] == FD_UNKNOWN || close(mCh[0]) == -1) 
     {
         mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed:%s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] close() channel failed:%s", strerror(mErr));
     }
     if (mCh[1] == FD_UNKNOWN || close(mCh[1]) == -1) 
     {
         mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] close() channel failed:%s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] close() channel failed:%s", strerror(mErr));
     }
 	mFD = FD_UNKNOWN;
 }
@@ -40,7 +41,7 @@ int &wChannel::operator[](int i)
 {
 	if (i > 1)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] leap the pale channel");
+		LOG_ERROR(ELOG_KEY, "[system] leap the pale channel");
 	}
 	return mCh[i];
 }
@@ -50,7 +51,7 @@ int wChannel::Open()
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, mCh) == -1)
     {
         mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] socketpair failed:%s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] socketpair failed:%s", strerror(mErr));
     	return -1;
     }
 	
@@ -58,14 +59,14 @@ int wChannel::Open()
     if (fcntl(mCh[0], F_SETFL, fcntl(mCh[0], F_GETFL) | O_NONBLOCK) == -1)
     {
         mErr = errno;
-    	LOG_ERROR(ELOG_KEY, "[runtime] fcntl(O_NONBLOCK) failed:%s", strerror(mErr));
+    	LOG_ERROR(ELOG_KEY, "[system] fcntl(O_NONBLOCK) failed:%s", strerror(mErr));
     	Close();
     	return -1;
     }
     if (fcntl(mCh[1], F_SETFL, fcntl(mCh[1], F_GETFL) | O_NONBLOCK) == -1)
     {
         mErr = errno;
-    	LOG_ERROR(ELOG_KEY, "[runtime] fcntl(O_NONBLOCK) failed:%s", strerror(mErr));
+    	LOG_ERROR(ELOG_KEY, "[system] fcntl(O_NONBLOCK) failed:%s", strerror(mErr));
     	Close();
     	return -1;
     }
@@ -74,12 +75,12 @@ int wChannel::Open()
     if (fcntl(mCh[0], F_SETFD, FD_CLOEXEC) == -1) 
     {
         mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] fcntl(FD_CLOEXEC) failed:%s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] fcntl(FD_CLOEXEC) failed:%s", strerror(mErr));
     }
     if (fcntl(mCh[1], F_SETFD, FD_CLOEXEC) == -1) 
     {
         mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[runtime] fcntl(FD_CLOEXEC) failed:%s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] fcntl(FD_CLOEXEC) failed:%s", strerror(mErr));
     }
 	
 	mFD = mCh[1];	//ch[1]被监听（可读事件）
@@ -107,10 +108,10 @@ ssize_t wChannel::SendBytes(char *vArray, size_t vLen)
 	
     if (pChannel->mFD == -1) 
     {
-        msg.msg_control = NULL;		
-        msg.msg_controllen = 0;		
-    } 
-    else 
+        msg.msg_control = NULL;
+        msg.msg_controllen = 0;
+    }
+    else
     {
         msg.msg_control = (caddr_t) &cmsg;	//typedef void* caddr_t;
         msg.msg_controllen = sizeof(cmsg);
@@ -155,11 +156,11 @@ ssize_t wChannel::SendBytes(char *vArray, size_t vLen)
             return 0;
         }
 		
-		LOG_ERROR(ELOG_KEY, "[runtime] sendmsg() failed:%s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] sendmsg() failed:%s", strerror(mErr));
         return -1;
     }
 
-	LOG_DEBUG(ELOG_KEY, "[runtime] sendmsg() success, data len: %d, real send len %d", n, vLen);
+	LOG_DEBUG(ELOG_KEY, "[system] sendmsg() success, data len: %d, real send len %d", n, vLen);
     return n;
 }
 
@@ -199,42 +200,43 @@ ssize_t wChannel::RecvBytes(char *vArray, size_t vLen)
             return EAGAIN;
         }
 		
-		LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() failed:%s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] recvmsg() failed:%s", strerror(mErr));
         return -1;
     }
 
     if (n == 0) 
     {
-		LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() returned zero");
+		LOG_ERROR(ELOG_KEY, "[system] recvmsg() returned zero");
         return -1;
     }
-
-    //获取文件描述符
-    ChannelReqCmd_s *pChannel = (ChannelReqCmd_s*) (vArray + sizeof(int));
-
-    LOG_DEBUG(ELOG_KEY, "[runtime] recvmsg() success, buf len %d, real reveive len %d, head len %d", vLen , n, *(int*)vArray);
-    LOG_DEBUG(ELOG_KEY, "[runtime] receive channel success cmd(%d) fd(%d)", (int) pChannel->GetCmd(), pChannel->mFD);
-
-    if (pChannel->GetCmd() == CMD_CHANNEL_REQ)	//channel请求 
-    {
-        if (cmsg.cm.cmsg_len < (socklen_t) CMSG_LEN(sizeof(int))) 
-        {
-			LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() returned too small ancillary data");
-            return -1;
-        }
-
-        if (cmsg.cm.cmsg_level != SOL_SOCKET || cmsg.cm.cmsg_type != SCM_RIGHTS)
-        {
-			LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() returned invalid ancillary data");
-            return -1;
-        }
-		
-        memcpy(&pChannel->mFD, CMSG_DATA(&cmsg.cm), sizeof(int));	//文件描述符
-    }
-	
+    
     if (msg.msg_flags & (MSG_TRUNC|MSG_CTRUNC)) 
     {
-		LOG_ERROR(ELOG_KEY, "[runtime] recvmsg() truncated data");
+        LOG_ERROR(ELOG_KEY, "[system] recvmsg() truncated data");
+    }
+
+    //是否是打开fd文件描述符channel
+    int iChLen = sizeof(struct ChannelReqOpen_t);
+
+    if (n == iChLen + sizeof(int))
+    {
+        struct ChannelReqOpen_t *pChannel = (struct ChannelReqOpen_t*) (vArray + sizeof(int));        
+        if (pChannel->GetCmd() == CMD_CHANNEL_REQ && pChannel->GetPara() == CHANNEL_REQ_OPEN)
+        {
+            if (cmsg.cm.cmsg_len < (socklen_t) CMSG_LEN(sizeof(int))) 
+            {
+                LOG_ERROR(ELOG_KEY, "[system] recvmsg() returned too small ancillary data");
+                return -1;
+            }
+
+            if (cmsg.cm.cmsg_level != SOL_SOCKET || cmsg.cm.cmsg_type != SCM_RIGHTS)
+            {
+                LOG_ERROR(ELOG_KEY, "[system] recvmsg() returned invalid ancillary data");
+                return -1;
+            }
+            
+            memcpy(&pChannel->mFD, CMSG_DATA(&cmsg.cm), sizeof(int));   //文件描述符
+        }
     }
 	
     return n;

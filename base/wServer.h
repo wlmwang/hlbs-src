@@ -4,8 +4,8 @@
  * Copyright (C) Hupu, Inc.
  */
 
-#ifndef _W_TCP_SERVER_H_
-#define _W_TCP_SERVER_H_
+#ifndef _W_SERVER_H_
+#define _W_SERVER_H_
 
 #include <algorithm>
 #include <vector>
@@ -27,12 +27,12 @@
 #include "wChannelTask.h"
 
 template <typename T>
-class wTcpServer: public wSingleton<T>
+class wServer: public wSingleton<T>
 {
 	public:
-		wTcpServer(string ServerName);
+		wServer(string ServerName);
 		void Initialize();
-		virtual ~wTcpServer();
+		virtual ~wServer();
 
 		void Final();
 		
@@ -57,7 +57,8 @@ class wTcpServer: public wSingleton<T>
 		 */
 		void PrepareMaster(string sIpAddr ,unsigned int nPort);	
 		void WorkerStart(wWorker *pWorker = NULL, bool bDaemon = true);
-		int AcceptMutex();
+		int AcceptMutexLock();
+		int AcceptMutexUnlock();
 		virtual void HandleSignal();
 		void WorkerExit();
 		
@@ -115,7 +116,7 @@ class wTcpServer: public wSingleton<T>
 		SERVER_STATUS mStatus;	//服务器当前状态
 		unsigned long long mLastTicker;	//服务器当前时间
 		wTimer mCheckTimer;
-		bool mIsCheckTimer;
+		bool mIsCheckTimer;		//心跳开关，默认关闭。强烈建议移动互联网环境下打开，而非依赖keepalive机制保活
 		
 		//epoll
 		int mEpollFD;
@@ -138,6 +139,6 @@ class wTcpServer: public wSingleton<T>
 		int mExiting;
 };
 
-#include "wTcpServer.inl"
+#include "wServer.inl"
 
 #endif

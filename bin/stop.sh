@@ -8,14 +8,13 @@ kill_proc()
 	for pid  in $pids 
 	do 
 		echo -n "$pid "
-		kill -9 $pid 
+		kill -15 $pid 
 	done 
 	echo
 }
 
-#kill_proc routersvrd
-#kill_proc agentsvrd
-kill_proc HLFS
+kill_proc routersvrd
+kill_proc agentsvrd
 
 echo "delete share memory" 
 shmid=`ipcs -m | grep -w $USER | awk '$6==0{printf " -m  " $2  " "}'` 

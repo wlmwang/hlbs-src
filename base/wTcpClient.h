@@ -19,9 +19,10 @@
 #include "wIO.h"
 #include "wTask.h"
 #include "wTcpTask.h"
+#include "wNoncopyable.h"
 
 template <typename T>
-class wTcpClient
+class wTcpClient : private wNoncopyable
 {
 	public:
         wTcpClient(int iType, string sClientName);
@@ -37,13 +38,15 @@ class wTcpClient
 		int ReConnectToServer();
 		
 		void CheckTimer();
-		void CheckReconnect();
-		
+		virtual void CheckTimeout();
+		virtual void CheckReconnect();
+
+		bool &IsCheckTimer() { return mIsCheckTimer;}
 		string &ClientName() { return mClientName; }
 		bool IsRunning() { return mStatus = CLIENT_RUNNING; }
 		CLIENT_STATUS &Status() { return mStatus; }
 		int Type() { return mType; }
-		
+
 		virtual wTcpTask* NewTcpTask(wIO *pIO);
 		wTcpTask* TcpTask() { return mTcpTask; }
 		
@@ -54,9 +57,11 @@ class wTcpClient
 		CLIENT_STATUS mStatus;
 
 		unsigned long long mLastTicker;
+		wTimer mCheckTimer;
 		wTimer mReconnectTimer;
 		int mReconnectTimes;
 		bool mIsCheckTimer;
+		bool mIsReconnect;
 
 		int mErr;
 };

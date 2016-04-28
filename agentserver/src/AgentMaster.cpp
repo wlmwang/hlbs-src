@@ -33,15 +33,15 @@ void AgentMaster::PrepareRun()
 
     //config、server对象
     mConfig = AgentConfig::Instance();
-    if(mConfig == NULL) 
+    if (mConfig == NULL) 
     {
-        LOG_ERROR(ELOG_KEY, "[startup] Get AgentConfig instance failed");
+        LOG_ERROR(ELOG_KEY, "[system] Get AgentConfig instance failed");
         exit(1);
     }
     mServer = AgentServer::Instance();
-    if(mServer == NULL) 
+    if (mServer == NULL) 
     {
-        LOG_ERROR(ELOG_KEY, "[startup] Get AgentServer instance failed");
+        LOG_ERROR(ELOG_KEY, "[system] Get AgentServer instance failed");
         exit(1);
     }
     
@@ -65,8 +65,10 @@ void AgentMaster::PrepareRun()
         p = Cpystrn(p, (u_char *) mConfig->mProcTitle->mArgv[i], size);
     }
 
-	mConfig->mProcTitle->Setproctitle(mTitle, "HLFS: ");
+	mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");
 
+    mPidFile.FileName() = "../log/hlbs.pid";
+    
     //准备工作
     mServer->PrepareStart(mConfig->mIPAddr, mConfig->mPort);
 }
@@ -74,7 +76,5 @@ void AgentMaster::PrepareRun()
 void AgentMaster::Run()
 {
     //服务器开始运行
-    LOG_DEBUG(ELOG_KEY, "[startup] AgentServer start succeed");
-
     mServer->Start();
 }

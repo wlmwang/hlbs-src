@@ -27,12 +27,12 @@ int wShmtx::Create(wShm *pShm, int iSpin)
 	char *pAddr = pShm->AllocShm(sizeof(wSem));
 	if (pAddr == NULL)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] shm alloc failed for shmtx: %d", sizeof(wSem));
+		LOG_ERROR(ELOG_KEY, "[system] shm alloc failed for shmtx: %d", sizeof(wSem));
 		return -1;
 	}
 	mSem = (wSem *) pAddr;
 	mSpin = iSpin;
-	return 0;
+	return mSem->Initialize();
 }
 
 int wShmtx::Lock()
@@ -42,6 +42,15 @@ int wShmtx::Lock()
 		return -1;
 	}
 	return mSem->Wait();
+}
+
+int wShmtx::Unlock()
+{
+	if (mSem == NULL)
+	{
+		return -1;
+	}
+	return mSem->Post();
 }
 
 int wShmtx::TryLock()

@@ -38,14 +38,14 @@ void RouterConfig::GetBaseConf()
 	bool bLoadOK = mDoc->LoadFile(mBaseConfFile);
 	if (!bLoadOK)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Load config file(conf.xml) failed");
+		LOG_ERROR(ELOG_KEY, "[config] Load config file(conf.xml) failed");
 		exit(2);
 	}
 
 	TiXmlElement *pRoot = mDoc->FirstChildElement();
 	if (NULL == pRoot)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Read root from config file(conf.xml) failed");
+		LOG_ERROR(ELOG_KEY, "[config] Read root from config file(conf.xml) failed");
 		exit(2);
 	}
 	
@@ -69,13 +69,13 @@ void RouterConfig::GetBaseConf()
 			}
 			else
 			{
-				LOG_ERROR(ELOG_KEY, "[startup] Get log config from conf.xml error");
+				LOG_ERROR(ELOG_KEY, "[config] Get log config from conf.xml error");
 			}
 		}
 	}
 	else
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Get log config from conf.xml failed");
+		LOG_ERROR(ELOG_KEY, "[config] Get log config from conf.xml failed");
 		exit(2);
 	}
 
@@ -93,14 +93,14 @@ void RouterConfig::GetBaseConf()
 		}
 		else
 		{
-			LOG_ERROR(ELOG_KEY, "[startup] Get SERVER ip or port from conf.xml failed");
+			LOG_ERROR(ELOG_KEY, "[config] Get SERVER ip or port from conf.xml failed");
 		}
 		mBacklog = szBacklog != NULL ? atoi(szBacklog): mBacklog;
 		mWorkers = szWorkers != NULL ? atoi(szWorkers): mWorkers;
 	}
 	else
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Get SERVER node from conf.xml failed");
+		LOG_ERROR(ELOG_KEY, "[config] Get SERVER node from conf.xml failed");
 		exit(2);
 	}
 }
@@ -110,7 +110,7 @@ void RouterConfig::GetSvrConf()
 	bool bLoadOK = mDoc->LoadFile(mSvrConfFile);
 	if (!bLoadOK)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Load config file(svr.xml) failed");
+		LOG_ERROR(ELOG_KEY, "[svr] Load config file(svr.xml) failed");
 		exit(2);
 	}
 
@@ -150,13 +150,13 @@ void RouterConfig::GetSvrConf()
 			}
 			else
 			{
-				LOG_ERROR("svr", "[startup] Parse svr config from svr.xml occur error: line(%d)!", i);
+				LOG_ERROR(ELOG_KEY, "[svr] Parse svr config from svr.xml occur error: line(%d)!", i);
 			}
 		}
 	}
 	else
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Get SVRS node from svr.xml failed");
+		LOG_ERROR(ELOG_KEY, "[svr] Get SVRS node from svr.xml failed");
 		exit(2);
 	}
 
@@ -169,7 +169,7 @@ int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 	bool bLoadOK = mDoc->LoadFile(mSvrConfFile);
 	if (!bLoadOK)
 	{
-		LOG_ERROR(ELOG_KEY, "[modify svr] Load config file(svr.xml) failed");
+		LOG_ERROR(ELOG_KEY, "[modify-svr] Load config file(svr.xml) failed");
 		return -1;
 	}
 
@@ -218,7 +218,7 @@ int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 			}
 			else
 			{
-				LOG_ERROR("svr", "[modify svr] Parse svr config from svr.xml occur error: line(%d)!", i);
+				LOG_ERROR(ELOG_KEY, "[modify-svr] Parse svr config from svr.xml occur error: line(%d)!", i);
 			}
 		}
 
@@ -226,7 +226,7 @@ int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 	}
 	else
 	{
-		LOG_ERROR(ELOG_KEY, "[modify svr] Get SVRS node from svr.xml failed");
+		LOG_ERROR(ELOG_KEY, "[modify-svr] Get SVRS node from svr.xml failed");
 		return -1;
 	}
 	return j;
@@ -260,7 +260,7 @@ void RouterConfig::GetQosConf()
 	bool bLoadOK = mDoc->LoadFile(mQosConfFile);
 	if (!bLoadOK)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Load config file(qos.xml) failed");
+		LOG_ERROR(ELOG_KEY, "[qos] Load config file(qos.xml) failed");
 		exit(2);
 	}
 	
@@ -362,31 +362,31 @@ void RouterConfig::GetQosConf()
 
 	if(!(mSvrQos->mReqCfg.mReqExtendRate > 0.001 && mSvrQos->mReqCfg.mReqExtendRate < 101))
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Init invalid req_extend_rate[%f]  !((ext > 0.001) && (ext < 101))", mSvrQos->mReqCfg.mReqExtendRate);
+		LOG_ERROR(ELOG_KEY, "[qos] Init invalid req_extend_rate[%f]  !((ext > 0.001) && (ext < 101))", mSvrQos->mReqCfg.mReqExtendRate);
 		exit(2);
 	}
 
 	if (mSvrQos->mReqCfg.mReqErrMin >= 1)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Init invalid _req_err_min[%f]  _qos_req_cfg._req_err_min > 1", mSvrQos->mReqCfg.mReqErrMin);
+		LOG_ERROR(ELOG_KEY, "[qos] Init invalid _req_err_min[%f]  _qos_req_cfg._req_err_min > 1", mSvrQos->mReqCfg.mReqErrMin);
 		exit(2);
 	}
 
 	if (mSvrQos->mDownCfg.mPossbileDownErrRate > 1 || mSvrQos->mDownCfg.mPossbileDownErrRate < 0.01)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Init invalid err_rate_to_def_possible_down[%f] > 1 or < _req_min[%f]", mSvrQos->mReqCfg.mReqErrMin, mSvrQos->mDownCfg.mPossbileDownErrRate);
+		LOG_ERROR(ELOG_KEY, "[qos] Init invalid err_rate_to_def_possible_down[%f] > 1 or < _req_min[%f]", mSvrQos->mReqCfg.mReqErrMin, mSvrQos->mDownCfg.mPossbileDownErrRate);
 		exit(2);
 	}
 
 	if (mSvrQos->mDownCfg.mProbeTimes < 3)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Init invalid continuous_err_req_count_to_def_possible_down[%d] <3", mSvrQos->mDownCfg.mProbeTimes);
+		LOG_ERROR(ELOG_KEY, "[qos] Init invalid continuous_err_req_count_to_def_possible_down[%d] <3", mSvrQos->mDownCfg.mProbeTimes);
 		exit(2);
 	}
 
 	if (mSvrQos->mReqCfg.mRebuildTm < 3)
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Init invalid rebuildtm[%d] < 3", mSvrQos->mReqCfg.mRebuildTm);
+		LOG_ERROR(ELOG_KEY, "[qos] Init invalid rebuildtm[%d] < 3", mSvrQos->mReqCfg.mRebuildTm);
 		exit(2);
 	}
 	

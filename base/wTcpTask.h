@@ -22,9 +22,6 @@ class wTcpTask : public wTask
 		virtual int VerifyConn();	//验证接收到连接
 		virtual int Verify();		//发送连接验证请求
 
-		virtual int Heartbeat();
-		virtual int HeartbeatOutTimes();
-				
 		int ConnType() { return mConnType; }
 	protected:
 		int mConnType; //客户端类型

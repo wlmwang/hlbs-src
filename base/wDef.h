@@ -15,6 +15,21 @@
 #define MAX_NAME_LEN 32	//名字的最大长度
 #define MAX_IP_LEN 16	//最长的IP地址字符串长度
 
+#define LISTEN_BACKLOG	511
+#define FD_UNKNOWN	-1
+
+//保活间隔时间 & 心跳
+#define KEEPALIVE_TIME 3000 /* 1*1000 */
+#define KEEPALIVE_CNT 5
+
+//超时时间
+#define WAITRES_TIME 30000 /* 30*1000 */
+
+//socket err
+#define ERR_TIMEO -4	//connect连接超时
+#define ERR_CLOSED -99	//socket对端close
+#define ERR_MSGLEN -98	//接受消息长度不合法（自定义"task"层协议）
+
 #define MAX_PACKAGE_LEN 131072	/* 128k */
 
 //客户端消息主体大小限制
@@ -30,17 +45,6 @@
 
 #define MEM_POOL_MAX 16777216 /* 16m */
 
-//心跳包间隔时间
-#define KEEPALIVE_TIME 3000 /* 3*1000 */
-
-//服务器检测心跳时间
-#define CHECK_CLIENT_TIME 5000 /* 5*1000 */
-
-//超时时间
-#define WAITRES_TIME 30000 /* 30*1000 */
-
-#define LISTEN_BACKLOG	511
-#define FD_UNKNOWN	-1
 #define SETPROCTITLE_PAD '\0'
 
 #define LF (u_char) '\n'
@@ -56,8 +60,10 @@
 #define PROCESS_WORKER     3 	//工作进程
 
 #define PROCESS_NORESPAWN     -1	//子进程退出时，父进程不再创建
-#define PROCESS_JUST_SPAWN    -2	//正在重启
-#define PROCESS_RESPAWN       -3	//子进程异常退出时，master会重新创建它
+#define PROCESS_JUST_SPAWN    -2	//子进程正在重启，该进程创建之后，再次退出时，父进程不再创建
+#define PROCESS_RESPAWN       -3	//子进程异常退出时，父进程会重新创建它
+#define PROCESS_JUST_RESPAWN  -4	//子进程正在重启，该进程创建之后，再次退出时，父进程会重新创建它
+#define PROCESS_DETACHED      -5    //分离进程（热代码替换）
 
 #define MAX_PROCESSES         1024
 
@@ -103,13 +109,8 @@ enum TASK_STATUS
 #define USER  "nobody"
 #define GROUP  "nobody"
 
-/**
- * 框架用于一对多项目时，目录定义放入具体项目中定义
- */
-//#define PREFIX  "/usr/local/disvr/server"
-//#define CONF_PREFIX  "../config/"
-#define PID_PATH  "../log/disvr.pid"
-#define LOCK_PATH  "../log/disvr.lock"
-#define WAIT_MUTEX	"../log/wait_mutex.bin"	//worker惊群锁
+#define PID_PATH  "../log/master.pid"
+#define LOCK_PATH  "../log/master.lock"
+#define ACCEPT_MUTEX	"../log/accept.mutex"	//worker惊群锁
 
 #endif

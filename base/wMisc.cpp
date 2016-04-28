@@ -111,17 +111,21 @@ int Ngcd(int *arr, int n)
 int InitDaemon(const char *filename)
 {
 	//打开需要锁定的文件
+	if (filename == NULL)
+	{
+		filename = LOCK_PATH;
+	}
 	int lock_fd = open(filename, O_RDWR|O_CREAT, 0640);
 	if (lock_fd < 0) 
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Open lock file failed when init daemon");
+		LOG_ERROR(ELOG_KEY, "[system] Open lock file failed when init daemon");
 		return -1;
 	}
 	//独占式锁定文件，防止有相同程序的进程已经启动
 	int ret = flock(lock_fd, LOCK_EX | LOCK_NB);
 	if (ret < 0) 
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Lock file failed, server is already running");
+		LOG_ERROR(ELOG_KEY, "[system] Lock file failed, server is already running");
 		return -1;
 	}
 
@@ -138,7 +142,6 @@ int InitDaemon(const char *filename)
 
 	//忽略以下信号
 	wSignal stSig(SIG_IGN);
-	
 	stSig.AddSigno(SIGINT);
 	stSig.AddSigno(SIGHUP);
 	stSig.AddSigno(SIGQUIT);
@@ -154,11 +157,11 @@ int InitDaemon(const char *filename)
 	if (chdir(dir_path)) 
 	{
 		int err = errno;
-		LOG_ERROR(ELOG_KEY, "[startup] Can not change run dir to %s , init daemon failed: %s", dir_path, strerror(err));
+		LOG_ERROR(ELOG_KEY, "[system] Can not change run dir to %s , init daemon failed: %s", dir_path, strerror(err));
 		return -1;		
 	}
 	umask(0);
 	
-	unlink(filename);
+	//unlink(filename);
 	return 0;
 }

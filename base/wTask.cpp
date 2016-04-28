@@ -46,9 +46,8 @@ int wTask::TaskRecv()
 {
 	int iRecvLen = mIO->RecvBytes(mRecvMsgBuff + mRecvBytes, sizeof(mRecvMsgBuff) - mRecvBytes);
 	
-	if(iRecvLen <= 0)
+	if (iRecvLen <= 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] recv data invalid len: %d, fd(%d)", iRecvLen, mIO->FD());
 		return iRecvLen;	
 	}
 	mRecvBytes += iRecvLen;	
@@ -57,7 +56,7 @@ int wTask::TaskRecv()
 	int iBuffMsgLen = mRecvBytes;	//消息总字节数
 	int iMsgLen = 0;
 	
-	while(true)
+	while (true)
 	{
 		if(iBuffMsgLen < sizeof(int))
 		{
@@ -69,8 +68,8 @@ int wTask::TaskRecv()
 		//判断消息长度
 		if(iMsgLen < MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN )
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] recv message invalid len: %d , fd(%d)", iMsgLen, mIO->FD());
-			return -1;
+			LOG_ERROR(ELOG_KEY, "[system] recv message invalid len: %d , fd(%d)", iMsgLen, mIO->FD());
+			return ERR_MSGLEN;
 		}
 
 		iBuffMsgLen -= iMsgLen + sizeof(int);	//buf中除去当前完整消息剩余数据长度
@@ -83,7 +82,7 @@ int wTask::TaskRecv()
 			iBuffMsgLen += iMsgLen + sizeof(int);
 			pBuffer -= iMsgLen + sizeof(int);
 			
-			LOG_DEBUG(ELOG_KEY, "[runtime] recv a part of message: real len = %d, now len = %d", iMsgLen, iBuffMsgLen);
+			LOG_DEBUG(ELOG_KEY, "[system] recv a part of message: real len = %d, now len = %d", iMsgLen, iBuffMsgLen);
 			break;
 		}
 		
@@ -100,8 +99,8 @@ int wTask::TaskRecv()
 		//判断剩余的长度
 		if(iBuffMsgLen < 0)
 		{
-			LOG_ERROR(ELOG_KEY, "[runtime] the last msg len %d is impossible fd(%d)", iBuffMsgLen, mIO->FD());
-			return -1;
+			LOG_ERROR(ELOG_KEY, "[system] the last msg len %d is impossible fd(%d)", iBuffMsgLen, mIO->FD());
+			return ERR_MSGLEN;
 		}
 		
 		mRecvBytes = iBuffMsgLen;
@@ -130,7 +129,7 @@ int wTask::TaskSend()
 		}
 		mSendBytes += iSendLen;
 		
-		LOG_DEBUG(ELOG_KEY, "[runtime] send message len: %d, fd(%d)", iMsgLen, mIO->FD());
+		LOG_DEBUG(ELOG_KEY, "[system] send message len: %d, fd(%d)", iMsgLen, mIO->FD());
 	}
 	
 	if(mSendBytes > 0)
@@ -145,16 +144,16 @@ int wTask::TaskSend()
 int wTask::SendToBuf(const char *pCmd, int iLen)
 {
 	//判断消息长度
-	if(iLen <= MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN )
+	if(iLen <= MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] write message invalid len %d, fd(%d)", iLen, mIO->FD());
+		LOG_ERROR(ELOG_KEY, "[system] write message invalid len %d, fd(%d)", iLen, mIO->FD());
 		return -1;
 	}
 	
 	int iMsgLen = iLen + sizeof(int);
 	if(sizeof(mSendMsgBuff) - mSendWrite + mSendBytes < iMsgLen) //剩余空间不足
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] send buf not enough. send(%d) need(%d)", sizeof(mSendMsgBuff) - mSendWrite + mSendBytes, iMsgLen);
+		LOG_ERROR(ELOG_KEY, "[system] send buf not enough. send(%d) need(%d)", sizeof(mSendMsgBuff) - mSendWrite + mSendBytes, iMsgLen);
 		return -2;
 	}
 	else if(sizeof(mSendMsgBuff) - mSendWrite < iMsgLen) //写入空间不足
@@ -168,7 +167,7 @@ int wTask::SendToBuf(const char *pCmd, int iLen)
 	memcpy(mSendMsgBuff + mSendWrite + sizeof(int), pCmd, iLen);
 	mSendWrite += iMsgLen;
 
-	LOG_DEBUG(ELOG_KEY, "[runtime] write message to buf(%d - %d), len(%d)", mSendWrite, mSendBytes, iLen);
+	LOG_DEBUG(ELOG_KEY, "[system] write message to buf(%d - %d), len(%d)", mSendWrite, mSendBytes, iLen);
 
 	return mSendWrite - mSendBytes;
 }
@@ -178,7 +177,7 @@ int wTask::SyncSend(const char *pCmd, int iLen)
 	//判断消息长度
 	if(iLen < MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN )
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] send message invalid len %d, fd(%d)", iLen, mIO->FD());
+		LOG_ERROR(ELOG_KEY, "[system] send message invalid len %d, fd(%d)", iLen, mIO->FD());
 		return -1;
 	}
 	
@@ -229,26 +228,34 @@ int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 			continue;
 		}
 		break;
-	} while(true);
+	} while (true);
 	
 	iMsgLen = *(int *)mTmpRecvMsgBuff;
-	if(iMsgLen < MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN)
+	if (iMsgLen < MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN)
 	{
-		LOG_ERROR(ELOG_KEY, "[runtime] sync recv message invalid len: %d, fd(%d)", iMsgLen, mIO->FD());
-		return -1;
+		LOG_ERROR(ELOG_KEY, "[system] sync recv message invalid len: %d, fd(%d)", iMsgLen, mIO->FD());
+		return ERR_MSGLEN;
 	}
 
 	if (iMsgLen > iRecvLen)	//消息不完整
 	{
-		LOG_DEBUG(ELOG_KEY, "[runtime] sync recv a part of message: real len = %d, now len = %d, call len = %d", iMsgLen, iRecvLen, iLen);
-		return -1;
+		LOG_DEBUG(ELOG_KEY, "[system] sync recv a part of message: real len = %d, now len = %d, call len = %d", iMsgLen, iRecvLen, iLen);
+		return ERR_MSGLEN;
 	}
 
 	if (iMsgLen > iLen)
 	{
-		LOG_DEBUG(ELOG_KEY, "[runtime] sync recv error buffer len, it\'s to short!");
-		return -1;
+		LOG_DEBUG(ELOG_KEY, "[system] sync recv error buffer len, it\'s to short!");
+		return ERR_MSGLEN;
 	}
 	memcpy(pCmd, mTmpRecvMsgBuff + sizeof(int), iLen);
 	return iRecvLen - sizeof(int);
+}
+
+int wTask::Heartbeat()
+{
+	mHeartbeatTimes++;
+	wCommand vCmd;
+	int iRet = SyncSend((char*)&vCmd, sizeof(vCmd));
+	return iRet;
 }

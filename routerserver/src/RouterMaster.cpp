@@ -33,17 +33,18 @@ void RouterMaster::PrepareRun()
 
     //config、server对象
     mConfig = RouterConfig::Instance();
-    if(mConfig == NULL) 
+    if (mConfig == NULL) 
     {
-        LOG_ERROR(ELOG_KEY, "[startup] Get RouterConfig instance failed");
+        LOG_ERROR(ELOG_KEY, "[system] RouterConfig instance failed");
         exit(2);
     }
     mServer = RouterServer::Instance();
-    if(mServer == NULL) 
+    if (mServer == NULL) 
     {
-        LOG_ERROR(ELOG_KEY, "[startup] Get RouterServer instance failed");
+        LOG_ERROR(ELOG_KEY, "[system] RouterServer instance failed");
         exit(2);
     }
+    ReconfigMaster();
 
     //进程标题
     size = strlen(sProcessTitle) + 1;
@@ -60,22 +61,32 @@ void RouterMaster::PrepareRun()
         *p++ = ' ';
         p = Cpystrn(p, (u_char *) mConfig->mProcTitle->mArgv[i], size);
     }
-	mConfig->mProcTitle->Setproctitle(mTitle, "HLFS: ");
+	mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");
 
     //pid文件名
-    mPidFile.FileName() = LOCK_PATH;
-
-	//worker进程个数
-	//mWorkerNum = 4;
+    mPidFile.FileName() = "../log/hlbs.pid";
+    
+    //mWorkerNum = 4;   //worker个数
     
     //准备工作（创建、绑定服务器Listen Socket）
     mServer->PrepareMaster(mConfig->mIPAddr, mConfig->mPort);
-
 }
 
 void RouterMaster::Run()
 {
 	//
+}
+
+void RouterMaster::ReconfigMaster()
+{
+    if (mConfig == NULL) 
+    {
+        LOG_ERROR(ELOG_KEY, "[system] RouterConfig instance failed");
+        return;
+    }
+    mConfig->GetBaseConf();
+    mConfig->GetSvrConf();
+    mConfig->GetQosConf();
 }
 
 wWorker* RouterMaster::NewWorker(int iSlot)

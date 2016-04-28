@@ -25,6 +25,7 @@ class RouterMaster : public wMaster<RouterMaster>
 		
 		virtual void PrepareRun();
 		virtual void Run();
+		virtual void ReconfigMaster();
 		
 		virtual wWorker* NewWorker(int iSlot = 0);
 	

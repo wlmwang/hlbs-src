@@ -37,13 +37,12 @@ class wWorker : public wNoncopyable
 		virtual void Close();
 
 		void InitWorker(int iWorkerNum = 0, wWorker **pWorkerPool = NULL, int iUseMutex = 1, wShm *pShmAddr = NULL, wShmtx *pMutex = NULL, int iDelay = 500);
-		void PrepareStart(int iSlot, int iType, void *pData);
+		void PrepareStart(int iSlot, int iType, const char *pTitle, void *pData);
 		void Start(bool bDaemon = true);
 
 		int InitChannel();
 	
 	public:
-		int mProcess;
 		pid_t mPid;
 		uid_t mUid;
 		gid_t mGid;
@@ -52,11 +51,12 @@ class wWorker : public wNoncopyable
 		char mWorkingDir[255];	//工作目录
 		
 		char *mName;	//进程名
-		void* mData;	//进程参数
+		void *mData;	//进程参数
 		int mDetached;	//是否已分离
 		int mExited;	//已退出 进程表mWorkerPool已回收
 		int mExiting;	//正在退出
 		int mRespawn;	//worker启动模式。退出是否重启
+		int mJustSpawn;
 		int mStat;		//waitpid子进程退出状态
 		
 		WORKER_STATUS mStatus;

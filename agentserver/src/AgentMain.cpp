@@ -9,8 +9,24 @@
 #include "AgentConfig.h"
 #include "AgentMaster.h"
 
-//工作目录
-#define PREFIX  "/usr/local/hlbs/agentserver/bin"
+void ServerExit()
+{
+	AgentConfig *pConfig = AgentConfig::Instance();
+	if (pConfig) 
+	{
+		SAFE_DELETE(pConfig);
+	}
+	AgentServer *pServer = AgentServer::Instance();
+	if (pServer)
+	{
+		SAFE_DELETE(pServer);
+	}
+	AgentMaster *pMaster = AgentMaster::Instance();
+	if (pMaster) 
+	{
+		SAFE_DELETE(pMaster);
+	}
+}
 
 int main(int argc, const char *argv[])
 {
@@ -18,13 +34,13 @@ int main(int argc, const char *argv[])
 	AgentConfig *pConfig = AgentConfig::Instance();
 	if(pConfig == NULL) 
 	{
-		cout << "[startup] Get AgentConfig instance failed" << endl;
-		exit(1);
+		cout << "[system] AgentConfig instance failed" << endl;
+		exit(2);
 	}
 	if (pConfig->GetOption(argc, argv) < 0)
 	{
-		cout << "[startup] Get Option failed" << endl;
-		exit(1);
+		cout << "[system] Command line Option failed" << endl;
+		exit(2);
 	}
 	pConfig->GetBaseConf();
 	pConfig->GetRouterConf();
@@ -33,10 +49,10 @@ int main(int argc, const char *argv[])
 	//daemon
 	if (pConfig->mDaemon == 1)
 	{
-		if (InitDaemon(LOCK_PATH) < 0)
+		if (InitDaemon("../log/hlbs.lock") < 0)
 		{
-			LOG_ERROR(ELOG_KEY, "[startup] Create daemon failed!");
-			exit(1);
+			LOG_ERROR(ELOG_KEY, "[system] Create daemon failed!");
+			exit(2);
 		}
 	}
 
@@ -44,9 +60,10 @@ int main(int argc, const char *argv[])
 	AgentMaster *pMaster = AgentMaster::Instance();
 	if(pMaster == NULL) 
 	{
-		LOG_ERROR(ELOG_KEY, "[startup] Get AgentMaster instance failed");
-		exit(1);
+		LOG_ERROR(ELOG_KEY, "[system] AgentMaster instance failed");
+		exit(2);
 	}
+	//atexit(ServerExit);
 
 	pMaster->PrepareStart();
 	pMaster->SingleStart();

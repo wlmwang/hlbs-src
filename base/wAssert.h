@@ -13,7 +13,7 @@
 #define W_ASSERT(a, b) \
 	if(!(a)) \
 	{  \
-		LOG_ERROR(ELOG_KEY, "ASSERT %s failed, %s, %s, %d", #a, __FILE__, __FUNCTION__, __LINE__); \
+		LOG_ERROR(ELOG_KEY, "[system] ASSERT %s failed, %s, %s, %d", #a, __FILE__, __FUNCTION__, __LINE__); \
 		b; \
 	}
 

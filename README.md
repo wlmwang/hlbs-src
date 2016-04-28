@@ -1,5 +1,6 @@
 #简介
-   该系统致力于为CGI在使用某一（GID、XID）Svr时，提供负载均衡与服务质量。为实现该目标，系统为所有Svr实现按类别（GID、XID）的动态负载均衡和过载保护功能。
+   该系统致力于为CGI在使用某一（GID、XID）Svr时，提供负载均衡与容错保护。
+   为实现该目标，系统为所有Svr实现按类别（GID、XID）的动态负载均衡和过载保护功能。
 
 #目标
 1）动态负载均衡：
@@ -12,55 +13,5 @@
 3）集中配置
    通过更新RouterSvr下svr.xml配置文件，集中进行管理所有后端Svr。
 
-
-#架构
-1）CGI使用步骤：
-a) CGI从AgentSvrd获取某一类(GID、XID)Svr服务的HOST/PORT。一般使用PHP扩展。
-b) 然后对该Svr的HOST/PORT进行直连访问。
-c) 访问结束后，CGI将本次访问结果（成功与否）、微妙时延上报至本地AgentSvrd（AgentSvrd需与CGI同处在同一台机器，即一一对应）。
-
-2）功能列表
-a) RouterSvrd
- - 接受并验证所有连接的AgentSvrd，记录日志中。
- - 对所有连接的AgentSvrd保存心跳检测，心跳异常，记录到日志中。
- - 检测某一Svr的配置（svr.xml）发生变化，同步变化的（新增或修改version值）Svr到所有AgentSvrd。
- - 同步失败的AgentSvrd告警。
- - 检测svr.xml配置文件，因非法配置被忽略的项，输出到日志中。
-
-b) AgentSvrd
- - 根据config.xml配置文件中的IP/PORT，连接RouterSvrd，并保持心跳。与RouterSvrd心跳异常须告警，记录日志中。
- - 发送初始化Svr请求，全量拉取Svr的配置。查询失败，告警，记录在日志中，尝试重查。
- - 处理CGI获取路由请求，加权轮询返回最优的Svr。
- - 调用获取路由接口时，在每个周期结束时验算重建（以及尝试恢复宕机（过载或非压力故障）的Svr）该类别下所有Svr门限、负载。
- - 接受并验证AgentCmd、第三方客户端、PHP扩展的查询及上报请求。
- - 开启探测线程：探测所有宕机（过载或非压力故障）Svr路由。
-
-#算法
-1）路由选择算法
-a) 各Svr节点负载W(k)计算。（k为某一Svr节点,0…n某一(GID,XID)所对应的所有节点）
-
-       W(k) = delay_load(k) * ok_load(k) * weight_load(k) * f(rate_weight) * f(delay_weight)
-
-      - delay_load (k) = delay(k)/min(delay(0)…delay(n))
-      （取值范围：1~100000000（100s））
-      
-      - ok_load(k) = max(ok_rate(0)…ok_rate(n))/ ok_rate(k)
-      （取值范围：1~1000000）
-      
-      - weight_load(k) = max(weight(0)…weight(n))/weight(k)
-      （取值范围：weight(n)= 0~1000,其中0为删除该Svr）
-      
-      - f(rate_weight)、 f(delay_weight)为在配置文件（qos.xml）中配置数值。
-      （取值范围：f(rate_weight)/f(delay_weight)= 0.01~100）
-
-b) 对于第一个周期的特殊处理：
-      - 由于第一个周期没有历史统计数据，W(k)全部预设为1，各路由的预取数也为1，此时为严格的round robin算法。
-
-2）路由选择
-a) 按 W(k)作为各节点负载（load）进行Weighted Round Robin加权轮询（选择 负载W(k)*调用次数 最低的作为预选结果）
-b) 如果所选择的路由过载（请求数超出门限），则：
- - 若在当前周期中无错误，则选择当前路由，但仅分配一次（预取数为1）。
- - 若在当前周期有错误出现，试探下一个节点，拒绝+1。
- - 所有节点都失败，整体过载，返回。
-
-
+#详情
+   见目录：HLBS_Manual_zh

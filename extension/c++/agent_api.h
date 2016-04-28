@@ -14,7 +14,7 @@
 #include "Svr.h"
 #include "SvrCmd.h"
 
-#define AGENT_HOST "0.0.0.0"
+#define AGENT_HOST "127.0.0.1"
 #define AGENT_PORT 10007
 
 struct postHandle_t
@@ -35,6 +35,8 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 int NotifyCallerNum(const struct SvrNet_t &stSvr, int iReqCount);
 
 int ConnectAgent(struct postHandle_t *pHandle);
+int TestConnect(struct postHandle_t *pHandle);
+
 void Release(struct postHandle_t *pHandle);
 
 #endif

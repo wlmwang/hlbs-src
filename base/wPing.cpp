@@ -48,7 +48,7 @@ int wPing::Open()
 	int size = 50*1024;
 	if (setsockopt(mFD, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size)) != 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[ping] set socket receive buf failed:%d", size);
+		LOG_ERROR(ELOG_KEY, "[system] set socket receive buf failed:%d", size);
 		return FD_UNKNOWN;
 	}
 
@@ -160,7 +160,7 @@ int wPing::SendPacket()
 	int iRet = sendto(mFD, mSendpacket, iLen, 0, (struct sockaddr *)&mDestAddr, sizeof(mDestAddr));
 	if (iRet < iLen)
 	{
-		LOG_ERROR(ELOG_KEY, "[ping] ip=%s,send ping error=%d,%s", mStrIp.c_str(), errno, strerror(errno));
+		LOG_ERROR(ELOG_KEY, "[system] send ping ip=%s, error=%d, %s", mStrIp.c_str(), errno, strerror(errno));
 		return -1;
 	}
 	return 0;
@@ -206,19 +206,19 @@ int wPing::RecvPacket()
 			}
 			else if(errno == EAGAIN)
 			{
-				LOG_ERROR(ELOG_KEY, "[ping] ping recv timeout,ip=%s,err=EAGAIN", mStrIp.c_str());
+				LOG_ERROR(ELOG_KEY, "[system] ping recv timeout,ip=%s,err=EAGAIN", mStrIp.c_str());
 				//continue;
 				return -1;
 			}
 			else
 			{
-				LOG_ERROR(ELOG_KEY, "[ping] ping recv error,ip=%s,err=%d,%s", mStrIp.c_str(), errno, strerror(errno));
+				LOG_ERROR(ELOG_KEY, "[system] ping recv error,ip=%s,err=%d,%s", mStrIp.c_str(), errno, strerror(errno));
 				return -1;
 			}
         }
         else if (iLen == 0)
         {
-        	LOG_ERROR(ELOG_KEY, "[ping] ping recv return 0,ip=%s", mStrIp.c_str());
+        	LOG_ERROR(ELOG_KEY, "[system] ping recv return 0,ip=%s", mStrIp.c_str());
         	return -1;
         }
 		else
@@ -233,19 +233,19 @@ int wPing::RecvPacket()
 
 	if (i >= RECV_RETRY_TIMES)
 	{
-		LOG_ERROR(ELOG_KEY, "[ping] ping recv retry times=%d,ip=%s", i, mStrIp.c_str());
+		LOG_ERROR(ELOG_KEY, "[system] ping recv retry times=%d,ip=%s", i, mStrIp.c_str());
         return -2;
 	}
 
     int iRet = Unpack(mRecvpacket, iLen);
     if (iRet < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[ping] ping parse error=%d,ip=%s,retry=%u", iRet, mStrIp.c_str(), i);
+		LOG_ERROR(ELOG_KEY, "[system] ping parse error=%d,ip=%s,retry=%u", iRet, mStrIp.c_str(), i);
 		return iRet;
 	}
 	else
 	{
-        LOG_DEBUG(ELOG_KEY, "[ping] ping succ,ip=%s,retry=%u", mStrIp.c_str(), i);
+        LOG_DEBUG(ELOG_KEY, "[system] ping succ,ip=%s,retry=%u", mStrIp.c_str(), i);
         return i;
 	}
 }
