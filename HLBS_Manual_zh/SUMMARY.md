@@ -31,4 +31,7 @@
    * [上报路由](555/333.md)
    * [重建路由](555/666.md)
    * [宕机探测线程（过载、非压力故障）](555/7777.md)
+* [日志](log/README.md)
+   * [RouterSvrd日志](log/routersvrd_log.md)
+   * [AgentSvrd日志](log/agentsvr_log.md)
 

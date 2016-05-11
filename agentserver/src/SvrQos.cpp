@@ -1105,7 +1105,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
             	mAvgErrRate = 0;
             }
         }
-	    LOG_ERROR(ELOG_KEY, "[svr] Overload(all) RebuildRoute, mod=%d cmd=%d avg err rate=%f, all req to min>config err_rate[%f]",
+	    LOG_ERROR(ELOG_KEY, "[svr] Overload(all) RebuildRoute, gid=%d xid=%d avg err rate=%f, all req to min>config err_rate[%f]",
 	    	stItem.mGid,stItem.mXid,mAvgErrRate,fCfgErrRate);
 
         //通知 TODO
@@ -1144,7 +1144,7 @@ int SvrQos::AddErrRoute(struct SvrKind_t& stItem, struct SvrNode_t& stNode)
 
 	time_t nowTm = time(NULL);
 
-	LOG_DEBUG(ELOG_KEY, "[svr] Overload AddErrRoute node, exist count=%d: mod=%d cmd=%d ip=%s port=%u stop_time=%d limit=%d",
+	LOG_DEBUG(ELOG_KEY, "[svr] Overload AddErrRoute node, exist count=%d: gid=%d xid=%d host=%s port=%u stop_time=%d limit=%d",
 		iErrCount+1,stNode.mNet.mGid,stNode.mNet.mXid,stNode.mNet.mHost,stNode.mNet.mPort,nowTm - stNode.mStopTime,stNode.mStat->mReqCfg.mReqLimit);
     	
 	//record down server
