@@ -19,11 +19,11 @@
 #include "wTimer.h"
 #include "wMisc.h"
 #include "wLog.h"
-#include "wNoncopyable.h"
 #include "wTcpClient.h"
+#include "wThread.h"
 
 template <typename TASK>
-class wMTcpClient : private wNoncopyable
+class wMTcpClient : public wThread
 {
 	public:
 		wMTcpClient();
@@ -50,8 +50,11 @@ class wMTcpClient : private wNoncopyable
 		void PrepareStart();
 		void Start(bool bDaemon = true);
 		
-		virtual void Run();
-		virtual void PrepareRun();
+		/**
+		 * 线程入口函数
+		 */
+		virtual int Run();
+		virtual int PrepareRun();
 		
 		void CheckTimer();
 		virtual void CheckTimeout();

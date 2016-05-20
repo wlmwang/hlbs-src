@@ -44,13 +44,12 @@ void AgentServer::PrepareRun()
 	mRouterConn->PrepareStart();
 	ConnectRouter(); //连接Router服务
 	
-	mDetectThread->StartThread();
+	mDetectThread->StartThread(0);
+	mRouterConn->StartThread(0);
 }
 
 void AgentServer::Run()
 {
-	mRouterConn->Start(false);
-
 	CheckQueue();	//读取共享内存
 	CheckTimer();	//统计weight结果
 }
