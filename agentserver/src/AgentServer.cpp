@@ -6,85 +6,21 @@
 
 #include "AgentServer.h"
 
-AgentServer::AgentServer() : wServer<AgentServer>("路由服务器")
+AgentServer::AgentServer() : wServer<AgentServer>("AGENT服务器")
 {
-	mConfig = NULL;
-	mInShm = NULL;
-	mOutShm = NULL;
-	mInMsgQ = NULL;
-	mOutMsgQ = NULL;
-	mRouterConn = NULL;
-	mDetectThread = NULL;
-	
 	Initialize();
 }
 
 AgentServer::~AgentServer() 
 {
-	SAFE_DELETE(mInShm);
-	SAFE_DELETE(mOutShm);
-	SAFE_DELETE(mInMsgQ);
-	SAFE_DELETE(mOutMsgQ);
 	SAFE_DELETE(mRouterConn);
 }
 
 void AgentServer::Initialize()
 {
-	mTicker = GetTickCount();
 	mConfig = AgentConfig::Instance();
-	mRouterConn = new wMTcpClient<AgentClientTask>();
 	mDetectThread = DetectThread::Instance();
-	
-	InitShm();	//初始化共享内存。与agentcmd进程通信
-}
-
-//准备工作
-void AgentServer::PrepareRun()
-{
-	mRouterConn->PrepareStart();
 	ConnectRouter(); //连接Router服务
-	
-	mDetectThread->StartThread(0);
-	mRouterConn->StartThread(0);
-}
-
-void AgentServer::Run()
-{
-	CheckQueue();	//读取共享内存
-	CheckTimer();	//统计weight结果
-}
-
-wTask* AgentServer::NewTcpTask(wIO *pIO)
-{
-	wTask *pTask = new AgentServerTask(pIO);
-	return pTask;
-}
-
-void AgentServer::InitShm()
-{
-	char *pAddr = NULL;
-
-	mInShm = new wShm(AGENT_SHM, 'i', MSG_QUEUE_LEN);
-	if((mInShm->CreateShm() != NULL) && ((pAddr = mInShm->AllocShm(MSG_QUEUE_LEN)) != NULL))
-	{
-		mInMsgQ = new wMsgQueue();
-		mInMsgQ->SetBuffer(pAddr, MSG_QUEUE_LEN);
-	}
-	else
-	{
-		LOG_ERROR(ELOG_KEY, "[system] Create (In) Share Memory failed");
-	}
-
-	mOutShm = new wShm(AGENT_SHM, 'o', MSG_QUEUE_LEN);
-	if((mOutShm->CreateShm() != NULL) && ((pAddr = mOutShm->AllocShm(MSG_QUEUE_LEN)) != NULL))
-	{
-		mOutMsgQ = new wMsgQueue();
-		mOutMsgQ->SetBuffer(pAddr, MSG_QUEUE_LEN);
-	}
-	else
-	{
-		LOG_ERROR(ELOG_KEY, "[system] Create (Out) Share Memory failed");
-	}
 }
 
 void AgentServer::ConnectRouter()
@@ -93,19 +29,41 @@ void AgentServer::ConnectRouter()
 	if (pRconf == NULL)
 	{
 		LOG_ERROR(ELOG_KEY, "[system] Get RouterServer Config failed");
-		exit(1);
+		exit(0);
 	}
+	
+	mRouterConn = new wMTcpClient<AgentClientTask>();
+	mRouterConn->PrepareStart();
 
-	//mRouterConn
+	//连接router
 	bool bRet = mRouterConn->GenerateClient(SERVER_ROUTER, "ROUTER SERVER", pRconf->mIPAddr, pRconf->mPort);
 	if (!bRet)
 	{
 		LOG_ERROR(ELOG_KEY, "[system] Connect to RouterServer failed");
-		exit(1);
+		exit(0);
 	}
 	LOG_DEBUG(ELOG_KEY, "[system] Connect to RouterServer success, ip(%s) port(%d)", pRconf->mIPAddr, pRconf->mPort);
 	
+	//初始化svr配置
 	InitSvrReq();
+}
+
+//准备工作
+void AgentServer::PrepareRun()
+{
+	mDetectThread != NULL && mDetectThread->StartThread(0);	//探测线程，宕机拉起
+	mRouterConn != NULL && mRouterConn->StartThread(0);	//router线程，与router交互
+}
+
+void AgentServer::Run() 
+{
+	//...
+}
+
+wTask* AgentServer::NewTcpTask(wIO *pIO)
+{
+	wTask *pTask = new AgentServerTask(pIO);
+	return pTask;
 }
 
 /** 发送初始化svr配置请求 */
@@ -141,60 +99,4 @@ int AgentServer::ReloadSvrReq()
 		return pClient->TcpTask()->SyncSend((char *)&stSvr, sizeof(stSvr));
 	}
 	return -1;
-}
-
-/**
- * 此队列解析不具通用性  Time is up!
- */
-void AgentServer::CheckQueue()
-{
-	int iLen = sizeof(SvrReqReport_t);
-	char szBuff[iLen];
-	memset(szBuff, 0, sizeof(szBuff));
-
-	int iRet;
-	while(true)
-	{
-		iRet = mInMsgQ->Pop(szBuff, iLen);	//取出数据
-		
-		//没有消息了
-		if(iRet == 0) 
-		{
-			return;
-		}
-
-		//取消息出错
-		if(iRet < 0) 
-		{
-			LOG_ERROR(ELOG_KEY, "[system] get one message from msg queue failed: %d", iRet);
-			return;
-		}
-		//如果消息大小不正确
-		if(iRet != iLen) 
-		{
-			LOG_ERROR(ELOG_KEY, "[system] get a msg with invalid len %d from msg queue", iRet);
-			return;
-		}
-		
-		//上报调用结果
-		SvrReqReport_t *pReportSvr = (SvrReqReport_t*) szBuff;
-		
-		if(pReportSvr->mCaller.mCalledGid>0 && pReportSvr->mCaller.mCalledXid>0 && pReportSvr->mCaller.mPort>0 && pReportSvr->mCaller.mHost[0]!=0)
-		{
-			mConfig->Qos()->CallerNode(pReportSvr->mCaller);
-		}
-	}
-}
-
-void AgentServer::CheckTimer()
-{
-	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mTicker);
-
-	if(iInterval < 100) 	//100ms
-	{
-		return;
-	}
-
-	//加上间隔时间
-	mTicker += iInterval;
 }

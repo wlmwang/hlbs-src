@@ -25,8 +25,6 @@ void wConfig<T>::Initialize()
 	mPort = 0;
 	mSignal = NULL;
 	mProcTitle = NULL;
-
-	InitErrLog();
 }
 
 template <typename T>

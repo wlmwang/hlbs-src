@@ -15,13 +15,8 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 	stCmd.mXid = stSvr.mXid;
 	int iRet = -1;
 
-	//if (TestConnect(&g_handle) != 0)
-	{
-		if (ConnectAgent(&g_handle) < 0)
-		{
-			return iRet;
-		}
-	}
+	if (ConnectAgent(&g_handle) < 0) return iRet;
+
 	if (g_handle.mSock != NULL && g_handle.mTask != NULL)
 	{
 		//查询请求
@@ -68,13 +63,7 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 	stCmd.mCaller.mReqUsetimeUsec = iUsetimeUsec;
 	memcpy(stCmd.mCaller.mHost, stSvr.mHost, strlen(stSvr.mHost) + 1);
 
-	//if (TestConnect(&g_handle) != 0)
-	{
-		if (ConnectAgent(&g_handle) < 0)
-		{
-			return iRet;
-		}
-	}
+	if (ConnectAgent(&g_handle) < 0) return iRet;
 
 	if (g_handle.mSock != NULL && g_handle.mTask != NULL)
 	{

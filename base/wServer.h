@@ -30,7 +30,7 @@ template <typename T>
 class wServer: public wSingleton<T>
 {
 	public:
-		wServer(string ServerName);
+		explicit wServer(string ServerName);
 		void Initialize();
 		virtual ~wServer();
 
@@ -46,8 +46,8 @@ class wServer: public wSingleton<T>
 		/**
 		 * single、worker进程中，准备|启动服务
 		 */
-		void PrepareStart(string sIpAddr ,unsigned int nPort);
-		void Start(bool bDaemon = true);
+		void PrepareSingle(string sIpAddr, unsigned int nPort);
+		void SingleStart(bool bDaemon = true);
 		
 		/**
 		 * master-worker用户多进程架构，准备|启动服务。（防止bind失败）
@@ -55,7 +55,7 @@ class wServer: public wSingleton<T>
 		 * PrepareMaster 需在master进程中调用
 		 * WorkerStart在worker进程提供服务
 		 */
-		void PrepareMaster(string sIpAddr ,unsigned int nPort);	
+		void PrepareMaster(string sIpAddr, unsigned int nPort);	
 		void WorkerStart(wWorker *pWorker = NULL, bool bDaemon = true);
 		int AcceptMutexLock();
 		int AcceptMutexUnlock();

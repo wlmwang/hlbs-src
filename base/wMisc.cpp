@@ -6,6 +6,59 @@
 
 #include "wMisc.h"
 
+unsigned GetIpByIF(const char* pIfname)
+{
+    int iFD, iIntrface;
+    struct ifreq buf[64];
+    struct ifconf ifc = {0, {0}};
+    unsigned ip = 0; 
+
+    memset(buf, 0, sizeof(buf));
+    if ((iFD = socket(AF_INET, SOCK_DGRAM, 0)) >= 0)
+    {
+        ifc.ifc_len = sizeof(buf);
+        ifc.ifc_buf = (caddr_t)buf;
+        if (!ioctl(iFD, SIOCGIFCONF, (char*)&ifc))
+        {
+            iIntrface = ifc.ifc_len / sizeof(struct ifreq); 
+            while(iIntrface-- > 0)
+            {
+                if(strcmp(buf[iIntrface].ifr_name, pIfname) == 0)
+                {
+                    if(!(ioctl(iFD, SIOCGIFADDR, (char *)&buf[iIntrface])))
+                    {
+                        ip = (unsigned)((struct sockaddr_in *)(&buf[iIntrface].ifr_addr))->sin_addr.s_addr;
+                    }
+                    break;  
+                }
+            }
+        }
+        close(iFD);
+    }
+    return ip;
+}
+
+void Strlow(u_char *dst, u_char *src, size_t n)
+{
+    while (n) 
+    {
+        *dst = tolower(*src);
+        dst++;
+        src++;
+        n--;
+    }
+}
+
+unsigned int HashString(const char* s)
+{
+	unsigned int hash = 5381;
+	while (*s)
+	{
+		hash += (hash << 5) + (*s ++);
+	}
+	return hash & 0x7FFFFFFF;
+}
+
 void itoa(unsigned long val, char *buf, unsigned radix) 
 {
 	char *p; /* pointer to traverse string */ 
@@ -92,14 +145,8 @@ int Gcd(int a, int b)
 		b = tmp;
 	}
 
-	if (b == 0)
-	{
-		return a;
-	}
-	else
-	{
-		return Gcd(b, a % b);
-	}
+	if (b == 0) return a;
+	return Gcd(b, a % b);
 }
 
 int Ngcd(int *arr, int n)
@@ -115,6 +162,29 @@ int InitDaemon(const char *filename)
 	{
 		filename = LOCK_PATH;
 	}
+	
+	int err;
+	char dir_path[256] = {0};
+#ifdef PREFIX
+	memcpy(dir_path, PREFIX, strlen(PREFIX) + 1);
+#else
+	if (GetCwd(dir_path, sizeof(dir_path)) == -1)
+	{
+		err = errno;
+		LOG_ERROR(ELOG_KEY, "[system] getcwd failed: %s", strerror(err));
+		exit(0);
+	}
+#endif
+
+	//切换工作目录
+	if (chdir(dir_path) == -1) 
+	{
+		err = errno;
+		LOG_ERROR(ELOG_KEY, "[system] Can not change run dir to %s , init daemon failed: %s", dir_path, strerror(err));
+		return -1;
+	}
+	umask(0);
+
 	int lock_fd = open(filename, O_RDWR|O_CREAT, 0640);
 	if (lock_fd < 0) 
 	{
@@ -128,10 +198,6 @@ int InitDaemon(const char *filename)
 		LOG_ERROR(ELOG_KEY, "[system] Lock file failed, server is already running");
 		return -1;
 	}
-
-	//获取当前的目录信息
-	char dir_path[256] = {0};
-	getcwd(dir_path, sizeof(dir_path));
 
 	pid_t pid;
 
@@ -153,15 +219,7 @@ int InitDaemon(const char *filename)
 
 	//再次fork
 	if ((pid = fork()) != 0) exit(0);
-
-	if (chdir(dir_path)) 
-	{
-		int err = errno;
-		LOG_ERROR(ELOG_KEY, "[system] Can not change run dir to %s , init daemon failed: %s", dir_path, strerror(err));
-		return -1;		
-	}
-	umask(0);
 	
-	//unlink(filename);
+	unlink(filename);
 	return 0;
 }

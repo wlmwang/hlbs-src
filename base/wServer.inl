@@ -27,7 +27,7 @@ void wServer<T>::Initialize()
 
 	mLastTicker = GetTickCount();
 	mCheckTimer = wTimer(KEEPALIVE_TIME);
-	mIsCheckTimer = false;
+	mIsCheckTimer = false;	//不开启心跳机制
 
 	mEpollFD = FD_UNKNOWN;
 	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
@@ -42,6 +42,62 @@ void wServer<T>::Initialize()
 }
 
 template <typename T>
+void wServer<T>::PrepareSingle(string sIpAddr, unsigned int nPort)
+{
+	LOG_INFO(ELOG_KEY, "[system] Server Prepare start succeed");
+	
+	//初始化epoll
+	if (InitEpoll() < 0)
+	{
+		exit(0);
+	}
+	
+	//初始化Listen Socket
+	if (InitListen(sIpAddr ,nPort) < 0)
+	{
+		exit(0);
+	}
+
+	//Listen Socket 添加到epoll中
+	if (mListenSock == NULL)
+	{
+		exit(0);
+	}
+	mTask = NewTcpTask(mListenSock);
+	if(NULL != mTask)
+	{
+		mTask->Status() = TASK_RUNNING;
+		if (AddToEpoll(mTask) >= 0)
+		{
+			AddToTaskPool(mTask);
+		}
+		else
+		{
+			mTask->DeleteIO();
+			SAFE_DELETE(mTask);
+			exit(1);
+		}
+	}
+	
+	//运行前工作
+	PrepareRun();
+}
+
+template <typename T>
+void wServer<T>::SingleStart(bool bDaemon)
+{
+	LOG_INFO(ELOG_KEY, "[system] Server start succeed");
+	
+	mStatus = SERVER_RUNNING;	
+	//进入服务主循环
+	do {
+		Recv();
+		Run();
+		CheckTimer();
+	} while(IsRunning() && bDaemon);
+}
+
+template <typename T>
 void wServer<T>::PrepareMaster(string sIpAddr, unsigned int nPort)
 {
 	LOG_INFO(ELOG_KEY, "[system] listen socket on ip(%s) port(%d)", sIpAddr.c_str(), nPort);
@@ -49,7 +105,7 @@ void wServer<T>::PrepareMaster(string sIpAddr, unsigned int nPort)
 	//初始化Listen Socket
 	if (InitListen(sIpAddr ,nPort) < 0)
 	{
-		exit(2);
+		exit(0);
 	}
 
 	//运行前工作
@@ -171,62 +227,6 @@ void wServer<T>::WorkerExit()
 
 	LOG_ERROR(ELOG_KEY, "[system] worker exit");
 	exit(0);
-}
-
-template <typename T>
-void wServer<T>::PrepareStart(string sIpAddr ,unsigned int nPort)
-{
-	LOG_INFO(ELOG_KEY, "[system] Server Prepare start succeed");
-	
-	//初始化epoll
-	if(InitEpoll() < 0)
-	{
-		exit(2);
-	}
-	
-	//初始化Listen Socket
-	if(InitListen(sIpAddr ,nPort) < 0)
-	{
-		exit(2);
-	}
-
-	//Listen Socket 添加到epoll中
-	if (mListenSock == NULL)
-	{
-		exit(2);
-	}
-	mTask = NewTcpTask(mListenSock);
-	if(NULL != mTask)
-	{
-		mTask->Status() = TASK_RUNNING;
-		if (AddToEpoll(mTask) >= 0)
-		{
-			AddToTaskPool(mTask);
-		}
-		else
-		{
-			mTask->DeleteIO();
-			SAFE_DELETE(mTask);
-			exit(2);
-		}
-	}
-	
-	//运行前工作
-	PrepareRun();
-}
-
-template <typename T>
-void wServer<T>::Start(bool bDaemon)
-{
-	LOG_INFO(ELOG_KEY, "[system] Server start succeed");
-	
-	mStatus = SERVER_RUNNING;	
-	//进入服务主循环
-	do {
-		Recv();
-		Run();
-		CheckTimer();
-	} while(IsRunning() && bDaemon);
 }
 
 template <typename T>
@@ -413,6 +413,7 @@ void wServer<T>::Recv()
 		
 		if (iFD == FD_UNKNOWN)
 		{
+			LOG_DEBUG(ELOG_KEY, "[system] socket FD is error, fd(%d), close it", iFD);
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -421,7 +422,7 @@ void wServer<T>::Recv()
 		}
 		if (!pTask->IsRunning())	//多数是超时设置
 		{
-			LOG_ERROR(ELOG_KEY, "[system] task status is quit, fd(%d), close it", iFD);
+			LOG_DEBUG(ELOG_KEY, "[system] task status is quit, fd(%d), close it", iFD);
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -443,7 +444,7 @@ void wServer<T>::Recv()
 		if (iOType == TYPE_SOCK && sockType == SOCK_LISTEN)
 		{
 			if (mEpollEventPool[i].events & EPOLLIN)
-			{	
+			{
 				AcceptConn();	//accept connect
 			}
 		}

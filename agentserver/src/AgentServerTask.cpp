@@ -132,7 +132,7 @@ int AgentServerTask::GetSvrAll(char *pBuffer, int iLen)
 	return 0;
 }
 
-//agentcmd发来查询请求(重点考虑此接口~)
+//客户端查询请求(重点考虑此接口~)
 int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
@@ -155,7 +155,7 @@ int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 	return 0;
 }
 
-//agentcmd发来上报请求(重点考虑此接口~)
+//客户端发来上报请求(重点考虑此接口~)
 int AgentServerTask::ReportSvr(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
