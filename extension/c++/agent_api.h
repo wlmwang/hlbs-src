@@ -8,19 +8,21 @@
 #define _AGENT_API_H
 
 #include "wCore.h"
-#include "wSocket.h"
+#include "wUDSocket.h"
 #include "wTask.h"
 #include "Common.h"
 #include "Svr.h"
 #include "SvrCmd.h"
 
-#define AGENT_HOST "127.0.0.1"
+#define AGENT_HOST "/usr/local/webserver/hlbs/agentserver/log/hlbs.sock"
+//#define AGENT_HOST "127.0.0.1"
 #define AGENT_PORT 10007
 
 struct postHandle_t
 {
-	wSocket *mSock;
-	wTask *mTask;
+	wUDSocket mSock;
+	wTask mTask;
+	bool mConnecting;
 };
 
 extern struct postHandle_t g_handle;
@@ -34,9 +36,7 @@ int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetim
 /** 调用数上报 */
 int NotifyCallerNum(const struct SvrNet_t &stSvr, int iReqCount);
 
-int ConnectAgent(struct postHandle_t *pHandle);
-int TestConnect(struct postHandle_t *pHandle);
-
-void Release(struct postHandle_t *pHandle);
+int ConnectAgent();
+void CloseAgent();
 
 #endif

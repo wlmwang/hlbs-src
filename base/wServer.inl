@@ -37,6 +37,7 @@ void wServer<T>::Initialize()
 
 	mListenSock = NULL;
 	mChannelSock = NULL;
+	mUDListenSock = NULL;
 	mWorker = NULL;
 	mExiting = 0;
 }
@@ -306,6 +307,13 @@ wTask* wServer<T>::NewChannelTask(wIO *pIO)
 }
 
 template <typename T>
+wTask* wServer<T>::NewUDSocketTask(wIO *pIO)
+{
+	wTask *pTask = new wUDSocketTask(pIO);
+	return pTask;
+}
+
+template <typename T>
 int wServer<T>::AddToEpoll(wTask* pTask, int iEvents, int iOp)
 {
 	mEpollEvent.events = iEvents | EPOLLERR | EPOLLHUP; //|EPOLLET
@@ -445,7 +453,7 @@ void wServer<T>::Recv()
 		{
 			if (mEpollEventPool[i].events & EPOLLIN)
 			{
-				AcceptConn();	//accept connect
+				AcceptConn(pTask);	//accept connect
 			}
 		}
 		else if (iOType == TYPE_SOCK && sockType == SOCK_CONNECT)
@@ -533,44 +541,82 @@ void wServer<T>::Broadcast(const char *pCmd, int iLen)
 }
 
 /**
- *  接受新连接
+ *  接受新连接 临时方案(每个类型只有一个监听sock)
  */
 template <typename T>
-int wServer<T>::AcceptConn()
+int wServer<T>::AcceptConn(wTask *pTask)
 {
-	if(mListenSock == NULL)
+	int iNewFD = FD_UNKNOWN;
+	if (pTask->IO()->TaskType() == TASK_UNIXD)
 	{
-		return -1;
-	}
-	
-	struct sockaddr_in stSockAddr;
-	socklen_t iSockAddrSize = sizeof(stSockAddr);	
-	int iNewFD = mListenSock->Accept((struct sockaddr*)&stSockAddr, &iSockAddrSize);
-	if (iNewFD <= 0)
-	{
-		if (iNewFD < 0)
+		if(mUDListenSock == NULL)
 		{
-			LOG_ERROR(ELOG_KEY, "[system] client connect failed:%s", strerror(mListenSock->Errno()));
+			return -1;
 		}
-	    return iNewFD;
-    }
-		
-	//new tcp task
-	wSocket *pSocket = new wSocket();
-	pSocket->FD() = iNewFD;
-	pSocket->Host() = inet_ntoa(stSockAddr.sin_addr);
-	pSocket->Port() = stSockAddr.sin_port;
-	pSocket->SockType() = SOCK_CONNECT;
-	pSocket->IOFlag() = FLAG_RVSD;
-	pSocket->TaskType() = TASK_TCP;
-	pSocket->SockStatus() = STATUS_CONNECTED;
-	if (pSocket->SetNonBlock() < 0)
+		struct sockaddr_un stSockAddr;
+		socklen_t iSockAddrSize = sizeof(stSockAddr);	
+		iNewFD = mUDListenSock->Accept((struct sockaddr*)&stSockAddr, &iSockAddrSize);
+		if (iNewFD <= 0)
+		{
+			if (iNewFD < 0)
+			{
+				LOG_ERROR(ELOG_KEY, "[system] unix client connect failed:%s", strerror(mUDListenSock->Errno()));
+			}
+		    return iNewFD;
+	    }
+			
+		//new unix task
+		wUDSocket *pUDSocket = new wUDSocket();
+		pUDSocket->FD() = iNewFD;
+		pUDSocket->Host() = stSockAddr.sun_path;
+		pUDSocket->SockType() = SOCK_CONNECT;
+		pUDSocket->IOFlag() = FLAG_RVSD;
+		pUDSocket->TaskType() = TASK_TCP;
+		pUDSocket->SockStatus() = STATUS_CONNECTED;
+		if (pUDSocket->SetNonBlock() < 0)
+		{
+			SAFE_DELETE(pUDSocket);
+			return -1;
+		}
+
+		mTask = NewUDSocketTask(pUDSocket);
+	}
+	else
 	{
-		SAFE_DELETE(pSocket);
-		return -1;
+		if(mListenSock == NULL)
+		{
+			return -1;
+		}
+		struct sockaddr_in stSockAddr;
+		socklen_t iSockAddrSize = sizeof(stSockAddr);	
+		iNewFD = mListenSock->Accept((struct sockaddr*)&stSockAddr, &iSockAddrSize);
+		if (iNewFD <= 0)
+		{
+			if (iNewFD < 0)
+			{
+				LOG_ERROR(ELOG_KEY, "[system] client connect failed:%s", strerror(mListenSock->Errno()));
+			}
+		    return iNewFD;
+	    }
+			
+		//new tcp task
+		wSocket *pSocket = new wSocket();
+		pSocket->FD() = iNewFD;
+		pSocket->Host() = inet_ntoa(stSockAddr.sin_addr);
+		pSocket->Port() = stSockAddr.sin_port;
+		pSocket->SockType() = SOCK_CONNECT;
+		pSocket->IOFlag() = FLAG_RVSD;
+		pSocket->TaskType() = TASK_TCP;
+		pSocket->SockStatus() = STATUS_CONNECTED;
+		if (pSocket->SetNonBlock() < 0)
+		{
+			SAFE_DELETE(pSocket);
+			return -1;
+		}
+		
+		mTask = NewTcpTask(pSocket);
 	}
 	
-	mTask = NewTcpTask(pSocket);
 	if(NULL != mTask)
 	{
 		if(mTask->VerifyConn() < 0 || mTask->Verify())
@@ -592,7 +638,7 @@ int wServer<T>::AcceptConn()
 			SAFE_DELETE(mTask);
 			return -1;
 		}
-		LOG_DEBUG(ELOG_KEY, "[system] client connect succeed: ip(%s) port(%d)", pSocket->Host().c_str(), pSocket->Port());
+		LOG_DEBUG(ELOG_KEY, "[system] client connect succeed: Host(%s)", mTask->IO()->Host().c_str());
 	}
 	return iNewFD;
 }
@@ -624,7 +670,7 @@ void wServer<T>::CleanTaskPool()
 		vector<wTask*>::iterator it;
 		for (it = mTaskPool.begin(); it != mTaskPool.end(); it++)
 		{
-	    	if ((*it)->IO()->TaskType() != TASK_UNIX)
+	    	if ((*it)->IO()->TaskType() != TASK_UNIXS)
 	    	{
 	    		(*it)->DeleteIO();
 	    	}
@@ -656,7 +702,7 @@ std::vector<wTask*>::iterator wServer<T>::RemoveTaskPool(wTask* pTask)
     std::vector<wTask*>::iterator it = std::find(mTaskPool.begin(), mTaskPool.end(), pTask);
     if (it != mTaskPool.end())
     {
-    	if ((*it)->IO()->TaskType() != TASK_UNIX)
+    	if ((*it)->IO()->TaskType() != TASK_UNIXS)
     	{
     		(*it)->DeleteIO();
     	}

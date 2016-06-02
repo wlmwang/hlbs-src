@@ -14,7 +14,7 @@
 enum IO_TYPE
 {
 	TYPE_UNKNOWN = -1,
-	TYPE_SOCK,	//tcp|udp|http|unix
+	TYPE_SOCK,	//tcp|udp|http|unix socketpair|unix domain socket
 	TYPE_FILE,
 	TYPE_BUF,
 	TYPE_SHM
@@ -34,7 +34,8 @@ enum TASK_TYPE
 	TASK_UNKNOWN = -1,
 	TASK_UDP,
 	TASK_TCP,
-	TASK_UNIX,
+	TASK_UNIXS,
+	TASK_UNIXD,
 	TASK_HTTP
 };
 

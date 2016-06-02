@@ -22,6 +22,7 @@
 #include "SvrCmd.h"
 #include "AgentClientTask.h"
 #include "AgentServerTask.h"
+#include "AgentUDSocketTask.h"
 #include "DetectThread.h"
 
 class AgentServer: public wServer<AgentServer>
@@ -44,6 +45,7 @@ class AgentServer: public wServer<AgentServer>
 		wMTcpClient<AgentClientTask>* RouterConn() { return mRouterConn; }
 
 		virtual wTask* NewTcpTask(wIO *pIO);
+		virtual wTask* NewUDSocketTask(wIO *pIO);
 		
 	private:		
 		AgentConfig *mConfig = NULL;

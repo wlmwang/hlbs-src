@@ -25,6 +25,8 @@
 #include "wTcpTask.h"
 #include "wHttpTask.h"
 #include "wChannelTask.h"
+#include "wUDSocket.h"
+#include "wUDSocketTask.h"
 
 template <typename T>
 class wServer: public wSingleton<T>
@@ -83,7 +85,7 @@ class wServer: public wSingleton<T>
 		/**
 		 *  accept接受连接
 		 */
-		int AcceptConn();
+		int AcceptConn(wTask *pTask);
 		int AddToTaskPool(wTask *pTask);
 		void CleanTaskPool();
 	    std::vector<wTask*>::iterator RemoveTaskPool(wTask *pTask);
@@ -95,6 +97,7 @@ class wServer: public wSingleton<T>
 		virtual wTask* NewTcpTask(wIO *pIO);	//io = wSocket
 		virtual wTask* NewHttpTask(wIO *pIO);	//io = wHttp
 		virtual wTask* NewChannelTask(wIO *pIO);//io = wChannel
+		virtual wTask* NewUDSocketTask(wIO *pIO);//io = wUDSocket
 		
 		/**
 		 * 服务主循环逻辑，继承可以定制服务
@@ -112,7 +115,8 @@ class wServer: public wSingleton<T>
 	protected:
 		string mServerName;
 		wSocket *mListenSock;	//Listen Socket(主服务socket对象)
-		
+		wUDSocket *mUDListenSock;	//Unix Domain Socket(主服务socket对象) 临时方案
+
 		SERVER_STATUS mStatus;	//服务器当前状态
 		unsigned long long mLastTicker;	//服务器当前时间
 		wTimer mCheckTimer;

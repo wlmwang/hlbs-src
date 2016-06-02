@@ -67,8 +67,8 @@ class wTask : private wNoncopyable
 		//业务逻辑入口函数
 		virtual int HandleRecvMessage(char * pBuffer, int nLen) {}
 		
-	protected:
 		wIO	*mIO;
+	protected:
 		TASK_STATUS mStatus;
 		int mHeartbeatTimes;
 		
