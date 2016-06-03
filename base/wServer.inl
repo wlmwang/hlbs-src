@@ -27,7 +27,7 @@ void wServer<T>::Initialize()
 
 	mLastTicker = GetTickCount();
 	mCheckTimer = wTimer(KEEPALIVE_TIME);
-	mIsCheckTimer = false;
+	mIsCheckTimer = false;	//不开启心跳机制
 
 	mEpollFD = FD_UNKNOWN;
 	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
@@ -37,8 +37,65 @@ void wServer<T>::Initialize()
 
 	mListenSock = NULL;
 	mChannelSock = NULL;
+	mUDListenSock = NULL;
 	mWorker = NULL;
 	mExiting = 0;
+}
+
+template <typename T>
+void wServer<T>::PrepareSingle(string sIpAddr, unsigned int nPort)
+{
+	LOG_INFO(ELOG_KEY, "[system] Server Prepare start succeed");
+	
+	//初始化epoll
+	if (InitEpoll() < 0)
+	{
+		exit(0);
+	}
+	
+	//初始化Listen Socket
+	if (InitListen(sIpAddr ,nPort) < 0)
+	{
+		exit(0);
+	}
+
+	//Listen Socket 添加到epoll中
+	if (mListenSock == NULL)
+	{
+		exit(0);
+	}
+	mTask = NewTcpTask(mListenSock);
+	if(NULL != mTask)
+	{
+		mTask->Status() = TASK_RUNNING;
+		if (AddToEpoll(mTask) >= 0)
+		{
+			AddToTaskPool(mTask);
+		}
+		else
+		{
+			mTask->DeleteIO();
+			SAFE_DELETE(mTask);
+			exit(1);
+		}
+	}
+	
+	//运行前工作
+	PrepareRun();
+}
+
+template <typename T>
+void wServer<T>::SingleStart(bool bDaemon)
+{
+	LOG_INFO(ELOG_KEY, "[system] Server start succeed");
+	
+	mStatus = SERVER_RUNNING;	
+	//进入服务主循环
+	do {
+		Recv();
+		Run();
+		CheckTimer();
+	} while(IsRunning() && bDaemon);
 }
 
 template <typename T>
@@ -49,7 +106,7 @@ void wServer<T>::PrepareMaster(string sIpAddr, unsigned int nPort)
 	//初始化Listen Socket
 	if (InitListen(sIpAddr ,nPort) < 0)
 	{
-		exit(2);
+		exit(0);
 	}
 
 	//运行前工作
@@ -174,62 +231,6 @@ void wServer<T>::WorkerExit()
 }
 
 template <typename T>
-void wServer<T>::PrepareStart(string sIpAddr ,unsigned int nPort)
-{
-	LOG_INFO(ELOG_KEY, "[system] Server Prepare start succeed");
-	
-	//初始化epoll
-	if(InitEpoll() < 0)
-	{
-		exit(2);
-	}
-	
-	//初始化Listen Socket
-	if(InitListen(sIpAddr ,nPort) < 0)
-	{
-		exit(2);
-	}
-
-	//Listen Socket 添加到epoll中
-	if (mListenSock == NULL)
-	{
-		exit(2);
-	}
-	mTask = NewTcpTask(mListenSock);
-	if(NULL != mTask)
-	{
-		mTask->Status() = TASK_RUNNING;
-		if (AddToEpoll(mTask) >= 0)
-		{
-			AddToTaskPool(mTask);
-		}
-		else
-		{
-			mTask->DeleteIO();
-			SAFE_DELETE(mTask);
-			exit(2);
-		}
-	}
-	
-	//运行前工作
-	PrepareRun();
-}
-
-template <typename T>
-void wServer<T>::Start(bool bDaemon)
-{
-	LOG_INFO(ELOG_KEY, "[system] Server start succeed");
-	
-	mStatus = SERVER_RUNNING;	
-	//进入服务主循环
-	do {
-		Recv();
-		Run();
-		CheckTimer();
-	} while(IsRunning() && bDaemon);
-}
-
-template <typename T>
 void wServer<T>::PrepareRun()
 {
 	//accept前准备工作
@@ -302,6 +303,13 @@ template <typename T>
 wTask* wServer<T>::NewChannelTask(wIO *pIO)
 {
 	wTask *pTask = new wChannelTask(pIO);
+	return pTask;
+}
+
+template <typename T>
+wTask* wServer<T>::NewUDSocketTask(wIO *pIO)
+{
+	wTask *pTask = new wUDSocketTask(pIO);
 	return pTask;
 }
 
@@ -413,6 +421,7 @@ void wServer<T>::Recv()
 		
 		if (iFD == FD_UNKNOWN)
 		{
+			LOG_DEBUG(ELOG_KEY, "[system] socket FD is error, fd(%d), close it", iFD);
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -421,7 +430,7 @@ void wServer<T>::Recv()
 		}
 		if (!pTask->IsRunning())	//多数是超时设置
 		{
-			LOG_ERROR(ELOG_KEY, "[system] task status is quit, fd(%d), close it", iFD);
+			LOG_DEBUG(ELOG_KEY, "[system] task status is quit, fd(%d), close it", iFD);
 			if (RemoveEpoll(pTask) >= 0)
 			{
 				RemoveTaskPool(pTask);
@@ -443,8 +452,8 @@ void wServer<T>::Recv()
 		if (iOType == TYPE_SOCK && sockType == SOCK_LISTEN)
 		{
 			if (mEpollEventPool[i].events & EPOLLIN)
-			{	
-				AcceptConn();	//accept connect
+			{
+				AcceptConn(pTask);	//accept connect
 			}
 		}
 		else if (iOType == TYPE_SOCK && sockType == SOCK_CONNECT)
@@ -532,44 +541,82 @@ void wServer<T>::Broadcast(const char *pCmd, int iLen)
 }
 
 /**
- *  接受新连接
+ *  接受新连接 临时方案(每个类型只有一个监听sock)
  */
 template <typename T>
-int wServer<T>::AcceptConn()
+int wServer<T>::AcceptConn(wTask *pTask)
 {
-	if(mListenSock == NULL)
+	int iNewFD = FD_UNKNOWN;
+	if (pTask->IO()->TaskType() == TASK_UNIXD)
 	{
-		return -1;
-	}
-	
-	struct sockaddr_in stSockAddr;
-	socklen_t iSockAddrSize = sizeof(stSockAddr);	
-	int iNewFD = mListenSock->Accept((struct sockaddr*)&stSockAddr, &iSockAddrSize);
-	if (iNewFD <= 0)
-	{
-		if (iNewFD < 0)
+		if(mUDListenSock == NULL)
 		{
-			LOG_ERROR(ELOG_KEY, "[system] client connect failed:%s", strerror(mListenSock->Errno()));
+			return -1;
 		}
-	    return iNewFD;
-    }
-		
-	//new tcp task
-	wSocket *pSocket = new wSocket();
-	pSocket->FD() = iNewFD;
-	pSocket->Host() = inet_ntoa(stSockAddr.sin_addr);
-	pSocket->Port() = stSockAddr.sin_port;
-	pSocket->SockType() = SOCK_CONNECT;
-	pSocket->IOFlag() = FLAG_RVSD;
-	pSocket->TaskType() = TASK_TCP;
-	pSocket->SockStatus() = STATUS_CONNECTED;
-	if (pSocket->SetNonBlock() < 0)
+		struct sockaddr_un stSockAddr;
+		socklen_t iSockAddrSize = sizeof(stSockAddr);	
+		iNewFD = mUDListenSock->Accept((struct sockaddr*)&stSockAddr, &iSockAddrSize);
+		if (iNewFD <= 0)
+		{
+			if (iNewFD < 0)
+			{
+				LOG_ERROR(ELOG_KEY, "[system] unix client connect failed:%s", strerror(mUDListenSock->Errno()));
+			}
+		    return iNewFD;
+	    }
+			
+		//new unix task
+		wUDSocket *pUDSocket = new wUDSocket();
+		pUDSocket->FD() = iNewFD;
+		pUDSocket->Host() = stSockAddr.sun_path;
+		pUDSocket->SockType() = SOCK_CONNECT;
+		pUDSocket->IOFlag() = FLAG_RVSD;
+		pUDSocket->TaskType() = TASK_TCP;
+		pUDSocket->SockStatus() = STATUS_CONNECTED;
+		if (pUDSocket->SetNonBlock() < 0)
+		{
+			SAFE_DELETE(pUDSocket);
+			return -1;
+		}
+
+		mTask = NewUDSocketTask(pUDSocket);
+	}
+	else
 	{
-		SAFE_DELETE(pSocket);
-		return -1;
+		if(mListenSock == NULL)
+		{
+			return -1;
+		}
+		struct sockaddr_in stSockAddr;
+		socklen_t iSockAddrSize = sizeof(stSockAddr);	
+		iNewFD = mListenSock->Accept((struct sockaddr*)&stSockAddr, &iSockAddrSize);
+		if (iNewFD <= 0)
+		{
+			if (iNewFD < 0)
+			{
+				LOG_ERROR(ELOG_KEY, "[system] client connect failed:%s", strerror(mListenSock->Errno()));
+			}
+		    return iNewFD;
+	    }
+			
+		//new tcp task
+		wSocket *pSocket = new wSocket();
+		pSocket->FD() = iNewFD;
+		pSocket->Host() = inet_ntoa(stSockAddr.sin_addr);
+		pSocket->Port() = stSockAddr.sin_port;
+		pSocket->SockType() = SOCK_CONNECT;
+		pSocket->IOFlag() = FLAG_RVSD;
+		pSocket->TaskType() = TASK_TCP;
+		pSocket->SockStatus() = STATUS_CONNECTED;
+		if (pSocket->SetNonBlock() < 0)
+		{
+			SAFE_DELETE(pSocket);
+			return -1;
+		}
+		
+		mTask = NewTcpTask(pSocket);
 	}
 	
-	mTask = NewTcpTask(pSocket);
 	if(NULL != mTask)
 	{
 		if(mTask->VerifyConn() < 0 || mTask->Verify())
@@ -591,7 +638,7 @@ int wServer<T>::AcceptConn()
 			SAFE_DELETE(mTask);
 			return -1;
 		}
-		LOG_DEBUG(ELOG_KEY, "[system] client connect succeed: ip(%s) port(%d)", pSocket->Host().c_str(), pSocket->Port());
+		LOG_DEBUG(ELOG_KEY, "[system] client connect succeed: Host(%s)", mTask->IO()->Host().c_str());
 	}
 	return iNewFD;
 }
@@ -623,7 +670,7 @@ void wServer<T>::CleanTaskPool()
 		vector<wTask*>::iterator it;
 		for (it = mTaskPool.begin(); it != mTaskPool.end(); it++)
 		{
-	    	if ((*it)->IO()->TaskType() != TASK_UNIX)
+	    	if ((*it)->IO()->TaskType() != TASK_UNIXS)
 	    	{
 	    		(*it)->DeleteIO();
 	    	}
@@ -655,7 +702,7 @@ std::vector<wTask*>::iterator wServer<T>::RemoveTaskPool(wTask* pTask)
     std::vector<wTask*>::iterator it = std::find(mTaskPool.begin(), mTaskPool.end(), pTask);
     if (it != mTaskPool.end())
     {
-    	if ((*it)->IO()->TaskType() != TASK_UNIX)
+    	if ((*it)->IO()->TaskType() != TASK_UNIXS)
     	{
     		(*it)->DeleteIO();
     	}

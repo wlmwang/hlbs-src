@@ -11,21 +11,7 @@
 
 void ServerExit()
 {
-	AgentConfig *pConfig = AgentConfig::Instance();
-	if (pConfig) 
-	{
-		SAFE_DELETE(pConfig);
-	}
-	AgentServer *pServer = AgentServer::Instance();
-	if (pServer)
-	{
-		SAFE_DELETE(pServer);
-	}
-	AgentMaster *pMaster = AgentMaster::Instance();
-	if (pMaster) 
-	{
-		SAFE_DELETE(pMaster);
-	}
+	//code...
 }
 
 int main(int argc, const char *argv[])
@@ -35,16 +21,13 @@ int main(int argc, const char *argv[])
 	if(pConfig == NULL) 
 	{
 		cout << "[system] AgentConfig instance failed" << endl;
-		exit(2);
+		exit(0);
 	}
 	if (pConfig->GetOption(argc, argv) < 0)
 	{
 		cout << "[system] Command line Option failed" << endl;
-		exit(2);
+		exit(0);
 	}
-	pConfig->GetBaseConf();
-	pConfig->GetRouterConf();
-	pConfig->GetQosConf();
 	
 	//daemon
 	if (pConfig->mDaemon == 1)
@@ -52,16 +35,21 @@ int main(int argc, const char *argv[])
 		if (InitDaemon("../log/hlbs.lock") < 0)
 		{
 			LOG_ERROR(ELOG_KEY, "[system] Create daemon failed!");
-			exit(2);
+			exit(0);
 		}
 	}
+
+	//init config
+	pConfig->GetBaseConf();
+	pConfig->GetRouterConf();
+	pConfig->GetQosConf();
 
 	//master
 	AgentMaster *pMaster = AgentMaster::Instance();
 	if(pMaster == NULL) 
 	{
 		LOG_ERROR(ELOG_KEY, "[system] AgentMaster instance failed");
-		exit(2);
+		exit(0);
 	}
 	//atexit(ServerExit);
 

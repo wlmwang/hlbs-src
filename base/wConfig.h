@@ -21,15 +21,6 @@ class wConfig : public wSingleton<T>
 		wConfig();
 		void Initialize();
 		virtual ~wConfig();
-		
-		/**
-		 * 初始化基础日志对象
-		 * @return 
-		 */
-		int InitErrLog()
-		{
-			return INIT_ROLLINGFILE_LOG(ELOG_KEY, ELOG_FILE, ELOG_LEVEL, ELOG_FSIZE, ELOG_BACKUP);
-		}
 
 		virtual int GetOption(int argc, const char *argv[]);
 

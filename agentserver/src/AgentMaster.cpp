@@ -31,7 +31,7 @@ void AgentMaster::PrepareRun()
 	int i;
     const char *sProcessTitle = "master process(agent)";
 
-    //config、server对象
+    //获取config、server对象（在main中已初始化完成）
     mConfig = AgentConfig::Instance();
     if (mConfig == NULL) 
     {
@@ -44,13 +44,13 @@ void AgentMaster::PrepareRun()
         LOG_ERROR(ELOG_KEY, "[system] Get AgentServer instance failed");
         exit(1);
     }
-    
+
+    //进程标题
     size = strlen(sProcessTitle) + 1;
     for (i = 0; i < mConfig->mProcTitle->mArgc; i++) 
     {
         size += strlen(mConfig->mProcTitle->mArgv[i]) + 1;
     }
-
     mTitle = new char[size];
     if (mTitle == NULL) 
     {
@@ -65,16 +65,15 @@ void AgentMaster::PrepareRun()
         p = Cpystrn(p, (u_char *) mConfig->mProcTitle->mArgv[i], size);
     }
 
-	mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");
+	mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");   //设置标题
 
-    mPidFile.FileName() = "../log/hlbs.pid";
+    mPidFile.FileName() = "../log/hlbs.pid";    //进程pid文件
     
-    //准备工作
-    mServer->PrepareStart(mConfig->mIPAddr, mConfig->mPort);
+    mServer->PrepareSingle(mConfig->mIPAddr, mConfig->mPort);    //初始化服务器
 }
 
 void AgentMaster::Run()
 {
     //服务器开始运行
-    mServer->Start();
+    mServer->SingleStart();
 }

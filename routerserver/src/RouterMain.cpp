@@ -11,21 +11,7 @@
 
 void ServerExit()
 {
-	RouterConfig *pConfig = RouterConfig::Instance();
-	if (pConfig) 
-	{
-		SAFE_DELETE(pConfig);
-	}
-	RouterServer *pServer = RouterServer::Instance();
-	if (pServer)
-	{
-		SAFE_DELETE(pServer);
-	}
-	RouterMaster *pMaster = RouterMaster::Instance();
-	if (pMaster) 
-	{
-		SAFE_DELETE(pMaster);
-	}
+	//code...
 }
 
 int main(int argc, const char *argv[])
@@ -35,12 +21,12 @@ int main(int argc, const char *argv[])
 	if (pConfig == NULL) 
 	{
 		cout << "[system] RouterConfig instance failed" << endl;
-		exit(2);
+		exit(0);
 	}
 	if (pConfig->GetOption(argc, argv) < 0)
 	{
 		cout << "[system] Command line Option failed" << endl;
-		exit(2);
+		exit(0);
 	}
 	pConfig->GetBaseConf();
 	pConfig->GetSvrConf();
@@ -52,7 +38,7 @@ int main(int argc, const char *argv[])
 		if (InitDaemon("../log/hlbs.lock") < 0)
 		{
 			LOG_ERROR(ELOG_KEY, "[system] Create daemon failed");
-			exit(2);
+			exit(0);
 		}
 	}
 	//master
@@ -60,7 +46,7 @@ int main(int argc, const char *argv[])
 	if (pMaster == NULL) 
 	{
 		LOG_ERROR(ELOG_KEY, "[system] RouterMaster instance failed");
-		exit(2);
+		exit(0);
 	}
 	//atexit(ServerExit);
 

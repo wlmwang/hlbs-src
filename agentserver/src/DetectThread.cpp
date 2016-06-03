@@ -31,15 +31,10 @@ int DetectThread::PrepareRun()
 	mSocket = new wSocket();
 
 	unsigned int nIp = GetIpByIF("eth1");
-	if(!nIp)
-	{
-		nIp = GetIpByIF("eth0");
-	}
-	if(nIp)
-	{
-		mLocalIp = nIp;
-	}
-	return 0;
+    if(!nIp) nIp = GetIpByIF("eth0");
+	if(nIp) mLocalIp = nIp;
+	
+    return 0;
 }
 
 int DetectThread::DoDetectNode(const struct DetectNode_t& stNode, struct DetectResult_t& stRes)

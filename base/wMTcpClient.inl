@@ -17,7 +17,7 @@ void wMTcpClient<TASK>::Initialize()
 	mCheckTimer = wTimer(KEEPALIVE_TIME);
 	mTcpClientCount = 0;
 	mTimeout = 10;
-	mEpollFD = -1;
+	mEpollFD = FD_UNKNOWN;
 	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
 	mEpollEventPool.reserve(LISTEN_BACKLOG);
 }
@@ -38,10 +38,10 @@ void wMTcpClient<TASK>::Final()
 template <typename TASK>
 void wMTcpClient<TASK>::CleanEpoll()
 {
-	if (mEpollFD != -1)
+	if (mEpollFD != FD_UNKNOWN)
 	{
 		close(mEpollFD);
-		mEpollFD = -1;
+		mEpollFD = FD_UNKNOWN;
 	}
 	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
 	mEpollEventPool.clear();
@@ -69,7 +69,7 @@ void wMTcpClient<TASK>::PrepareStart()
 {
 	if (InitEpoll() < 0)
 	{
-		exit(2);
+		exit(0);
 	}
 }
 
@@ -93,7 +93,7 @@ int wMTcpClient<TASK>::PrepareRun()
 template <typename TASK>
 int wMTcpClient<TASK>::Run()
 {
-	Start(true);
+	Start(true);	//线程任务
 	return 0;
 }
 

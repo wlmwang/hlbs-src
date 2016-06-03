@@ -7,7 +7,7 @@
 CXX=g++
 
 BASEPATH=./base
-CXXFLAGS =-g -std=c++11 -fPIC -O2 -pipe -fno-ident -Wno-invalid-offsetof
+CXXFLAGS =-std=c++11 -fPIC -O2 -pipe -fno-ident -Wno-invalid-offsetof
 
 INCPATH=-I./$(BASEPATH)
 LIBS=-shared
@@ -19,6 +19,7 @@ OBJECTS=./debug/agent_api.o \
 		./debug/wMsgQueue.o \
 		./debug/wMisc.o \
 		./debug/wSocket.o \
+		./debug/wUDSocket.o \
 		./debug/wTask.o \
 		./debug/wShm.o
 
@@ -41,6 +42,9 @@ $(TARGET).so:$(OBJECTS)
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wSocket.o: $(BASEPATH)/wSocket.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wUDSocket.o: $(BASEPATH)/wUDSocket.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wTask.o: $(BASEPATH)/wTask.cpp

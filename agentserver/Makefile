@@ -36,11 +36,13 @@ OBJECTS=./debug/wLog.o \
 		./debug/wIO.o \
 		./debug/wFile.o \
 		./debug/wSocket.o \
+		./debug/wUDSocket.o \
 		./debug/wChannel.o \
 		./debug/wHttp.o \
 		./debug/wHttpTask.o  \
 		./debug/wTask.o \
 		./debug/wTcpTask.o  \
+		./debug/wUDSocketTask.o \
 		./debug/wChannelTask.o \
 		./debug/wMsgQueue.o \
 		./debug/wMemPool.o \
@@ -56,6 +58,7 @@ OBJECTS=./debug/wLog.o \
 		./debug/AgentServer.o \
 		./debug/AgentServerTask.o \
 		./debug/AgentClientTask.o \
+		./debug/AgentUDSocketTask.o \
 		./debug/DetectThread.o
 
 $(TARGET): $(OBJECTS)
@@ -87,6 +90,9 @@ all: $(TARGET)
 ./debug/wSocket.o: $(BASEPATH)/wSocket.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
+./debug/wUDSocket.o: $(BASEPATH)/wUDSocket.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
 ./debug/wChannel.o: $(BASEPATH)/wChannel.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
@@ -100,6 +106,9 @@ all: $(TARGET)
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wTcpTask.o: $(BASEPATH)/wTcpTask.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/wUDSocketTask.o: $(BASEPATH)/wUDSocketTask.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/wHttpTask.o: $(BASEPATH)/wHttpTask.cpp
@@ -142,6 +151,9 @@ all: $(TARGET)
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/AgentClientTask.o: src/AgentClientTask.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+
+./debug/AgentUDSocketTask.o: src/AgentUDSocketTask.cpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
 
 ./debug/DetectThread.o: src/DetectThread.cpp

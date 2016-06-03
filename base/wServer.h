@@ -25,12 +25,14 @@
 #include "wTcpTask.h"
 #include "wHttpTask.h"
 #include "wChannelTask.h"
+#include "wUDSocket.h"
+#include "wUDSocketTask.h"
 
 template <typename T>
 class wServer: public wSingleton<T>
 {
 	public:
-		wServer(string ServerName);
+		explicit wServer(string ServerName);
 		void Initialize();
 		virtual ~wServer();
 
@@ -46,8 +48,8 @@ class wServer: public wSingleton<T>
 		/**
 		 * single、worker进程中，准备|启动服务
 		 */
-		void PrepareStart(string sIpAddr ,unsigned int nPort);
-		void Start(bool bDaemon = true);
+		void PrepareSingle(string sIpAddr, unsigned int nPort);
+		void SingleStart(bool bDaemon = true);
 		
 		/**
 		 * master-worker用户多进程架构，准备|启动服务。（防止bind失败）
@@ -55,7 +57,7 @@ class wServer: public wSingleton<T>
 		 * PrepareMaster 需在master进程中调用
 		 * WorkerStart在worker进程提供服务
 		 */
-		void PrepareMaster(string sIpAddr ,unsigned int nPort);	
+		void PrepareMaster(string sIpAddr, unsigned int nPort);	
 		void WorkerStart(wWorker *pWorker = NULL, bool bDaemon = true);
 		int AcceptMutexLock();
 		int AcceptMutexUnlock();
@@ -83,7 +85,7 @@ class wServer: public wSingleton<T>
 		/**
 		 *  accept接受连接
 		 */
-		int AcceptConn();
+		int AcceptConn(wTask *pTask);
 		int AddToTaskPool(wTask *pTask);
 		void CleanTaskPool();
 	    std::vector<wTask*>::iterator RemoveTaskPool(wTask *pTask);
@@ -95,6 +97,7 @@ class wServer: public wSingleton<T>
 		virtual wTask* NewTcpTask(wIO *pIO);	//io = wSocket
 		virtual wTask* NewHttpTask(wIO *pIO);	//io = wHttp
 		virtual wTask* NewChannelTask(wIO *pIO);//io = wChannel
+		virtual wTask* NewUDSocketTask(wIO *pIO);//io = wUDSocket
 		
 		/**
 		 * 服务主循环逻辑，继承可以定制服务
@@ -112,7 +115,8 @@ class wServer: public wSingleton<T>
 	protected:
 		string mServerName;
 		wSocket *mListenSock;	//Listen Socket(主服务socket对象)
-		
+		wUDSocket *mUDListenSock;	//Unix Domain Socket(主服务socket对象) 临时方案
+
 		SERVER_STATUS mStatus;	//服务器当前状态
 		unsigned long long mLastTicker;	//服务器当前时间
 		wTimer mCheckTimer;
