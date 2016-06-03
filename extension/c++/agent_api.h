@@ -14,9 +14,9 @@
 #include "Svr.h"
 #include "SvrCmd.h"
 
-#define AGENT_HOST "/usr/local/webserver/hlbs/agentserver/log/hlbs.sock"
 //#define AGENT_HOST "127.0.0.1"
 #define AGENT_PORT 10007
+#define AGENT_HOST "/usr/local/webserver/hlbs/agentserver/log/hlbs.sock"
 
 struct postHandle_t
 {

@@ -91,7 +91,7 @@ int wUDSocket::Connect(string sPathAddr, float fTimeout)
 	mIOFlag = FLAG_RECV;
 
 	string sTmpSock = "tmpsock";
-	sTmpSock += getpid();
+	sTmpSock += Itos(getpid());
 	if (Bind(sTmpSock) < 0)
 	{
 		mErr = errno;
