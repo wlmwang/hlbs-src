@@ -16,6 +16,7 @@
 #	include	"log4cpp/Category.hh"
 #	include	"log4cpp/RollingFileAppender.hh"
 #	include	"log4cpp/BasicLayout.hh"
+#	include	"log4cpp/PatternLayout.hh"
 #endif // USE_LOG4CPP
 
 //初始一种类型的日志
@@ -23,53 +24,47 @@ int InitLog(const char* vLogName, const char* vLogDir, LogLevel vPriority, unsig
 {
 
 #ifdef USE_LOG4CPP
-	if ( NULL == vLogName || NULL == vLogDir )
+	if (NULL == vLogName || NULL == vLogDir)
 	{
 		return -1;
 	}
-
-	// 已经存在该名称的实例
-	log4cpp::Category* tpCategory = log4cpp::Category::exists( vLogName);
-	if ( tpCategory != NULL )
-	{
-		// 1.删除所有的appender
-		tpCategory->removeAllAppenders ();
-
-		// 2.实例化一个layout 对象
-		log4cpp::Layout* tpLayout = new log4cpp::BasicLayout();
-		// 3. 初始化一个appender 对象
-		log4cpp::Appender* tpAppender = new log4cpp::RollingFileAppender(vLogName, vLogDir, vMaxFileSize, vMaxBackupIndex, vAppend );
-		// 4. 把layout对象附着在appender对象上
-		tpAppender->setLayout(tpLayout);
-		// 5. 设置additivity为false，替换已有的appender
-		tpCategory->setAdditivity(false);
-		// 6. 把appender对象附到category上
-		tpCategory->setAppender(tpAppender);
-		// 7. 设置category的优先级，低于此优先级的日志不被记录
-		tpCategory->setPriority((log4cpp::Priority::PriorityLevel) vPriority );
-
-		return 0;
-	}
-
-	// 1实例化一个layout 对象
-	log4cpp::Layout* tpLayout = new log4cpp::BasicLayout();
-	// 2. 初始化一个appender 对象
-	log4cpp::Appender* tpAppender = new log4cpp::RollingFileAppender(vLogName, vLogDir, vMaxFileSize, vMaxBackupIndex, vAppend );
-	// 3. 把layout对象附着在appender对象上
+	
+	//1. 实例化一个layout 对象
+	//log4cpp::Layout* tpLayout = new log4cpp::BasicLayout();
+	log4cpp::PatternLayout* tpLayout = new log4cpp::PatternLayout();
+	//2. 格式化输出字符
+	tpLayout->setConversionPattern("%d: %p: %m%n");
+	
+	//3. 初始化一个appender 对象
+	log4cpp::Appender* tpAppender = new log4cpp::RollingFileAppender(vLogName, vLogDir, vMaxFileSize, vMaxBackupIndex, vAppend);
+	//4. 把layout对象附着在appender对象上
 	tpAppender->setLayout(tpLayout);
-	// 4. 实例化一个category对象
-	log4cpp::Category& trCategory = log4cpp::Category::getInstance(vLogName);
-	// 5. 设置additivity为false，替换已有的appender
-	trCategory.setAdditivity(false);
-	// 6. 把appender对象附到category上
-	trCategory.setAppender(tpAppender);
-	// 7. 设置category的优先级，低于此优先级的日志不被记录
-	trCategory.setPriority((log4cpp::Priority::PriorityLevel) vPriority );
-
+	//5. 获取已经存在该名称的实例
+	log4cpp::Category* tpCategory = log4cpp::Category::exists(vLogName);
+	if (tpCategory != NULL)
+	{
+		//6. 删除所有的appender
+		tpCategory->removeAllAppenders();
+		//7. 设置additivity为false，替换已有的appender
+		tpCategory->setAdditivity(false);
+		//8. 把appender对象附到category上
+		tpCategory->setAppender(tpAppender);
+		//9. 设置category的优先级，低于此优先级的日志不被记录
+		tpCategory->setPriority((log4cpp::Priority::PriorityLevel) vPriority );
+	}
+	else
+	{
+		//5. 实例化一个category对象
+		log4cpp::Category& trCategory = log4cpp::Category::getInstance(vLogName);
+		//6. 设置additivity为false，替换已有的appender
+		trCategory.setAdditivity(false);
+		//7. 把appender对象附到category上
+		trCategory.setAppender(tpAppender);
+		//8. 设置category的优先级，低于此优先级的日志不被记录
+		trCategory.setPriority((log4cpp::Priority::PriorityLevel) vPriority);
+	}
 #endif
-
 	return 0;
-
 }
 
 int ReInitLog(const char* vLogName, LogLevel vPriority/*日志等级*/,unsigned int vMaxFileSize/*回卷文件最大长度*/, unsigned int vMaxBackupIndex) /*回卷文件个数*/

@@ -22,7 +22,7 @@ CXX=g++
 CXXFLAGS=-g -std=c++11 -Wno-invalid-offsetof -DPREFIX=$(ROOTPATH) -DUSE_LOG4CPP -DLINUX -D_DEBUG_ #-D_MEM_CHECK #--extra-libs=-lgcc
 
 LIBS=-llog4cpp -ltinyxml -lpthread
-INCPATH=-I./$(BASEPATH) -I/usr/local/include/log4cpp -I./$(LIBPATH)/tinyxml -I./$(COMMANDPATH)
+INCPATH=-I./$(BASEPATH) -I./$(LIBPATH)/tinyxml -I./$(COMMANDPATH) -I/usr/include/log4cpp
 
 DIRS=./log ./bin ./debug
 

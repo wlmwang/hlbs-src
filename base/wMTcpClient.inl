@@ -71,7 +71,6 @@ void wMTcpClient<TASK>::PrepareStart()
 	{
 		exit(2);
 	}
-	PrepareRun();
 }
 
 
@@ -81,21 +80,21 @@ void wMTcpClient<TASK>::Start(bool bDaemon)
 	//进入服务主服务
 	do {
 		Recv();
-		Run();
 		CheckTimer();
 	} while(bDaemon);
 }
 
 template <typename TASK>
-void wMTcpClient<TASK>::PrepareRun()
+int wMTcpClient<TASK>::PrepareRun()
 {
-	//...
+	return 0;
 }
 
 template <typename TASK>
-void wMTcpClient<TASK>::Run()
+int wMTcpClient<TASK>::Run()
 {
-	//...
+	Start(true);
+	return 0;
 }
 
 template <typename TASK>
