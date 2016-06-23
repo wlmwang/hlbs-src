@@ -19,13 +19,9 @@ int GPSvr()
 	}
 }
 
-int main(int argc,char **argv)
+int main(int argc, char *argv[])
 {
-	if (ConnectAgent() >= 0)
-	{
-		GPSvr();
-		
-		CloseAgent();
-	}
+	(ConnectAgent() >= 0) && GPSvr();
+	CloseAgent();
 	return 0;
 }
