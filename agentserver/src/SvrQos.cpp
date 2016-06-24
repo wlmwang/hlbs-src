@@ -27,7 +27,7 @@ void SvrQos::Initialize()
 /** 清除所有节点 */
 int SvrQos::CleanNode()
 {
-	mReqMutex->Lock();
+	//mReqMutex->Lock();
     map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.begin();
     struct SvrNet_t stSvr;
     struct SvrStat_t* pSvrStat = NULL;
@@ -42,7 +42,7 @@ int SvrQos::CleanNode()
     	}
     	mMapReqSvr.clear();
     }
-    mReqMutex->Unlock();
+    //mReqMutex->Unlock();
     return 0;
 }
 
@@ -50,13 +50,13 @@ int SvrQos::CleanNode()
 bool SvrQos::IsExistNode(struct SvrNet_t& stSvr)
 {
 	bool bRet = true;
-	mReqMutex->Lock();
+	//mReqMutex->Lock();
 	map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
 	if(mapReqIt == mMapReqSvr.end())
 	{
 		bRet = false;
 	}
-	mReqMutex->Unlock();
+	//mReqMutex->Unlock();
 	return bRet;
 }
 
@@ -64,7 +64,7 @@ bool SvrQos::IsExistNode(struct SvrNet_t& stSvr)
 bool SvrQos::IsVerChange(struct SvrNet_t& stSvr)
 {
 	bool bRet = false;
-	mReqMutex->Lock();
+	//mReqMutex->Lock();
 	map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
 	if(mapReqIt != mMapReqSvr.end())
 	{
@@ -74,30 +74,30 @@ bool SvrQos::IsVerChange(struct SvrNet_t& stSvr)
 			bRet = true;
 		}
 	}
-	mReqMutex->Unlock();
+	//mReqMutex->Unlock();
 	return bRet;
 }
 
 /** 获取所有节点 */
 int SvrQos::GetSvrAll(struct SvrNet_t* pBuffer)
 {
-	mReqMutex->Lock();
+	//mReqMutex->Lock();
 	map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.begin();
 	for(int i = 0; mapReqIt != mMapReqSvr.end(); i++, mapReqIt++)
 	{
 		pBuffer[i] = const_cast<struct SvrNet_t&> (mapReqIt->first);
 	}
 	int size = mMapReqSvr.size();
-	mReqMutex->Unlock();
+	//mReqMutex->Unlock();
 	return size;
 }
 
 /** 查找某一节点 */
 map<struct SvrNet_t, struct SvrStat_t*>::iterator SvrQos::SearchNode(struct SvrNet_t& stSvr)
 {
-	mReqMutex->Lock();
+	//mReqMutex->Lock();
 	map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
-	mReqMutex->Unlock();
+	//mReqMutex->Unlock();
 	return mapReqIt;
 }
 
@@ -105,7 +105,7 @@ map<struct SvrNet_t, struct SvrStat_t*>::iterator SvrQos::SearchNode(struct SvrN
 int SvrQos::SaveNode(struct SvrNet_t& stSvr)
 {
 	int iRet = 0;
-	mReqMutex->Lock();
+	//mReqMutex->Lock();
 	map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
 	if (mapReqIt == mMapReqSvr.end())
 	{
@@ -127,7 +127,7 @@ int SvrQos::SaveNode(struct SvrNet_t& stSvr)
 		}
 		LOG_DEBUG(ELOG_KEY, "[svr] SaveNode modify Svr weight gid(%d),xid(%d),host(%s),port(%d),weight(%d),old_key(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight, stKey.mWeight);
 	}
-	mReqMutex->Unlock();
+	//mReqMutex->Unlock();
 	
 	return iRet;
 }
@@ -176,7 +176,7 @@ int SvrQos::QueryNode(struct SvrNet_t& stSvr)
 int SvrQos::DelNode(struct SvrNet_t& stSvr)
 {
 	int iRet = 0;
-	mReqMutex->Lock();
+	//mReqMutex->Lock();
     map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
     if (mapReqIt == mMapReqSvr.end())
 	{
@@ -188,7 +188,7 @@ int SvrQos::DelNode(struct SvrNet_t& stSvr)
     
     DelRouteNode(stSvr);
     SAFE_DELETE(pSvrStat);
-    mReqMutex->Unlock();
+    //mReqMutex->Unlock();
     return 0;
 }
 
@@ -217,7 +217,7 @@ int SvrQos::CallerNode(struct SvrCaller_t& stCaller)
 		stCaller.mReqUsetimeUsec = 1;
 	}
 	
-	mReqMutex->Lock();
+	//mReqMutex->Lock();
     map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
     if (mapReqIt == mMapReqSvr.end())
 	{
@@ -245,7 +245,7 @@ int SvrQos::CallerNode(struct SvrCaller_t& stCaller)
     //重建route
     struct SvrKind_t stKind(stSvr);
     RebuildRoute(stKind);
-    mReqMutex->Unlock();
+    //mReqMutex->Unlock();
     return 0;
 }
 
@@ -254,7 +254,7 @@ int SvrQos::NotifyNode(struct SvrNet_t& stSvr)
 {
 	LOG_DEBUG(ELOG_KEY, "[svr] NotifyNode start gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
     
-    mReqMutex->Lock();
+    //mReqMutex->Lock();
     map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
     if (mapReqIt == mMapReqSvr.end())
 	{
@@ -266,7 +266,7 @@ int SvrQos::NotifyNode(struct SvrNet_t& stSvr)
 	pSvrStat->mInfo.mReqAll++;
 	pSvrStat->mInfo.mSReqAll++;
 	
-	mReqMutex->Unlock();
+	//mReqMutex->Unlock();
 	return 0;
 }
 
