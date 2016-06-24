@@ -68,21 +68,20 @@ int AgentUDSocketTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer
 int AgentUDSocketTask::GetSvrByGXid(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	SvrReqGXid_t *pCmd = (struct SvrReqGXid_t* )pBuffer;
+	struct SvrReqGXid_t *pCmd = (struct SvrReqGXid_t* )pBuffer;
 	
-	SvrResData_t vRRt;
-	vRRt.mReqId = pCmd->GetId();
-	
-	vRRt.mSvr[0].mGid = pCmd->mGid;
-	vRRt.mSvr[0].mXid = pCmd->mXid;
-	if(pConfig->Qos()->QueryNode(vRRt.mSvr[0]) >= 0)
+	struct SvrOneRes_t vRRt;
+	//vRRt.mReqId = pCmd->GetId();
+	vRRt.mSvr.mGid = pCmd->mGid;
+	vRRt.mSvr.mXid = pCmd->mXid;
+	if (pConfig->Qos()->QueryNode(vRRt.mSvr) >= 0)
 	{
-		vRRt.mNum = 1;
+		mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
 	}
-
-	LOG_DEBUG(ELOG_KEY, "[system] (unix sock) send svr agent num(%d) gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", vRRt.mNum,
-		vRRt.mSvr[0].mGid, vRRt.mSvr[0].mXid, vRRt.mSvr[0].mHost, vRRt.mSvr[0].mPort, vRRt.mSvr[0].mWeight, vRRt.mSvr[0].mVersion);
 	
+	LOG_DEBUG(ELOG_KEY, "[system] (unix sock) send svr agent gid(%d),xid(%d),host(%s,%d),port(%d),weight(%d),ver(%d)",
+		vRRt.mSvr.mGid, vRRt.mSvr.mXid, vRRt.mSvr.mHost, vRRt.mSvr.mPort, vRRt.mSvr.mWeight, vRRt.mSvr.mVersion);
+
 	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
@@ -91,9 +90,9 @@ int AgentUDSocketTask::GetSvrByGXid(char *pBuffer, int iLen)
 int AgentUDSocketTask::ReportSvr(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	SvrReqReport_t *pCmd = (struct SvrReqReport_t* )pBuffer;
+	struct SvrReqReport_t *pCmd = (struct SvrReqReport_t* )pBuffer;
 	
-	SvrResReport_t vRRt;
+	struct SvrResReport_t vRRt;
 
 	if(pConfig->Qos()->CallerNode(pCmd->mCaller) >= 0)
 	{
