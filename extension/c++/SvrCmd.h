@@ -148,7 +148,7 @@ struct SvrOneRes_t : public SvrResCmd_s
 {
 	SvrOneRes_t() : SvrResCmd_s(SVR_ONE_RES) 
 	{
-		memset(mSvr, 0, sizeof(mSvr));
+		memset(&mSvr, 0, sizeof(mSvr));
 	}
 	SvrNet_t mSvr;
 };

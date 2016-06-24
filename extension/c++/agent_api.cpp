@@ -26,12 +26,9 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 		if (iLen > 0)
 		{
 			struct SvrOneRes_t *pRes = (struct SvrOneRes_t*) pBuffer;
-			if (pRes->mNum == 1)
-			{
-				stSvr.mPort = pRes->mSvr.mPort;
-				memcpy(stSvr.mHost, pRes->mSvr.mHost, strlen(pRes->mSvr.mHost) + 1);
-				iRet = 0;
-			}
+			stSvr.mPort = pRes->mSvr.mPort;
+			memcpy(stSvr.mHost, pRes->mSvr.mHost, strlen(pRes->mSvr.mHost) + 1);
+			iRet = 0;
 		}
 		else
 		{
@@ -113,7 +110,7 @@ int ConnectAgent()
 		}
 		else if (g_handle.mSock.TaskType() == TASK_UNIXD)
 		{
-			if(g_handle.mSock.Connect(AGENT_HOST) >= 0)
+			if(g_handle.mSock.Connect(AGENT_HOST, AGENT_TIMEOUT) >= 0)
 			{
 				g_handle.mTask.mIO = &g_handle.mSock;
 				g_handle.mConnecting = true;

@@ -147,7 +147,7 @@ int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 		mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
 	}
 	
-	LOG_DEBUG(ELOG_KEY, "[system] send svr agent num(%d) gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", vRRt.mNum,
+	LOG_DEBUG(ELOG_KEY, "[system] send svr agent gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)",
 		vRRt.mSvr.mGid, vRRt.mSvr.mXid, vRRt.mSvr.mHost, vRRt.mSvr.mPort, vRRt.mSvr.mWeight, vRRt.mSvr.mVersion);
 
 	return 0;
