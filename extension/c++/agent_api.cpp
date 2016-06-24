@@ -21,15 +21,15 @@ int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
 	if (g_handle.mTask.SyncSend((char*)&stCmd, sizeof(stCmd)) > 0)
 	{
 		//接受返回
-		char pBuffer[sizeof(struct SvrResData_t)];
-		int iLen = g_handle.mTask.SyncRecv(pBuffer, sizeof(struct SvrResData_t), iTimeOut);
+		char pBuffer[sizeof(struct SvrOneRes_t)];
+		int iLen = g_handle.mTask.SyncRecv(pBuffer, sizeof(struct SvrOneRes_t), iTimeOut);
 		if (iLen > 0)
 		{
-			SvrResData_t *pRes = (SvrResData_t*) pBuffer;
+			struct SvrOneRes_t *pRes = (struct SvrOneRes_t*) pBuffer;
 			if (pRes->mNum == 1)
 			{
-				stSvr.mPort = pRes->mSvr[0].mPort;
-				memcpy(stSvr.mHost, pRes->mSvr[0].mHost, strlen(pRes->mSvr[0].mHost) + 1);
+				stSvr.mPort = pRes->mSvr.mPort;
+				memcpy(stSvr.mHost, pRes->mSvr.mHost, strlen(pRes->mSvr.mHost) + 1);
 				iRet = 0;
 			}
 		}

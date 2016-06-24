@@ -90,8 +90,8 @@ int wUDSocket::Connect(string sPathAddr, float fTimeout)
 	mSockType = SOCK_CONNECT;
 	mIOFlag = FLAG_RECV;
 
-	string sTmpSock = "tmpsock";
-	sTmpSock += Itos(getpid());
+	string sTmpSock = "unix_";
+	sTmpSock += Itos(getpid()) + ".sock";
 	if (Bind(sTmpSock) < 0)
 	{
 		mErr = errno;

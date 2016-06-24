@@ -142,8 +142,19 @@ struct SvrResData_t : public SvrResCmd_s
 	SvrNet_t mSvr[MAX_SVR_NUM];
 };
 
+//获取单个svr
+const BYTE SVR_ONE_RES = 4;
+struct SvrOneRes_t : public SvrResCmd_s 
+{
+	SvrOneRes_t() : SvrResCmd_s(SVR_ONE_RES) 
+	{
+		memset(mSvr, 0, sizeof(mSvr));
+	}
+	SvrNet_t mSvr;
+};
+
 //上报返回
-const BYTE SVR_RES_REPORT = 4;
+const BYTE SVR_RES_REPORT = 5;
 struct SvrResReport_t : public SvrResCmd_s 
 {
 	SvrResReport_t() : SvrResCmd_s(SVR_RES_REPORT) 

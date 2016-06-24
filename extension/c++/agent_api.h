@@ -9,6 +9,7 @@
 
 #include "wCore.h"
 #include "wUDSocket.h"
+#include "wSocket.h"
 #include "wTask.h"
 #include "Common.h"
 #include "Svr.h"
@@ -16,7 +17,8 @@
 
 struct postHandle_t
 {
-	wUDSocket mSock;
+	//wUDSocket mSock;
+	wSocket mSock;
 	wTask mTask;
 	bool mConnecting;
 };

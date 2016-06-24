@@ -10,7 +10,7 @@ LIBPATH=../lib
 
 CXX=g++
 
-CXXFLAGS=-g -std=c++11 -Wno-invalid-offsetof
+CXXFLAGS=-g -std=c++11 -Wall -Wno-invalid-offsetof
 
 LIBS=-L/usr/lib -lagent_api
 INCPATH=-I./$(BASEPATH) -I..

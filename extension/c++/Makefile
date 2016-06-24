@@ -7,7 +7,7 @@
 CXX=g++
 
 BASEPATH=./base
-CXXFLAGS =-std=c++11 -fPIC -O2 -pipe -fno-ident -Wno-invalid-offsetof
+CXXFLAGS =-std=c++11 -fPIC -O2 -pipe -fno-ident -Wall -Wno-invalid-offsetof
 
 INCPATH=-I./$(BASEPATH)
 LIBS=-shared
