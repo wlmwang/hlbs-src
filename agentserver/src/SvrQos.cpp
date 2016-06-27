@@ -27,13 +27,12 @@ void SvrQos::Initialize()
 /** 清除所有节点 */
 int SvrQos::CleanNode()
 {
-	//mReqMutex->Lock();
     map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.begin();
     struct SvrNet_t stSvr;
     struct SvrStat_t* pSvrStat = NULL;
     if (mMapReqSvr.size() > 0)
     {
-    	for(mapReqIt; mapReqIt != mMapReqSvr.end(); mapReqIt++)
+    	for (mapReqIt; mapReqIt != mMapReqSvr.end(); mapReqIt++)
     	{
     		stSvr = mapReqIt->first;
     		pSvrStat = mapReqIt->second;
@@ -42,7 +41,6 @@ int SvrQos::CleanNode()
     	}
     	mMapReqSvr.clear();
     }
-    //mReqMutex->Unlock();
     return 0;
 }
 
@@ -50,13 +48,11 @@ int SvrQos::CleanNode()
 bool SvrQos::IsExistNode(struct SvrNet_t& stSvr)
 {
 	bool bRet = true;
-	//mReqMutex->Lock();
 	map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
-	if(mapReqIt == mMapReqSvr.end())
+	if (mapReqIt == mMapReqSvr.end())
 	{
 		bRet = false;
 	}
-	//mReqMutex->Unlock();
 	return bRet;
 }
 
@@ -64,40 +60,34 @@ bool SvrQos::IsExistNode(struct SvrNet_t& stSvr)
 bool SvrQos::IsVerChange(struct SvrNet_t& stSvr)
 {
 	bool bRet = false;
-	//mReqMutex->Lock();
 	map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
-	if(mapReqIt != mMapReqSvr.end())
+	if (mapReqIt != mMapReqSvr.end())
 	{
 		struct SvrNet_t &stKey = const_cast<struct SvrNet_t&> (mapReqIt->first);
-		if(stKey.mVersion != stSvr.mVersion)
+		if (stKey.mVersion != stSvr.mVersion)
 		{
 			bRet = true;
 		}
 	}
-	//mReqMutex->Unlock();
 	return bRet;
 }
 
 /** 获取所有节点 */
 int SvrQos::GetSvrAll(struct SvrNet_t* pBuffer)
 {
-	//mReqMutex->Lock();
 	map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.begin();
-	for(int i = 0; mapReqIt != mMapReqSvr.end(); i++, mapReqIt++)
+	for (int i = 0; mapReqIt != mMapReqSvr.end(); i++, mapReqIt++)
 	{
 		pBuffer[i] = const_cast<struct SvrNet_t&> (mapReqIt->first);
 	}
 	int size = mMapReqSvr.size();
-	//mReqMutex->Unlock();
 	return size;
 }
 
 /** 查找某一节点 */
 map<struct SvrNet_t, struct SvrStat_t*>::iterator SvrQos::SearchNode(struct SvrNet_t& stSvr)
 {
-	//mReqMutex->Lock();
 	map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
-	//mReqMutex->Unlock();
 	return mapReqIt;
 }
 
@@ -105,12 +95,11 @@ map<struct SvrNet_t, struct SvrStat_t*>::iterator SvrQos::SearchNode(struct SvrN
 int SvrQos::SaveNode(struct SvrNet_t& stSvr)
 {
 	int iRet = 0;
-	//mReqMutex->Lock();
 	map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
 	if (mapReqIt == mMapReqSvr.end())
 	{
 		LOG_DEBUG(ELOG_KEY, "[svr] SaveNode new Svr gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
-		if(AllocNode(stSvr) < 0)
+		if (AllocNode(stSvr) < 0)
 		{
 			LOG_ERROR(ELOG_KEY, "[svr] SaveNode new Svr failed");
 			iRet = -1;
@@ -126,9 +115,7 @@ int SvrQos::SaveNode(struct SvrNet_t& stSvr)
             ModRouteNode(stSvr);
 		}
 		LOG_DEBUG(ELOG_KEY, "[svr] SaveNode modify Svr weight gid(%d),xid(%d),host(%s),port(%d),weight(%d),old_key(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight, stKey.mWeight);
-	}
-	//mReqMutex->Unlock();
-	
+	}	
 	return iRet;
 }
 
@@ -150,7 +137,7 @@ int SvrQos::ModNode(struct SvrNet_t& stSvr)
 	else
 	{
 		LOG_DEBUG(ELOG_KEY, "[svr] ModNode start gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
-		if(stSvr.mWeight > MAX_WEIGHT)
+		if (stSvr.mWeight > MAX_WEIGHT)
 		{
 			LOG_ERROR(ELOG_KEY, "[svr] ModNode but weight is setting default(invalid) gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
 			stSvr.mWeight = MAX_WEIGHT;
@@ -176,7 +163,6 @@ int SvrQos::QueryNode(struct SvrNet_t& stSvr)
 int SvrQos::DelNode(struct SvrNet_t& stSvr)
 {
 	int iRet = 0;
-	//mReqMutex->Lock();
     map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
     if (mapReqIt == mMapReqSvr.end())
 	{
@@ -188,7 +174,6 @@ int SvrQos::DelNode(struct SvrNet_t& stSvr)
     
     DelRouteNode(stSvr);
     SAFE_DELETE(pSvrStat);
-    //mReqMutex->Unlock();
     return 0;
 }
 
@@ -217,7 +202,6 @@ int SvrQos::CallerNode(struct SvrCaller_t& stCaller)
 		stCaller.mReqUsetimeUsec = 1;
 	}
 	
-	//mReqMutex->Lock();
     map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
     if (mapReqIt == mMapReqSvr.end())
 	{
@@ -245,7 +229,6 @@ int SvrQos::CallerNode(struct SvrCaller_t& stCaller)
     //重建route
     struct SvrKind_t stKind(stSvr);
     RebuildRoute(stKind);
-    //mReqMutex->Unlock();
     return 0;
 }
 
@@ -254,7 +237,6 @@ int SvrQos::NotifyNode(struct SvrNet_t& stSvr)
 {
 	LOG_DEBUG(ELOG_KEY, "[svr] NotifyNode start gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
     
-    //mReqMutex->Lock();
     map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
     if (mapReqIt == mMapReqSvr.end())
 	{
@@ -266,7 +248,6 @@ int SvrQos::NotifyNode(struct SvrNet_t& stSvr)
 	pSvrStat->mInfo.mReqAll++;
 	pSvrStat->mInfo.mSReqAll++;
 	
-	//mReqMutex->Unlock();
 	return 0;
 }
 
@@ -281,7 +262,7 @@ int SvrQos::AllocNode(struct SvrNet_t& stSvr)
 		return -1;
 	}
 	GetTimeofday(&pSvrStat->mInfo.mBuildTm, NULL);	//重建时间
-	if(LoadStatCfg(stSvr, pSvrStat) < 0)
+	if (LoadStatCfg(stSvr, pSvrStat) < 0)
 	{
 		LOG_ERROR(ELOG_KEY, "[svr] AllocNode LoadStatCfg failed! gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
 		SAFE_DELETE(pSvrStat);
@@ -316,11 +297,11 @@ int SvrQos::AddRouteNode(struct SvrNet_t& stSvr, struct SvrStat_t* pSvrStat)
     stKind.mRebuildTm = pSvrStat->mReqCfg.mRebuildTm;	//重建时间
 
     multimap<float, struct SvrNode_t>* &pTable = mRouteTable[stKind];
-    if(pTable == NULL)
+    if (pTable == NULL)
 	{
         pTable = new multimap<float, SvrNode_t>;
     }
-    if(pTable == NULL)
+    if (pTable == NULL)
     {
 		LOG_ERROR(ELOG_KEY, "[svr] AddRouteNode failed(new multimap<float, SvrNode_t>)! gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
     	return -1;
@@ -328,7 +309,7 @@ int SvrQos::AddRouteNode(struct SvrNet_t& stSvr, struct SvrStat_t* pSvrStat)
 
     //路由表中已有相关节点，取优先级最低的那个作为新节点的默认值
     multimap<float, struct SvrNode_t>::reverse_iterator it = pTable->rbegin();
-    for(; it != pTable->rend(); ++it)
+    for (; it != pTable->rend(); ++it)
 	{
         struct SvrNode_t& stNode = it->second;
         pSvrStat->mReqCfg.mReqLimit = stNode.mStat->mReqCfg.mReqLimit;
@@ -373,7 +354,6 @@ int SvrQos::GetRouteNode(struct SvrNet_t& stSvr)
 		if (stSvr.mGid > 0 && stSvr.mXid > 0)
 		{
 			//反向注册路由 TODO（讲道理，这里一定会被执行）
-			
 			return -1;
 		}
 		else
