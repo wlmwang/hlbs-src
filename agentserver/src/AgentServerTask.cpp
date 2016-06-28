@@ -139,13 +139,15 @@ int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 	struct SvrReqGXid_t *pCmd = (struct SvrReqGXid_t* )pBuffer;
 	
 	struct SvrOneRes_t vRRt;
-	//vRRt.mReqId = pCmd->GetId();
 	vRRt.mSvr.mGid = pCmd->mGid;
 	vRRt.mSvr.mXid = pCmd->mXid;
+	
+	//手动测试该函数是否为瓶颈函数
 	if (pConfig->Qos()->QueryNode(vRRt.mSvr) >= 0)
 	{
-		mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
+		vRRt.mNum = 1;
 	}
+	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
 	
 	LOG_DEBUG(ELOG_KEY, "[system] send svr agent gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)",
 		vRRt.mSvr.mGid, vRRt.mSvr.mXid, vRRt.mSvr.mHost, vRRt.mSvr.mPort, vRRt.mSvr.mWeight, vRRt.mSvr.mVersion);
@@ -160,13 +162,14 @@ int AgentServerTask::ReportSvr(char *pBuffer, int iLen)
 	struct SvrReqReport_t *pCmd = (struct SvrReqReport_t* )pBuffer;
 	
 	struct SvrResReport_t vRRt;
-
 	if (pConfig->Qos()->CallerNode(pCmd->mCaller) >= 0)
 	{
 		vRRt.mCode = 1;
 	}
-	LOG_DEBUG(ELOG_KEY, "[system] send svr report %d", vRRt.mCode);
-	
 	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
+	
+	LOG_DEBUG(ELOG_KEY, "[system] send svr report ret %d, gid(%d) xid(%d),host(%s),port(%d)", 
+		vRRt.mCode, pCmd->mCaller.mCalledGid, pCmd->mCaller.mCalledXid, pCmd->mCaller.mHost, pCmd->mCaller.mPort);
+
 	return 0;
 }

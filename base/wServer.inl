@@ -65,7 +65,7 @@ void wServer<T>::PrepareSingle(string sIpAddr, unsigned int nPort)
 		exit(0);
 	}
 	mTask = NewTcpTask(mListenSock);
-	if(NULL != mTask)
+	if (NULL != mTask)
 	{
 		mTask->Status() = TASK_RUNNING;
 		if (AddToEpoll(mTask) >= 0)
@@ -265,7 +265,7 @@ int wServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	}
 	
 	//listen socket
-	if(mListenSock->Listen(sIpAddr, nPort) < 0)
+	if (mListenSock->Listen(sIpAddr, nPort) < 0)
 	{
 		mErr = errno;
 		LOG_ERROR(ELOG_KEY, "[system] listen failed: %s", strerror(mErr));
@@ -274,7 +274,7 @@ int wServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
 	}
 	
 	//nonblock
-	if(mListenSock->SetNonBlock() < 0) 
+	if (mListenSock->SetNonBlock() < 0) 
 	{
 		LOG_ERROR(ELOG_KEY, "[system] Set non block failed: %d, close it", iFD);
 		SAFE_DELETE(mListenSock);
@@ -453,6 +453,7 @@ void wServer<T>::Recv()
 		{
 			if (mEpollEventPool[i].events & EPOLLIN)
 			{
+				LOG_DEBUG(ELOG_KEY, "[system] tcp socket EPOLLIN accept start");
 				AcceptConn(pTask);	//accept connect
 			}
 		}
@@ -467,7 +468,7 @@ void wServer<T>::Recv()
 					{
 						LOG_DEBUG(ELOG_KEY, "[system] tcp socket closed by client");
 					}
-					else if(iLenOrErr == ERR_MSGLEN)
+					else if (iLenOrErr == ERR_MSGLEN)
 					{
 						LOG_ERROR(ELOG_KEY, "[system] recv message invalid len");
 					}
@@ -527,10 +528,10 @@ void wServer<T>::Broadcast(const char *pCmd, int iLen)
 {
 	W_ASSERT(pCmd != NULL, return);
 
-	if(mTaskPool.size() > 0)
+	if (mTaskPool.size() > 0)
 	{
 		vector<wTask*>::iterator iter;
-		for(iter = mTaskPool.begin(); iter != mTaskPool.end(); iter++)
+		for (iter = mTaskPool.begin(); iter != mTaskPool.end(); iter++)
 		{
 			if (*iter != NULL && (*iter)->IO()->TaskType() == TASK_TCP)
 			{
@@ -549,7 +550,7 @@ int wServer<T>::AcceptConn(wTask *pTask)
 	int iNewFD = FD_UNKNOWN;
 	if (pTask->IO()->TaskType() == TASK_UNIXD)
 	{
-		if(mUDListenSock == NULL)
+		if (mUDListenSock == NULL)
 		{
 			return -1;
 		}
@@ -583,7 +584,7 @@ int wServer<T>::AcceptConn(wTask *pTask)
 	}
 	else
 	{
-		if(mListenSock == NULL)
+		if (mListenSock == NULL)
 		{
 			return -1;
 		}
@@ -617,9 +618,9 @@ int wServer<T>::AcceptConn(wTask *pTask)
 		mTask = NewTcpTask(pSocket);
 	}
 	
-	if(NULL != mTask)
+	if (NULL != mTask)
 	{
-		if(mTask->VerifyConn() < 0 || mTask->Verify())
+		if (mTask->VerifyConn() < 0 || mTask->Verify())
 		{
 			LOG_ERROR(ELOG_KEY, "[system] connect illegal or verify timeout: %d, close it", iNewFD);
 			mTask->DeleteIO();
@@ -628,7 +629,7 @@ int wServer<T>::AcceptConn(wTask *pTask)
 		}
 		
 		mTask->Status() = TASK_RUNNING;
-		if(AddToEpoll(mTask) >= 0)
+		if (AddToEpoll(mTask) >= 0)
 		{
 			AddToTaskPool(mTask);
 		}
@@ -686,7 +687,7 @@ int wServer<T>::RemoveEpoll(wTask* pTask)
 {
 	int iFD = pTask->IO()->FD();
 	mEpollEvent.data.fd = iFD;
-	if(epoll_ctl(mEpollFD, EPOLL_CTL_DEL, iFD, &mEpollEvent) < 0)
+	if (epoll_ctl(mEpollFD, EPOLL_CTL_DEL, iFD, &mEpollEvent) < 0)
 	{
 		mErr = errno;
 		LOG_ERROR(ELOG_KEY, "[system] epoll remove socket fd(%d) error : %s", iFD, strerror(mErr));
@@ -723,13 +724,13 @@ template <typename T>
 void wServer<T>::CheckTimer()
 {
 	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mLastTicker);
-	if(iInterval < 100) 	//100ms
+	if (iInterval < 100) 	//100ms
 	{
 		return;
 	}
 
 	mLastTicker += iInterval;
-	if(mCheckTimer.CheckTimer(iInterval))
+	if (mCheckTimer.CheckTimer(iInterval))
 	{
 		CheckTimeout();
 	}
@@ -745,12 +746,12 @@ void wServer<T>::CheckTimeout()
 
 	unsigned long long iNowTime = GetTickCount();
 	unsigned long long iIntervalTime;
-	if(mTaskPool.size() > 0)
+	if (mTaskPool.size() > 0)
 	{
 		SOCK_TYPE sockType;
 		TASK_TYPE taskType;
 		vector<wTask*>::iterator iter;
-		for(iter = mTaskPool.begin(); iter != mTaskPool.end(); iter++)
+		for (iter = mTaskPool.begin(); iter != mTaskPool.end(); iter++)
 		{
 			sockType = (*iter)->IO()->SockType();
 			taskType = (*iter)->IO()->TaskType();
