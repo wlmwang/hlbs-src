@@ -18,6 +18,9 @@ enum CLIENT_TYPE
 #define ROUTER_LOGIN false
 #define AGENT_LOGIN false
 
-#define AGENT_SHM "/tmp/report-agent.bin"
+#define AGENT_HOST "127.0.0.1"
+//#define AGENT_HOST "/usr/local/webserver/hlbs/agentserver/log/hlbs.sock"
+#define AGENT_PORT 10007
+#define AGENT_TIMEOUT 30
 
 #endif

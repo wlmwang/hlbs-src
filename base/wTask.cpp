@@ -58,7 +58,7 @@ int wTask::TaskRecv()
 	
 	while (true)
 	{
-		if(iBuffMsgLen < sizeof(int))
+		if (iBuffMsgLen < sizeof(int))
 		{
 			break;
 		}
@@ -66,7 +66,7 @@ int wTask::TaskRecv()
 		iMsgLen = *(int *)pBuffer;	//完整消息体长度
 
 		//判断消息长度
-		if(iMsgLen < MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN )
+		if (iMsgLen < MIN_CLIENT_MSG_LEN || iMsgLen > MAX_CLIENT_MSG_LEN )
 		{
 			LOG_ERROR(ELOG_KEY, "[system] recv message invalid len: %d , fd(%d)", iMsgLen, mIO->FD());
 			return ERR_MSGLEN;
@@ -76,7 +76,7 @@ int wTask::TaskRecv()
 		pBuffer += iMsgLen + sizeof(int);		//位移到本条消息结束位置地址
 		
 		//一条不完整消息
-		if(iBuffMsgLen < 0)
+		if (iBuffMsgLen < 0)
 		{
 			//重置buf标识位，待下次循环做准备
 			iBuffMsgLen += iMsgLen + sizeof(int);
@@ -90,14 +90,14 @@ int wTask::TaskRecv()
 		HandleRecvMessage(pBuffer - iMsgLen, iMsgLen);	//去除4字节消息长度标识位
 	}
 
-	if(iBuffMsgLen == 0) //缓冲区无数据
+	if (iBuffMsgLen == 0) //缓冲区无数据
 	{
 		mRecvBytes = 0;
 	}
 	else
 	{
 		//判断剩余的长度
-		if(iBuffMsgLen < 0)
+		if (iBuffMsgLen < 0)
 		{
 			LOG_ERROR(ELOG_KEY, "[system] the last msg len %d is impossible fd(%d)", iBuffMsgLen, mIO->FD());
 			return ERR_MSGLEN;
@@ -117,13 +117,13 @@ int wTask::TaskSend()
 	while(true)
 	{
 		iMsgLen = mSendWrite - mSendBytes;
-		if(iMsgLen <= 0)
+		if (iMsgLen <= 0)
 		{
 			return 0;
 		}
 		
 		iSendLen = mIO->SendBytes(mSendMsgBuff + mSendBytes, iMsgLen);
-		if(iSendLen < 0)
+		if (iSendLen < 0)
 		{
 			return iSendLen;
 		}
@@ -132,7 +132,7 @@ int wTask::TaskSend()
 		LOG_DEBUG(ELOG_KEY, "[system] send message len: %d, fd(%d)", iMsgLen, mIO->FD());
 	}
 	
-	if(mSendBytes > 0)
+	if (mSendBytes > 0)
 	{
 		memmove(mSendMsgBuff, mSendMsgBuff + mSendBytes, mSendWrite - mSendBytes);	//清除已处理消息
 		mSendWrite -= mSendBytes;
@@ -144,19 +144,19 @@ int wTask::TaskSend()
 int wTask::SendToBuf(const char *pCmd, int iLen)
 {
 	//判断消息长度
-	if(iLen <= MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN)
+	if (iLen <= MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN)
 	{
 		LOG_ERROR(ELOG_KEY, "[system] write message invalid len %d, fd(%d)", iLen, mIO->FD());
 		return -1;
 	}
 	
 	int iMsgLen = iLen + sizeof(int);
-	if(sizeof(mSendMsgBuff) - mSendWrite + mSendBytes < iMsgLen) //剩余空间不足
+	if (sizeof(mSendMsgBuff) - mSendWrite + mSendBytes < iMsgLen) //剩余空间不足
 	{
 		LOG_ERROR(ELOG_KEY, "[system] send buf not enough. send(%d) need(%d)", sizeof(mSendMsgBuff) - mSendWrite + mSendBytes, iMsgLen);
 		return -2;
 	}
-	else if(sizeof(mSendMsgBuff) - mSendWrite < iMsgLen) //写入空间不足
+	else if (sizeof(mSendMsgBuff) - mSendWrite < iMsgLen) //写入空间不足
 	{
 		memmove(mSendMsgBuff, mSendMsgBuff + mSendBytes, mSendWrite - mSendBytes);	//清除已处理消息
 		mSendWrite -= mSendBytes;
@@ -175,7 +175,7 @@ int wTask::SendToBuf(const char *pCmd, int iLen)
 int wTask::SyncSend(const char *pCmd, int iLen)
 {
 	//判断消息长度
-	if(iLen < MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN )
+	if (iLen < MIN_CLIENT_MSG_LEN || iLen > MAX_CLIENT_MSG_LEN )
 	{
 		LOG_ERROR(ELOG_KEY, "[system] send message invalid len %d, fd(%d)", iLen, mIO->FD());
 		return -1;
@@ -189,9 +189,9 @@ int wTask::SyncSend(const char *pCmd, int iLen)
 int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 {
 	int iSize = 0, iRecvLen = 0, iMsgLen = 0, iTryCount = 0; /*每个消息最多被分为多少个包*/
-	long long iSleep = 5000;	//5ms
+	long long iSleep = 10;	//10us
 
-	iTryCount = iTimeout*1000000 / iSleep;
+	iTryCount = iTimeout*1000000/iSleep;
 	memset(mTmpRecvMsgBuff, 0, sizeof(mTmpRecvMsgBuff));
 	
 	struct wCommand* pTmpCmd = 0;

@@ -72,8 +72,8 @@ zend_module_entry hlbs_module_entry = {
 #endif
 	"hlbs",
 	hlbs_functions,
-	NULL,
-	NULL,
+	PHP_MINIT,
+	PHP_MSHUTDOWN,
 	NULL,
 	NULL,
 	PHP_MINFO(hlbs),

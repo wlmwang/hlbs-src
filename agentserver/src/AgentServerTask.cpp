@@ -102,7 +102,7 @@ int AgentServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, 
 //agentcmd发来请求，(正常由router主动下发，而非请求下发)
 int AgentServerTask::SyncSvrReq(char *pBuffer, int iLen)
 {
-	SvrReqSync_t vRRt;
+	struct SvrReqSync_t vRRt;
 	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
 	return 0;
 }
@@ -123,9 +123,9 @@ int AgentServerTask::ReloadSvrReq(char *pBuffer, int iLen)
 int AgentServerTask::GetSvrAll(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	SvrReqAll_t *pCmd = (struct SvrReqAll_t* )pBuffer;
+	struct SvrReqAll_t *pCmd = (struct SvrReqAll_t* )pBuffer;
 
-	SvrResData_t vRRt;
+	struct SvrResData_t vRRt;
 	vRRt.mReqId = pCmd->GetId();
 	vRRt.mNum = pConfig->Qos()->GetSvrAll(vRRt.mSvr);
 	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
@@ -136,22 +136,22 @@ int AgentServerTask::GetSvrAll(char *pBuffer, int iLen)
 int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	SvrReqGXid_t *pCmd = (struct SvrReqGXid_t* )pBuffer;
+	struct SvrReqGXid_t *pCmd = (struct SvrReqGXid_t* )pBuffer;
 	
-	SvrResData_t vRRt;
-	vRRt.mReqId = pCmd->GetId();
+	struct SvrOneRes_t vRRt;
+	vRRt.mSvr.mGid = pCmd->mGid;
+	vRRt.mSvr.mXid = pCmd->mXid;
 	
-	vRRt.mSvr[0].mGid = pCmd->mGid;
-	vRRt.mSvr[0].mXid = pCmd->mXid;
-	if(pConfig->Qos()->QueryNode(vRRt.mSvr[0]) >= 0)
+	//手动测试该函数是否为瓶颈函数
+	if (pConfig->Qos()->QueryNode(vRRt.mSvr) >= 0)
 	{
 		vRRt.mNum = 1;
 	}
-
-	LOG_DEBUG(ELOG_KEY, "[system] send svr agent num(%d) gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)", vRRt.mNum,
-		vRRt.mSvr[0].mGid, vRRt.mSvr[0].mXid, vRRt.mSvr[0].mHost, vRRt.mSvr[0].mPort, vRRt.mSvr[0].mWeight, vRRt.mSvr[0].mVersion);
-	
 	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
+	
+	LOG_DEBUG(ELOG_KEY, "[system] send svr agent gid(%d),xid(%d),host(%s),port(%d),weight(%d),ver(%d)",
+		vRRt.mSvr.mGid, vRRt.mSvr.mXid, vRRt.mSvr.mHost, vRRt.mSvr.mPort, vRRt.mSvr.mWeight, vRRt.mSvr.mVersion);
+
 	return 0;
 }
 
@@ -159,17 +159,17 @@ int AgentServerTask::GetSvrByGXid(char *pBuffer, int iLen)
 int AgentServerTask::ReportSvr(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
-	SvrReqReport_t *pCmd = (struct SvrReqReport_t* )pBuffer;
+	struct SvrReqReport_t *pCmd = (struct SvrReqReport_t* )pBuffer;
 	
-	SvrResReport_t vRRt;
-
-	if(pConfig->Qos()->CallerNode(pCmd->mCaller) >= 0)
+	struct SvrResReport_t vRRt;
+	if (pConfig->Qos()->CallerNode(pCmd->mCaller) >= 0)
 	{
 		vRRt.mCode = 1;
 	}
-
-	LOG_DEBUG(ELOG_KEY, "[system] send svr report %d", vRRt.mCode);
-	
 	mServer->Send(this, (char *)&vRRt, sizeof(vRRt));
+	
+	LOG_DEBUG(ELOG_KEY, "[system] send svr report ret %d, gid(%d) xid(%d),host(%s),port(%d)", 
+		vRRt.mCode, pCmd->mCaller.mCalledGid, pCmd->mCaller.mCalledXid, pCmd->mCaller.mHost, pCmd->mCaller.mPort);
+
 	return 0;
 }

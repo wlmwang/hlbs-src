@@ -9,18 +9,16 @@
 
 #include "wCore.h"
 #include "wUDSocket.h"
+#include "wSocket.h"
 #include "wTask.h"
 #include "Common.h"
 #include "Svr.h"
 #include "SvrCmd.h"
 
-//#define AGENT_HOST "127.0.0.1"
-#define AGENT_PORT 10007
-#define AGENT_HOST "/usr/local/webserver/hlbs/agentserver/log/hlbs.sock"
-
 struct postHandle_t
 {
-	wUDSocket mSock;
+	//wUDSocket mSock;
+	wSocket mSock;
 	wTask mTask;
 	bool mConnecting;
 };

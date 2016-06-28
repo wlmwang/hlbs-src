@@ -71,7 +71,7 @@ void AgentServer::PrepareRun()
 	}
 	
 	//listen socket
-	if(mUDListenSock->Listen("../log/hlbs.sock") < 0)
+	if (mUDListenSock->Listen("../log/hlbs.sock") < 0)
 	{
 		mErr = errno;
 		LOG_ERROR(ELOG_KEY, "[system] listen unix socket failed: %s", strerror(mErr));
@@ -80,7 +80,7 @@ void AgentServer::PrepareRun()
 	}
 	
 	//nonblock
-	if(mUDListenSock->SetNonBlock() < 0) 
+	if (mUDListenSock->SetNonBlock() < 0) 
 	{
 		LOG_ERROR(ELOG_KEY, "[system] Set unix socket non block failed: %d, close it", iFD);
 		SAFE_DELETE(mUDListenSock);
@@ -89,7 +89,7 @@ void AgentServer::PrepareRun()
 	mUDListenSock->SockStatus() = STATUS_LISTEN;
 
 	mTask = NewUDSocketTask(mUDListenSock);
-	if(NULL != mTask)
+	if (NULL != mTask)
 	{
 		mTask->Status() = TASK_RUNNING;
 		if (AddToEpoll(mTask) >= 0)
@@ -126,13 +126,13 @@ wTask* AgentServer::NewUDSocketTask(wIO *pIO)
 int AgentServer::InitSvrReq()
 {
 	wMTcpClient<AgentClientTask>* pRouterConn = RouterConn();	//客户端连接
-	if(pRouterConn == NULL)
+	if (pRouterConn == NULL)
 	{
 		return -1;
 	}
 
 	wTcpClient<AgentClientTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
-	if(pClient != NULL && pClient->TcpTask())
+	if (pClient != NULL && pClient->TcpTask())
 	{
 		SvrReqInit_t stSvr;
 		return pClient->TcpTask()->SyncSend((char *)&stSvr, sizeof(stSvr));
@@ -144,12 +144,12 @@ int AgentServer::InitSvrReq()
 int AgentServer::ReloadSvrReq()
 {
 	wMTcpClient<AgentClientTask>* pRouterConn = RouterConn();
-	if(pRouterConn == NULL)
+	if (pRouterConn == NULL)
 	{
 		return -1;
 	}
 	wTcpClient<AgentClientTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
-	if(pClient != NULL && pClient->TcpTask())
+	if (pClient != NULL && pClient->TcpTask())
 	{
 		SvrReqReload_t stSvr;
 		return pClient->TcpTask()->SyncSend((char *)&stSvr, sizeof(stSvr));

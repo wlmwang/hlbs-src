@@ -9,7 +9,7 @@
 # 需要预先编译lib目录下的log4cpp|tinyxml软件包
 #
 
-ROOTPATH=\"/usr/local/hlbs/routerserver/bin\"
+ROOTPATH=\"/usr/local/webserver/hlbs/routerserver/bin\"
 
 BASEPATH=../base
 
@@ -19,7 +19,7 @@ COMMANDPATH=../command
 
 CXX=g++
 
-CXXFLAGS=-g -std=c++11 -Wno-invalid-offsetof -DPREFIX=$(ROOTPATH) -DUSE_LOG4CPP -DLINUX -D_DEBUG_ #-D_MEM_CHECK #--extra-libs=-lgcc
+CXXFLAGS=-std=c++11 -Wall -Wno-invalid-offsetof -DPREFIX=$(ROOTPATH) -DUSE_LOG4CPP -DLINUX -D_DEBUG_ #-D_MEM_CHECK #--extra-libs=-lgcc
 
 LIBS=-llog4cpp -ltinyxml -lpthread
 INCPATH=-I./$(BASEPATH) -I./$(LIBPATH)/tinyxml -I./$(COMMANDPATH) -I/usr/include/log4cpp
