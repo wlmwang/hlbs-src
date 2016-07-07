@@ -63,11 +63,9 @@ void RouterMaster::PrepareRun()
     }
 	mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");
 
-    //pid文件名
-    mPidFile.FileName() = "../log/hlbs.pid";
-    
-    //mWorkerNum = 4;   //worker个数
-    
+    //mPidFile.FileName() = "../log/hlbs.pid";  //pid文件名
+    mPidFile.FileName() = "/var/run/hlbs_router.pid";
+        
     //准备工作（创建、绑定服务器Listen Socket）
     mServer->PrepareMaster(mConfig->mIPAddr, mConfig->mPort);
 }

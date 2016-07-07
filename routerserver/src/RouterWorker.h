@@ -29,7 +29,6 @@ class RouterWorker: public wWorker
 	protected:
 		RouterConfig *mConfig;
 		RouterServer *mServer;
-
 		map<long long, string> mTimeEvent;
 };
 

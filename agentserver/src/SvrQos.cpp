@@ -14,13 +14,11 @@ SvrQos::SvrQos()
 SvrQos::~SvrQos() 
 {
 	CleanNode();
-	SAFE_DELETE(mReqMutex);
 }
 
 void SvrQos::Initialize() 
 {
 	mPreRoute = 1;	//开启预取缓存功能
-	mReqMutex = new wMutex();
 	mDetectThread = DetectThread::Instance();
 }
 

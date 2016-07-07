@@ -9,11 +9,6 @@
 #include "RouterConfig.h"
 #include "RouterMaster.h"
 
-void ServerExit()
-{
-	//code...
-}
-
 int main(int argc, const char *argv[])
 {
 	//config
@@ -28,9 +23,6 @@ int main(int argc, const char *argv[])
 		cout << "[system] Command line Option failed" << endl;
 		exit(0);
 	}
-	pConfig->GetBaseConf();
-	pConfig->GetSvrConf();
-	pConfig->GetQosConf();
 	
 	//daemon
 	if (pConfig->mDaemon == 1)
@@ -41,6 +33,12 @@ int main(int argc, const char *argv[])
 			exit(0);
 		}
 	}
+
+	//init config
+	pConfig->GetBaseConf();
+	pConfig->GetSvrConf();
+	pConfig->GetQosConf();
+	
 	//master
 	RouterMaster *pMaster = RouterMaster::Instance();
 	if (pMaster == NULL) 
@@ -48,7 +46,6 @@ int main(int argc, const char *argv[])
 		LOG_ERROR(ELOG_KEY, "[system] RouterMaster instance failed");
 		exit(0);
 	}
-	//atexit(ServerExit);
 
 	pMaster->PrepareStart();
 	pMaster->MasterStart();
