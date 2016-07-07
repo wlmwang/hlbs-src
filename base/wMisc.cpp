@@ -171,7 +171,7 @@ int InitDaemon(const char *filename)
 	if (GetCwd(dir_path, sizeof(dir_path)) == -1)
 	{
 		err = errno;
-		LOG_ERROR(ELOG_KEY, "[system] getcwd failed: %s", strerror(err));
+		cout << "[system] getcwd failed: " << strerror(err) << endl;
 		exit(0);
 	}
 #endif
@@ -180,7 +180,7 @@ int InitDaemon(const char *filename)
 	if (chdir(dir_path) == -1) 
 	{
 		err = errno;
-		LOG_ERROR(ELOG_KEY, "[system] Can not change run dir to %s , init daemon failed: %s", dir_path, strerror(err));
+		cout << "[system] Can not change run dir to "<< dir_path << " , init daemon failed: " << strerror(err) << endl;
 		return -1;
 	}
 	umask(0);
@@ -188,21 +188,19 @@ int InitDaemon(const char *filename)
 	int lock_fd = open(filename, O_RDWR|O_CREAT, 0640);
 	if (lock_fd < 0) 
 	{
-		LOG_ERROR(ELOG_KEY, "[system] Open lock file failed when init daemon");
+		cout << "[system] Open lock file failed when init daemon" << endl;
 		return -1;
 	}
 	//独占式锁定文件，防止有相同程序的进程已经启动
 	int ret = flock(lock_fd, LOCK_EX | LOCK_NB);
 	if (ret < 0) 
 	{
-		LOG_ERROR(ELOG_KEY, "[system] Lock file failed, server is already running");
+		cout << "[system] Lock file failed, server is already running" << endl;
 		return -1;
 	}
 
-	pid_t pid;
-
 	//第一次fork
-	if ((pid = fork()) != 0) exit(0);
+	if (fork() != 0) exit(0);
 
 	setsid();
 
@@ -218,7 +216,7 @@ int InitDaemon(const char *filename)
 	stSig.AddSigno(SIGTTOU);
 
 	//再次fork
-	if ((pid = fork()) != 0) exit(0);
+	if (fork() != 0) exit(0);
 	
 	unlink(filename);
 	return 0;

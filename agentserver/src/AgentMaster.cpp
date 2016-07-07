@@ -67,8 +67,9 @@ void AgentMaster::PrepareRun()
 
 	mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");   //设置标题
 
-    mPidFile.FileName() = "../log/hlbs.pid";    //进程pid文件
-    
+    //mPidFile.FileName() = "../log/hlbs.pid";    //进程pid文件
+    mPidFile.FileName() = "/var/run/hlbs_agent.pid";
+
     mServer->PrepareSingle(mConfig->mIPAddr, mConfig->mPort);    //初始化服务器
 }
 

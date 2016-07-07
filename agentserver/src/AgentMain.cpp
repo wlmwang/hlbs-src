@@ -9,11 +9,6 @@
 #include "AgentConfig.h"
 #include "AgentMaster.h"
 
-void ServerExit()
-{
-	//code...
-}
-
 int main(int argc, const char *argv[])
 {
 	//config
@@ -51,7 +46,6 @@ int main(int argc, const char *argv[])
 		LOG_ERROR(ELOG_KEY, "[system] AgentMaster instance failed");
 		exit(0);
 	}
-	//atexit(ServerExit);
 
 	pMaster->PrepareStart();
 	pMaster->SingleStart();

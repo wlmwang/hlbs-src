@@ -20,7 +20,6 @@
 #include "wCore.h"
 #include "wCommand.h"
 #include "wSignal.h"
-#include "wLog.h"
 
 inline const char* IP2Text(long ip)
 {
