@@ -19,7 +19,7 @@ class wHttpTask : public wTask
 		void Initialize();
 		virtual ~wHttpTask();
 		
-		virtual int HandleRecvMessage(char * pBuffer, int nLen) {}
+		virtual int HandleRecvMessage(char * pBuffer, int nLen) { return -1;}
 };
 
 #endif

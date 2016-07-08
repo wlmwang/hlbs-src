@@ -79,8 +79,8 @@ class wMaster : public wSingleton<T>
 
 	public:
 		int mErr;
-		MASTER_STATUS mStatus {PROCESS_SINGLE};
-		int mProcess {0};
+		MASTER_STATUS mStatus {MASTER_INIT};
+		int mProcess {PROCESS_SINGLE};
 		int mNcpu {0};		//cpu个数
 		pid_t mPid {0};		//master进程id
 		int mSlot {0};		//进程表分配到数量

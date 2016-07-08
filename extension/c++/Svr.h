@@ -40,6 +40,8 @@ struct SvrNet_t
     int 	mPre {0};		//预取数
     int 	mExpired {0};	//过期时间
 
+	SvrNet_t() {}
+	
 	SvrNet_t(const SvrNet_t &stSvr)
 	{
 		mGid = stSvr.mGid;
@@ -442,6 +444,8 @@ struct SvrNode_t
     bool mIsDetecting {false}; 		//是否处在 "探测宕机是否恢复" 的状态  
     //int mHasDumpStatistic {0};//是否备份
 
+    SvrNode_t() {}
+    
 	SvrNode_t(const struct SvrNet_t& nt, struct SvrStat_t* pStat)
 	{
         if (pStat == NULL)

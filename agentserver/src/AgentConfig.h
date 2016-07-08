@@ -28,17 +28,6 @@
 class AgentConfig : public wConfig<AgentConfig>
 {
 	public:
-		AgentConfig();
-		virtual ~AgentConfig();
-		struct RouterConf_t* GetOneRouterConf();	//获取一个router服务器
-		
-		void GetBaseConf();
-		void GetRouterConf();
-		void GetQosConf();
-		
-		SvrQos *Qos() { return mSvrQos; }
-
-	public:
 		//router配置，server.xml
 		struct RouterConf_t
 		{
@@ -51,9 +40,20 @@ class AgentConfig : public wConfig<AgentConfig>
 		unsigned int mPort {0};
 		unsigned int mBacklog {LISTEN_BACKLOG};
 		unsigned int mWorkers {1};
-			
+		
+	public:
+		AgentConfig();
+		virtual ~AgentConfig();
+		struct RouterConf_t* GetOneRouterConf();	//获取一个router服务器
+		
+		void GetBaseConf();
+		void GetRouterConf();
+		void GetQosConf();
+		
+		SvrQos *Qos() { return mSvrQos; }
+
 	protected:
-		RouterConf_t mRouterConf[MAX_ROUTER_NUM];
+		struct RouterConf_t mRouterConf[MAX_ROUTER_NUM];
 
 		SvrQos *mSvrQos {NULL};
 		TiXmlDocument *mDoc {NULL};

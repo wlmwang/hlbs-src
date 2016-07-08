@@ -6,8 +6,6 @@
 
 #include "RouterWorker.h"
 
-RouterWorker::RouterWorker(int iSlot) : wWorker(iSlot) {}
-
 void RouterWorker::PrepareRun()
 {
 	mConfig = RouterConfig::Instance();

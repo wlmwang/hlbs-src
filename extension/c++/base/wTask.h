@@ -64,7 +64,7 @@ class wTask : private wNoncopyable
 		int SyncRecv(char *pCmd, int iLen, int iTimeout = 10/*s*/);
 		
 		//业务逻辑入口函数
-		virtual int HandleRecvMessage(char * pBuffer, int nLen) {}
+		virtual int HandleRecvMessage(char * pBuffer, int nLen) { return -1;}
 		
 		wIO	*mIO {NULL};
 	protected:

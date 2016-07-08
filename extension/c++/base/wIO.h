@@ -59,7 +59,7 @@ enum SOCK_TYPE
 class wIO : private wNoncopyable
 {
 	public:
-		wIO() {}
+		wIO();
 		virtual ~wIO();
 		
 		int &FD() { return mFD; }

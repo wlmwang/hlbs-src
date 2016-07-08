@@ -21,7 +21,7 @@
 class wUDSocket : public wIO
 {
 	public:
-		wUDSocket() {}
+		wUDSocket();
 		virtual ~wUDSocket() {}
 
 		virtual ssize_t RecvBytes(char *vArray, size_t vLen);
