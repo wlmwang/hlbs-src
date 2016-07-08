@@ -14,4 +14,4 @@
    通过更新RouterSvr下svr.xml配置文件，集中进行管理所有后端Svr。
 
 #详情
-   见目录：HLBS_Manual_zh
+   见目录：[用户手册](HLBS_Manual_zh/SUMMARY.md)
