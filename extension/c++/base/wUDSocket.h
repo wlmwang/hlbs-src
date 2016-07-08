@@ -21,9 +21,8 @@
 class wUDSocket : public wIO
 {
 	public:
-		wUDSocket();
-		void Initialize();
-		virtual ~wUDSocket();
+		wUDSocket() {}
+		virtual ~wUDSocket() {}
 
 		virtual ssize_t RecvBytes(char *vArray, size_t vLen);
 		virtual ssize_t SendBytes(char *vArray, size_t vLen);

@@ -22,14 +22,13 @@ class wShm : private wNoncopyable
 {
 	struct shmhead_t
 	{
-		char *mStart;	//共享内存开始地址
-		char *mEnd;		//共享内存结束地址
-		char *mUsedOff;	//已被分配共享内存偏移地址offset，即下次可使用的开始地址
+		char *mStart {NULL};	//共享内存开始地址
+		char *mEnd {NULL};		//共享内存结束地址
+		char *mUsedOff {NULL};	//已被分配共享内存偏移地址offset，即下次可使用的开始地址
 	};
 
 	public:
 		wShm(const char *filename, int pipeid = 'i', size_t size = MSG_QUEUE_LEN);
-		void Initialize();
 		virtual ~wShm();
 
 		char *CreateShm();
@@ -44,14 +43,14 @@ class wShm : private wNoncopyable
 
 	protected:
 		char mFilename[255];
-		int mPipeId;
-		key_t mKey;
-		int mShmId;
+		int mPipeId {0};
+		key_t mKey {0};
+		int mShmId {0};
 		
-		size_t mSize;
-		shmhead_t *mShmhead;	//共享内存头信息
+		size_t mSize {0};
+		struct shmhead_t *mShmhead {NULL};	//共享内存头信息
 
-		int mPagesize;
+		int mPagesize {0};
 };
 
 #endif

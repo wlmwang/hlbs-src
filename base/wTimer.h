@@ -17,14 +17,8 @@
 class wTimer
 {
 	public:
-		wTimer()
-		{
-            mTimer = 0;
-            mTimeRecord = 0;
-		}
-
+		wTimer() {}
 		wTimer(int vTimer): mTimer(vTimer), mTimeRecord(vTimer) {}
-
 		~wTimer() {}
 
 		bool CheckTimer(int vInterval)
@@ -44,8 +38,8 @@ class wTimer
 		}
 		
 	private:
-		int mTimer;
-		int mTimeRecord;
+		int mTimer {0};
+		int mTimeRecord {0};
 };
 
 #endif

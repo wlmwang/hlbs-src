@@ -36,11 +36,6 @@ wThread::wThread()
 	mRunStatus = THREAD_BLOCKED;	//×èÈû
 }
 
-wThread::~wThread() 
-{
-	//
-}
-
 int wThread::StartThread(int join)
 {
 	pthread_attr_init(&mAttr);

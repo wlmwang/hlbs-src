@@ -8,19 +8,11 @@
 
 wTcpTask::wTcpTask(wIO *pIO) : wTask(pIO)
 {
-	Initialize();
+	mHeartbeatTimes = 0;
 }
 
 wTcpTask::wTcpTask()
 {
-	Initialize();
-}
-
-wTcpTask::~wTcpTask() {}
-
-void wTcpTask::Initialize()
-{
-	mConnType = CLIENT;
 	mHeartbeatTimes = 0;
 }
 

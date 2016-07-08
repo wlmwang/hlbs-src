@@ -19,9 +19,8 @@
 class wMsgQueue : private wNoncopyable
 {
 	public:
-		wMsgQueue();
-		~wMsgQueue();
-		void Initialize();
+		wMsgQueue() {}
+		~wMsgQueue() {}
 
 		void SetBuffer(char *vBuffer, int vBufferLen);
 		
@@ -47,10 +46,10 @@ class wMsgQueue : private wNoncopyable
 		}
 		
 	private:
-		int *mBeginIdxPtr;	//前4位记录开始地址
-		int *mEndIdxPtr;	//后4位开始地址
-		int mQueueSize;		//实际数据长度
-		char *mBufferPtr;	//实际数据地址
+		int *mBeginIdxPtr {NULL};	//前4位记录开始地址
+		int *mEndIdxPtr {NULL};		//后4位开始地址
+		int mQueueSize {0};			//实际数据长度
+		char *mBufferPtr {NULL};	//实际数据地址
 };
 
 #endif

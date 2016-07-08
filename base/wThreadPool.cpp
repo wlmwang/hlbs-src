@@ -6,11 +6,6 @@
 
 #include "wThreadPool.h"
 
-wThreadPool::wThreadPool()
-{
-	Initialize();
-}
-
 wThreadPool::~wThreadPool()
 {
 	SAFE_DELETE(mMutex);
@@ -21,11 +16,6 @@ wThreadPool::~wThreadPool()
 		SAFE_DELETE(*it);
 	}
 	mThreadPool.clear();
-}
-
-void wThreadPool::Initialize()
-{
-	//
 }
 
 void wThreadPool::CleanPool()
@@ -46,19 +36,6 @@ int wThreadPool::DelPool(wThread* pThread)
 {
 	W_ASSERT(pThread != NULL, return -1);
 }
-
-
-void wThreadPool::PrepareRun()
-{
-	//
-}
-
-
-void wThreadPool::Run()
-{
-	//
-}
-
 
 void wThreadPool::PrepareStart()
 {

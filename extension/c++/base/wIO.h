@@ -59,8 +59,7 @@ enum SOCK_TYPE
 class wIO : private wNoncopyable
 {
 	public:
-		wIO();
-		void Initialize();
+		wIO() {}
 		virtual ~wIO();
 		
 		int &FD() { return mFD; }
@@ -87,29 +86,29 @@ class wIO : private wNoncopyable
 		
 		virtual int SetNonBlock(bool bNonblock = true);
 		
-		virtual int Open();
+		virtual int Open() { return FD_UNKNOWN;}
 		virtual void Close();
 		
 		virtual ssize_t RecvBytes(char *vArray, size_t vLen) = 0;
 		virtual ssize_t SendBytes(char *vArray, size_t vLen) = 0;
 		
 	protected:
-		int mFD;
 		int mErr;
-		IO_TYPE mIOType;
-		IO_FLAG mIOFlag;
+		int mFD {FD_UNKNOWN};
+		IO_TYPE mIOType {TYPE_UNKNOWN};
+		IO_FLAG mIOFlag {FLAG_UNKNOWN};
 		
-		SOCK_TYPE mSockType;
-		SOCK_STATUS mSockStatus;
+		SOCK_TYPE mSockType {SOCK_UNKNOWN};
+		SOCK_STATUS mSockStatus {STATUS_UNKNOWN};
 		
-		TASK_TYPE mTaskType;
+		TASK_TYPE mTaskType {TASK_UNKNOWN};
 		
 		string mHost;
-		unsigned short mPort;
+		unsigned short mPort {0};
 		
-		unsigned long long mRecvTime;	//最后接收到数据包的时间戳，毫秒
-		unsigned long long mSendTime;	//最后发送数据包时间戳（主要用户心跳检测），毫秒
-		unsigned long long mCreateTime;	//创建时间，毫秒
+		unsigned long long mRecvTime {0};	//最后接收到数据包的时间戳，毫秒
+		unsigned long long mSendTime {0};	//最后发送数据包时间戳（主要用户心跳检测），毫秒
+		unsigned long long mCreateTime {0};	//创建时间，毫秒
 };
 
 #endif

@@ -17,14 +17,14 @@ class wTcpTask : public wTask
 		wTcpTask();
 		wTcpTask(wIO *pIO);
 		void Initialize();
-		virtual ~wTcpTask();
+		virtual ~wTcpTask() {}
 		
 		virtual int VerifyConn();	//验证接收到连接
 		virtual int Verify();		//发送连接验证请求
 
 		int ConnType() { return mConnType; }
 	protected:
-		int mConnType; //客户端类型
+		int mConnType {CLIENT}; //客户端类型
 };
 
 #endif

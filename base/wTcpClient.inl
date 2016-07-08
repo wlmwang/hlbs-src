@@ -7,24 +7,11 @@
 template <typename T>
 wTcpClient<T>::wTcpClient(int iType, string sClientName)
 {
-	Initialize();
-	mType = iType;
-	mClientName = sClientName;
-}
-
-template <typename T>
-void wTcpClient<T>::Initialize()
-{
-	mStatus = CLIENT_INIT;
 	mLastTicker = GetTickCount();
 	mCheckTimer = wTimer(KEEPALIVE_TIME);
 	mReconnectTimer = wTimer(KEEPALIVE_TIME);
-	mIsCheckTimer = false;
-	mIsReconnect = true;
-	mReconnectTimes = 0;
-	mClientName = "";
-	mType = 0;
-	mTcpTask = NULL;
+	mType = iType;
+	mClientName = sClientName;
 }
 
 template <typename T>

@@ -8,8 +8,7 @@
 
 wShm::wShm(const char *filename, int pipeid, size_t size)
 {
-	Initialize();
-
+	mPagesize = getpagesize();
 	mPipeId = pipeid;
 	mSize = size + sizeof(struct shmhead_t);
 	if(mPagesize > 0)
@@ -18,17 +17,6 @@ wShm::wShm(const char *filename, int pipeid, size_t size)
 	}
 	
 	memcpy(mFilename, filename, strlen(filename) +1);
-}
-
-void wShm::Initialize()
-{
-	mPagesize = getpagesize();
-	memset(mFilename, 0, sizeof(mFilename));
-	mPipeId = 0;
-	mSize = 0;
-	mShmId = 0;
-	mKey = 0;
-	mShmhead = NULL;
 }
 
 wShm::~wShm()

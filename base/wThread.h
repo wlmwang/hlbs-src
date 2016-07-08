@@ -27,7 +27,7 @@ class wThread : private wNoncopyable
 {
 	public:
 		wThread();
-		virtual ~wThread();
+		virtual ~wThread() {}
 
 		virtual int PrepareRun() = 0;
 		virtual int Run() = 0;
@@ -58,15 +58,16 @@ class wThread : private wNoncopyable
 			memcpy(mRetVal, "pthread exited", sizeof("pthread exited"));
 			return mRetVal;
 		}
+
 	protected:
 		int CondBlock();
 
 		pthread_t mTid;
 		pthread_attr_t mAttr;
-		int mRunStatus;
-		char mRetVal[255];
-		wMutex *mMutex;
-		wCond *mCond;
+		int mRunStatus {THREAD_INIT};
+		char mRetVal[255] {'\0'};
+		wMutex *mMutex {NULL};
+		wCond *mCond {NULL};
 };
 
 #endif

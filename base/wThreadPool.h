@@ -19,24 +19,23 @@
 class wThreadPool : private wNoncopyable
 {
 	public:
-		wThreadPool();
+		wThreadPool() {}
 		virtual ~wThreadPool();
-		void Initialize();
 		void CleanPool();
 		
 		void PrepareStart();
 		void Start(bool bDaemon = true);
 		
-		virtual void PrepareRun();
-		virtual void Run();
+		virtual void PrepareRun() {}
+		virtual void Run() {}
 
 		virtual int AddPool(wThread* pThread);
 		virtual int DelPool(wThread* pThread);
 		
 	protected:
 		vector<wThread *> mThreadPool;
-		wMutex *mMutex;
-		wCond *mCond;
+		wMutex *mMutex {NULL};
+		wCond *mCond {NULL};
 };
 
 #endif

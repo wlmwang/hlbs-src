@@ -28,7 +28,6 @@ class wTcpClient : private wNoncopyable
         wTcpClient(int iType, string sClientName);
 		wTcpClient(const wTcpClient&);
 		virtual ~wTcpClient();
-		void Initialize();
 		void Final();
 
 		virtual void PrepareStart();
@@ -51,19 +50,18 @@ class wTcpClient : private wNoncopyable
 		wTcpTask* TcpTask() { return mTcpTask; }
 		
 	protected:
-		int mType;	//服务器类型(CLIENT_TYPE)
-		string mClientName;		
-		wTcpTask* mTcpTask;	//每个客户端只对应一个task
-		CLIENT_STATUS mStatus;
+		int mErr;
+		string mClientName;
+		int mType {0};	//服务器类型(CLIENT_TYPE)
+		wTcpTask* mTcpTask {NULL};	//每个客户端只对应一个task
+		CLIENT_STATUS mStatus {CLIENT_INIT};
 
-		unsigned long long mLastTicker;
+		unsigned long long mLastTicker {0};
 		wTimer mCheckTimer;
 		wTimer mReconnectTimer;
-		int mReconnectTimes;
-		bool mIsCheckTimer;
-		bool mIsReconnect;
-
-		int mErr;
+		int mReconnectTimes {0};
+		bool mIsCheckTimer {false};
+		bool mIsReconnect {true};
 };
 
 #include "wTcpClient.inl"
