@@ -28,30 +28,8 @@
 class AgentConfig : public wConfig<AgentConfig>
 {
 	public:
-		//router配置，server.xml
-		struct RouterConf_t
-		{
-			char mIPAddr[MAX_IP_LEN];
-			unsigned int mPort;
-			short mDisabled;
-			
-			RouterConf_t()
-			{
-				memset(mIPAddr, 0, sizeof(mIPAddr));
-				mPort = 0;
-				mDisabled = 0;
-			}
-		};
-
-		char mIPAddr[MAX_IP_LEN];
-		unsigned int mPort;
-		unsigned int mBacklog;
-		unsigned int mWorkers;
-	
-	public:
 		AgentConfig();
 		virtual ~AgentConfig();
-		void Initialize();
 		struct RouterConf_t* GetOneRouterConf();	//获取一个router服务器
 		
 		void GetBaseConf();
@@ -59,17 +37,31 @@ class AgentConfig : public wConfig<AgentConfig>
 		void GetQosConf();
 		
 		SvrQos *Qos() { return mSvrQos; }
-		
+
+	public:
+		//router配置，server.xml
+		struct RouterConf_t
+		{
+			char mIPAddr[MAX_IP_LEN] {'\0'};
+			unsigned int mPort {0};
+			short mDisabled {0};
+		};
+
+		char mIPAddr[MAX_IP_LEN] {'\0'};
+		unsigned int mPort {0};
+		unsigned int mBacklog {LISTEN_BACKLOG};
+		unsigned int mWorkers {1};
+			
 	protected:
-		SvrQos *mSvrQos;
-		TiXmlDocument* mDoc;
-		wMemPool *mMemPool;
-		
 		RouterConf_t mRouterConf[MAX_ROUTER_NUM];
 
-		char mRouteConfFile[255];
-		char mQosConfFile[255];
-		char mBaseConfFile[255];
+		SvrQos *mSvrQos {NULL};
+		TiXmlDocument *mDoc {NULL};
+		wMemPool *mMemPool {NULL};
+
+		char mRouteConfFile[255] {'\0'};
+		char mQosConfFile[255] {'\0'};
+		char mBaseConfFile[255] {'\0'};
 };
 
 #endif

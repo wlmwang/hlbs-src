@@ -28,19 +28,15 @@ class AgentUDSocketTask : public wTcpTask
 	public:
 		AgentUDSocketTask();
 		AgentUDSocketTask(wIO *pIO);
-		~AgentUDSocketTask();
+		virtual ~AgentUDSocketTask() {}
 		void Initialize();
-
-		virtual int HandleRecvMessage(char * pBuffer, int nLen);
-		
-		int ParseRecvMessage(struct wCommand* pCommand ,char *pBuffer,int iLen);
+		virtual int HandleRecvMessage(char *pBuffer, int nLen);
+		int ParseRecvMessage(struct wCommand *pCommand ,char *pBuffer,int iLen);
 		
 		DEC_FUNC(GetSvrByGXid);	//获取一个可用svr
 		DEC_FUNC(ReportSvr);	//上报
-
 	protected:
 		DEC_DISP(mDispatch);
-
 		AgentConfig *mConfig;
 		AgentServer *mServer;
 };

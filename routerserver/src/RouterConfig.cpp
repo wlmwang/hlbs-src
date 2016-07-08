@@ -8,7 +8,14 @@
 
 RouterConfig::RouterConfig()
 {
-	Initialize();
+	memcpy(mBaseConfFile, CONF_XML, strlen(CONF_XML) + 1);
+	memcpy(mSvrConfFile, SVR_XML, strlen(SVR_XML) + 1);
+	memcpy(mQosConfFile, QOS_XML, strlen(QOS_XML) + 1);
+
+	mSvrQos = SvrQos::Instance();
+	mDoc = new TiXmlDocument();
+	mMemPool = new wMemPool();
+	mMemPool->Create(MEM_POOL_MAX);
 }
 
 RouterConfig::~RouterConfig()
@@ -17,26 +24,9 @@ RouterConfig::~RouterConfig()
 	SAFE_DELETE(mSvrQos);
 }
 
-void RouterConfig::Initialize()
-{
-	memset(mIPAddr, 0, sizeof(mIPAddr));
-	mPort = 0;
-	mBacklog = LISTEN_BACKLOG;
-	mWorkers = 1;
-	memcpy(mBaseConfFile, CONF_XML, strlen(CONF_XML) + 1);
-	memcpy(mSvrConfFile, SVR_XML, strlen(SVR_XML) + 1);
-	memcpy(mQosConfFile, QOS_XML, strlen(QOS_XML) + 1);
-
-	mDoc = new TiXmlDocument();
-	mSvrQos = SvrQos::Instance();
-	mMemPool = new wMemPool();
-	mMemPool->Create(MEM_POOL_MAX);
-}
-
 void RouterConfig::GetBaseConf()
 {
-	bool bLoadOK = mDoc->LoadFile(mBaseConfFile);
-	if (!bLoadOK)
+	if (!mDoc->LoadFile(mBaseConfFile))
 	{
 		LOG_ERROR(ELOG_KEY, "[config] Load config file(conf.xml) failed");
 		exit(2);
@@ -107,8 +97,7 @@ void RouterConfig::GetBaseConf()
 
 void RouterConfig::GetSvrConf()
 {
-	bool bLoadOK = mDoc->LoadFile(mSvrConfFile);
-	if (!bLoadOK)
+	if (!mDoc->LoadFile(mSvrConfFile))
 	{
 		LOG_ERROR(ELOG_KEY, "[svr] Load config file(svr.xml) failed");
 		exit(2);
@@ -166,8 +155,7 @@ void RouterConfig::GetSvrConf()
 //不能删除节点（可修改WEIGHT=0属性，达到删除节点效果）
 int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 {
-	bool bLoadOK = mDoc->LoadFile(mSvrConfFile);
-	if (!bLoadOK)
+	if (!mDoc->LoadFile(mSvrConfFile))
 	{
 		LOG_ERROR(ELOG_KEY, "[modify-svr] Load config file(svr.xml) failed");
 		return -1;
@@ -257,8 +245,7 @@ bool RouterConfig::IsModTime()
 
 void RouterConfig::GetQosConf()
 {
-	bool bLoadOK = mDoc->LoadFile(mQosConfFile);
-	if (!bLoadOK)
+	if (!mDoc->LoadFile(mQosConfFile))
 	{
 		LOG_ERROR(ELOG_KEY, "[qos] Load config file(qos.xml) failed");
 		exit(2);

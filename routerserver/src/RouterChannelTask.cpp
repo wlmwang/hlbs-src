@@ -18,23 +18,18 @@ RouterChannelTask::RouterChannelTask(wIO *pIO) : wChannelTask(pIO)
     Initialize();
 }
 
-RouterChannelTask::~RouterChannelTask()
-{
-    //...
-}
-
 void RouterChannelTask::Initialize()
 {
-	CHANNEL_REG_DISP(CMD_CHANNEL_REQ, CHANNEL_REQ_OPEN, &RouterChannelTask::ChannelOpen);
-	CHANNEL_REG_DISP(CMD_CHANNEL_REQ, CHANNEL_REQ_CLOSE, &RouterChannelTask::ChannelClose);
-	CHANNEL_REG_DISP(CMD_CHANNEL_REQ, CHANNEL_REQ_QUIT, &RouterChannelTask::ChannelQuit);
-	CHANNEL_REG_DISP(CMD_CHANNEL_REQ, CHANNEL_REQ_TERMINATE, &RouterChannelTask::ChannelTerminate);
+	REG_DISP(mDispatch, "RouterChannelTask", CMD_CHANNEL_REQ, CHANNEL_REQ_OPEN, &RouterChannelTask::ChannelOpen);
+	REG_DISP(mDispatch, "RouterChannelTask", CMD_CHANNEL_REQ, CHANNEL_REQ_CLOSE, &RouterChannelTask::ChannelClose);
+	REG_DISP(mDispatch, "RouterChannelTask", CMD_CHANNEL_REQ, CHANNEL_REQ_QUIT, &RouterChannelTask::ChannelQuit);
+	REG_DISP(mDispatch, "RouterChannelTask", CMD_CHANNEL_REQ, CHANNEL_REQ_TERMINATE, &RouterChannelTask::ChannelTerminate);
 }
 
 /**
  *  接受数据
  */
-int RouterChannelTask::HandleRecvMessage(char * pBuffer, int nLen)
+int RouterChannelTask::HandleRecvMessage(char *pBuffer, int nLen)
 {
 	W_ASSERT(pBuffer != NULL, return -1);
 	//解析消息
@@ -44,7 +39,7 @@ int RouterChannelTask::HandleRecvMessage(char * pBuffer, int nLen)
 
 int RouterChannelTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen)
 {
-	if (pCommand->GetId() == CMD_ID(CMD_NULL, PARA_NULL))
+	if (pCommand->GetId() == W_CMD(CMD_NULL, PARA_NULL))
 	{
 		//空消息(心跳返回)
 		mHeartbeatTimes = 0;

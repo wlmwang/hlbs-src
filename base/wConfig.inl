@@ -5,26 +5,9 @@
  */
 
 template <typename T>
-wConfig<T>::wConfig()
-{
-	Initialize();
-}
-
-template <typename T>
 wConfig<T>::~wConfig() 
 {
 	SAFE_DELETE(mProcTitle);
-}
-
-template <typename T>
-void wConfig<T>::Initialize()
-{
-	mShowVer = 0;
-	mDaemon = 0;
-	mHost = 0;
-	mPort = 0;
-	mSignal = NULL;
-	mProcTitle = NULL;
 }
 
 template <typename T>
@@ -112,7 +95,13 @@ int wConfig<T>::GetOption(int argc, const char *argv[])
 		continue;
 	}
 
+	InitProcTitle(argc, argv);
+	return 0;
+}
+
+template <typename T>
+void wConfig<T>::InitProcTitle(int argc, const char *argv[])
+{
 	mProcTitle = new wProcTitle(argc, argv);
 	mProcTitle->InitSetproctitle();
-	return 0;
 }

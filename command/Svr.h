@@ -14,9 +14,9 @@
 #define MAX_SVR_NUM 255			//每次请求svr最多个数
 
 #define SVR_TM_MAX 20
-#define INIT_WEIGHT     100      //默认权重值 
-#define MAX_WEIGHT      1000     //最大权重值
-#define DELAY_MAX 100000000		//最大延时值 100s
+#define INIT_WEIGHT 100      //默认权重值 
+#define MAX_WEIGHT 1000     //最大权重值
+#define DELAY_MAX 100000000	//最大延时值 100s
 
 enum QOS_RTN
 {
@@ -25,41 +25,20 @@ enum QOS_RTN
 	QOS_SYSERR      = -9998    //系统错误
 };
 
-/*
-enum ACCESS_STATUS
-{
-	SVR_UNKNOWN = -1,
-	SVR_ERR,
-	SVR_SUC,	
-};
-*/
-
 #pragma pack(1)
 
 /*Svr 基础属性 && 通信结构*/
 struct SvrNet_t
 {
-	int		mGid;
-	int		mXid;
-	int 	mWeight;	//静态权重，0为禁用此Svr
-	short	mVersion;
-	int		mPort;
-	char	mHost[MAX_SVR_HOST];
+	int		mGid {0};
+	int		mXid {0};
+	int 	mWeight {INIT_WEIGHT};	//静态权重，0为禁用此Svr
+	short	mVersion {0};
+	int		mPort {0};
+	char	mHost[MAX_SVR_HOST] {'\0'};
 
-    int 	mPre;		//预取数
-    int 	mExpired;	//过期时间
-
-	SvrNet_t()
-	{
-		mGid = 0;
-		mXid = 0;
-		mWeight = INIT_WEIGHT;
-		mPort = 0;
-		mVersion = 0;
-		mPre = 0;
-		mExpired = 0;
-		memset(mHost, 0, MAX_SVR_HOST);
-	}
+    int 	mPre {0};		//预取数
+    int 	mExpired {0};	//过期时间
 
 	SvrNet_t(const SvrNet_t &stSvr)
 	{
@@ -152,27 +131,17 @@ struct SvrNet_t
 
 struct SvrCaller_t
 {
-	int 	mCallerGid;
-	int     mCallerXid;
-	int		mCalledGid;			//被调模块编码
-	int		mCalledXid;			//被调接口编码
-	char	mHost[MAX_SVR_HOST];//被调主机IP
-	unsigned short mPort;		//被调主机PORT
+	int 	mCallerGid {0};
+	int     mCallerXid {0};
+	int		mCalledGid {0};			//被调模块编码
+	int		mCalledXid {0};			//被调接口编码
+	char	mHost[MAX_SVR_HOST] {'\0'};//被调主机IP
+	unsigned short mPort {0};		//被调主机PORT
 	
-	int mReqRet;				//请求结果。 >=0 成功
-	int mReqCount;				//请求次数
-	long long mReqUsetimeUsec;	//微妙
-	int mTid;					//进程id（为实现）
-
-	SvrCaller_t()
-	{
-		mCallerGid = 0;
-		mCallerXid = 0;
-		mCalledGid = 0;
-		mCalledXid = 0;
-		mPort = 0;
-		memset(mHost, 0, MAX_SVR_HOST);
-	}
+	int mReqRet {0};				//请求结果。 >=0 成功
+	int mReqCount {0};				//请求次数
+	long long mReqUsetimeUsec {0};	//微妙
+	int mTid {0};					//进程id（为实现）
 
     bool operator==(SvrCaller_t const &other) const
     {
@@ -210,82 +179,49 @@ struct SvrCaller_t
 //访问量的配置信息
 struct SvrReqCfg_t
 {
-	int			mReqLimit;			//访问量控制的阀值
-	int			mReqMax;			//访问量控制的最大值
-	int			mReqMin;			//访问量控制的最小值
-	int			mReqCount;			//访问量控制的实际值（请求数）
-	float		mReqErrMin;			//错误的最小阀值 0-1 [小于则服务无错，应增大访问量。大于则服务过载，应减少访问量。]
-	float		mReqExtendRate;		//无错误的时候的访问量阀值扩张率 0.001-101
-	int         mRebuildTm;        	//统计的周期 60s
-	int 		mPreTime;			//4(不能大于route重建时间的一半) 可以设定预取时间长度N秒内的路由计数，N小于当前周期的1/2
-	SvrReqCfg_t()
-	{
-		mReqLimit = 0;
-		mReqMax = 0;
-		mReqMin = 0;
-		mReqCount = 0;
-		mReqErrMin = 0.0;
-		mReqExtendRate = 0.0;
-		mRebuildTm = 3;
-		mPreTime = 0;
-	};
+	int			mReqLimit {0};			//访问量控制的阀值
+	int			mReqMax {0};			//访问量控制的最大值
+	int			mReqMin {0};			//访问量控制的最小值
+	int			mReqCount {0};			//访问量控制的实际值（请求数）
+	float		mReqErrMin {0.0};		//错误的最小阀值 0-1 [小于则服务无错，应增大访问量。大于则服务过载，应减少访问量。]
+	float		mReqExtendRate {0.0};	//无错误的时候的访问量阀值扩张率 0.001-101
+	int         mRebuildTm {3};        	//统计的周期 60s
+	int 		mPreTime {0};			//4(不能大于route重建时间的一半) 可以设定预取时间长度N秒内的路由计数，N小于当前周期的1/2
 };
 
 //并发量的配置信息
 struct SvrListCfg_t
 {
-	int			mListLimit;		//并发量控制的阀值
-	int			mListMax;		//并发量控制的最大值 400
-	int			mListMin;		//并发量控制的最小值 10
-	int			mListCount;		//并发量控制的实际值
-	float		mListErrMin;	//并发的最小阀值[小于这个值认为是无错] 0.5
-	float		mListExtendRate;//并发无错误的时候的阀值扩张率 0.2
-	SvrListCfg_t()
-	{
-		mListLimit = 0;
-		mListMax = 0;
-		mListMin = 0;
-		mListCount = 0;
-		mListErrMin = 0.0;
-		mListExtendRate = 0.0;
-	};
+	int			mListLimit {0};		//并发量控制的阀值
+	int			mListMax {0};		//并发量控制的最大值 400
+	int			mListMin {0};		//并发量控制的最小值 10
+	int			mListCount {0};		//并发量控制的实际值
+	float		mListErrMin {0.0};	//并发的最小阀值[小于这个值认为是无错] 0.5
+	float		mListExtendRate {0.0};//并发无错误的时候的阀值扩张率 0.2
 };
 
 //宕机检测和探测的相关配置
 struct SvrDownCfg_t
 {
-	int mReqCountTrigerProbe;   //100000
-	int mDownTimeTrigerProbe;   //600
-	int mProbeTimes;            //(3,~)
-	int mPossibleDownErrReq;    //10	连续错误阈值
-	float mPossbileDownErrRate; //0.5   (0.01,1)	宕机错误率阈值
+	int mReqCountTrigerProbe {0};   //100000
+	int mDownTimeTrigerProbe {0};   //600
+	int mProbeTimes {0};            //(3,~)
+	int mPossibleDownErrReq {0};    //10	连续错误阈值
+	float mPossbileDownErrRate {0.0}; //0.5   (0.01,1)	宕机错误率阈值
 
     //mProbeBegin >0 才打开自探测
-    int mProbeBegin;    //0
-    int mProbeInterval; //3~10
-    int mProbeNodeExpireTime;//3~600
-
-	SvrDownCfg_t()
-    {
-        mReqCountTrigerProbe = 0;
-        mDownTimeTrigerProbe = 0;
-        mProbeTimes = 0;
-        mPossibleDownErrReq = 0;
-        mPossbileDownErrRate = 0.0f;
-
-        mProbeBegin = 0;
-        mProbeInterval = 0;
-        mProbeNodeExpireTime = 0;
-    }
+    int mProbeBegin {0};    //0
+    int mProbeInterval {0}; //3~10
+    int mProbeNodeExpireTime {0};//3~600
 };
 
 /** 时间段配置 */
 struct SvrTM
 {
-	int mCfgCount;					//配置的个数
-	int mBeginUsec[SVR_TM_MAX];		//返回时间段开始时间
-	int mEndUsec[SVR_TM_MAX];		//返回时间段结束时间
-	int mRet[SVR_TM_MAX];			//返回值[0:成功 -1:失败]
+	int mCfgCount {0};					//配置的个数
+	int mBeginUsec[SVR_TM_MAX] {0};		//返回时间段开始时间
+	int mEndUsec[SVR_TM_MAX] {0};		//返回时间段结束时间
+	int mRet[SVR_TM_MAX] {0};			//返回值[0:成功 -1:失败]
 
 	SvrTM(const SvrTM & stm);
 };
@@ -294,88 +230,52 @@ struct SvrTM
 struct SvrInfo_t
 {
 	struct timeval mBuildTm;		//统计信息开始时间, 每个节点 rebuild 时刻的绝对时间
-	int			mReqAll;			//总的请求数，理论上请求调用agent获取路由次数
-	int			mReqRej;			//被拒绝的请求数
-	int			mReqSuc;			//成功的请求数
-	int			mReqErrRet;			//失败的请求数
-	int			mReqErrTm;			//超时的请求数
+	int			mReqAll {0};			//总的请求数，理论上请求调用agent获取路由次数
+	int			mReqRej {0};			//被拒绝的请求数
+	int			mReqSuc {0};			//成功的请求数
+	int			mReqErrRet {0};			//失败的请求数
+	int			mReqErrTm {0};			//超时的请求数
 
-	float       mLoadX;				//负载总乘数 (mOkLoad*mDelayLoad)*(max<mWeight>)/mWeight  系数
-	float       mOkLoad;			//成功率乘数
-	float       mDelayLoad;			//时延乘数
-    float       mDelayLoadAmplify;	//时延放大
-	float       mOkRate;			//上一周期成功率 0-1
-	unsigned int mAvgTm;			//上一周期成功请求平均时延，微秒  mTotalUsec/mReqSuc
-	long long   mTotalUsec; 		//请求总微秒数
-	float 		mAvgErrRate;		//平均错误率，统计多个周期的错误率并加以平均得到（未超过最低阈值(mReqCfg.mReqErrMin)，始终为0）
+	float       mLoadX {1.0};				//负载总乘数 (mOkLoad*mDelayLoad)*(max<mWeight>)/mWeight  系数
+	float       mOkLoad {1.0};			//成功率乘数
+	float       mDelayLoad {1.0};			//时延乘数
+    float       mDelayLoadAmplify {0.0};	//时延放大
+	float       mOkRate {1.0};			//上一周期成功率 0-1
+	unsigned int mAvgTm {1};			//上一周期成功请求平均时延，微秒  mTotalUsec/mReqSuc
+	long long   mTotalUsec {1}; 		//请求总微秒数
+	float 		mAvgErrRate {0.0};		//平均错误率，统计多个周期的错误率并加以平均得到（未超过最低阈值(mReqCfg.mReqErrMin)，始终为0）
 
 	/** 上一周期统计数据 */
-	int 		mLastReqAll;
-	int 		mLastReqRej;
-	int 		mLastReqErrRet;
-	int 		mLastReqErrTm;
-	int  		mLastReqSuc;
-	bool  		mLastErr;			//门限扩张标识 true：收缩  false：扩张
-	int 		mLastAlarmReq;		//参考值。请求数扩张门限（上一周期数量），判断扩展是否有效
-	int 		mLastAlarmSucReq;	//参考值。成功请求数扩张门限
-	int 		mPreAll;			//路由被分配次数 + 预测本周期成功请求次数
+	int 		mLastReqAll {0};
+	int 		mLastReqRej {0};
+	int 		mLastReqErrRet {0};
+	int 		mLastReqErrTm {0};
+	int  		mLastReqSuc {0};
+	bool  		mLastErr {false};		//门限扩张标识 true：收缩  false：扩张
+	int 		mLastAlarmReq {0};		//参考值。请求数扩张门限（上一周期数量），判断扩展是否有效
+	int 		mLastAlarmSucReq {0};	//参考值。成功请求数扩张门限
+	int 		mPreAll {0};			//路由被分配次数 + 预测本周期成功请求次数
 
-	int 		mCityId;	//被调所属城市id
-	int 		mOffSide;	//被调节点与主调异地标志，默认为0， 1标为异地
+	int 		mCityId {0};	//被调所属城市id
+	int 		mOffSide {0};	//被调节点与主调异地标志，默认为0， 1标为异地
 
-	int 		mContErrCount;		//连续失败次数累积
+	int 		mContErrCount {0};		//连续失败次数累积
 
-	int			mSReqAll;			//总的请求数(统计用)
-	int			mSReqRej;			//被拒绝的请求数(统计用)
-	int			mSReqSuc;			//成功的请求数(统计用)
-	int			mSReqErrRet;		//失败的请求数(统计用)
-	int			mSReqRrrTm;			//超时的请求数(统计用)
-    int         mSPreAll;
+	int			mSReqAll {0};			//总的请求数(统计用)
+	int			mSReqRej {0};			//被拒绝的请求数(统计用)
+	int			mSReqSuc {0};			//成功的请求数(统计用)
+	int			mSReqErrRet {0};		//失败的请求数(统计用)
+	int			mSReqRrrTm {0};			//超时的请求数(统计用)
+    int         mSPreAll {0};
     
-    int 		mAddSuc;			//上个周期与上上个周期成功请求数差值
-    int 		mIdle;				//add连续核算次数
+    int 		mAddSuc {0};			//上个周期与上上个周期成功请求数差值
+    int 		mIdle {0};				//add连续核算次数
     SvrInfo_t()
     {
 		mBuildTm.tv_sec = mBuildTm.tv_usec = 0;
-		mReqAll = 0;
-		mReqRej = 0;
-		mReqSuc = 0;
-		mReqErrRet = 0;
-		mReqErrTm	 = 0;
-		mOkRate = 1;
-		mOkLoad = 1;
-		mDelayLoad = 1;
-		mDelayLoadAmplify = 0;
-		mLoadX = 1;
-		mAvgTm = 1;
-		mTotalUsec = 1;
-		mLastReqAll = 0;
-		mLastReqRej = 0;
-		mLastReqErrRet = 0;
-		mLastReqErrTm = 0;
-		mLastReqSuc = 0;
-
-		mLastErr = false;
-		mLastAlarmReq = 0;
-		mLastAlarmSucReq = 0;
-		mPreAll = 0;
-		mContErrCount = 0;
-
-		mSReqAll = 0;
-		mSReqRej = 0;
-		mSReqSuc = 0;
-		mSReqErrRet = 0;
-		mSReqRrrTm  = 0;
-        mSPreAll = 0;
-        
-        mAddSuc = 0;
-        mIdle = 0;
     }
 
-    void InitInfo(struct SvrNet_t& stSvr)
-    {
-    	//...
-    }
+    void InitInfo(struct SvrNet_t& stSvr) {}
 };
 
 /**
@@ -383,10 +283,10 @@ struct SvrInfo_t
  */
 struct SvrStat_t
 {
-	int 			mType;
-	SvrReqCfg_t		mReqCfg;	//访问量配置
-	SvrListCfg_t	mListCfg;	//并发量配置
-	SvrInfo_t		mInfo;		//统计信息
+	int 			mType {0};
+	struct SvrReqCfg_t		mReqCfg;	//访问量配置
+	struct SvrListCfg_t		mListCfg;	//并发量配置
+	struct SvrInfo_t		mInfo;		//统计信息
 
 	//mlist并发量
 	//mreq按各个时间段统计信息
@@ -430,31 +330,23 @@ struct SvrStat_t
  */
 struct SvrKind_t
 {
-	int		mGid;
-	int		mXid;
-	int 	mOverload;
-    float 	mPtotalErrRate;		//累计连续过载，所有路由错误率平均值总和
-    int 	mPsubCycCount;		//累计连续过载次数
+	int		mGid {0};
+	int		mXid {0};
+	int 	mOverload {0};
+    float 	mPtotalErrRate {0.0};		//累计连续过载，所有路由错误率平均值总和
+    int 	mPsubCycCount {0};		//累计连续过载次数
 
-    int 	mPtm; 			//rebuild 时刻的绝对时间 time_t
-    int 	mRebuildTm; 	//rebuild 的时间间隔
-	float 	mWeightSum;
-	int64_t mAccess64tm;	//最近访问时间 微妙
+    int 	mPtm {0}; 			//rebuild 时刻的绝对时间 time_t
+    int 	mRebuildTm {3}; 	//rebuild 的时间间隔
+	float 	mWeightSum {0};
+	int64_t mAccess64tm {0};	//最近访问时间 微妙
 
-	int mPindex;
+	int mPindex {0};
 	
 	SvrKind_t()
 	{
-		mGid = 0;
-		mXid = 0;
-        mPtotalErrRate = 0;
-        mPsubCycCount = 0;
-        mRebuildTm = 3;
-        mWeightSum = 0.0f;
-        mOverload = 0;
         mPtm = time(NULL);
         mAccess64tm = GetTimeofday();
-        mPindex = 0;
 	}
 	
 	SvrKind_t(const SvrKind_t& stKind)
@@ -475,14 +367,8 @@ struct SvrKind_t
 	{
 		mGid = stNode.mGid;
 		mXid = stNode.mXid;
-        mPtotalErrRate = 0;
-        mPsubCycCount = 0;
-        mRebuildTm = 3;
-        mWeightSum = 0.0f;
-        mOverload = 0;
         mPtm = time(NULL);
         mAccess64tm = GetTimeofday();
-        mPindex = 0;
 	}
 
 	SvrKind_t& operator=(const SvrKind_t& stKind)
@@ -542,19 +428,19 @@ struct SvrKind_t
 struct SvrNode_t
 {
 	SvrNet_t mNet;
-	SvrStat_t *mStat;
+	SvrStat_t *mStat {NULL};
 
-	float mKey;				//关键值，初始化为 mInfo.mLoadX = 1
+	float mKey {0};				//关键值，初始化为 mInfo.mLoadX = 1
 
-	int mStopTime;			//宕机记录信息
-	int mReqAllAfterDown;	//宕机以来所有请求数量
+	int mStopTime {0};			//宕机记录信息
+	int mReqAllAfterDown {0};	//宕机以来所有请求数量
     
     /** 宕机相关的额外恢复条件 */
-    int mDownTimeTrigerProbeEx;		//时间
-    int mReqCountTrigerProbeEx;		//请求数量
+    int mDownTimeTrigerProbeEx {0};		//时间
+    int mReqCountTrigerProbeEx {0};		//请求数量
     
-    bool mIsDetecting; 		//是否处在 "探测宕机是否恢复" 的状态  
-    //int mHasDumpStatistic;//是否备份
+    bool mIsDetecting {false}; 		//是否处在 "探测宕机是否恢复" 的状态  
+    //int mHasDumpStatistic {0};//是否备份
 
 	SvrNode_t(const struct SvrNet_t& nt, struct SvrStat_t* pStat)
 	{
@@ -568,12 +454,6 @@ struct SvrNode_t
         }
         mNet = nt;
         mStat = pStat;
-		mStopTime = 0;
-		mReqAllAfterDown = 0;
-		mIsDetecting = false;
-		mDownTimeTrigerProbeEx = 0;
-		mReqCountTrigerProbeEx = 0;
-		//mHasDumpStatistic = 0;
 	}
 };
 

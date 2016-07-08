@@ -16,18 +16,12 @@ RouterServerTask::RouterServerTask(wIO *pIO) : wTcpTask(pIO)
     Initialize();
 }
 
-RouterServerTask::~RouterServerTask()
-{
-    //...
-}
-
 void RouterServerTask::Initialize()
 {
     mConfig = RouterConfig::Instance();
     mServer = RouterServer::Instance();
-    
-	ROUTER_REG_DISP(CMD_SVR_REQ, SVR_REQ_INIT, &RouterServerTask::InitSvrReq);
-	ROUTER_REG_DISP(CMD_SVR_REQ, SVR_REQ_RELOAD, &RouterServerTask::ReloadSvrReq);
+	REG_DISP(mDispatch, "RouterServerTask", CMD_SVR_REQ, SVR_REQ_INIT, &RouterServerTask::InitSvrReq);
+	REG_DISP(mDispatch, "RouterServerTask", CMD_SVR_REQ, SVR_REQ_RELOAD, &RouterServerTask::ReloadSvrReq);
 }
 
 //验证登录
@@ -62,7 +56,7 @@ int RouterServerTask::Verify()
 	return 0;
 }
 
-int RouterServerTask::HandleRecvMessage(char * pBuffer, int nLen)
+int RouterServerTask::HandleRecvMessage(char *pBuffer, int nLen)
 {
 	W_ASSERT(pBuffer != NULL, return -1);
 	struct wCommand *pCommand = (struct wCommand*) pBuffer;
@@ -71,7 +65,7 @@ int RouterServerTask::HandleRecvMessage(char * pBuffer, int nLen)
 
 int RouterServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen)
 {
-	if (pCommand->GetId() == CMD_ID(CMD_NULL, PARA_NULL))
+	if (pCommand->GetId() == W_CMD(CMD_NULL, PARA_NULL))
 	{
 		//空消息(心跳返回)
 		mHeartbeatTimes = 0;

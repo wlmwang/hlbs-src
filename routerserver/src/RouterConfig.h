@@ -23,17 +23,10 @@
 #define QOS_XML "../config/qos.xml"
 
 class RouterConfig: public wConfig<RouterConfig>
-{	
-	public:
-		char mIPAddr[MAX_IP_LEN];
-		unsigned int mPort;
-		unsigned int mBacklog;
-		unsigned int mWorkers;
-
+{
 	public:
 		RouterConfig();
 		virtual ~RouterConfig();
-		void Initialize();
 		
 		void GetBaseConf();
 		void GetSvrConf();
@@ -44,16 +37,23 @@ class RouterConfig: public wConfig<RouterConfig>
 		int GetModSvr(SvrNet_t* pBuffer);
 		
 		SvrQos *Qos() { return mSvrQos; }
-		
+	
+	public:
+		char mIPAddr[MAX_IP_LEN] {'\0'};
+		unsigned int mPort {0};
+		unsigned int mBacklog {LISTEN_BACKLOG};
+		unsigned int mWorkers {1};
+
 	protected:
-		SvrQos *mSvrQos;
-		TiXmlDocument* mDoc;
-		wMemPool *mMemPool;
+		time_t mMtime {0};	//svr.xml修改时间
 		
-		char mSvrConfFile[255];
-		char mQosConfFile[255];
-		char mBaseConfFile[255];
-		time_t mMtime;	//svr.xml修改时间
+		SvrQos *mSvrQos {NULL};
+		TiXmlDocument *mDoc {NULL};
+		wMemPool *mMemPool {NULL};
+
+		char mSvrConfFile[255] {'\0'};
+		char mQosConfFile[255] {'\0'};
+		char mBaseConfFile[255] {'\0'};
 };
 
 #endif

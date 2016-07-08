@@ -189,7 +189,7 @@ int wTask::SyncSend(const char *pCmd, int iLen)
 int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 {
 	int iSize = 0, iRecvLen = 0, iMsgLen = 0, iTryCount = 0; /*每个消息最多被分为多少个包*/
-	long long iSleep = 10;	//10us
+	long long iSleep = 100;	//100us
 
 	iTryCount = iTimeout*1000000/iSleep;
 	memset(mTmpRecvMsgBuff, 0, sizeof(mTmpRecvMsgBuff));

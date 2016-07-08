@@ -24,29 +24,28 @@ int main(int argc, const char *argv[])
 		exit(0);
 	}
 	
-	//daemon
+	//daemon && chdir
 	if (pConfig->mDaemon == 1)
 	{
-		if (InitDaemon("../log/hlbs.lock") < 0)
+		if (InitDaemon("../log/router_hlbs.lock") < 0)
 		{
 			LOG_ERROR(ELOG_KEY, "[system] Create daemon failed");
 			exit(0);
 		}
 	}
 
-	//init config
+	//Init config
 	pConfig->GetBaseConf();
 	pConfig->GetSvrConf();
 	pConfig->GetQosConf();
 	
-	//master
+	//master && server
 	RouterMaster *pMaster = RouterMaster::Instance();
 	if (pMaster == NULL) 
 	{
 		LOG_ERROR(ELOG_KEY, "[system] RouterMaster instance failed");
 		exit(0);
 	}
-
 	pMaster->PrepareStart();
 	pMaster->MasterStart();
 

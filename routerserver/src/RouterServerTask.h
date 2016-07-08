@@ -22,22 +22,18 @@
 #include "RouterConfig.h"
 #include "RouterServer.h"
 
-#define ROUTER_REG_DISP(cmdid, paraid, func) mDispatch.Register("RouterServerTask", CMD_ID(cmdid, paraid), REG_FUNC(CMD_ID(cmdid, paraid), func));
-
 class RouterServer;
 class RouterServerTask : public wTcpTask
 {
 	public:
 		RouterServerTask();
 		RouterServerTask(wIO *pIO);
-		virtual ~RouterServerTask();
+		virtual ~RouterServerTask() {}
 		void Initialize();
 
 		virtual int VerifyConn();
 		virtual int Verify();
-
-		virtual int HandleRecvMessage(char * pBuffer, int nLen);
-		
+		virtual int HandleRecvMessage(char *pBuffer, int nLen);
 		int ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen);
 
 		DEC_FUNC(InitSvrReq);
@@ -45,7 +41,6 @@ class RouterServerTask : public wTcpTask
 		
 	protected:
 		DEC_DISP(mDispatch);
-
 		RouterConfig *mConfig;
 		RouterServer *mServer;
 };

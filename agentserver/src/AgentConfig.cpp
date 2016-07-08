@@ -12,7 +12,14 @@
 
 AgentConfig::AgentConfig()
 {
-	Initialize();
+	memcpy(mRouteConfFile, ROUTER_XML, strlen(ROUTER_XML) + 1);
+	memcpy(mQosConfFile, QOS_XML, strlen(QOS_XML) + 1);
+	memcpy(mBaseConfFile, CONF_XML, strlen(CONF_XML) + 1);
+
+	mSvrQos = SvrQos::Instance();
+	mDoc = new TiXmlDocument();
+	mMemPool = new wMemPool();
+	mMemPool->Create(MEM_POOL_MAX);
 }
 
 AgentConfig::~AgentConfig()
@@ -21,28 +28,9 @@ AgentConfig::~AgentConfig()
 	SAFE_DELETE(mSvrQos);
 }
 
-void AgentConfig::Initialize()
-{
-	mPort = 0;
-	mBacklog = LISTEN_BACKLOG;
-	mWorkers = 1;
-	memset(mIPAddr, 0, sizeof(mIPAddr));
-	memset(mRouterConf, 0, sizeof(mRouterConf));
-
-	memcpy(mRouteConfFile, ROUTER_XML, strlen(ROUTER_XML) + 1);
-	memcpy(mQosConfFile, QOS_XML, strlen(QOS_XML) + 1);
-	memcpy(mBaseConfFile, CONF_XML, strlen(CONF_XML) + 1);
-
-	mDoc = new TiXmlDocument();
-	mSvrQos = SvrQos::Instance();
-	mMemPool = new wMemPool();
-	mMemPool->Create(MEM_POOL_MAX);
-}
-
 void AgentConfig::GetBaseConf()
 {
-	bool bLoadOK = mDoc->LoadFile(mBaseConfFile);
-	if (!bLoadOK)
+	if (!mDoc->LoadFile(mBaseConfFile))
 	{
 		LOG_ERROR(ELOG_KEY, "[config] Load config file(conf.xml) failed");
 		exit(2);
@@ -113,8 +101,7 @@ void AgentConfig::GetBaseConf()
 
 void AgentConfig::GetRouterConf()
 {
-	bool bLoadOK = mDoc->LoadFile(mRouteConfFile);
-	if (!bLoadOK)
+	if (!mDoc->LoadFile(mRouteConfFile))
 	{
 		LOG_ERROR(ELOG_KEY, "[router] Load config file(router.xml) failed");
 		exit(2);
@@ -155,8 +142,7 @@ void AgentConfig::GetRouterConf()
 
 void AgentConfig::GetQosConf()
 {
-	bool bLoadOK = mDoc->LoadFile(mQosConfFile);
-	if (!bLoadOK)
+	if (!mDoc->LoadFile(mQosConfFile))
 	{
 		LOG_ERROR(ELOG_KEY, "[qos] Load config file(qos.xml) failed");
 		exit(2);

@@ -27,26 +27,25 @@ int main(int argc, const char *argv[])
 	//daemon
 	if (pConfig->mDaemon == 1)
 	{
-		if (InitDaemon("../log/hlbs.lock") < 0)
+		if (InitDaemon("../log/agent_hlbs.lock") < 0)
 		{
 			LOG_ERROR(ELOG_KEY, "[system] Create daemon failed!");
 			exit(0);
 		}
 	}
 
-	//init config
+	//Init config
 	pConfig->GetBaseConf();
 	pConfig->GetRouterConf();
 	pConfig->GetQosConf();
 
-	//master
+	//master && server
 	AgentMaster *pMaster = AgentMaster::Instance();
 	if(pMaster == NULL) 
 	{
 		LOG_ERROR(ELOG_KEY, "[system] AgentMaster instance failed");
 		exit(0);
 	}
-
 	pMaster->PrepareStart();
 	pMaster->SingleStart();
 

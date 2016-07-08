@@ -19,16 +19,11 @@ AgentClientTask::AgentClientTask(wIO *pIO) : wTcpTask(pIO)
     Initialize();
 }
 
-AgentClientTask::~AgentClientTask()
-{
-    //...
-}
-
 void AgentClientTask::Initialize()
 {
-	AGENTCLT_REG_DISP(CMD_SVR_RES, SVR_RES_INIT, &AgentClientTask::InitSvrRes);
-	AGENTCLT_REG_DISP(CMD_SVR_RES, SVR_RES_RELOAD, &AgentClientTask::ReloadSvrRes);
-	AGENTCLT_REG_DISP(CMD_SVR_RES, SVR_RES_SYNC, &AgentClientTask::SyncSvrRes);
+	REG_DISP(mDispatch, "AgentClientTask", CMD_SVR_RES, SVR_RES_INIT, &AgentClientTask::InitSvrRes);
+	REG_DISP(mDispatch, "AgentClientTask", CMD_SVR_RES, SVR_RES_RELOAD, &AgentClientTask::ReloadSvrRes);
+	REG_DISP(mDispatch, "AgentClientTask", CMD_SVR_RES, SVR_RES_SYNC, &AgentClientTask::SyncSvrRes);
 }
 
 int AgentClientTask::VerifyConn()
@@ -71,9 +66,9 @@ int AgentClientTask::HandleRecvMessage(char *pBuffer, int nLen)
 	return ParseRecvMessage(pCommand , pBuffer, nLen);
 }
 
-int AgentClientTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen)
+int AgentClientTask::ParseRecvMessage(struct wCommand *pCommand, char *pBuffer, int iLen)
 {
-	if (pCommand->GetId() == CMD_ID(CMD_NULL, PARA_NULL))
+	if (pCommand->GetId() == W_CMD(CMD_NULL, PARA_NULL))
 	{
 		//空消息(心跳返回)
 		mHeartbeatTimes = 0;

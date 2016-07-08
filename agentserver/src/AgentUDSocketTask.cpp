@@ -16,24 +16,18 @@ AgentUDSocketTask::AgentUDSocketTask(wIO *pIO) : wTcpTask(pIO)
     Initialize();
 }
 
-AgentUDSocketTask::~AgentUDSocketTask()
-{
-    //...
-}
-
 void AgentUDSocketTask::Initialize()
 {
     mConfig = AgentConfig::Instance();
     mServer = AgentServer::Instance();
-
-	AGENT_UNIX_DISP(CMD_SVR_REQ, SVR_REQ_GXID, &AgentUDSocketTask::GetSvrByGXid);
-	AGENT_UNIX_DISP(CMD_SVR_REQ, SVR_REQ_REPORT, &AgentUDSocketTask::ReportSvr);
+	REG_DISP(mDispatch, "AgentUDSocketTask", CMD_SVR_REQ, SVR_REQ_GXID, &AgentUDSocketTask::GetSvrByGXid);
+	REG_DISP(mDispatch, "AgentUDSocketTask", CMD_SVR_REQ, SVR_REQ_REPORT, &AgentUDSocketTask::ReportSvr);
 }
 
 /**
  *  接受数据
  */
-int AgentUDSocketTask::HandleRecvMessage(char * pBuffer, int nLen)
+int AgentUDSocketTask::HandleRecvMessage(char *pBuffer, int nLen)
 {
 	W_ASSERT(pBuffer != NULL, return -1);
 	//解析消息
@@ -41,9 +35,9 @@ int AgentUDSocketTask::HandleRecvMessage(char * pBuffer, int nLen)
 	return ParseRecvMessage(pCommand , pBuffer, nLen);
 }
 
-int AgentUDSocketTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen)
+int AgentUDSocketTask::ParseRecvMessage(struct wCommand *pCommand, char *pBuffer, int iLen)
 {
-	if (pCommand->GetId() == CMD_ID(CMD_NULL, PARA_NULL))
+	if (pCommand->GetId() == W_CMD(CMD_NULL, PARA_NULL))
 	{
 		//空消息(心跳返回)
 		mHeartbeatTimes = 0;

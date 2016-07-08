@@ -16,20 +16,14 @@ AgentServerTask::AgentServerTask(wIO *pIO) : wTcpTask(pIO)
     Initialize();
 }
 
-AgentServerTask::~AgentServerTask()
-{
-    //...
-}
-
 void AgentServerTask::Initialize()
 {
     mConfig = AgentConfig::Instance();
     mServer = AgentServer::Instance();
-
-	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_RELOAD, &AgentServerTask::ReloadSvrReq);
-	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_ALL, &AgentServerTask::GetSvrAll);
-	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_GXID, &AgentServerTask::GetSvrByGXid);
-	AGENT_REG_DISP(CMD_SVR_REQ, SVR_REQ_REPORT, &AgentServerTask::ReportSvr);
+	REG_DISP(mDispatch, "AgentServerTask", CMD_SVR_REQ, SVR_REQ_RELOAD, &AgentServerTask::ReloadSvrReq);
+	REG_DISP(mDispatch, "AgentServerTask", CMD_SVR_REQ, SVR_REQ_ALL, &AgentServerTask::GetSvrAll);
+	REG_DISP(mDispatch, "AgentServerTask", CMD_SVR_REQ, SVR_REQ_GXID, &AgentServerTask::GetSvrByGXid);
+	REG_DISP(mDispatch, "AgentServerTask", CMD_SVR_REQ, SVR_REQ_REPORT, &AgentServerTask::ReportSvr);
 }
 
 //验证登录消息
@@ -68,7 +62,7 @@ int AgentServerTask::Verify()
 /**
  *  接受数据
  */
-int AgentServerTask::HandleRecvMessage(char * pBuffer, int nLen)
+int AgentServerTask::HandleRecvMessage(char *pBuffer, int nLen)
 {
 	W_ASSERT(pBuffer != NULL, return -1);
 	//解析消息
@@ -76,9 +70,9 @@ int AgentServerTask::HandleRecvMessage(char * pBuffer, int nLen)
 	return ParseRecvMessage(pCommand , pBuffer, nLen);
 }
 
-int AgentServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen)
+int AgentServerTask::ParseRecvMessage(struct wCommand *pCommand, char *pBuffer, int iLen)
 {
-	if (pCommand->GetId() == CMD_ID(CMD_NULL, PARA_NULL))
+	if (pCommand->GetId() == W_CMD(CMD_NULL, PARA_NULL))
 	{
 		//空消息(心跳返回)
 		mHeartbeatTimes = 0;

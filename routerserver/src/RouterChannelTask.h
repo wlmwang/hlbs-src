@@ -25,11 +25,9 @@ class RouterChannelTask : public wChannelTask
 	public:
 		RouterChannelTask();
 		RouterChannelTask(wIO *pIO);
-		~RouterChannelTask();
-		
+		virtual ~RouterChannelTask() {}
 		void Initialize();
-
-		virtual int HandleRecvMessage(char * pBuffer, int nLen);
+		virtual int HandleRecvMessage(char *pBuffer, int nLen);
 		int ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen);
 
 		DEC_FUNC(ChannelOpen);

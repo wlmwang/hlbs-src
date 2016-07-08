@@ -25,15 +25,12 @@ class AgentClientTask : public wTcpTask
 	public:
 		AgentClientTask();
 		AgentClientTask(wIO *pIO);
-		~AgentClientTask();
+		virtual ~AgentClientTask() {}
 		void Initialize();
-		
 		virtual int VerifyConn();
 		virtual int Verify();
-
-		virtual int HandleRecvMessage(char * pBuffer, int nLen);
-		
-		int ParseRecvMessage(struct wCommand* pCommand ,char *pBuffer,int iLen);
+		virtual int HandleRecvMessage(char *pBuffer, int nLen);
+		int ParseRecvMessage(struct wCommand *pCommand ,char *pBuffer,int iLen);
 			
 		DEC_FUNC(SyncSvrRes);
 		DEC_FUNC(ReloadSvrRes);
