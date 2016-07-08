@@ -8,16 +8,6 @@
 
 wUDSocket::wUDSocket()
 {
-	Initialize();
-}
-
-wUDSocket::~wUDSocket() 
-{
-	//...
-}
-
-void wUDSocket::Initialize()
-{
 	mIOType = TYPE_SOCK;
 	mIOFlag = FLAG_RVSD;
 	mTaskType = TASK_UNIXD;

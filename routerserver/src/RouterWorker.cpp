@@ -6,21 +6,7 @@
 
 #include "RouterWorker.h"
 
-RouterWorker::RouterWorker(int iSlot) : wWorker(iSlot)
-{
-	Initialize();
-}
-
-RouterWorker::~RouterWorker()
-{
-	//
-}
-
-void RouterWorker::Initialize()
-{
-	mConfig = NULL;
-	mServer = NULL;
-}
+RouterWorker::RouterWorker(int iSlot) : wWorker(iSlot) {}
 
 void RouterWorker::PrepareRun()
 {

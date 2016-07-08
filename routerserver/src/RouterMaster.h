@@ -19,21 +19,17 @@
 class RouterMaster : public wMaster<RouterMaster>
 {
 	public:
-		RouterMaster();
+		RouterMaster() {}
 		virtual ~RouterMaster();
-		void Initialize();
-		
+
 		virtual void PrepareRun();
-		virtual void Run();
 		virtual void ReconfigMaster();
-		
 		virtual wWorker* NewWorker(int iSlot = 0);
 	
 	protected:
-		char *mTitle;
-
-		RouterConfig *mConfig;
-		RouterServer *mServer;
+		char *mTitle {NULL};
+		RouterConfig *mConfig {NULL};
+		RouterServer *mServer {NULL};
 };
 
 #endif

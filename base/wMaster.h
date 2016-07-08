@@ -29,7 +29,6 @@ class wMaster : public wSingleton<T>
 	public:
 		wMaster();
 		virtual ~wMaster();
-		void Initialize();
 		
 		void PrepareStart();
 		void SingleStart();		//单进程模式启动
@@ -60,9 +59,9 @@ class wMaster : public wSingleton<T>
 		 * 4. 设置自定义信号处理结构
 		 * 5. 初始化服务器（创建、bind、listen套接字） 
 		 */
-		virtual void PrepareRun();
-		virtual void Run();
-		virtual void ReconfigMaster();
+		virtual void PrepareRun() {}
+		virtual void Run() {}
+		virtual void ReconfigMaster() {}
 
 		/**
 		 *  注册信号回调
@@ -79,22 +78,22 @@ class wMaster : public wSingleton<T>
 		void DeletePidFile();
 
 	public:
-		MASTER_STATUS mStatus;
-		int mProcess;
-		int mNcpu;		//cpu个数
-		pid_t mPid;		//master进程id
-		int mSlot;		//进程表分配到数量
-		int mWorkerNum;	//worker总数量
-		wWorker **mWorkerPool;	//进程表，从0开始
-		wFile mPidFile;	//pid文件
-		
-		int mUseMutex;	//惊群锁标识
-		int mMutexHeld;	//是否持有锁
-		int mDelay;		//延时时间。默认500ms
-		wShm *mShmAddr;	//共享内存
-		wShmtx *mMutex;	//accept mutex
-
 		int mErr;
+		MASTER_STATUS mStatus {PROCESS_SINGLE};
+		int mProcess {0};
+		int mNcpu {0};		//cpu个数
+		pid_t mPid {0};		//master进程id
+		int mSlot {0};		//进程表分配到数量
+		int mWorkerNum {0};	//worker总数量
+		wWorker **mWorkerPool {NULL};	//进程表，从0开始
+		
+		int mUseMutex {0};	//惊群锁标识
+		int mMutexHeld {0};	//是否持有锁
+		int mDelay {500};		//延时时间。默认500ms
+		wShm *mShmAddr {NULL};	//共享内存
+		wShmtx *mMutex {NULL};	//accept mutex
+
+		wFile mPidFile;	//pid文件
 };
 
 #include "wMaster.inl"

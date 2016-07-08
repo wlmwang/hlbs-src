@@ -24,12 +24,7 @@ class RouterServer: public wServer<RouterServer>
 {
 	public:
 		RouterServer();
-		virtual ~RouterServer();
-		
-		void Initialize();
-		
-		virtual void PrepareRun();
-		
+		virtual ~RouterServer() {}				
 		virtual void Run();
 		
 		virtual wTask* NewTcpTask(wIO *pIO);
@@ -38,7 +33,7 @@ class RouterServer: public wServer<RouterServer>
 		void CheckModSvr();	//检测配置文件是否修改
 		
 	protected:
-		RouterConfig *mConfig;
+		RouterConfig *mConfig {NULL};
 };
 
 #endif

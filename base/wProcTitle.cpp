@@ -12,7 +12,8 @@ wProcTitle::wProcTitle(int argc, const char *argv[])
 	mOsArgv = (char **) argv;
 	mOsArgvLast = (char *)argv[0];
 
-	Initialize();
+    mOsEnv = environ;
+    SaveArgv();
 }
 
 wProcTitle::~wProcTitle()
@@ -22,12 +23,6 @@ wProcTitle::~wProcTitle()
         SAFE_DELETE_VEC(mArgv[i]);    //delete []mArgv[i];
     }
     SAFE_DELETE_VEC(mArgv);   //delete []mArgv;
-}
-
-void wProcTitle::Initialize()
-{
-	mOsEnv = environ;
-	SaveArgv();
 }
 
 void wProcTitle::SaveArgv()

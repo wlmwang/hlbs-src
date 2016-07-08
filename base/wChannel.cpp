@@ -9,17 +9,9 @@
 
 wChannel::wChannel() 
 {
-	Initialize();
-}
-
-wChannel::~wChannel() {}
-
-void wChannel::Initialize()
-{
-	mCh[0] = mCh[1] = FD_UNKNOWN;
-	mIOType = TYPE_SOCK;
-	mTaskType = TASK_UNIXS;
-    mSockType = SOCK_CONNECT;   //都标识为connect socket，方便wServer使用tcp socket处理方式处理Unix socket
+    mIOType = TYPE_SOCK;
+    mTaskType = TASK_UNIXS;
+    mSockType = SOCK_CONNECT;
 }
 
 void wChannel::Close()

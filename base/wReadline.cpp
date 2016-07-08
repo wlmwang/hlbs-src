@@ -11,20 +11,12 @@ const unsigned char wReadline::mQuitCmdNum = sizeof(wReadline::mQuitCmd) / sizeo
 
 wReadline::wReadline()
 {
-	Initialize();
+	memcpy(mPrompt, "Anny>", 5);
 }
 
 wReadline::~wReadline()
 {
 	SAFE_FREE(mLineRead);
-}
-
-void wReadline::Initialize()
-{
-	memcpy(mPrompt, "Anny>", 5);
-	mLineRead = 0;
-	mStripLine = 0;
-	mFunc = NULL;
 }
 
 bool wReadline::SetCompletion(CompletionFunc_t pFunc)

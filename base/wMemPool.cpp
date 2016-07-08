@@ -6,23 +6,9 @@
 
 #include "wMemPool.h"
 
-wMemPool::wMemPool()
-{
-	Initialize();
-}
-
 wMemPool::~wMemPool() 
 {
 	Destroy();
-}
-
-void wMemPool::Initialize()
-{
-	mStart = NULL;
-	mLast = NULL;
-	mEnd = NULL;
-	mSize = 0;
-	mExtra = NULL;
 }
 
 char *wMemPool::Create(size_t size)

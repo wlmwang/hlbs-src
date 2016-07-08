@@ -73,7 +73,7 @@ class wSigSet : private wNoncopyable
 		virtual ~wSigSet() {}
 
 	private:
-		sigset_t	mSet;	//设置信号集
+		sigset_t mSet;	//设置信号集
 };
 
 #endif

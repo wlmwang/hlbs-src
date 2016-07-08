@@ -20,9 +20,8 @@
 class wShmtx : private wNoncopyable
 {
 	public:
-		wShmtx();
-		virtual ~wShmtx();
-		void Initialize();
+		wShmtx() {}
+		virtual ~wShmtx() {}
 
 		/**
 		 * 创建锁（在共享建立sem）
@@ -42,8 +41,8 @@ class wShmtx : private wNoncopyable
 		void LockSpin();
 
 	private:
-		wSem *mSem;
-		int  mSpin;	
+		wSem *mSem {NULL};
+		int  mSpin {0};	
 };
 
 #endif

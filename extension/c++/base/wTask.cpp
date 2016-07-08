@@ -6,31 +6,6 @@
 
 #include "wTask.h"
 
-wTask::wTask()
-{
-	Initialize();
-}
-
-wTask::wTask(wIO *pIO)
-{
-	Initialize();
-	mIO = pIO;
-}
-
-void wTask::Initialize()
-{
-	mIO = NULL;
-	mStatus = TASK_INIT;
-	mHeartbeatTimes = 0;
-	mRecvBytes = 0;
-	mSendBytes = 0;
-	mSendWrite = 0;
-	memset(&mSendMsgBuff, 0, sizeof(mSendMsgBuff));
-	memset(&mRecvMsgBuff, 0, sizeof(mRecvMsgBuff));
-}
-
-wTask::~wTask() {}
-
 void wTask::DeleteIO()
 {
 	SAFE_DELETE(mIO);	//mIO建立在堆上

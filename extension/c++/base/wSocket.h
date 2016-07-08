@@ -24,8 +24,7 @@ class wSocket : public wIO
 {
 	public:
 		wSocket();
-		void Initialize();
-		virtual ~wSocket();
+		virtual ~wSocket() {}
 		
 		virtual int SetTimeout(float fTimeout = 30);	//单位：秒
 		virtual int SetSendTimeout(float fTimeout = 30);

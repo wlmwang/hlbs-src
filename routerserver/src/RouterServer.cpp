@@ -8,16 +8,6 @@
 
 RouterServer::RouterServer() : wServer<RouterServer>("路由服务器")
 {
-	Initialize();
-}
-
-RouterServer::~RouterServer() 
-{
-	//...
-}
-
-void RouterServer::Initialize()
-{
 	mConfig = RouterConfig::Instance();
 }
 
@@ -31,12 +21,6 @@ wTask* RouterServer::NewChannelTask(wIO *pIO)
 {
 	wTask *pTask = new RouterChannelTask(pIO);
 	return pTask;
-}
-
-//准备工作
-void RouterServer::PrepareRun()
-{
-	//...
 }
 
 void RouterServer::Run()

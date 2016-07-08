@@ -6,21 +6,6 @@
 
 #include "wFile.h"
 
-wFile::wFile()
-{
-	Initialize();
-}
-
-wFile::~wFile() {}
-
-void wFile::Initialize()
-{
-	mFileName = "";
-	mFD = 0;
-	mOffset = 0;
-	memset(&mInfo, 0, sizeof(struct stat));
-}
-
 int wFile::Open(int flags, mode_t mode)
 {
 	if (mFileName.size() <= 0)

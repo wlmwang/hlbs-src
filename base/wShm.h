@@ -44,15 +44,15 @@ class wShm : private wNoncopyable
 		void FreeShm();
 
 	protected:
-		char mFilename[255];
-		int mPipeId;
-		key_t mKey;
-		int mShmId;
+		char mFilename[255] {'\0'};
+		int mPipeId {0};
+		key_t mKey {0};
+		int mShmId {0};
 		
-		size_t mSize;
-		shmhead_t *mShmhead;	//共享内存头信息
+		size_t mSize {0};
+		shmhead_t *mShmhead {NULL};	//共享内存头信息
 
-		int mPagesize;
+		int mPagesize {0};
 };
 
 #endif

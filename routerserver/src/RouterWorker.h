@@ -19,16 +19,15 @@
 class RouterWorker: public wWorker
 {
 	public:
-		RouterWorker(int iSlot = 0);
-		~RouterWorker();
-		void Initialize();
+		RouterWorker(int iSlot = 0) : wWorker(iSlot) {}
+		virtual ~RouterWorker() {}
 
 		virtual void PrepareRun();
 		virtual void Run();
 
 	protected:
-		RouterConfig *mConfig;
-		RouterServer *mServer;
+		RouterConfig *mConfig {NULL};
+		RouterServer *mServer {NULL};
 		map<long long, string> mTimeEvent;
 };
 

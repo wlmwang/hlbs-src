@@ -17,11 +17,9 @@
 class wFile : private wNoncopyable
 {
 	public:
-		wFile();
-		~wFile();
-		
-		void Initialize();
-		
+		wFile() {}
+		~wFile() {}
+				
 		//成功则返回0, 失败返回-1, 错误原因存于mErrno
 		int Open(int flags = O_RDWR| O_APPEND| O_EXCL, mode_t mode = 644);
 
@@ -48,43 +46,19 @@ class wFile : private wNoncopyable
 		 */
 		ssize_t Write(const char *pBuf, size_t nbytes, off_t offset);
 		
-		string &FileName()
-		{
-			return mFileName;
-		}
-		
-		int FD()
-		{
-			return mFD;
-		}
+		int FD() { return mFD;}
+		struct stat Stat() { return mInfo;}
+		mode_t Mode() { return mInfo.st_mode;}
+		off_t Size() { return mInfo.st_size;}
+		uid_t Uid() { return mInfo.st_uid;}
 
-		struct stat Stat()
-		{
-			return mInfo;
-		}
-
-		mode_t Mode()
-		{
-			return mInfo.st_mode;
-		}
-
-		off_t Size()
-		{
-			return mInfo.st_size;
-		}
-
-		uid_t Uid()
-		{
-			return mInfo.st_uid;
-		}
-
+		string &FileName() { return mFileName;}
 	private:
-	    int mFD;		//文件描述符
-	    string  mFileName;	//文件名称
-		int mErr;
-
+	    int mErr;
+	    int mFD {FD_UNKNOWN};//文件描述符
+	    off_t  mOffset {0};	//现在处理到文件何处了
+		string  mFileName;	//文件名称
 	    struct stat mInfo;	//文件大小等资源信息
-	    off_t  mOffset;		//现在处理到文件何处了
 };
 
 #endif

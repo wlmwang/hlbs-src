@@ -6,21 +6,9 @@
 
 #include "RouterMaster.h"
 
-RouterMaster::RouterMaster()
-{
-	Initialize();
-}
-
 RouterMaster::~RouterMaster()
 {
     SAFE_DELETE(mTitle);
-}
-
-void RouterMaster::Initialize()
-{
-	mTitle = NULL;
-    mConfig = NULL;
-    mServer = NULL;
 }
 
 //进程标题 title = "master process " + argv[0] + ... + argv[argc-1]
@@ -63,16 +51,10 @@ void RouterMaster::PrepareRun()
     }
 	mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");
 
-    //mPidFile.FileName() = "../log/hlbs.pid";  //pid文件名
-    mPidFile.FileName() = "/var/run/hlbs_router.pid";
+    mPidFile.FileName() = "/var/run/hlbs_router.pid";   //pid文件名
         
     //准备工作（创建、绑定服务器Listen Socket）
     mServer->PrepareMaster(mConfig->mIPAddr, mConfig->mPort);
-}
-
-void RouterMaster::Run()
-{
-	//
 }
 
 void RouterMaster::ReconfigMaster()

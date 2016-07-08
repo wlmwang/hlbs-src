@@ -32,14 +32,13 @@ class wReadline
 			memcpy(mPrompt, cStr, iLen);
 		}
 	protected:
-		char mPrompt[32];
-		char *mLineRead;
-		char *mStripLine;
-		
-		CompletionFunc_t mFunc;
+		char mPrompt[32] {'\0'};
+		char *mLineRead {NULL};
+		char *mStripLine {NULL};
 
-		static const char *mQuitCmd[];
-		static const unsigned char mQuitCmdNum;
+		CompletionFunc_t mFunc {NULL};
+		static const char *mQuitCmd[] {NULL};
+		static const unsigned char mQuitCmdNum {0};
 };
 
 

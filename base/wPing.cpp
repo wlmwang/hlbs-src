@@ -8,7 +8,7 @@
 
 wPing::wPing()
 {
-	Initialize();
+	mPid = getpid();
 }
 
 wPing::~wPing()
@@ -24,13 +24,6 @@ int wPing::Close()
 		mFD = FD_UNKNOWN;
 	}
 	return 0;
-}
-
-void wPing::Initialize()
-{
-	mPid = getpid();
-	mFD = FD_UNKNOWN;
-	mSeqNum = 0;
 }
 
 int wPing::Open()

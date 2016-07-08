@@ -19,26 +19,25 @@ class wMemPool : private wNoncopyable
 {
 	struct extra_t
 	{
-		extra_t	*mNext;
-		char	*mAddr;
+		struct extra_t	*mNext {NULL};
+		char	*mAddr {NULL};
 	};
 
 	public:
-		wMemPool();
+		wMemPool() {}
 		virtual ~wMemPool();
-		void Initialize();
-		
+
 		char *Create(size_t size);
 		char *Alloc(size_t size);
 		void Destroy();
 		void Reset();
 		
 	protected:
-		char	*mStart; //起始地址
-		char	*mLast;	//已分配到的地址
-		char	*mEnd;	//结束地址
-		int		mSize;
-		struct extra_t *mExtra;
+		char	*mStart {NULL}; //起始地址
+		char	*mLast {NULL};	//已分配到的地址
+		char	*mEnd {NULL};	//结束地址
+		int		mSize {0};
+		struct extra_t *mExtra {NULL};
 };
 
 #endif

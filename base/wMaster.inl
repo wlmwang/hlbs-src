@@ -7,7 +7,8 @@
 template <typename T>
 wMaster<T>::wMaster()
 {
-	Initialize();
+	mPid = getpid();
+	mNcpu = sysconf(_SC_NPROCESSORS_ONLN);
 }
 
 template <typename T>
@@ -30,44 +31,10 @@ wWorker* wMaster<T>::NewWorker(int iSlot)
 }
 
 template <typename T>
-void wMaster<T>::Initialize()
-{
-	mSlot = 0;
-	mWorkerPool = NULL;
-	mShmAddr = NULL;
-	mMutex = NULL;
-	mUseMutex = 0;	//暂不使用。wServer类中统一了所有IO对象事件（tcp socket、Unix socket、pipe、normal file），不能简单使用惊群方案。
-	mMutexHeld = 0;
-	mDelay = 500;
-	mPid = getpid();
-	mNcpu = sysconf(_SC_NPROCESSORS_ONLN);
-	mProcess = PROCESS_SINGLE;
-}
-
-template <typename T>
-void wMaster<T>::ReconfigMaster()
-{
-	//
-}
-
-template <typename T>
-void wMaster<T>::PrepareRun()
-{
-	//
-}
-
-template <typename T>
-void wMaster<T>::Run()
-{
-	//
-}
-
-template <typename T>
 void wMaster<T>::PrepareStart()
 {
 	mWorkerNum = mNcpu;	//默认 worker 数量等于cpu数量
 	mPid = getpid();
-
 	PrepareRun();	//初始化服务器
 }
 

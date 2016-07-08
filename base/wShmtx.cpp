@@ -6,22 +6,6 @@
 
 #include "wShmtx.h"
 
-wShmtx::wShmtx()
-{
-	Initialize();
-}
-
-wShmtx::~wShmtx()
-{
-	//
-}
-
-void wShmtx::Initialize()
-{
-	mSem = NULL;
-	mSpin = 0;
-}
-
 int wShmtx::Create(wShm *pShm, int iSpin)
 {
 	char *pAddr = pShm->AllocShm(sizeof(wSem));

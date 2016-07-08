@@ -80,10 +80,10 @@ class wSem : private wNoncopyable
 		}
 
 	protected:
-		sem_t mSem;
-		int mPshared;
-		int mValue;
 		int mErr;
+		sem_t mSem;
+		int mPshared {0};
+		int mValue {0};
 };
 
 #endif

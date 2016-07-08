@@ -26,14 +26,13 @@ class wWorker : public wNoncopyable
 {
 	public:
 		wWorker(int iSlot = 0);
-		void Initialize();
-		virtual ~wWorker();
+		virtual ~wWorker() {}
 
 		/**
 		 * 设置进程标题
 		 */
-		virtual void PrepareRun();
-		virtual void Run();
+		virtual void PrepareRun() {}
+		virtual void Run() {}
 		virtual void Close();
 
 		void InitWorker(int iWorkerNum = 0, wWorker **pWorkerPool = NULL, int iUseMutex = 1, wShm *pShmAddr = NULL, wShmtx *pMutex = NULL, int iDelay = 500);
@@ -43,39 +42,38 @@ class wWorker : public wNoncopyable
 		int InitChannel();
 	
 	public:
-		pid_t mPid;
-		uid_t mUid;
-		gid_t mGid;
-		int mPriority;			//进程优先级
-		int mRlimitCore;		//连接限制
-		char mWorkingDir[255];	//工作目录
+		int mErr;
+		pid_t mPid {-1};
+		uid_t mUid {0};
+		gid_t mGid {0};
+		int mPriority {0};			//进程优先级
+		int mRlimitCore {1024};		//连接限制
+		char mWorkingDir[255] {'\0'};	//工作目录
 		
-		char *mName;	//进程名
-		void *mData;	//进程参数
-		int mDetached;	//是否已分离
-		int mExited;	//已退出 进程表mWorkerPool已回收
-		int mExiting;	//正在退出
-		int mRespawn;	//worker启动模式。退出是否重启
-		int mJustSpawn;
-		int mStat;		//waitpid子进程退出状态
-		
-		WORKER_STATUS mStatus;
+		char *mName {NULL};	//进程名
+		void *mData {NULL};	//进程参数
+		int mDetached {0};	//是否已分离
+		int mExited {0};	//已退出 进程表mWorkerPool已回收
+		int mExiting {0};	//正在退出
+		int mStat {0};		//waitpid子进程退出状态
+		int mRespawn {PROCESS_NORESPAWN};	//worker启动模式。退出是否重启
+		int mJustSpawn {PROCESS_JUST_SPAWN};
+
+		WORKER_STATUS mStatus {WORKER_INIT};
 
 		//进程表相关，对应 wMaster 相关属性
-		int mSlot;
-		int mWorkerNum;
-		wWorker **mWorkerPool;
+		int mSlot {0};
+		int mWorkerNum {0};
+		wWorker **mWorkerPool {NULL};
 
 		//惊群锁相关，对应 wMaster 相关属性
-		int mUseMutex;
-		wShm *mShmAddr;
-		wShmtx *mMutex;
-		int mDelay;
-		int mMutexHeld;
+		int mUseMutex {0};
+		wShm *mShmAddr {NULL};
+		wShmtx *mMutex {NULL};
+		int mDelay {0};
+		int mMutexHeld {0};
 
 		wChannel mCh;	//worker进程channel
-
-		int mErr;
 };
 
 #endif

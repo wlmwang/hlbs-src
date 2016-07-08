@@ -16,11 +16,10 @@
 class wTask : private wNoncopyable
 {
 	public:
-		wTask();
-		wTask(wIO *pIO);
-		void Initialize();
-		virtual ~wTask();
-		
+		wTask() {}
+		wTask(wIO *pIO) : mIO(pIO) {}
+		virtual ~wTask() {}
+
 		wIO *IO() { return mIO; }
 		void DeleteIO();
 		TASK_STATUS &Status() { return mStatus; }
@@ -67,22 +66,22 @@ class wTask : private wNoncopyable
 		//业务逻辑入口函数
 		virtual int HandleRecvMessage(char * pBuffer, int nLen) {}
 		
-		wIO	*mIO;
+		wIO	*mIO {NULL};
 	protected:
-		TASK_STATUS mStatus;
-		int mHeartbeatTimes;
+		TASK_STATUS mStatus {TASK_INIT};
+		int mHeartbeatTimes {0};
 		
 		//接收消息的缓冲区 32M
-		int mRecvBytes;	//接收的字节数
-		char mRecvMsgBuff[MAX_RECV_BUFFER_LEN];	
+		int mRecvBytes {0};	//接收的字节数
+		char mRecvMsgBuff[MAX_RECV_BUFFER_LEN] {'\0'};	
 		
 		//发送消息时的临时缓冲区 32M
-		int mSendBytes;						//已发送字节数（发送线程更新）
-		int mSendWrite;						//发送缓冲被写入字节数（写入线程更新）
-		char mSendMsgBuff[MAX_SEND_BUFFER_LEN];
+		int mSendBytes {0};						//已发送字节数（发送线程更新）
+		int mSendWrite {0};						//发送缓冲被写入字节数（写入线程更新）
+		char mSendMsgBuff[MAX_SEND_BUFFER_LEN] {'\0'};
 		
-		char mTmpSendMsgBuff[MAX_CLIENT_MSG_LEN + sizeof(int)];	//同步发送，临时缓冲区
-		char mTmpRecvMsgBuff[MAX_CLIENT_MSG_LEN + sizeof(int)];	//同步接受，临时缓冲区
+		char mTmpSendMsgBuff[MAX_CLIENT_MSG_LEN + sizeof(int)] {'\0'};	//同步发送，临时缓冲区
+		char mTmpRecvMsgBuff[MAX_CLIENT_MSG_LEN + sizeof(int)] {'\0'};	//同步接受，临时缓冲区
 };
 
 #endif

@@ -20,8 +20,7 @@ class wChannel : public wIO
 {
 	public:	
 		wChannel();
-		virtual ~wChannel();
-		void Initialize();
+		virtual ~wChannel() {}
 		
 		/**
 		 * 创建非阻塞channel
@@ -55,7 +54,7 @@ class wChannel : public wIO
 		int &operator[](int i);
 
 	protected:
-		int	mCh[2];
+		int	mCh[2] {FD_UNKNOWN, FD_UNKNOWN};
 };
 
 #endif

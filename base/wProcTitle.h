@@ -15,7 +15,6 @@ class wProcTitle : private wNoncopyable
 {
 	public:
 		wProcTitle(int argc, const char *argv[]);
-		void Initialize();
 		~wProcTitle();
 
 		//务必在设置进程标题之前调用
@@ -31,12 +30,11 @@ class wProcTitle : private wNoncopyable
 		void Setproctitle(const char *title, const char *pretitle = NULL);
 
 	public:
-		int mArgc;
-		char **mOsArgv;	//原生参数
-		char **mOsEnv;	//原生环境变量
-		char **mArgv;	//堆上参数（正常取该值）
-
-		char *mOsArgvLast;
+		int mArgc {0};
+		char **mOsArgv {NULL};	//原生参数
+		char **mOsEnv {NULL};	//原生环境变量
+		char **mArgv {NULL};	//堆上参数（正常取该值）
+		char *mOsArgvLast {NULL};
 };
 
 #endif

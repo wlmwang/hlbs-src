@@ -6,37 +6,8 @@
 
 #include "wWorker.h"
 
-wWorker::wWorker(int iSlot) 
+wWorker::wWorker(int iSlot) : mSlot(iSlot)
 {
-	Initialize();
-	mSlot = iSlot;
-}
-
-wWorker::~wWorker() {}
-
-void wWorker::PrepareRun() {}
-
-void wWorker::Run() {}
-
-int wWorker::InitChannel()
-{
-	return mCh.Open();
-}
-
-void wWorker::Close()
-{
-	mCh.Close();
-}
-
-void wWorker::Initialize() 
-{
-	mStatus = WORKER_INIT;
-	mPid = -1;	//此时worker还未生成
-	mUid = 0;
-	mGid = 0;
-	mPriority = 0;
-	mRlimitCore = 1024;
-
 #ifdef PREFIX
 	memcpy(mWorkingDir, PREFIX, strlen(PREFIX) + 1);
 #else
@@ -47,21 +18,16 @@ void wWorker::Initialize()
 		exit(2);
 	}
 #endif
-	
-	mRespawn = PROCESS_NORESPAWN;
-	mJustSpawn = PROCESS_JUST_SPAWN;
-	mDetached = 0;
-	mExited = 0;
-	mExiting = 0;
-	mData = NULL;
-	mName = NULL;
+}
 
-	mWorkerNum = 0;
-	mWorkerPool = NULL;
-	mUseMutex = 0;
-	mShmAddr = NULL;
-	mMutex = NULL;
-	mMutexHeld = 0;
+int wWorker::InitChannel()
+{
+	return mCh.Open();
+}
+
+void wWorker::Close()
+{
+	mCh.Close();
 }
 
 void wWorker::InitWorker(int iWorkerNum, wWorker **pWorkerPool, int iUseMutex, wShm *pShmAddr, wShmtx *pMutex, int iDelay) 

@@ -8,13 +8,6 @@
 
 wSocket::wSocket()
 {
-	Initialize();
-}
-
-wSocket::~wSocket() {}
-
-void wSocket::Initialize()
-{
 	mIOType = TYPE_SOCK;
 	mIOFlag = FLAG_RVSD;
 	mTaskType = TASK_TCP;

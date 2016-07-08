@@ -54,11 +54,10 @@ class wMmap : private wNoncopyable
 		}
 	
 	private:
-		char mFilename[255];
-		void *mStart;
-		size_t mSize;
-		
-		int mFD;
+		int mFD {FD_UNKNOWN};
+		char mFilename[255] {'\0'};
+		void *mStart {NULL};
+		size_t mSize {0};
 };
 
 #endif
