@@ -26,7 +26,7 @@ class RouterServer: public wServer<RouterServer>
 		RouterServer();
 		virtual void Run();
 		
-		virtual wTask* NewTcpTask(wIO *pIO);
+		virtual wTask* NewTcpTask(wSocket *pSocket);
 		void CheckModSvr();	//检测配置文件是否修改
 		
 	protected:

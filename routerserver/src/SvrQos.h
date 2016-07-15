@@ -25,7 +25,6 @@ class SvrQos : public wSingleton<SvrQos>
 {
 	friend class RouterConfig;
 	public:
-		SvrQos() {}
 		~SvrQos();
 		
 		int SaveNode(struct SvrNet_t& stSvr);

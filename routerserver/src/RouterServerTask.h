@@ -11,14 +11,10 @@
 #include <functional>
 
 #include "wCore.h"
-#include "wLog.h"
-#include "wIO.h"
-#include "wTcpTask.h"
-#include "wTask.h"
-#include "wDispatch.h"
-#include "SvrCmd.h"
-#include "LoginCmd.h"
 #include "wAssert.h"
+#include "wLog.h"
+#include "wTcpTask.h"
+#include "wDispatch.h"
 #include "RouterConfig.h"
 #include "RouterServer.h"
 
@@ -27,8 +23,7 @@ class RouterServerTask : public wTcpTask
 {
 	public:
 		RouterServerTask();
-		RouterServerTask(wIO *pIO);
-		virtual ~RouterServerTask() {}
+		RouterServerTask(wSocket *pSocket);
 		void Initialize();
 
 		virtual int VerifyConn();

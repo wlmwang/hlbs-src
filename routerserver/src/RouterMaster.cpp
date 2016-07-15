@@ -5,6 +5,7 @@
  */
 
 #include "RouterMaster.h"
+#include "RouterWorker.h"
 
 RouterMaster::~RouterMaster()
 {
@@ -27,7 +28,7 @@ void RouterMaster::PrepareRun()
         LOG_ERROR(ELOG_KEY, "[system] RouterServer instance failed");
         exit(2);
     }
-    ReconfigMaster();
+    ReloadMaster();
 
     //进程标题
     const char *sProcessTitle = "master process(router)";
@@ -54,7 +55,7 @@ void RouterMaster::PrepareRun()
     mServer->PrepareMaster(mConfig->mIPAddr, mConfig->mPort);
 }
 
-void RouterMaster::ReconfigMaster()
+void RouterMaster::ReloadMaster()
 {
     if (mConfig == NULL) 
     {

@@ -234,7 +234,7 @@ void wMaster<T>::HandleSignal()
 		LOG_DEBUG(ELOG_KEY, "[system] reconfiguring");
 		g_reconfigure = 0;
 		
-		ReconfigMaster();	//重新初始化主进程配置
+		ReloadMaster();	//重新初始化主进程配置
 		WorkerStart(mWorkerNum, PROCESS_JUST_SPAWN);	//重启worker
 		
 		/* allow new processes to start */

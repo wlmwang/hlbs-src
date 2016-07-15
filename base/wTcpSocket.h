@@ -22,7 +22,6 @@ class wTcpSocket : public wSocket
 {
 	public:
 		wTcpSocket(SOCK_TYPE eType = SOCK_TYPE_LISTEN, SOCK_PROTO eProto = SOCK_PROTO_TCP, SOCK_FLAG eFlag = SOCK_FLAG_RVSD) : wSocket(eType, eProto, eFlag) {}
-		virtual ~wTcpSocket() {}
 		
 		virtual int Open();
 		virtual int Bind(string sHost, unsigned int nPort = 0);

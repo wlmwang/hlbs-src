@@ -52,11 +52,11 @@ class wServer: public wSingleton<T>
 		 * WorkerStart在worker进程提供服务
 		 */
 		void PrepareMaster(string sIpAddr, unsigned int nPort, string sProtocol = "TCP");	
-		void WorkerStart(/*wWorker *pWorker = NULL,*/bool bDaemon = true);
-		int AcceptMutexLock();
-		int AcceptMutexUnlock();
+		void WorkerStart(bool bDaemon = true);
 		virtual void HandleSignal();
 		void WorkerExit();
+		//int AcceptMutexLock();
+		//int AcceptMutexUnlock();
 		
 		/**
 		 * epoll event
@@ -88,17 +88,17 @@ class wServer: public wSingleton<T>
 		/**
 		 * 新建客户端
 		 */
-		virtual wTask* NewTcpTask(wIO *pIO);	//io = wTcpSocket
-		virtual wTask* NewUnixTask(wIO *pIO);	//io = wUnixSocket		
+		virtual wTask* NewTcpTask(wSocket *pSocket);
+		virtual wTask* NewUnixTask(wSocket *pSocket);
 		/**
 		 * 服务主循环逻辑，继承可以定制服务
 		 */
 		virtual void PrepareRun() {}
 		virtual void Run() {}
 		
-		string &ServerName() { return mServerName; }
-		bool IsRunning() { return mStatus == SERVER_RUNNING; }
-		SERVER_STATUS &Status() { return mStatus; }
+		string &ServerName() { return mServerName;}
+		bool IsRunning() { return mStatus == SERVER_RUNNING;}
+		SERVER_STATUS &Status() { return mStatus;}
 		
 		void CheckTimer();
 		virtual void CheckTimeout();
@@ -121,7 +121,7 @@ class wServer: public wSingleton<T>
 		//epoll_event
 		struct epoll_event mEpollEvent;
 		vector<struct epoll_event> mEpollEventPool; //epoll_event已发生事件池（epoll_wait）
-		int mTaskCount {0};	//mTcpTaskPool.size();
+		int mTaskCount {0};	// = mTcpTaskPool.size();
 		
 		//task|pool
 		wTask *mTask {NULL};		//temp task

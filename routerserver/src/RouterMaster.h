@@ -12,20 +12,18 @@
 
 #include "wCore.h"
 #include "wMaster.h"
-#include "RouterWorker.h"
 #include "RouterConfig.h"
 #include "RouterServer.h"
 
 class RouterMaster : public wMaster<RouterMaster>
 {
 	public:
-		RouterMaster() {}
 		virtual ~RouterMaster();
 
 		virtual void PrepareRun();
-		virtual void ReconfigMaster();
 		virtual wWorker* NewWorker(int iSlot = 0);
-	
+		virtual void ReloadMaster();
+
 	protected:
 		char *mTitle {NULL};
 		RouterConfig *mConfig {NULL};

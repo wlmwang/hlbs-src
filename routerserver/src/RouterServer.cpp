@@ -11,15 +11,9 @@ RouterServer::RouterServer() : wServer<RouterServer>("路由服务器")
 	mConfig = RouterConfig::Instance();
 }
 
-wTask* RouterServer::NewTcpTask(wIO *pIO)
+wTask* RouterServer::NewTcpTask(wSocket *pSocket)
 {
-	wTask *pTask = new RouterServerTask(pIO);
-	return pTask;
-}
-
-wTask* RouterServer::NewChannelTask(wIO *pIO)
-{
-	wTask *pTask = new RouterChannelTask(pIO);
+	wTask *pTask = new RouterServerTask(pSocket);
 	return pTask;
 }
 

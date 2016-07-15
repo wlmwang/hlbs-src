@@ -20,7 +20,6 @@ class RouterWorker: public wWorker
 {
 	public:
 		RouterWorker(int iSlot = 0) : wWorker(iSlot) {}
-		virtual ~RouterWorker() {}
 
 		virtual void PrepareRun();
 		virtual void Run();
@@ -28,7 +27,6 @@ class RouterWorker: public wWorker
 	protected:
 		RouterConfig *mConfig {NULL};
 		RouterServer *mServer {NULL};
-		map<long long, string> mTimeEvent;
 };
 
 #endif

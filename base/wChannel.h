@@ -15,7 +15,8 @@
 
 class wChannel : public wSocket
 {
-	public:	
+	public:
+		wChannel() {}
 		wChannel(SOCK_TYPE eType = TYPE_LISTEN, SOCK_PROTO eProto = PROTO_CHANNEL, SOCK_FLAG eFlag = FLAG_RVSD) : wSocket(eType, eProto, eFlag) {}
 		
 		/**

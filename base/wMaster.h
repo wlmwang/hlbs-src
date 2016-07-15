@@ -60,7 +60,7 @@ class wMaster : public wSingleton<T>
 		 */
 		virtual void PrepareRun() {}
 		virtual void Run() {}
-		virtual void ReconfigMaster() {}
+		virtual void ReloadMaster() {}
 
 		/**
 		 *  注册信号回调

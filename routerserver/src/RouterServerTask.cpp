@@ -5,13 +5,15 @@
  */
 
 #include "RouterServerTask.h"
+#include "SvrCmd.h"
+#include "LoginCmd.h"
 
 RouterServerTask::RouterServerTask()
 {
     Initialize();
 }
 
-RouterServerTask::RouterServerTask(wIO *pIO) : wTcpTask(pIO)
+RouterServerTask::RouterServerTask(wSocket *pSocket) : wTcpTask(pSocket)
 {
     Initialize();
 }
