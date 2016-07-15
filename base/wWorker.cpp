@@ -18,9 +18,11 @@ wWorker::wWorker(int iSlot) : mSlot(iSlot)
 		exit(2);
 	}
 #endif
+	//worker通信 主要通过channel同步个fd，填充进程表
+	mIpc = new wWorkerIpc(this);
 }
 
-int wWorker::InitChannel()
+int wWorker::OpenChannel()
 {
 	return mCh.Open();
 }
@@ -30,24 +32,14 @@ void wWorker::Close()
 	mCh.Close();
 }
 
-void wWorker::InitWorker(int iWorkerNum, wWorker **pWorkerPool, int iUseMutex, wShm *pShmAddr, wShmtx *pMutex, int iDelay) 
+void wWorker::PrepareStart(int iSlot, int iType, string sTitle, void *pData) 
 {
-	mWorkerNum = iWorkerNum;
-	mWorkerPool = pWorkerPool;
-	mUseMutex = iUseMutex;
-	mShmAddr = pShmAddr;
-	mMutex = pMutex;
-	mDelay = iDelay;
-}
-
-void wWorker::PrepareStart(int iSlot, int iType, const char *pTitle, void *pData) 
-{
+	mPid = getpid();
 	mSlot = iSlot;
 	mRespawn = iType;
-	mPid = getpid();
-	//mData = pData;
-	//mName = pTitle;
-	
+	mData = sTitle;
+	mMaster = (wMaster<wMaster> *)pData;
+
 	/**
 	 *  设置当前进程优先级。进程默认优先级为0
 	 *  -20 -> 20 高 -> 低。只有root可提高优先级，即可减少priority值
@@ -75,37 +67,6 @@ void wWorker::PrepareStart(int iSlot, int iType, const char *pTitle, void *pData
 			LOG_ERROR(ELOG_KEY, "[system] setrlimit(RLIMIT_NOFILE, %i) failed: %s", mRlimitCore, strerror(mErr));
         }
     }
-	
-    /**
-     * 设置进程的有效uid
-     * 若是以root身份运行，则将worker进程降级, 默认是nobody
-     */
-	/*
-    if (geteuid() == 0) 
-	{
-        if (setgid(GROUP) == -1) 
-		{
-			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[system] setgid(%d) failed: %s", GROUP, strerror(mErr));
-            exit(2);
-        }
-
-        //附加组ID
-        if (initgroups(USER, GROUP) == -1) 
-		{
-			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[system] initgroups(%s, %d) failed: %s", USER, GROUP, strerror(mErr));
-        }
-
-        //用户ID
-        if (setuid(USER) == -1) 
-		{
-			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[system] setuid(%d) failed: %s", USER, strerror(mErr));            
-			exit(2);
-        }
-    }
-	*/
 	
     //切换工作目录
     if (strlen(mWorkingDir) > 0) 
@@ -150,12 +111,14 @@ void wWorker::PrepareStart(int iSlot, int iType, const char *pTitle, void *pData
 		mErr = errno;
 		LOG_ERROR(ELOG_KEY, "[system] sigprocmask() failed: %s", strerror(mErr));
 	}
-
+	
 	PrepareRun();
 }
 
 void wWorker::Start(bool bDaemon) 
 {
 	mStatus = WORKER_RUNNING;
+	
+	mIpc->StartThread();
 	Run();
 }

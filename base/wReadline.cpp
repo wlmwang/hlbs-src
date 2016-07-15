@@ -19,6 +19,11 @@ wReadline::~wReadline()
 	SAFE_FREE(mLineRead);
 }
 
+inline void wReadline::SetPrompt(char* cStr, int iLen)
+{
+	memcpy(mPrompt, cStr, iLen);
+}
+
 bool wReadline::SetCompletion(CompletionFunc_t pFunc)
 {
 	if (pFunc != NULL)

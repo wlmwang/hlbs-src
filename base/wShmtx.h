@@ -20,9 +20,6 @@
 class wShmtx : private wNoncopyable
 {
 	public:
-		wShmtx() {}
-		virtual ~wShmtx() {}
-
 		/**
 		 * 创建锁（在共享建立sem）
 		 * @param  pShm [共享内存]
@@ -30,13 +27,9 @@ class wShmtx : private wNoncopyable
 		 * @return       [0]
 		 */
 		int Create(wShm *pShm, int iSpin = 2048);
-		
 		int Lock();
-
 		int Unlock();
-
 		int TryLock();
-
 		//自旋争抢锁
 		void LockSpin();
 

@@ -8,8 +8,10 @@
 #define _W_THREAD_H_
 
 #include <pthread.h>
+#include <stdarg.h>
 
 #include "wCore.h"
+#include "wLog.h"
 #include "wMutex.h"
 #include "wNoncopyable.h"
 
@@ -26,7 +28,7 @@ void* ThreadProc(void *pvArgs);
 class wThread : private wNoncopyable
 {
 	public:
-		wThread();
+		wThread() : mRunStatus(THREAD_BLOCKED) {}
 		virtual ~wThread() {}
 
 		virtual int PrepareRun() = 0;
@@ -37,27 +39,11 @@ class wThread : private wNoncopyable
 		int StopThread();
 		int Wakeup();
 		int CancelThread();
+		char* GetRetVal();
 		
-		bool IsRunning()
-		{
-			return mRunStatus == THREAD_RUNNING;
-		}
-		
-		bool IsStop()
-		{
-			return mRunStatus == THREAD_STOPPED;
-		}
-		
-		pthread_t GetTid()
-		{
-			return mTid;
-		}
-		
-		virtual char* GetRetVal()
-		{
-			memcpy(mRetVal, "pthread exited", sizeof("pthread exited"));
-			return mRetVal;
-		}
+		bool IsRunning() { return mRunStatus == THREAD_RUNNING;}
+		bool IsStop() { return mRunStatus == THREAD_STOPPED;}
+		pthread_t GetTid() { return mTid;}
 
 	protected:
 		int CondBlock();

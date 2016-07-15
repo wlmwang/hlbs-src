@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ROOT>
 	<!--服务器监听地址-->
-	<SERVER IPADDRESS="0.0.0.0" PORT="10007" BACKLOG="1024" WORKERS="1"/>
+	<SERVER IPADDRESS="0.0.0.0" PORT="10007" PROTOCOL="TCP" BACKLOG="1024" WORKERS="1"/>
 
 	<!--日志文件-->
 	<LOG>

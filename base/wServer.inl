@@ -7,76 +7,48 @@
 template <typename T>
 wServer<T>::wServer(string ServerName)
 {
-	Initialize();
-	
-	mStatus = SERVER_INIT;
 	mServerName = ServerName;
+	mCheckTimer = wTimer(KEEPALIVE_TIME);
+	mEpollEventPool.reserve(LISTEN_BACKLOG);
+	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
+	mLastTicker = GetTickCount();
 }
 
 template <typename T>
 wServer<T>::~wServer()
 {
-	Final();
+	CleanEpoll();
+	CleanTaskPool();
 }
 
 template <typename T>
-void wServer<T>::Initialize()
+void wServer<T>::PrepareSingle(string sIpAddr, unsigned int nPort, string sProtocol)
 {
-	mTimeout = 10;
-	mServerName = "";
-
-	mLastTicker = GetTickCount();
-	mCheckTimer = wTimer(KEEPALIVE_TIME);
-	mIsCheckTimer = false;	//不开启心跳机制
-
-	mEpollFD = FD_UNKNOWN;
-	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
-	mTaskCount = 0;
-	mEpollEventPool.reserve(LISTEN_BACKLOG);	//容量
-	mTask = NULL;
-
-	mListenSock = NULL;
-	mChannelSock = NULL;
-	mUDListenSock = NULL;
-	mWorker = NULL;
-	mExiting = 0;
-}
-
-template <typename T>
-void wServer<T>::PrepareSingle(string sIpAddr, unsigned int nPort)
-{
-	LOG_INFO(ELOG_KEY, "[system] Server Prepare start succeed");
+	LOG_INFO(ELOG_KEY, "[system] single server prepare succeed on ip(%s) port(%d) protocol(%s)", sIpAddr.c_str(), nPort, sProtocol.c_str());
+	
+	//添加服务器
+	if (AddListener(sIpAddr, nPort, sProtocol) < 0 || mListenSock.size() <= 0) exit(0);
 	
 	//初始化epoll
-	if (InitEpoll() < 0)
-	{
-		exit(0);
-	}
+	if (InitEpoll() < 0) exit(0);
 	
-	//初始化Listen Socket
-	if (InitListen(sIpAddr ,nPort) < 0)
+	//添加到侦听事件队列
+	for (vector<wSocket *>::iterator it = mListenSock.begin(); it != mListenSock.end(); it++)
 	{
-		exit(0);
-	}
-
-	//Listen Socket 添加到epoll中
-	if (mListenSock == NULL)
-	{
-		exit(0);
-	}
-	mTask = NewTcpTask(mListenSock);
-	if (NULL != mTask)
-	{
-		mTask->Status() = TASK_RUNNING;
-		if (AddToEpoll(mTask) >= 0)
+		mTask = NewTcpTask(*it);
+		if (NULL != mTask)
 		{
-			AddToTaskPool(mTask);
-		}
-		else
-		{
-			mTask->DeleteIO();
-			SAFE_DELETE(mTask);
-			exit(1);
+			mTask->Status() = TASK_RUNNING;
+			if (AddToEpoll(mTask) >= 0)
+			{
+				AddToTaskPool(mTask);
+			}
+			else
+			{
+				mTask->DeleteIO();
+				SAFE_DELETE(mTask);
+				exit(2);
+			}
 		}
 	}
 	
@@ -87,9 +59,9 @@ void wServer<T>::PrepareSingle(string sIpAddr, unsigned int nPort)
 template <typename T>
 void wServer<T>::SingleStart(bool bDaemon)
 {
-	LOG_INFO(ELOG_KEY, "[system] Server start succeed");
-	
-	mStatus = SERVER_RUNNING;	
+	LOG_INFO(ELOG_KEY, "[system] single server start succeed");
+	mStatus = SERVER_RUNNING;
+
 	//进入服务主循环
 	do {
 		Recv();
@@ -99,89 +71,46 @@ void wServer<T>::SingleStart(bool bDaemon)
 }
 
 template <typename T>
-void wServer<T>::PrepareMaster(string sIpAddr, unsigned int nPort)
+void wServer<T>::PrepareMaster(string sIpAddr, unsigned int nPort, string sProtocol)
 {
-	LOG_INFO(ELOG_KEY, "[system] listen socket on ip(%s) port(%d)", sIpAddr.c_str(), nPort);
+	LOG_INFO(ELOG_KEY, "[system] master server prepare succeed on ip(%s) port(%d) protocol(%s)", sIpAddr.c_str(), nPort, sProtocol.c_str());
 	
-	//初始化Listen Socket
-	if (InitListen(sIpAddr ,nPort) < 0)
-	{
-		exit(0);
-	}
+	//添加服务器
+	if (AddListener(sIpAddr, nPort, sProtocol) < 0 || mListenSock.size() <= 0) exit(0);
 
 	//运行前工作
 	PrepareRun();
 }
 
 template <typename T>
-void wServer<T>::WorkerStart(wWorker *pWorker, bool bDaemon)
+void wServer<T>::WorkerStart(/*wWorker *pWorker,*/bool bDaemon)
 {
-	LOG_INFO(ELOG_KEY, "[system] worker start succeed");
-	
+	LOG_INFO(ELOG_KEY, "[system] worker server start succeed");
 	mStatus = SERVER_RUNNING;
-	//初始化epoll
-	if (InitEpoll() < 0)
-	{
-		exit(2);
-	}
 	
-	//Listen Socket 添加到epoll中
-	if (mListenSock == NULL)
+	//初始化epoll
+	if (InitEpoll() < 0) exit(2);
+	
+	//添加到侦听事件队列
+	for (vector<wSocket *>::iterator it = mListenSock.begin(); it != mListenSock.end(); it++)
 	{
-		exit(2);
-	}
-	mTask = NewTcpTask(mListenSock);
-	if (NULL != mTask)
-	{
-		mTask->Status() = TASK_RUNNING;
-		if (AddToEpoll(mTask) >= 0)
+		mTask = NewTcpTask(*it);
+		if (NULL != mTask)
 		{
-			AddToTaskPool(mTask);
-		}
-		else
-		{
-			mTask->DeleteIO();
-			SAFE_DELETE(mTask);
-			exit(2);
-		}
-	}
-
-	//Unix Socket 添加到epoll中（worker自身channel[1]被监听）
-	if (pWorker != NULL)
-	{
-		mWorker = pWorker;
-		
-		if (mWorker->mWorkerPool != NULL)
-		{
-			mChannelSock = &mWorker->mWorkerPool[mWorker->mSlot]->mCh;	//当前worker进程表项
-			if (mChannelSock != NULL)
+			mTask->Status() = TASK_RUNNING;
+			if (AddToEpoll(mTask) >= 0)
 			{
-				//new unix task
-				mChannelSock->IOFlag() = FLAG_RECV;
-				
-				mTask = NewChannelTask(mChannelSock);
-				if (NULL != mTask)
-				{
-					mTask->Status() = TASK_RUNNING;
-					if (AddToEpoll(mTask) >= 0)
-					{
-						AddToTaskPool(mTask);
-					}
-					else
-					{
-						SAFE_DELETE(mTask);
-						exit(2);
-					}
-				}
+				AddToTaskPool(mTask);
 			}
 			else
 			{
-				LOG_ERROR(ELOG_KEY, "[system] worker pool slot(%d) illegal", mWorker->mSlot);
+				mTask->DeleteIO();
+				SAFE_DELETE(mTask);
 				exit(2);
 			}
 		}
 	}
-	
+
 	//进入服务主循环
 	do {
 		if (mExiting)	//退出
@@ -223,17 +152,11 @@ void wServer<T>::WorkerExit()
 {
 	if (mExiting)	//关闭池
 	{
-		//
+		//...
 	}
 
 	LOG_ERROR(ELOG_KEY, "[system] worker exit");
 	exit(0);
-}
-
-template <typename T>
-void wServer<T>::PrepareRun()
-{
-	//accept前准备工作
 }
 
 /**
@@ -253,36 +176,39 @@ int wServer<T>::InitEpoll()
 }
 
 template <typename T>
-int wServer<T>::InitListen(string sIpAddr ,unsigned int nPort)
+int wServer<T>::AddListener(string sIpAddr, unsigned int nPort, string sProtocol)
 {
-	mListenSock = new wSocket();
-	int iFD = mListenSock->Open();
-	if (iFD == -1)
+	int idx = -1;
+	if (sProtocol == "TCP")
 	{
-		LOG_ERROR(ELOG_KEY, "[system] listen socket open failed");
-		SAFE_DELETE(mListenSock);
-		return -1;
+		wSocket *pSocket = new wTcpSocket();
+		int iFD = pSocket->Open();
+		if (iFD == -1)
+		{
+			LOG_ERROR(ELOG_KEY, "[system] listen socket open failed");
+			SAFE_DELETE(pSocket);
+			return -1;
+		}
+		if (pSocket->Listen(sIpAddr, nPort) < 0)
+		{
+			LOG_ERROR(ELOG_KEY, "[system] listen failed: %s", strerror(mErr));
+			SAFE_DELETE(pSocket);
+			return -1;
+		}
+		pSocket->SockStatus() = STATUS_LISTEN;
+		mListenSock.push_back(pSocket);
+		idx = mListenSock.size();
 	}
-	
-	//listen socket
-	if (mListenSock->Listen(sIpAddr, nPort) < 0)
+	else if(sProtocol == "UDP")
 	{
-		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[system] listen failed: %s", strerror(mErr));
-		SAFE_DELETE(mListenSock);
-		return -1;
+		//
 	}
-	
-	//nonblock
-	if (mListenSock->SetNonBlock() < 0) 
+	else if(sProtocol == "UNIX")
 	{
-		LOG_ERROR(ELOG_KEY, "[system] Set non block failed: %d, close it", iFD);
-		SAFE_DELETE(mListenSock);
-		return -1;
+
 	}
-	
-	mListenSock->SockStatus() = STATUS_LISTEN;	
-	return iFD;
+
+	return idx;
 }
 
 template <typename T>
@@ -293,23 +219,9 @@ wTask* wServer<T>::NewTcpTask(wIO *pIO)
 }
 
 template <typename T>
-wTask* wServer<T>::NewHttpTask(wIO *pIO)
+wTask* wServer<T>::NewUnixTask(wIO *pIO)
 {
-	wTask *pTask = new wHttpTask(pIO);
-	return pTask;
-}
-
-template <typename T>
-wTask* wServer<T>::NewChannelTask(wIO *pIO)
-{
-	wTask *pTask = new wChannelTask(pIO);
-	return pTask;
-}
-
-template <typename T>
-wTask* wServer<T>::NewUDSocketTask(wIO *pIO)
-{
-	wTask *pTask = new wUDSocketTask(pIO);
+	wTask *pTask = new wUnixTask(pIO);
 	return pTask;
 }
 
@@ -514,7 +426,7 @@ int wServer<T>::Send(wTask *pTask, const char *pCmd, int iLen)
 
 	if (pTask->IsRunning() && pTask->IO()->IOType() == TYPE_SOCK && (pTask->IO()->IOFlag() == FLAG_SEND || pTask->IO()->IOFlag() == FLAG_RVSD))
 	{
-		if (pTask->SendToBuf(pCmd, iLen) > 0)
+		if (pTask->Send2Buf(pCmd, iLen) > 0)
 		{
 			return AddToEpoll(pTask, EPOLLIN | EPOLLOUT, EPOLL_CTL_MOD);
 		}
@@ -645,13 +557,6 @@ int wServer<T>::AcceptConn(wTask *pTask)
 }
 
 template <typename T>
-void wServer<T>::Final()
-{
-	CleanEpoll();
-	CleanTaskPool();
-}
-
-template <typename T>
 void wServer<T>::CleanEpoll()
 {
 	if (mEpollFD != -1)
@@ -712,12 +617,6 @@ std::vector<wTask*>::iterator wServer<T>::RemoveTaskPool(wTask* pTask)
     }
     mTaskCount = mTaskPool.size();
     return it;
-}
-
-template <typename T>
-void wServer<T>::Run()
-{
-	//...
 }
 
 template <typename T>

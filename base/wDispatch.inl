@@ -5,24 +5,6 @@
  */
 
 template<typename T,typename IDX>
-wDispatch<T,IDX>::wDispatch()
-{
-	Initialize();
-}
-
-template<typename T,typename IDX>
-void wDispatch<T,IDX>::Initialize()
-{
-	mProcNum = 0;
-}
-
-template<typename T,typename IDX>
-wDispatch<T,IDX>::~wDispatch()
-{
-	//
-}
-
-template<typename T,typename IDX>
 bool wDispatch<T,IDX>::Register(string className, IDX ActIdx, struct Func_t vFunc)
 {
 	vector<struct Func_t> vf;
@@ -49,4 +31,22 @@ bool wDispatch<T,IDX>::Register(string className, IDX ActIdx, struct Func_t vFun
 	mProcNum++;
 	return true;
 	//return itRet.second;
+}
+
+template<typename T,typename IDX>
+struct Func_t* wDispatch<T,IDX>::GetFuncT(string className, IDX ActIdx)
+{
+	typename map<string, vector<struct Func_t> >::iterator mp = mProc.find(className);
+	if(mp != mProc.end())
+	{
+		typename vector<struct Func_t>::iterator itvf = mp->second.begin();
+		for(; itvf != mp->second.end() ; itvf++)
+		{
+			if(itvf->mActIdx == ActIdx)
+			{
+				return &*itvf;
+			}
+		}
+	}
+	return 0;
 }

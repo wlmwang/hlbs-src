@@ -8,7 +8,7 @@
 #define _W_DEF_H_
 
 #define SOFTWARE_NAME "hlbs"
-#define SOFTWARE_VER "2.1"
+#define SOFTWARE_VER "2.2"
 
 //主机名长度
 #ifndef MAXHOSTNAMELEN

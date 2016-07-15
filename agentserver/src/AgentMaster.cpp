@@ -26,9 +26,6 @@ void AgentMaster::Initialize()
 //进程标题 title = "master process " + argv[0] + ... + argv[argc-1]
 void AgentMaster::PrepareRun()
 {
-	size_t size;
-	u_char *p;
-	int i;
     const char *sProcessTitle = "master process(agent)";
 
     //获取config、server对象（在main中已初始化完成）
@@ -46,25 +43,21 @@ void AgentMaster::PrepareRun()
     }
 
     //进程标题
-    size = strlen(sProcessTitle) + 1;
-    for (i = 0; i < mConfig->mProcTitle->mArgc; i++) 
+    size_t size = strlen(sProcessTitle) + 1;
+    for (size_t i = 0; i < mConfig->mProcTitle->mArgc; i++) 
     {
         size += strlen(mConfig->mProcTitle->mArgv[i]) + 1;
     }
     mTitle = new char[size];
-    if (mTitle == NULL) 
+
+    u_char *ptr = (u_char *)memcpy(mTitle, sProcessTitle, strlen(sProcessTitle)) + strlen(sProcessTitle);     //不要\0结尾
+    for (size_t i = 0; i < mConfig->mProcTitle->mArgc; i++) 
     {
-        exit(1);
+        *ptr++ = ' ';
+        //ptr = Cpystrn(ptr, (u_char *) mConfig->mProcTitle->mArgv[i], size);
+        ptr = Cpystrn(ptr, (u_char *) mConfig->mProcTitle->mArgv[i], strlen(mConfig->mProcTitle->mArgv[i]));    //不要\0结尾
     }
-
-    p = (u_char *)memcpy(mTitle, sProcessTitle, strlen(sProcessTitle)) + strlen(sProcessTitle);     //不要\0结尾
-
-    for (i = 0; i < mConfig->mProcTitle->mArgc; i++) 
-    {
-        *p++ = ' ';
-        p = Cpystrn(p, (u_char *) mConfig->mProcTitle->mArgv[i], size);
-    }
-
+    *ptr = '\0';
 	mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");   //设置标题
 
     //mPidFile.FileName() = "../log/hlbs.pid";    //进程pid文件

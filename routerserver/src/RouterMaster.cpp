@@ -14,11 +14,6 @@ RouterMaster::~RouterMaster()
 //进程标题 title = "master process " + argv[0] + ... + argv[argc-1]
 void RouterMaster::PrepareRun()
 {
-	size_t size;
-	u_char *p;
-	int i;
-    const char *sProcessTitle = "master process(router)";
-
     //config、server对象
     mConfig = RouterConfig::Instance();
     if (mConfig == NULL) 
@@ -35,20 +30,22 @@ void RouterMaster::PrepareRun()
     ReconfigMaster();
 
     //进程标题
-    size = strlen(sProcessTitle) + 1;
-    for (i = 0; i < mConfig->mProcTitle->mArgc; i++) 
+    const char *sProcessTitle = "master process(router)";
+    size_t size = strlen(sProcessTitle) + 1;
+    for (size_t i = 0; i < mConfig->mProcTitle->mArgc; i++) 
     {
         size += strlen(mConfig->mProcTitle->mArgv[i]) + 1;
     }
 
     mTitle = new char[size];
-    p = (u_char *)memcpy(mTitle, sProcessTitle, strlen(sProcessTitle)) + strlen(sProcessTitle);     //前缀。不要\0结尾
-    //拼接argv
-    for (i = 0; i < mConfig->mProcTitle->mArgc; i++) 
+    u_char *ptr = (u_char *)memcpy(mTitle, sProcessTitle, strlen(sProcessTitle)) + strlen(sProcessTitle);     //前缀。不要\0结尾
+    for (size_t i = 0; i < mConfig->mProcTitle->mArgc; i++) 
     {
-        *p++ = ' ';
-        p = Cpystrn(p, (u_char *) mConfig->mProcTitle->mArgv[i], size);
+        *ptr++ = ' ';
+        //ptr = Cpystrn(ptr, (u_char *) mConfig->mProcTitle->mArgv[i], size);
+        ptr = Cpystrn(ptr, (u_char *) mConfig->mProcTitle->mArgv[i], strlen(mConfig->mProcTitle->mArgv[i]));    //不要\0结尾
     }
+    *ptr = '\0';
 	mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");
 
     mPidFile.FileName() = "/var/run/hlbs_router.pid";   //pid文件名

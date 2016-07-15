@@ -6,19 +6,6 @@
 
 #include "wMsgQueue.h"
 
-wMsgQueue::wMsgQueue()
-{
-	Initialize();
-}
-
-wMsgQueue::~wMsgQueue() {}
-
-void wMsgQueue::Initialize()
-{
-	mBeginIdxPtr = NULL;
-	mEndIdxPtr = NULL;
-}
-
 void wMsgQueue::SetBuffer(char *vBuffer, int vBufferLen)
 {
 	char *pBuffer = vBuffer;
@@ -195,4 +182,3 @@ int wMsgQueue::Push(char *pBuffer, int vBufferLen)
 		return 0;
 	}
 }
-

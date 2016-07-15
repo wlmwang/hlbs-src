@@ -19,12 +19,7 @@
 class wMsgQueue : private wNoncopyable
 {
 	public:
-		wMsgQueue();
-		~wMsgQueue();
-		void Initialize();
-
 		void SetBuffer(char *vBuffer, int vBufferLen);
-		
 		/**
 		 * 取出第一个消息，本函数只改变mBeginIdx
 		 * @param  pBuffer    [out]
@@ -32,7 +27,6 @@ class wMsgQueue : private wNoncopyable
 		 * @return            [< 0 出错，= 0 没消息，> 0 消息长度]
 		 */
 		int Pop(char *pBuffer, int vBufferLen);
-
 		/**
 		 * 放入第一个消息，本函数只改变mEndIdx
 		 * @param  pBuffer    
@@ -40,17 +34,13 @@ class wMsgQueue : private wNoncopyable
 		 * @return            = 0表示成功，< 0表示失败
 		 */
 		int Push(char *pBuffer, int vBufferLen);
+		int IsEmpty() { return *mBeginIdxPtr == *mEndIdxPtr ? 1 : 0;}
 
-		int IsEmpty() 
-		{
-			return *mBeginIdxPtr == *mEndIdxPtr ? 1 : 0; 
-		}
-		
 	private:
-		int *mBeginIdxPtr;	//前4位记录开始地址
-		int *mEndIdxPtr;	//后4位开始地址
-		int mQueueSize;		//实际数据长度
-		char *mBufferPtr;	//实际数据地址
+		int *mBeginIdxPtr {NULL};	//前4位记录开始地址
+		int *mEndIdxPtr {NULL};		//后4位开始地址
+		char *mBufferPtr {NULL};	//实际数据地址
+		int mQueueSize {0};	//实际数据长度
 };
 
 #endif

@@ -199,6 +199,37 @@ int InitDaemon(const char *filename)
 		return -1;
 	}
 
+    /**
+     * 设置进程的有效uid
+     * 若是以root身份运行，则将worker进程降级, 默认是nobody
+     */
+	/*
+    if (geteuid() == 0) 
+	{
+        if (setgid(GROUP) == -1) 
+		{
+			mErr = errno;
+			LOG_ERROR(ELOG_KEY, "[system] setgid(%d) failed: %s", GROUP, strerror(mErr));
+            exit(2);
+        }
+
+        //附加组ID
+        if (initgroups(USER, GROUP) == -1) 
+		{
+			mErr = errno;
+			LOG_ERROR(ELOG_KEY, "[system] initgroups(%s, %d) failed: %s", USER, GROUP, strerror(mErr));
+        }
+
+        //用户ID
+        if (setuid(USER) == -1) 
+		{
+			mErr = errno;
+			LOG_ERROR(ELOG_KEY, "[system] setuid(%d) failed: %s", USER, strerror(mErr));            
+			exit(2);
+        }
+    }
+	*/
+
 	//第一次fork
 	if (fork() != 0) exit(0);
 

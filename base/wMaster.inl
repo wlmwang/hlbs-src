@@ -33,8 +33,7 @@ wWorker* wMaster<T>::NewWorker(int iSlot)
 template <typename T>
 void wMaster<T>::PrepareStart()
 {
-	mWorkerNum = mNcpu;	//默认 worker 数量等于cpu数量
-	mPid = getpid();
+	mWorkerNum = mNcpu;	//默认worker数量等于cpu数量
 	PrepareRun();	//初始化服务器
 }
 
@@ -319,7 +318,7 @@ int wMaster<T>::ReapChildren()
 template <typename T>
 void wMaster<T>::WorkerStart(int n, int type)
 {
-	const char *sProcessTitle = "worker process";
+	string sProcessTitle = "worker process";
 	pid_t pid;
 	
 	//同步channel fd消息结构
@@ -327,7 +326,7 @@ void wMaster<T>::WorkerStart(int n, int type)
 	for (int i = 0; i < mWorkerNum; ++i)
 	{
 		//创建worker进程
-		pid = SpawnWorker((void *) &i, sProcessTitle, type);
+		pid = SpawnWorker((void *) this, sProcessTitle, type);
 	
 		stCh.mSlot = mSlot;
         stCh.mPid = mWorkerPool[mSlot]->mPid;
@@ -368,7 +367,8 @@ void wMaster<T>::SignalWorker(int iSigno)
 	for (int i = 0; i < mWorkerNum; i++) 
     {
         LOG_DEBUG(ELOG_KEY, "[system] child: %d %d e:%d t:%d d:%d r:%d j:%d", 
-        	i, mWorkerPool[i]->mPid, mWorkerPool[i]->mExiting, mWorkerPool[i]->mExited, mWorkerPool[i]->mDetached, mWorkerPool[i]->mRespawn, mWorkerPool[i]->mJustSpawn);
+        	i, mWorkerPool[i]->mPid, mWorkerPool[i]->mExiting, mWorkerPool[i]->mExited, 
+        	mWorkerPool[i]->mDetached, mWorkerPool[i]->mRespawn, mWorkerPool[i]->mJustSpawn);
 
         if (mWorkerPool[i]->mDetached || mWorkerPool[i]->mPid == -1) 
 		{
@@ -481,7 +481,7 @@ void wMaster<T>::PassCloseChannel(struct ChannelReqClose_t *pCh)
 }
 
 template <typename T>
-pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
+pid_t wMaster<T>::SpawnWorker(void *pData, string sTitle, int type)
 {
 	int s;
 	if (type >= 0)
@@ -501,7 +501,7 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
 	mSlot = s;
 
 	wWorker *pWorker = mWorkerPool[mSlot];
-	if (pWorker->InitChannel() < 0)
+	if (pWorker->OpenChannel() < 0)
 	{
 		mErr = errno;
 		LOG_ERROR(ELOG_KEY, "[system] socketpair() failed while spawning: %s", strerror(mErr));
@@ -539,7 +539,6 @@ pid_t wMaster<T>::SpawnWorker(void* pData, const char *title, int type)
 	    case 0:
 	    	//worker进程
 	        mProcess = PROCESS_WORKER;
-	        pWorker->InitWorker(mWorkerNum, mWorkerPool, mUseMutex, mShmAddr, mMutex, mDelay);
 	        pWorker->PrepareStart(mSlot, type, title, pData);
 	        pWorker->Start();
 	        _exit(0);	//TODO 进程退出

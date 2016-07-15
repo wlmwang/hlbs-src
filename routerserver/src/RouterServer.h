@@ -24,12 +24,9 @@ class RouterServer: public wServer<RouterServer>
 {
 	public:
 		RouterServer();
-		virtual ~RouterServer() {}				
 		virtual void Run();
 		
 		virtual wTask* NewTcpTask(wIO *pIO);
-		virtual wTask* NewChannelTask(wIO *pIO);
-
 		void CheckModSvr();	//检测配置文件是否修改
 		
 	protected:

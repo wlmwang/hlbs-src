@@ -17,27 +17,21 @@
 #include "wLog.h"
 #include "wSingleton.h"
 #include "wTimer.h"
-#include "wTask.h"
-#include "wWorker.h"
-#include "wMaster.h"
-#include "wSocket.h"
-#include "wHttp.h"
+#include "wTcpSocket.h"
+#include "wUnixSocket.h"
 #include "wTcpTask.h"
-#include "wHttpTask.h"
-#include "wChannelTask.h"
-#include "wUDSocket.h"
-#include "wUDSocketTask.h"
+#include "wUnixTask.h"
 
+/**
+ * 多服务基础类
+ */
 template <typename T>
 class wServer: public wSingleton<T>
 {
 	public:
 		explicit wServer(string ServerName);
-		void Initialize();
 		virtual ~wServer();
 
-		void Final();
-		
 		/**
 		 * 事件读写主调函数
 		 */
@@ -48,7 +42,7 @@ class wServer: public wSingleton<T>
 		/**
 		 * single、worker进程中，准备|启动服务
 		 */
-		void PrepareSingle(string sIpAddr, unsigned int nPort);
+		void PrepareSingle(string sIpAddr, unsigned int nPort, string sProtocol = "TCP");
 		void SingleStart(bool bDaemon = true);
 		
 		/**
@@ -57,8 +51,8 @@ class wServer: public wSingleton<T>
 		 * PrepareMaster 需在master进程中调用
 		 * WorkerStart在worker进程提供服务
 		 */
-		void PrepareMaster(string sIpAddr, unsigned int nPort);	
-		void WorkerStart(wWorker *pWorker = NULL, bool bDaemon = true);
+		void PrepareMaster(string sIpAddr, unsigned int nPort, string sProtocol = "TCP");	
+		void WorkerStart(/*wWorker *pWorker = NULL,*/bool bDaemon = true);
 		int AcceptMutexLock();
 		int AcceptMutexUnlock();
 		virtual void HandleSignal();
@@ -80,7 +74,7 @@ class wServer: public wSingleton<T>
 		/**
 		 *  Listen Socket
 		 */
-		int InitListen(string sIpAddr ,unsigned int nPort);
+		int AddListener(string sIpAddr, unsigned int nPort, string sProtocol = "TCP");
 		
 		/**
 		 *  accept接受连接
@@ -94,16 +88,13 @@ class wServer: public wSingleton<T>
 		/**
 		 * 新建客户端
 		 */
-		virtual wTask* NewTcpTask(wIO *pIO);	//io = wSocket
-		virtual wTask* NewHttpTask(wIO *pIO);	//io = wHttp
-		virtual wTask* NewChannelTask(wIO *pIO);//io = wChannel
-		virtual wTask* NewUDSocketTask(wIO *pIO);//io = wUDSocket
-		
+		virtual wTask* NewTcpTask(wIO *pIO);	//io = wTcpSocket
+		virtual wTask* NewUnixTask(wIO *pIO);	//io = wUnixSocket		
 		/**
 		 * 服务主循环逻辑，继承可以定制服务
 		 */
-		virtual void PrepareRun();
-		virtual void Run();
+		virtual void PrepareRun() {}
+		virtual void Run() {}
 		
 		string &ServerName() { return mServerName; }
 		bool IsRunning() { return mStatus == SERVER_RUNNING; }
@@ -113,34 +104,28 @@ class wServer: public wSingleton<T>
 		virtual void CheckTimeout();
 		
 	protected:
+		int mErr;
+		int mExiting {0};
 		string mServerName;
-		wSocket *mListenSock;	//Listen Socket(主服务socket对象)
-		wUDSocket *mUDListenSock;	//Unix Domain Socket(主服务socket对象) 临时方案
+		vector<wSocket *> mListenSock;	//多监听服务
 
-		SERVER_STATUS mStatus;	//服务器当前状态
-		unsigned long long mLastTicker;	//服务器当前时间
+		SERVER_STATUS mStatus {SERVER_INIT};	//服务器当前状态
+		unsigned long long mLastTicker {0};	//服务器当前时间
+		bool mIsCheckTimer {false};		//心跳开关，默认关闭。强烈建议移动互联网环境下打开，而非依赖keepalive机制保活
 		wTimer mCheckTimer;
-		bool mIsCheckTimer;		//心跳开关，默认关闭。强烈建议移动互联网环境下打开，而非依赖keepalive机制保活
-		
+
 		//epoll
-		int mEpollFD;
-		int mTimeout;	//epoll_wait timeout
+		int mEpollFD {FD_UNKNOWN};
+		int mTimeout {10};	//epoll_wait timeout
 		
 		//epoll_event
 		struct epoll_event mEpollEvent;
 		vector<struct epoll_event> mEpollEventPool; //epoll_event已发生事件池（epoll_wait）
-		int mTaskCount;	//mTcpTaskPool.size();
+		int mTaskCount {0};	//mTcpTaskPool.size();
 		
 		//task|pool
-		wTask *mTask;		//temp task
+		wTask *mTask {NULL};		//temp task
 		vector<wTask*> mTaskPool;
-		
-		//worker
-		wWorker *mWorker;	//对应worker对象，worker与server一对一（single进程模式无worker进程）
-		wChannel *mChannelSock;	//Unix Socket(进程间通信)
-
-		int mErr;
-		int mExiting;
 };
 
 #include "wServer.inl"

@@ -9,26 +9,26 @@
 
 #include "wCore.h"
 #include "wCommand.h"
-#include "wIO.h"
 #include "wLog.h"
 #include "wMisc.h"
 #include "wNoncopyable.h"
+#include "wSocket.h"
 
 class wTask : private wNoncopyable
 {
 	public:
 		wTask() {}
-		wTask(wIO *pIO) : mIO(pIO) {}
-		virtual ~wTask() {}
+		wTask(wSocket *pSocket) : mSocket(pSocket) {}
+		virtual ~wTask();
+
+		wSocket *Socket() { return mSocket;}
+		TASK_STATUS &Status() { return mStatus;}
+		bool IsRunning() { return mStatus == TASK_RUNNING;}
 		
-		wIO *IO() { return mIO; }
-		void DeleteIO();
-		TASK_STATUS &Status() { return mStatus; }
-		bool IsRunning() { return mStatus == TASK_RUNNING; }
-		
-		virtual void CloseTask(int iReason);	//iReason关闭原因
 		virtual int VerifyConn() { return 0;}	//验证接收到连接
 		virtual int Verify() {return 0;}		//发送连接验证请求
+
+		virtual void CloseTask(int iReason);	//iReason关闭原因
 		
 		virtual int Heartbeat();
 		virtual int HeartbeatOutTimes() { return mHeartbeatTimes > KEEPALIVE_CNT; }
@@ -40,20 +40,23 @@ class wTask : private wNoncopyable
 		 *  return ：<0 对端发生错误|消息超长 =0 对端关闭(FIN_WAIT1) >0 接受字符
 		 */
 		virtual int TaskRecv();
+		virtual int TaskSend();
 		/**
-		 *  异步发送客户端消息
+		 * 业务逻辑入口函数
+		 */
+		virtual int HandleRecvMessage(char *pBuffer, int nLen) { return -1;}
+		/**
+		 * 发送缓冲区是否有数据
+		 */
+		int WritableLen() { return mSendWrite - mSendBytes;}
+		/**
+		 *  将待发送客户端消息写入buf，等待TaskSend发送
 		 *  return 
 		 *  -1 ：消息长度不合法
 		 *  -2 ：发送缓冲剩余空间不足，请稍后重试
 		 *   0 : 发送成功
 		 */
-		virtual int SendToBuf(const char *pCmd, int iLen);
-		/**
-		 * 发送缓冲区有数据
-		 */
-		int WritableLen() { return mSendWrite - mSendBytes; }
-		virtual int TaskSend();
-		
+		int Send2Buf(const char *pCmd, int iLen);
 		/**
 		 *  同步发送确切长度消息
 		 */
@@ -64,11 +67,8 @@ class wTask : private wNoncopyable
 		 */
 		int SyncRecv(char *pCmd, int iLen, int iTimeout = 10/*s*/);
 		
-		//业务逻辑入口函数
-		virtual int HandleRecvMessage(char * pBuffer, int nLen) { return -1;}
-		
 	protected:
-		wIO	*mIO {NULL};
+		wSocket	*mSocket {NULL};
 		TASK_STATUS mStatus {TASK_INIT};
 		int mHeartbeatTimes {0};
 		

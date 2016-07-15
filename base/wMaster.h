@@ -17,11 +17,10 @@
 #include "wFile.h"
 #include "wShm.h"
 #include "wShmtx.h"
-#include "wChannel.h"
 #include "wSigSet.h"
 #include "wSignal.h"
 #include "wWorker.h"
-#include "wChannelCmd.h"
+#include "wChannelCmd.h"	//*channel*_t
 
 template <typename T>
 class wMaster : public wSingleton<T>
@@ -36,7 +35,7 @@ class wMaster : public wSingleton<T>
 		void MasterExit();
 		
 		void WorkerStart(int n, int type = PROCESS_RESPAWN);
-		pid_t SpawnWorker(void* pData, const char *title, int type = PROCESS_RESPAWN);
+		pid_t SpawnWorker(void *pData, string sTitle, int type = PROCESS_RESPAWN);
 		void PassOpenChannel(struct ChannelReqOpen_t *pCh);
 		void PassCloseChannel(struct ChannelReqClose_t *pCh);
 		virtual wWorker* NewWorker(int iSlot = 0);
@@ -73,17 +72,17 @@ class wMaster : public wSingleton<T>
 		 *  更新进程表
 		 */
 		void ProcessGetStatus();
-		
 		int CreatePidFile();
 		void DeletePidFile();
 
 	public:
 		int mErr;
+		wFile mPidFile;	//pid文件
 		MASTER_STATUS mStatus {MASTER_INIT};
-		int mProcess {PROCESS_SINGLE};
+		int mProcess {PROCESS_SINGLE};	//进程类别（master、worker、单进程）
 		int mNcpu {0};		//cpu个数
-		pid_t mPid {0};		//master进程id
-		int mSlot {0};		//进程表分配到数量
+		pid_t mPid {0};		//master&&worker进程id
+		int mSlot {0};		//进程表分配到索引
 		int mWorkerNum {0};	//worker总数量
 		wWorker **mWorkerPool {NULL};	//进程表，从0开始
 		
@@ -92,8 +91,6 @@ class wMaster : public wSingleton<T>
 		int mDelay {500};		//延时时间。默认500ms
 		wShm *mShmAddr {NULL};	//共享内存
 		wShmtx *mMutex {NULL};	//accept mutex
-
-		wFile mPidFile;	//pid文件
 };
 
 #include "wMaster.inl"

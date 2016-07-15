@@ -6,20 +6,22 @@
 
 #include "wTask.h"
 
-void wTask::DeleteIO()
+wTask::~wTask()
 {
-	SAFE_DELETE(mIO);	//mIO建立在堆上
+	SAFE_DELETE(mSocket);
 }
 
-void wTask::CloseTask(int iReason)
+int wTask::Heartbeat()
 {
-	mStatus = TASK_QUIT;
-	mIO->Close();
+	mHeartbeatTimes++;
+	struct wCommand vCmd;
+	int iRet = SyncSend((char*)&vCmd, sizeof(vCmd));
+	return iRet;
 }
 
 int wTask::TaskRecv()
 {
-	int iRecvLen = mIO->RecvBytes(mRecvMsgBuff + mRecvBytes, sizeof(mRecvMsgBuff) - mRecvBytes);
+	int iRecvLen = mSocket->RecvBytes(mRecvMsgBuff + mRecvBytes, sizeof(mRecvMsgBuff) - mRecvBytes);
 	
 	if (iRecvLen <= 0)
 	{
@@ -43,7 +45,7 @@ int wTask::TaskRecv()
 		//判断消息长度
 		if ((iMsgLen < MIN_CLIENT_MSG_LEN) || (iMsgLen > MAX_CLIENT_MSG_LEN))
 		{
-			LOG_ERROR(ELOG_KEY, "[system] recv message invalid len: %d , fd(%d)", iMsgLen, mIO->FD());
+			LOG_ERROR(ELOG_KEY, "[system] recv message invalid len: %d , fd(%d)", iMsgLen, mSocket->FD());
 			return ERR_MSGLEN;
 		}
 
@@ -74,7 +76,7 @@ int wTask::TaskRecv()
 		//判断剩余的长度
 		if (iBuffMsgLen < 0)
 		{
-			LOG_ERROR(ELOG_KEY, "[system] the last msg len %d is impossible fd(%d)", iBuffMsgLen, mIO->FD());
+			LOG_ERROR(ELOG_KEY, "[system] the last msg len %d is impossible fd(%d)", iBuffMsgLen, mSocket->FD());
 			return ERR_MSGLEN;
 		}
 		
@@ -97,14 +99,14 @@ int wTask::TaskSend()
 			return 0;
 		}
 		
-		iSendLen = mIO->SendBytes(mSendMsgBuff + mSendBytes, iMsgLen);
+		iSendLen = mSocket->SendBytes(mSendMsgBuff + mSendBytes, iMsgLen);
 		if (iSendLen < 0)
 		{
 			return iSendLen;
 		}
 		mSendBytes += iSendLen;
 		
-		LOG_DEBUG(ELOG_KEY, "[system] send message len: %d, fd(%d)", iMsgLen, mIO->FD());
+		LOG_DEBUG(ELOG_KEY, "[system] send message len: %d, fd(%d)", iMsgLen, mSocket->FD());
 	}
 	
 	if (mSendBytes > 0)
@@ -116,12 +118,12 @@ int wTask::TaskSend()
 	return mSendBytes;
 }
 
-int wTask::SendToBuf(const char *pCmd, int iLen)
+int wTask::Send2Buf(const char *pCmd, int iLen)
 {
 	//判断消息长度
 	if ((iLen <= MIN_CLIENT_MSG_LEN) || (iLen > MAX_CLIENT_MSG_LEN))
 	{
-		LOG_ERROR(ELOG_KEY, "[system] write message invalid len %d, fd(%d)", iLen, mIO->FD());
+		LOG_ERROR(ELOG_KEY, "[system] write message invalid len %d, fd(%d)", iLen, mSocket->FD());
 		return -1;
 	}
 	
@@ -152,13 +154,13 @@ int wTask::SyncSend(const char *pCmd, int iLen)
 	//判断消息长度
 	if ((iLen < MIN_CLIENT_MSG_LEN) || (iLen > MAX_CLIENT_MSG_LEN))
 	{
-		LOG_ERROR(ELOG_KEY, "[system] send message invalid len %d, fd(%d)", iLen, mIO->FD());
+		LOG_ERROR(ELOG_KEY, "[system] send message invalid len %d, fd(%d)", iLen, mSocket->FD());
 		return -1;
 	}
 	
 	*(int *)mTmpSendMsgBuff = iLen;
 	memcpy(mTmpSendMsgBuff + sizeof(int), pCmd, iLen);
-	return mIO->SendBytes(mTmpSendMsgBuff, iLen + sizeof(int));
+	return mSocket->SendBytes(mTmpSendMsgBuff, iLen + sizeof(int));
 }
 
 int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
@@ -172,7 +174,7 @@ int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 	struct wCommand* pTmpCmd = 0;
 	int iSize = 0, iRecvLen = 0;
 	do {
-		iSize = mIO->RecvBytes(mTmpRecvMsgBuff + iRecvLen, iLen + sizeof(int));
+		iSize = mSocket->RecvBytes(mTmpRecvMsgBuff + iRecvLen, iLen + sizeof(int));
 		if (iSize < 0) break;
 		iRecvLen += iSize;
 		if ((iSize == 0) || (iRecvLen < iCmdMsgLen))
@@ -220,12 +222,4 @@ int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 	}
 	memcpy(pCmd, mTmpRecvMsgBuff + sizeof(int), iLen);
 	return iRecvLen - sizeof(int);
-}
-
-int wTask::Heartbeat()
-{
-	mHeartbeatTimes++;
-	wCommand vCmd;
-	int iRet = SyncSend((char*)&vCmd, sizeof(vCmd));
-	return iRet;
 }

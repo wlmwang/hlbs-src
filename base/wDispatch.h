@@ -24,7 +24,6 @@ class wDispatch : private wNoncopyable
 		struct Func_t
 		{
 			IDX mActIdx;
-			
 			/**
 			 * T为function类型，例：function<void(void)>
 			 * mFunc用类似std::bind函数绑定，例：bind(&wTcpTask::Get, this, std::placeholders::_1)
@@ -41,32 +40,12 @@ class wDispatch : private wNoncopyable
 			}
 		};
 
-		wDispatch();
-		virtual ~wDispatch();
-		void Initialize();
-		
 		bool Register(string className, IDX ActIdx, struct Func_t vFunc);
-
-		inline struct Func_t * GetFuncT(string className, IDX ActIdx)
-		{
-			typename map<string, vector<struct Func_t> >::iterator mp = mProc.find(className);
-			if(mp != mProc.end())
-			{
-				typename vector<struct Func_t>::iterator itvf = mp->second.begin();
-				for(; itvf != mp->second.end() ; itvf++)
-				{
-					if(itvf->mActIdx == ActIdx)
-					{
-						return &*itvf;
-					}
-				}
-			}
-			return 0;
-		}
+		struct Func_t * GetFuncT(string className, IDX ActIdx);
 
 	protected:
 		map<string, vector<struct Func_t> > mProc;	//注册回调方法
-		int mProcNum;
+		int mProcNum {0};
 };
 
 #include "wDispatch.inl"

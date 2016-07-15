@@ -28,8 +28,6 @@ namespace W
 				len_ = 0;
 			}
 
-			~string() {}
-
 			string(const string& s)
 			{
 				strcpy(value_, s.value_);

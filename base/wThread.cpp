@@ -4,10 +4,7 @@
  * Copyright (C) Hupu, Inc.
  */
 
-#include <stdarg.h>
-
 #include "wThread.h"
-#include "wLog.h"
 
 /**
  *  线程入口
@@ -27,13 +24,7 @@ void* ThreadProc(void *pvArgs)
 	}
 
 	pThread->Run();
-
 	return NULL;	//pthread_exit(0);
-}
-
-wThread::wThread()
-{
-	mRunStatus = THREAD_BLOCKED;	//阻塞
 }
 
 int wThread::StartThread(int join)
@@ -114,7 +105,13 @@ int wThread::Wakeup()
 	return 0;
 }
 
-int wThread::CancelThread()
+inline int wThread::CancelThread()
 {
 	return pthread_cancel(mTid);
+}
+
+inline char* wThread::GetRetVal()
+{
+	memcpy(mRetVal, "pthread exited", sizeof("pthread exited"));
+	return mRetVal;
 }

@@ -32,5 +32,5 @@ void RouterWorker::PrepareRun()
 void RouterWorker::Run()
 {
 	//服务器开始运行
-	mServer->WorkerStart(this);
+	mServer->WorkerStart();
 }

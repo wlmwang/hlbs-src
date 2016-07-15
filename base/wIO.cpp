@@ -6,7 +6,7 @@
 
 #include "wIO.h"
 
-wIO::wIO() 
+wIO::wIO() :mIOFlag(FLAG_RVSD)
 {
 	mCreateTime = GetTickCount();
 }
@@ -35,4 +35,3 @@ void wIO::Close()
 	}
 	mFD = FD_UNKNOWN;
 }
-
