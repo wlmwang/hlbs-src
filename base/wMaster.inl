@@ -327,7 +327,11 @@ void wMaster<T>::WorkerStart(int n, int type)
 	{
 		//创建worker进程
 		pid = SpawnWorker((void *) this, sProcessTitle, type);
-	
+		if (pid == -1)
+		{
+			LOG_ERROR(ELOG_KEY, "[system] could not fork worker process %d", i);
+			continue;
+		}
 		stCh.mSlot = mSlot;
         stCh.mPid = mWorkerPool[mSlot]->mPid;
         stCh.mFD = mWorkerPool[mSlot]->mCh[0];
@@ -538,10 +542,10 @@ pid_t wMaster<T>::SpawnWorker(void *pData, string sTitle, int type)
 			
 	    case 0:
 	    	//worker进程
-	        mProcess = PROCESS_WORKER;
+	        mProcess = PROCESS_WORKER;	//进程模式
 	        pWorker->PrepareStart(mSlot, type, title, pData);
 	        pWorker->Start();
-	        _exit(0);	//TODO 进程退出
+	        _exit(0);
 	        break;
 
 	    default:
@@ -549,7 +553,7 @@ pid_t wMaster<T>::SpawnWorker(void *pData, string sTitle, int type)
     }
     LOG_INFO(ELOG_KEY, "[system] worker start %s [%d] %d", title, mSlot, pid);
     
-    //更新进程表
+    //主进程master更新进程表
     pWorker->mSlot = mSlot;
     pWorker->mPid = pid;
 	pWorker->mExited = 0;

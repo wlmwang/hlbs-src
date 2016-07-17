@@ -77,20 +77,25 @@ class wMaster : public wSingleton<T>
 
 	public:
 		int mErr;
-		wFile mPidFile;	//pid文件
 		MASTER_STATUS mStatus {MASTER_INIT};
 		int mProcess {PROCESS_SINGLE};	//进程类别（master、worker、单进程）
-		int mNcpu {0};		//cpu个数
-		pid_t mPid {0};		//master&&worker进程id
-		int mSlot {0};		//进程表分配到索引
-		int mWorkerNum {0};	//worker总数量
-		wWorker **mWorkerPool {NULL};	//进程表，从0开始
 		
+		//master相关
+		wFile mPidFile;	//pid文件
+		int mNcpu {0};		//cpu个数
+		pid_t mPid {0};		//master进程id
+		
+		//进程表
+		wWorker **mWorkerPool {NULL};
+		int mWorkerNum {0};	//worker总数量
+		int mSlot {0};		//进程表分配到索引
+		
+		//主进程master构建惊群锁（进程共享）
 		int mUseMutex {0};	//惊群锁标识
 		int mMutexHeld {0};	//是否持有锁
-		int mDelay {500};		//延时时间。默认500ms
 		wShm *mShmAddr {NULL};	//共享内存
 		wShmtx *mMutex {NULL};	//accept mutex
+		int mDelay {500};	//延时时间。默认500ms
 };
 
 #include "wMaster.inl"
