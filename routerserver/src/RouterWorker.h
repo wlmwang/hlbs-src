@@ -23,7 +23,6 @@ class RouterWorker: public wWorker
 
 		virtual void PrepareRun();
 		virtual void Run();
-
 	protected:
 		RouterConfig *mConfig {NULL};
 		RouterServer *mServer {NULL};

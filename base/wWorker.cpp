@@ -5,6 +5,8 @@
  */
 
 #include "wWorker.h"
+//#include "wShm.h"
+//#include "wShmtx.h"
 
 wWorker::wWorker(int iSlot) : mSlot(iSlot)
 {
@@ -22,12 +24,18 @@ wWorker::wWorker(int iSlot) : mSlot(iSlot)
 	mIpc = new wWorkerIpc(this);
 }
 
+wWorker::~wWorker()
+{
+	CloseChannel();
+	SAFE_DELETE(mIpc);
+}
+
 int wWorker::OpenChannel()
 {
 	return mCh.Open();
 }
 
-void wWorker::Close()
+void wWorker::CloseChannel()
 {
 	mCh.Close();
 }
@@ -37,7 +45,7 @@ void wWorker::PrepareStart(int iSlot, int iType, string sTitle, void *pData)
 	mPid = getpid();
 	mSlot = iSlot;
 	mRespawn = iType;
-	mData = sTitle;
+	mName = sTitle;
 	mMaster = (wMaster<wMaster> *)pData;
 
 	/**
@@ -49,7 +57,7 @@ void wWorker::PrepareStart(int iSlot, int iType, string sTitle, void *pData)
         if (setpriority(PRIO_PROCESS, 0, mPriority) == -1) 
 		{
 			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[system] setpriority(%d) failed: %s", mPriority, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[system] worker process setpriority(%d) failed: %s", mPriority, strerror(mErr));
         }
     }
 	
@@ -64,18 +72,18 @@ void wWorker::PrepareStart(int iSlot, int iType, string sTitle, void *pData)
         if (setrlimit(RLIMIT_NOFILE, &rlmt) == -1) 
 		{
 			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[system] setrlimit(RLIMIT_NOFILE, %i) failed: %s", mRlimitCore, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[system] worker process setrlimit(RLIMIT_NOFILE, %i) failed: %s", mRlimitCore, strerror(mErr));
         }
     }
 	
     //切换工作目录
     if (strlen(mWorkingDir) > 0) 
 	{
-		LOG_DEBUG(ELOG_KEY, "[system] chdir(\"%s\")", mWorkingDir);
+		LOG_DEBUG(ELOG_KEY, "[system] worker process chdir(\"%s\")", mWorkingDir);
         if (chdir((char *)mWorkingDir) == -1) 
 		{
 			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[system] chdir(\"%s\") failed: %s", mWorkingDir, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[system] worker process chdir(\"%s\") failed: %s", mWorkingDir, strerror(mErr));
 			exit(2);
         }
     }
@@ -93,7 +101,7 @@ void wWorker::PrepareStart(int iSlot, int iType, string sTitle, void *pData)
         if (close(mWorkerPool[n]->mCh[1]) == -1) 
         {
         	mErr = errno;
-            LOG_ERROR(ELOG_KEY, "[system] close() channel failed: %s", strerror(mErr));
+            LOG_ERROR(ELOG_KEY, "[system] worker process close() channel failed: %s", strerror(mErr));
         }
     }
 
@@ -101,15 +109,15 @@ void wWorker::PrepareStart(int iSlot, int iType, string sTitle, void *pData)
     if (close(mWorkerPool[mSlot]->mCh[0]) == -1) 
     {
     	mErr = errno;
-        LOG_ERROR(ELOG_KEY, "[system] close() channel failed: %s", strerror(mErr));
+        LOG_ERROR(ELOG_KEY, "[system] worker process close() channel failed: %s", strerror(mErr));
     }
 	
-	//worker进程中不阻塞所有信号
+	//worker进程中不阻塞所有信号（恢复信号处理）
 	wSigSet mSigSet;
 	if (mSigSet.Procmask(SIG_SETMASK))
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[system] sigprocmask() failed: %s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] worker process sigprocmask() failed: %s", strerror(mErr));
 	}
 	
 	PrepareRun();

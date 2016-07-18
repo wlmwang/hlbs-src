@@ -21,6 +21,12 @@ enum CLIENT_TYPE
 #define AGENT_LOGIN false
 #define CLIENT_LOGIN false
 
+#define ROUTER_LOCK_FILE "../log/router_hlbs.lock"
+#define AGENT_LOCK_FILE "../log/agent_hlbs.lock"
+
+#define ROUTER_PID_FILE "/var/run/hlbs_router.pid"
+#define AGENT_PID_FILE "/var/run/hlbs_agent.pid"
+
 #define AGENT_SHM "/tmp/report-agent.bin"
 
 //Dispatch

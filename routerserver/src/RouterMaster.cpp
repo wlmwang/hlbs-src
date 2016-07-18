@@ -4,6 +4,7 @@
  * Copyright (C) Hupu, Inc.
  */
 
+#include "Common.h"
 #include "RouterMaster.h"
 #include "RouterWorker.h"
 
@@ -28,7 +29,7 @@ void RouterMaster::PrepareRun()
         LOG_ERROR(ELOG_KEY, "[system] RouterServer instance failed");
         exit(2);
     }
-    ReloadMaster();
+    //ReloadMaster();
 
     //进程标题
     const char *sProcessTitle = "master process(router)";
@@ -49,7 +50,7 @@ void RouterMaster::PrepareRun()
     *ptr = '\0';
 	mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");
 
-    mPidFile.FileName() = "/var/run/hlbs_router.pid";   //pid文件名
+    mPidFile.FileName() = ROUTER_PID_FILE;
         
     //准备工作（创建、绑定服务器Listen Socket）
     mServer->PrepareMaster(mConfig->mIPAddr, mConfig->mPort);

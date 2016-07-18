@@ -37,7 +37,6 @@ class RouterConfig: public wConfig<RouterConfig>
 		int GetModSvr(SvrNet_t* pBuffer);
 		
 		SvrQos *Qos() { return mSvrQos; }
-	
 	public:
 		char mIPAddr[MAX_IP_LEN] {'\0'};
 		unsigned int mPort {0};
@@ -51,9 +50,9 @@ class RouterConfig: public wConfig<RouterConfig>
 		TiXmlDocument *mDoc {NULL};
 		wMemPool *mMemPool {NULL};
 
-		char mSvrConfFile[255] {'\0'};
-		char mQosConfFile[255] {'\0'};
-		char mBaseConfFile[255] {'\0'};
+		string mSvrConfFile = SVR_XML;
+		string mQosConfFile = QOS_XML;
+		string mBaseConfFile = CONF_XML;
 };
 
 #endif

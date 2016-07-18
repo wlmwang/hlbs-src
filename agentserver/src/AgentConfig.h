@@ -59,9 +59,9 @@ class AgentConfig : public wConfig<AgentConfig>
 		TiXmlDocument *mDoc {NULL};
 		wMemPool *mMemPool {NULL};
 
-		char mRouteConfFile[255] {'\0'};
-		char mQosConfFile[255] {'\0'};
-		char mBaseConfFile[255] {'\0'};
+		string mRouteConfFile = ROUTER_XML;
+		char mQosConfFile = QOS_XML;
+		char mBaseConfFile = CONF_XML;
 };
 
 #endif

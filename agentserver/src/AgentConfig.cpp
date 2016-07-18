@@ -12,10 +12,6 @@
 
 AgentConfig::AgentConfig()
 {
-	memcpy(mRouteConfFile, ROUTER_XML, strlen(ROUTER_XML) + 1);
-	memcpy(mQosConfFile, QOS_XML, strlen(QOS_XML) + 1);
-	memcpy(mBaseConfFile, CONF_XML, strlen(CONF_XML) + 1);
-
 	mSvrQos = SvrQos::Instance();
 	mDoc = new TiXmlDocument();
 	mMemPool = new wMemPool();
@@ -25,12 +21,12 @@ AgentConfig::AgentConfig()
 AgentConfig::~AgentConfig()
 {
 	SAFE_DELETE(mDoc);
-	SAFE_DELETE(mSvrQos);
+	SAFE_DELETE(mMemPool);
 }
 
 void AgentConfig::GetBaseConf()
 {
-	if (!mDoc->LoadFile(mBaseConfFile))
+	if (!mDoc->LoadFile(mBaseConfFile.c_str()))
 	{
 		LOG_ERROR(ELOG_KEY, "[config] Load config file(conf.xml) failed");
 		exit(2);
@@ -101,7 +97,7 @@ void AgentConfig::GetBaseConf()
 
 void AgentConfig::GetRouterConf()
 {
-	if (!mDoc->LoadFile(mRouteConfFile))
+	if (!mDoc->LoadFile(mRouteConfFile.c_str()))
 	{
 		LOG_ERROR(ELOG_KEY, "[router] Load config file(router.xml) failed");
 		exit(2);
@@ -142,7 +138,7 @@ void AgentConfig::GetRouterConf()
 
 void AgentConfig::GetQosConf()
 {
-	if (!mDoc->LoadFile(mQosConfFile))
+	if (!mDoc->LoadFile(mQosConfFile.c_str()))
 	{
 		LOG_ERROR(ELOG_KEY, "[qos] Load config file(qos.xml) failed");
 		exit(2);

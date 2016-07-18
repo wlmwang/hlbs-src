@@ -52,7 +52,7 @@ int wChannelTask::ChannelOpen(char *pBuffer, int iLen)
 	W_ASSERT(mWorker != NULL && mWorker->mMaster != NULL, return -1);
 
 	struct ChannelReqOpen_t *pCh = (struct ChannelReqOpen_t* )pBuffer;
-	if (mWorker->mMaster->mWorkerPool != NULL && mWorker->mMaster->mWorkerPool[pCh->mSlot])
+	if (mWorker->mMaster != NULL && mWorker->mMaster->mWorkerPool != NULL && mWorker->mMaster->mWorkerPool[pCh->mSlot])
 	{
 		LOG_DEBUG(ELOG_KEY, "[system] get channel s:%i pid:%d fd:%d", pCh->mSlot, pCh->mPid, pCh->mFD);
 
@@ -67,7 +67,7 @@ int wChannelTask::ChannelClose(char *pBuffer, int iLen)
 	W_ASSERT(mWorker != NULL && mWorker->mMaster != NULL, return -1);
 
 	struct ChannelReqClose_t *pCh = (struct ChannelReqClose_t* )pBuffer;
-	if (mWorker->mMaster->mWorkerPool != NULL && mWorker->mMaster->mWorkerPool[pCh->mSlot])
+	if (mWorker->mMaster != NULL && mWorker->mMaster->mWorkerPool != NULL && mWorker->mMaster->mWorkerPool[pCh->mSlot])
 	{
 		LOG_DEBUG(ELOG_KEY, "[system] close channel s:%i pid:%d our:%d fd:%d", pCh->mSlot, pCh->mPid, 
 			mWorker->mMaster->mWorkerPool[pCh->mSlot]->mPid, mWorker->mMaster->mWorkerPool[pCh->mSlot]->mCh[0]);

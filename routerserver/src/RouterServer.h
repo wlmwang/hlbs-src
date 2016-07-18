@@ -14,11 +14,9 @@
 #include "wLog.h"
 #include "wSingleton.h"
 #include "wTask.h"
-#include "wIO.h"
+#include "wSocket.h"
 #include "wServer.h"
 #include "RouterConfig.h"
-#include "RouterServerTask.h"
-#include "RouterChannelTask.h"
 
 class RouterServer: public wServer<RouterServer>
 {

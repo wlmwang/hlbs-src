@@ -5,6 +5,7 @@
  */
 
 #include "RouterServer.h"
+#include "RouterServerTask.h"
 
 RouterServer::RouterServer() : wServer<RouterServer>("路由服务器")
 {

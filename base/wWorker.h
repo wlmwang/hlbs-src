@@ -14,8 +14,6 @@
 #include "wLog.h"
 #include "wMisc.h"
 #include "wNoncopyable.h"
-#include "wShm.h"
-#include "wShmtx.h"
 #include "wChannel.h"
 #include "wWorkerIpc.h"
 #include "wMaster.h"
@@ -24,16 +22,16 @@ class wWorker : public wNoncopyable
 {
 	public:
 		wWorker(int iSlot = 0);
-		virtual ~wWorker() {}
+		virtual ~wWorker();
 
 		/**
 		 * 设置进程标题
 		 */
 		virtual void PrepareRun() {}
 		virtual void Run() {}
-		virtual void Close();
 
 		int OpenChannel();
+		void CloseChannel();
 		void PrepareStart(int iSlot, int iType, string sTitle, void* pData);
 		void Start(bool bDaemon = true);
 		
@@ -41,8 +39,8 @@ class wWorker : public wNoncopyable
 		int mErr;
 		WORKER_STATUS mStatus {WORKER_INIT};
 		pid_t mPid {-1};
-		int mPriority {0};			//进程优先级
-		int mRlimitCore {1024};		//连接限制
+		int mPriority {0};				//进程优先级
+		int mRlimitCore {65535};		//连接限制
 		char mWorkingDir[255] {'\0'};	//工作目录
 		
 		string mName;		//进程名
@@ -55,10 +53,11 @@ class wWorker : public wNoncopyable
 
 		int mSlot {0};
 		int mMutexHeld {0};
+		
+		wChannel mCh;	//worker进程channel
 
 		wMaster<wMaster> *mMaster {NULL};
 		wWorkerIpc *mIpc {NULL};	//master-worker ipc
-		wChannel mCh;	//worker进程channel
 };
 
 #endif

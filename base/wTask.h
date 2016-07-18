@@ -28,7 +28,7 @@ class wTask : private wNoncopyable
 		virtual int VerifyConn() { return 0;}	//验证接收到连接
 		virtual int Verify() {return 0;}		//发送连接验证请求
 
-		virtual void CloseTask(int iReason);	//iReason关闭原因
+		virtual void CloseTask(int iReason) {}	//iReason关闭原因
 		
 		virtual int Heartbeat();
 		virtual int HeartbeatOutTimes() { return mHeartbeatTimes > KEEPALIVE_CNT; }

@@ -4,6 +4,7 @@
  * Copyright (C) Hupu, Inc.
  */
 
+#include "Common.h"
 #include "AgentMaster.h"
 
 AgentMaster::AgentMaster()
@@ -60,8 +61,7 @@ void AgentMaster::PrepareRun()
     *ptr = '\0';
 	mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");   //设置标题
 
-    //mPidFile.FileName() = "../log/hlbs.pid";    //进程pid文件
-    mPidFile.FileName() = "/var/run/hlbs_agent.pid";
+    mPidFile.FileName() = AGENT_PID_FILE;
 
     mServer->PrepareSingle(mConfig->mIPAddr, mConfig->mPort);    //初始化服务器
 }

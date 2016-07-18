@@ -25,6 +25,7 @@
 template <typename T>
 class wMaster : public wSingleton<T>
 {
+	static string mWorkerProcessTitle = "worker process";
 	public:
 		wMaster();
 		virtual ~wMaster();
@@ -91,11 +92,11 @@ class wMaster : public wSingleton<T>
 		int mSlot {0};		//进程表分配到索引
 		
 		//主进程master构建惊群锁（进程共享）
+		int mDelay {500};	//延时时间。默认500ms
 		int mUseMutex {0};	//惊群锁标识
 		int mMutexHeld {0};	//是否持有锁
 		wShm *mShmAddr {NULL};	//共享内存
 		wShmtx *mMutex {NULL};	//accept mutex
-		int mDelay {500};	//延时时间。默认500ms
 };
 
 #include "wMaster.inl"
