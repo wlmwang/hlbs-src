@@ -5,13 +5,15 @@
  */
 
 #include "AgentServerTask.h"
+#include "SvrCmd.h"
+#include "LoginCmd.h"
 
 AgentServerTask::AgentServerTask()
 {
     Initialize();
 }
 
-AgentServerTask::AgentServerTask(wIO *pIO) : wTcpTask(pIO)
+AgentServerTask::AgentServerTask(wSocket *pSocket) : wTcpTask(pSocket)
 {
     Initialize();
 }
@@ -38,11 +40,13 @@ int AgentServerTask::VerifyConn()
 		LoginReqToken_t *pLoginRes = (LoginReqToken_t*) pBuffer;
 		if (strcmp(pLoginRes->mToken, "Anny") == 0)
 		{
-			LOG_ERROR("system", "[client] receive client and verify success from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
+			LOG_ERROR("system", "[client] receive client and verify success from ip(%s) port(%d) with token(%s)", 
+				mSocket->Host().c_str(), mSocket->Port(), pLoginRes->mToken);
 			mConnType = pLoginRes->mConnType;
 			return 0;
 		}
-		LOG_ERROR("system", "[client] receive client and verify failed from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
+		LOG_ERROR("system", "[client] receive client and verify failed from ip(%s) port(%d) with token(%s)", 
+			mSocket->Host().c_str(), mSocket->Port(), pLoginRes->mToken);
 	}
 	return -1;
 }

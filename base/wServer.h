@@ -29,7 +29,7 @@ template <typename T>
 class wServer: public wSingleton<T>
 {
 	public:
-		explicit wServer(string ServerName);
+		wServer(string sName);
 		virtual ~wServer();
 
 		/**
@@ -72,10 +72,14 @@ class wServer: public wSingleton<T>
         int RemoveEpoll(wTask* pTask);
 		
 		/**
-		 *  Listen Socket
+		 *  Listen Socket(nonblock fd)
 		 */
 		int AddListener(string sIpAddr, unsigned int nPort, string sProtocol = "TCP");
-		
+		/**
+		 * 添加Listen Socket到侦听事件队列中
+		 */
+		void Listener2Epoll();
+
 		/**
 		 *  accept接受连接
 		 */

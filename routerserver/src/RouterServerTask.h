@@ -36,8 +36,8 @@ class RouterServerTask : public wTcpTask
 		
 	protected:
 		DEC_DISP(mDispatch);
-		RouterConfig *mConfig;
-		RouterServer *mServer;
+		RouterConfig *mConfig {NULL};
+		RouterServer *mServer {NULL};
 };
 
 #endif

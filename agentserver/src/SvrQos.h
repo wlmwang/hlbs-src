@@ -18,8 +18,6 @@
 #include "wMisc.h"
 #include "wLog.h"
 #include "wSingleton.h"
-#include "SvrCmd.h"
-#include "wMutex.h"
 #include "DetectThread.h"
 
 class AgentConfig;

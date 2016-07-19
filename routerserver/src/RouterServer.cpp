@@ -7,15 +7,14 @@
 #include "RouterServer.h"
 #include "RouterServerTask.h"
 
-RouterServer::RouterServer() : wServer<RouterServer>("路由服务器")
+RouterServer::RouterServer() : wServer<RouterServer>("router服务器")
 {
 	mConfig = RouterConfig::Instance();
 }
 
 wTask* RouterServer::NewTcpTask(wSocket *pSocket)
 {
-	wTask *pTask = new RouterServerTask(pSocket);
-	return pTask;
+	return new RouterServerTask(pSocket);
 }
 
 void RouterServer::Run()

@@ -249,6 +249,6 @@ int InitDaemon(const char *filename)
 	//再次fork
 	if (fork() != 0) exit(0);
 	
-	unlink(filename);
+	//unlink(filename);
 	return 0;
 }

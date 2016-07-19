@@ -31,15 +31,16 @@ int RouterServerTask::VerifyConn()
 {
 	if(!ROUTER_LOGIN) return 0;
 	
-	char pBuffer[sizeof(LoginReqToken_t)];
-	int iLen = SyncRecv(pBuffer, sizeof(LoginReqToken_t));
+	char pBuffer[sizeof(struct LoginReqToken_t)];
+	int iLen = SyncRecv(pBuffer, sizeof(struct LoginReqToken_t));
 	if (iLen > 0)
 	{
-		LoginReqToken_t *pLoginRes = (LoginReqToken_t*) pBuffer;
+		struct LoginReqToken_t *pLoginRes = (struct LoginReqToken_t*) pBuffer;
 		if (strcmp(pLoginRes->mToken, "Anny") == 0)
 		{
-			LOG_INFO(ELOG_KEY, "[client] receive client and verify success from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
-			mConnType = pLoginRes->mConnType;
+			LOG_INFO(ELOG_KEY, "[client] receive client and verify success from ip(%s) port(%d) with token(%s)", 
+				mSocket->Host().c_str(), mSocket->Port(), pLoginRes->mToken);
+			//mConnType = pLoginRes->mConnType;
 			return 0;
 		}
 	}
@@ -51,8 +52,8 @@ int RouterServerTask::Verify()
 {
 	if(!AGENT_LOGIN) return 0;
 	
-	LoginReqToken_t stLoginReq;
-	stLoginReq.mConnType = SERVER_ROUTER;
+	struct LoginReqToken_t stLoginReq;
+	//stLoginReq.mConnType = SERVER_ROUTER;
 	memcpy(stLoginReq.mToken, "Anny", 4);
 	SyncSend((char*)&stLoginReq, sizeof(stLoginReq));
 	return 0;
@@ -82,7 +83,7 @@ int RouterServerTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer,
 		}
 		else
 		{
-			LOG_ERROR(ELOG_KEY, "[system] client send a invalid msg fd(%d) id(%u)", mIO->FD(), pCommand->GetId());
+			LOG_ERROR(ELOG_KEY, "[system] client send a invalid msg fd(%d) id(%u)", mSocket->FD(), pCommand->GetId());
 		}
 	}
 	return 0;

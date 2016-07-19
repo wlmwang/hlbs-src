@@ -5,15 +5,7 @@
  */
 
 #include "DetectThread.h"
-
-DetectThread::DetectThread()
-{
-	mDetectLoopUsleep = 100000;
-	mDetectMaxNode = 1000;
-	mPingTimeout = 0.1;
-	mTcpTimeout = 0.8;
-	mDetectNodeInterval = 10;
-}
+#include "Detect.h"
 
 DetectThread::~DetectThread()
 {

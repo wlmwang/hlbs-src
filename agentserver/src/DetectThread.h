@@ -17,12 +17,10 @@
 #include "wSingleton.h"
 #include "wPing.h"
 #include "wSocket.h"
-#include "Detect.h"
 
 class DetectThread : public wThread, public wSingleton<DetectThread>
 {
 	public:
-		DetectThread();
 		virtual ~DetectThread();
 
 		virtual int PrepareRun();
@@ -34,21 +32,21 @@ class DetectThread : public wThread, public wSingleton<DetectThread>
 		int DoDetectNode(const struct DetectNode_t& stNode, struct DetectResult_t& stRes);
 
 	protected:
-		wPing *mPing;
-		wSocket *mSocket;
-		int mPollFD;
+		wPing *mPing {NULL};
+		wSocket *mSocket {NULL};
+		int mPollFD {FD_UNKNOWN};
 
-		unsigned int mLocalIp;
-		time_t mNowTm;
-		unsigned int mDetectLoopUsleep;
-		unsigned int mDetectMaxNode;
-		unsigned int mDetectNodeInterval;
+		time_t mNowTm {0};
+		unsigned int mLocalIp {0};
+		unsigned int mDetectLoopUsleep {100000};
+		unsigned int mDetectMaxNode {1000};
+		unsigned int mDetectNodeInterval {10};
 
-		float mPingTimeout;
-		float mTcpTimeout;
+		float mPingTimeout {0.1};
+		float mTcpTimeout {0.8};
 
-		wMutex *mDetectMutex;
-		wMutex *mResultMutex;
+		wMutex *mDetectMutex {NULL};
+		wMutex *mResultMutex {NULL};
 		map<struct DetectNode_t, struct DetectResult_t> mDetectMapAll;		//检测队列
 		map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewadd;	//新加入的,优先探测
 		map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewdel;	//新删除的,优先探测

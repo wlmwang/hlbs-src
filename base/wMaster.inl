@@ -44,6 +44,8 @@ void wMaster<T>::SingleStart()
 
 	mProcess = PROCESS_SINGLE;
 	CreatePidFile();
+	
+	//InitSignals();
 
 	//恢复默认信号处理
 	wSignal stSig(SIG_DFL);

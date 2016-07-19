@@ -10,6 +10,17 @@
 #include "AgentConfig.h"
 #include "AgentMaster.h"
 
+//删除pid、lock文件
+void ProcessExit()
+{
+	AgentMaster *pMaster = AgentMaster::Instance();
+	if ((int)pMaster->mProcess < 2)
+	{
+		unlink(AGENT_LOCK_FILE);
+		unlink(AGENT_PID_FILE);
+	}
+}
+
 int main(int argc, const char *argv[])
 {
 	//config
@@ -47,6 +58,8 @@ int main(int argc, const char *argv[])
 		LOG_ERROR(ELOG_KEY, "[system] AgentMaster instance failed");
 		exit(0);
 	}
+	atexit(ProcessExit);
+	
 	pMaster->PrepareStart();
 	pMaster->SingleStart();
 

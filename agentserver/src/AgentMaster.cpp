@@ -7,21 +7,9 @@
 #include "Common.h"
 #include "AgentMaster.h"
 
-AgentMaster::AgentMaster()
-{
-	Initialize();
-}
-
 AgentMaster::~AgentMaster()
 {
     SAFE_DELETE(mTitle);
-}
-
-void AgentMaster::Initialize()
-{
-	mTitle = NULL;
-    mConfig = NULL;
-    mServer = NULL;
 }
 
 //进程标题 title = "master process " + argv[0] + ... + argv[argc-1]
@@ -33,25 +21,25 @@ void AgentMaster::PrepareRun()
     mConfig = AgentConfig::Instance();
     if (mConfig == NULL) 
     {
-        LOG_ERROR(ELOG_KEY, "[system] Get AgentConfig instance failed");
-        exit(1);
+        LOG_ERROR(ELOG_KEY, "[system] AgentConfig instance failed");
+        exit(0);
     }
     mServer = AgentServer::Instance();
     if (mServer == NULL) 
     {
-        LOG_ERROR(ELOG_KEY, "[system] Get AgentServer instance failed");
-        exit(1);
+        LOG_ERROR(ELOG_KEY, "[system] AgentServer instance failed");
+        exit(0);
     }
 
-    //进程标题
+    const char *sProcessTitle = "master process(agent)";
     size_t size = strlen(sProcessTitle) + 1;
     for (size_t i = 0; i < mConfig->mProcTitle->mArgc; i++) 
     {
         size += strlen(mConfig->mProcTitle->mArgv[i]) + 1;
     }
-    mTitle = new char[size];
 
-    u_char *ptr = (u_char *)memcpy(mTitle, sProcessTitle, strlen(sProcessTitle)) + strlen(sProcessTitle);     //不要\0结尾
+    mTitle = new char[size];
+    u_char *ptr = (u_char *)memcpy(mTitle, sProcessTitle, strlen(sProcessTitle)) + strlen(sProcessTitle);     //前缀。不要\0结尾
     for (size_t i = 0; i < mConfig->mProcTitle->mArgc; i++) 
     {
         *ptr++ = ' ';
@@ -59,7 +47,7 @@ void AgentMaster::PrepareRun()
         ptr = Cpystrn(ptr, (u_char *) mConfig->mProcTitle->mArgv[i], strlen(mConfig->mProcTitle->mArgv[i]));    //不要\0结尾
     }
     *ptr = '\0';
-	mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");   //设置标题
+    mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");
 
     mPidFile.FileName() = AGENT_PID_FILE;
 

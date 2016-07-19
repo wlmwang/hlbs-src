@@ -10,6 +10,17 @@
 #include "RouterConfig.h"
 #include "RouterMaster.h"
 
+//删除pid、lock文件
+void ProcessExit()
+{
+	RouterMaster *pMaster = RouterMaster::Instance();
+	if ((int)pMaster->mProcess < 2)
+	{
+		unlink(ROUTER_LOCK_FILE);
+		unlink(ROUTER_PID_FILE);
+	}
+}
+
 int main(int argc, const char *argv[])
 {
 	//config
@@ -47,6 +58,8 @@ int main(int argc, const char *argv[])
 		LOG_ERROR(ELOG_KEY, "[system] RouterMaster instance failed");
 		exit(0);
 	}
+	atexit(ProcessExit);
+
 	pMaster->PrepareStart();
 	pMaster->MasterStart();
 
