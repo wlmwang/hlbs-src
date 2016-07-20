@@ -383,10 +383,7 @@ int wServer<T>::AcceptConn(wTask *pTask)
 		iNewFD = pTask->Socket()->Accept((struct sockaddr*)&stSockAddr, &iSockAddrSize);
 		if (iNewFD <= 0)
 		{
-			if (iNewFD < 0)
-			{
-				LOG_ERROR(ELOG_KEY, "[system] unix client connect failed:%s", strerror(pTask->Socket()->Errno()));
-			}
+			if (iNewFD < 0) LOG_ERROR(ELOG_KEY, "[system] unix client connect failed:%s", strerror(pTask->Socket()->Errno()));
 		    return iNewFD;
 	    }
 	    //unix socket
@@ -408,10 +405,7 @@ int wServer<T>::AcceptConn(wTask *pTask)
 		iNewFD = pTask->Socket()->Accept((struct sockaddr*)&stSockAddr, &iSockAddrSize);
 		if (iNewFD <= 0)
 		{
-			if (iNewFD < 0)
-			{
-				LOG_ERROR(ELOG_KEY, "[system] client connect failed:%s", strerror(pTask->Socket()->Errno()));
-			}
+			if (iNewFD < 0) LOG_ERROR(ELOG_KEY, "[system] client connect failed:%s", strerror(pTask->Socket()->Errno()));
 		    return iNewFD;
 	    }
 		//tcp socket
@@ -455,10 +449,7 @@ int wServer<T>::AcceptConn(wTask *pTask)
 template <typename T>
 void wServer<T>::CleanEpoll()
 {
-	if (mEpollFD != -1)
-	{
-		close(mEpollFD);
-	}
+	if (mEpollFD != -1) close(mEpollFD);
 	mEpollFD = -1;
 	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
 	mEpollEventPool.clear();
@@ -511,16 +502,10 @@ template <typename T>
 void wServer<T>::CheckTimer()
 {
 	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mLastTicker);
-	if (iInterval < 100) 	//100ms
-	{
-		return;
-	}
+	if (iInterval < 100) return;	//100ms
 
 	mLastTicker += iInterval;
-	if (mCheckTimer.CheckTimer(iInterval))
-	{
-		CheckTimeout();
-	}
+	if (mCheckTimer.CheckTimer(iInterval)) CheckTimeout();
 }
 
 template <typename T>

@@ -4,9 +4,9 @@
  * Copyright (C) Hupu, Inc.
  */
 
-#include "AgentUnixTask.h"
 #include "SvrCmd.h"
 #include "LoginCmd.h"
+#include "AgentUnixTask.h"
 
 AgentUnixTask::AgentUnixTask()
 {
@@ -54,7 +54,7 @@ int AgentUnixTask::ParseRecvMessage(struct wCommand *pCommand, char *pBuffer, in
 		}
 		else
 		{
-			LOG_ERROR(ELOG_KEY, "[system] unix client send a invalid msg fd(%d) id(%d)", mIO->FD(), pCommand->GetId());
+			LOG_ERROR(ELOG_KEY, "[system] unix client send a invalid msg fd(%d) id(%d)", mSocket->FD(), pCommand->GetId());
 		}
 	}
 	return 0;

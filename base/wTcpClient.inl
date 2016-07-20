@@ -37,10 +37,7 @@ int wTcpClient<T>::ReConnectToServer()
 template <typename T>
 int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 {
-	if (vIPAddress == NULL || vPort == 0) 
-	{
-		return -1;
-	}
+	if (vIPAddress == NULL || vPort == 0) return -1;
 	
 	wTcpSocket* pSocket = new wTcpSocket(SOCK_TYPE_CONNECT);
 	if (pSocket->Open() == FD_UNKNOWN)
@@ -106,20 +103,12 @@ template <typename T>
 void wTcpClient<T>::CheckTimer()
 {
 	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mLastTicker);
-	if (iInterval < 100) 	//100ms
-	{
-		return;
-	}
+	if (iInterval < 100) return;	//100ms
 
 	mLastTicker += iInterval;
-	if(mCheckTimer.CheckTimer(iInterval))
-	{
-		CheckTimeout();
-	}
-	if (mReconnectTimer.CheckTimer(iInterval))
-	{
-		CheckReconnect();
-	}
+	if (mCheckTimer.CheckTimer(iInterval)) CheckTimeout();
+
+	if (mReconnectTimer.CheckTimer(iInterval)) CheckReconnect();
 }
 
 template <typename T>
@@ -130,10 +119,7 @@ void wTcpClient<T>::CheckTimeout()
 	unsigned long long iNowTime = GetTickCount();
 	unsigned long long iIntervalTime;
 
-	if ((*iter)->Socket()->SockType() != SOCK_TYPE_CONNECT || (*iter)->Socket()->SockStatus() != SOCK_STATUS_CONNECTED)
-	{
-		return;
-	}
+	if (mTcpTask->Socket()->SockType() != SOCK_TYPE_CONNECT || mTcpTask->Socket()->SockStatus() != SOCK_STATUS_CONNECTED) return;
 	
 	//心跳检测
 	iIntervalTime = iNowTime - mTcpTask->Socket()->SendTime();	//上一次发送时间间隔
@@ -166,12 +152,9 @@ void wTcpClient<T>::CheckTimeout()
 template <typename T>
 void wTcpClient<T>::CheckReconnect()
 {
-	W_ASSERT(mIsReconnect && mTcpTask != NULL, return);
+	if (!mIsReconnect || mTcpTask != NULL) return;
 	
-	if ((*iter)->Socket()->SockType() != SOCK_TYPE_CONNECT || (*iter)->Socket()->SockStatus() != SOCK_STATUS_CONNECTED)
-	{
-		return;
-	}
+	if (mTcpTask->Socket()->SockType() != SOCK_TYPE_CONNECT || mTcpTask->Socket()->SockStatus() != SOCK_STATUS_CONNECTED) return;
 	
 	if (mTcpTask->Socket() != NULL && mTcpTask->Socket()->FD() == FD_UNKNOWN)
 	{

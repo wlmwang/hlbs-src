@@ -29,10 +29,7 @@ int wPing::Close()
 int wPing::Open()
 {
 	//生成使用ICMP的原始套接字,这种套接字只有root才能生成
-	if ((mFD = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
-	{
-		return NOT_PRI;
-	}
+	if ((mFD = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) return NOT_PRI;
 	
 	//回收root权限,设置当前用户权限
 	//setuid(getuid());
@@ -50,69 +47,53 @@ int wPing::Open()
 
 int wPing::SetTimeout(float fTimeout)
 {
-	if(SetSendTimeout(fTimeout) < 0)
-	{
-		return -1;
-	}
-	if(SetRecvTimeout(fTimeout) < 0)
-	{
-		return -1;
-	}
+	if (SetSendTimeout(fTimeout) < 0) return -1;
+
+	if (SetRecvTimeout(fTimeout) < 0) return -1;
+
 	return 0;
 }
 
 int wPing::SetSendTimeout(float fTimeout)
 {
-	if(mFD == FD_UNKNOWN) 
-	{
-		return -1;
-	}
+	if (mFD == FD_UNKNOWN) return -1;
 
 	struct timeval stTimetv;
 	stTimetv.tv_sec = (int)fTimeout>=0 ? (int)fTimeout : 0;
 	stTimetv.tv_usec = (int)((fTimeout - (int)fTimeout) * 1000000);
-	if(stTimetv.tv_usec < 0 || stTimetv.tv_usec >= 1000000 || (stTimetv.tv_sec == 0 && stTimetv.tv_usec == 0))
+	if (stTimetv.tv_usec < 0 || stTimetv.tv_usec >= 1000000 || (stTimetv.tv_sec == 0 && stTimetv.tv_usec == 0))
 	{
 		stTimetv.tv_sec = 0;
 		stTimetv.tv_usec = 700000;
 	}
 
-	if(setsockopt(mFD, SOL_SOCKET, SO_SNDTIMEO, &stTimetv, sizeof(stTimetv)) == -1)  
-    {
-        return -1;  
-    }
+	if (setsockopt(mFD, SOL_SOCKET, SO_SNDTIMEO, &stTimetv, sizeof(stTimetv)) == -1)  return -1;
+
     return 0;
 }
 
 int wPing::SetRecvTimeout(float fTimeout)
 {
-	if(mFD == FD_UNKNOWN) 
-	{
-		return -1;
-	}
+	if (mFD == FD_UNKNOWN) return -1;
 
 	struct timeval stTimetv;
 	stTimetv.tv_sec = (int)fTimeout>=0 ? (int)fTimeout : 0;
 	stTimetv.tv_usec = (int)((fTimeout - (int)fTimeout) * 1000000);
-	if(stTimetv.tv_usec < 0 || stTimetv.tv_usec >= 1000000 || (stTimetv.tv_sec == 0 && stTimetv.tv_usec == 0))
+	if (stTimetv.tv_usec < 0 || stTimetv.tv_usec >= 1000000 || (stTimetv.tv_sec == 0 && stTimetv.tv_usec == 0))
 	{
 		stTimetv.tv_sec = 0;
 		stTimetv.tv_usec = 700000;
 	}
 	
-	if(setsockopt(mFD, SOL_SOCKET, SO_RCVTIMEO, &stTimetv, sizeof(stTimetv)) == -1)  
-    {
-        return -1;  
-    }
+	if (setsockopt(mFD, SOL_SOCKET, SO_RCVTIMEO, &stTimetv, sizeof(stTimetv)) == -1) return -1;
+
     return 0;
 }
 
 int wPing::Ping(const char *pIp)
 {
-	if (pIp == NULL || mFD == FD_UNKNOWN)
-	{
-		return -1;
-	}
+	if (pIp == NULL || mFD == FD_UNKNOWN) return -1;
+
 	mStrIp = pIp;	
 	
 	bzero(&mDestAddr, sizeof(mDestAddr));
@@ -162,21 +143,18 @@ int wPing::SendPacket()
 /** 接收所有ICMP报文 */
 int wPing::RecvPacket()  
 {
-	if (mFD == FD_UNKNOWN)
-	{
-		return -1;
-	}
+	if (mFD == FD_UNKNOWN) return -1;
 
     struct msghdr msg;
     struct iovec iov;
     memset(&msg, 0, sizeof(msg));
     memset(&iov, 0, sizeof(iov));
 
-	int iLen = 0, i = 0;
-    int fromlen = sizeof(mFromAddr);
-
 	memset(mRecvpacket, 0, sizeof(mRecvpacket));
 	memset(mCtlpacket, 0, sizeof(mCtlpacket));
+
+	int iLen = 0, i = 0;
+    //int fromlen = sizeof(mFromAddr);
     for (i = 0; i < RECV_RETRY_TIMES; i++)
     {
         iov.iov_base = mRecvpacket;
@@ -217,10 +195,7 @@ int wPing::RecvPacket()
 		else
 		{
             struct ip *iphdr = (struct ip *)mRecvpacket;
-            if(iphdr->ip_p == IPPROTO_ICMP && iphdr->ip_src.s_addr == mDestAddr.sin_addr.s_addr)
-            {
-                break;
-            }
+            if(iphdr->ip_p == IPPROTO_ICMP && iphdr->ip_src.s_addr == mDestAddr.sin_addr.s_addr) break;
 		}
     }
 
@@ -268,20 +243,12 @@ int wPing::Pack()
 /** 剥去ICMP报头 */
 int wPing::Unpack(char *pBuffer, int iLen)
 {
-	if (iLen == 0)
-	{
-		return -7;
-	}
-	if (pBuffer == NULL)
-	{
-		return -8;
-	}
+	if (iLen == 0) return -7;
+
+	if (pBuffer == NULL) return -8;
 
 	struct ip *ip = (struct ip *)pBuffer;
-    if(ip->ip_p != IPPROTO_ICMP)
-    {
-        return -2;
-    }
+    if (ip->ip_p != IPPROTO_ICMP) return -2;
 
     int iphdrlen = ip->ip_hl << 2;
 	
@@ -292,26 +259,16 @@ int wPing::Unpack(char *pBuffer, int iLen)
 	iLen -= iphdrlen;
 	
 	//小于ICMP报头长度则不合理
-	if (iLen < 8)
-	{
-		return -3;  
-	}
+	if (iLen < 8) return -3;
 	
 	//确保所接收的是我所发的的ICMP的回应
 	if (icmp->icmp_type == ICMP_ECHOREPLY)	//TODO 本机会返回8
 	{
-		if (icmp->icmp_id != mPid)
-		{
-			return -4;
-		}
-        if(iLen < 16)
-        {
-            return -5;     
-        }
-        if (icmp->icmp_data[0] != ICMP_DATA)
-        {
-            return -6;
-        }
+		if (icmp->icmp_id != mPid) return -4;
+
+        if(iLen < 16) return -5;
+
+        if (icmp->icmp_data[0] != ICMP_DATA) return -6;
 	}
 	else
 	{
@@ -329,14 +286,14 @@ unsigned short wPing::CalChksum(unsigned short *addr, int len)
 	unsigned short answer = 0;
 			
 	//把ICMP报头二进制数据以2字节为单位累加起来
-	while(nleft > 1)
+	while (nleft > 1)
 	{
 		sum += *w++;
 		nleft -= 2;
 	}
 	
 	//若ICMP报头为奇数个字节，会剩下最后一字节。把最后一个字节视为一个2字节数据的高字节，这个2字节数据的低字节为0，继续累加
-	if(nleft == 1)
+	if (nleft == 1)
 	{
 		*(unsigned char *)(&answer) = *(unsigned char *)w;
 		sum += answer;

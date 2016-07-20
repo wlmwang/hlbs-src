@@ -4,8 +4,8 @@
  * Copyright (C) Hupu, Inc.
  */
 
+#include "Detect.h"
 #include "SvrQos.h"
-#include "SvrCmd.h"
 
 SvrQos::SvrQos()
 {
@@ -155,12 +155,11 @@ int SvrQos::QueryNode(struct SvrNet_t& stSvr)
 /** 删除 节点&路由 */
 int SvrQos::DelNode(const struct SvrNet_t& stSvr)
 {
-	int iRet = 0;
     map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
     if (mapReqIt == mMapReqSvr.end())
 	{
 		LOG_ERROR(ELOG_KEY, "[svr] DelNode failed(cannot find svr) gid(%d),xid(%d),host(%s),port(%d),weight(%d)",stSvr.mGid,stSvr.mXid,stSvr.mHost,stSvr.mPort,stSvr.mWeight);
-        iRet = -1;
+        return -1;
     }
     SvrStat_t* pSvrStat = mapReqIt->second;
     mMapReqSvr.erase(mapReqIt);
@@ -869,7 +868,7 @@ int SvrQos::ListRebuild(const struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat
 	//错误率
 	float fErrRate = (float)iErrCount / (float)iReqCount;
 	//拒绝率
-	float fRejRate = pSvrStat->mInfo.mReqRej / pSvrStat->mInfo.mReqAll;
+	//float fRejRate = pSvrStat->mInfo.mReqRej / pSvrStat->mInfo.mReqAll;
 
 	fErrRate = fErrRate>1 ? 1: fErrRate;
 	pSvrStat->mInfo.mOkRate = 1 - fErrRate;	//重置成功率
@@ -1215,12 +1214,12 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 	
 	//宕机检测、故障恢复
 	int iRet = -1;
-	bool bDelFlag = false;
+	//bool bDelFlag = false;
 	int iDetectStat = -1;
 	while (it != pErrRoute->end())
 	{
 		struct DetectResult_t stRes;
-		bDelFlag = false;
+		//bDelFlag = false;
 		iDetectStat = -1;  //-2: 没root权限探测  -1:网络探测失败 0:网络探测成功
 
 		//故障探测：
@@ -1260,7 +1259,7 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 				{
 					//tcp or udp success, other fail
 					vDetectNodedel.push_back(stDetectNode);
-					bDelFlag = true;
+					//bDelFlag = true;
 					iDetectStat = 0;
 				}
 				else
@@ -1498,7 +1497,7 @@ void SvrQos::LogAllNode()
 		multimap<float, struct SvrNode_t>::iterator it = pTable->begin() , it1 = pTable->end();
 		LOG_DEBUG(ELOG_KEY, "[svr] LogAllNode mRouteTable kind(gid=%d xid=%d) have node size=%d", rtIt->first.mGid,rtIt->first.mXid,rtIt->second->size());
 
-		for (it; it != it1; it++)
+		for (; it != it1; it++)
 		{
             LOG_DEBUG(ELOG_KEY, "[svr] LogAllNode mRouteTable key=%f, gid=%d xid=%d host=%s port=%hu weight=%d pre=%d,reqall=%d reqrej=%d reqsuc=%d reqerrret=%d reqerrtm=%d loadx=%f okload=%f delayload=%f okrate=%f avgtm=%d preall=%d,reqlimit=%d reqmax=%d,reqmin=%d reqerrmin=%f reqrebuild=%d pretime=%d",
             	it->first,
@@ -1513,13 +1512,13 @@ void SvrQos::LogAllNode()
 	//宕机map
 	map<struct SvrKind_t, list<struct SvrNode_t>* >::iterator reIt = mErrTable.begin(), reIt1 = mErrTable.end();
 	LOG_DEBUG(ELOG_KEY,"[svr] LogAllNode mErrTable size=%d",mErrTable.size());
-	for (reIt; reIt != reIt1; reIt++)
+	for (; reIt != reIt1; reIt++)
 	{
 		list<struct SvrNode_t>* pErrRoute = reIt->second;
 		list<struct SvrNode_t>::iterator it = pErrRoute->begin(), it1 = pErrRoute->end();
 		LOG_DEBUG(ELOG_KEY, "[svr] LogAllNode mErrTable kind(gid=%d xid=%d) have node size=%d", reIt->first.mGid,reIt->first.mXid,reIt->second->size());
 
-		for (it; it != it1; it++)
+		for (; it != it1; it++)
 		{
             LOG_DEBUG(ELOG_KEY, "[svr] LogAllNode mErrTable gid=%d xid=%d host=%s port=%hu weight=%d pre=%d,reqall=%d reqrej=%d reqsuc=%d reqerrret=%d reqerrtm=%d loadx=%f okload=%f delayload=%f okrate=%f avgtm=%d preall=%d,reqlimit=%d reqmax=%d,reqmin=%d reqerrmin=%f reqrebuild=%d pretime=%d",
             	it->mNet.mGid,it->mNet.mXid,it->mNet.mHost,it->mNet.mPort,it->mNet.mWeight,it->mNet.mPre,

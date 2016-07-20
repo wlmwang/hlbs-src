@@ -57,9 +57,7 @@ int wWorkerIpc::Run()
 	mStatus = SERVER_RUNNING;
 
 	do {
-		
 		Recv();
-
 	} while (IsRunning());
 
 	return 0;
@@ -78,10 +76,7 @@ int wWorkerIpc::InitEpoll()
 
 void wWorkerIpc::CleanEpoll()
 {
-	if (mEpollFD != -1)
-	{
-		close(mEpollFD);
-	}
+	if (mEpollFD != -1) close(mEpollFD);
 	mEpollFD = -1;
 	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
 	mEpollEventPool.clear();

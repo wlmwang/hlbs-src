@@ -16,6 +16,7 @@
 #include <arpa/inet.h>
 
 #include "wCore.h"
+#include "wAssert.h"
 #include "wTimer.h"
 #include "wMisc.h"
 #include "wLog.h"

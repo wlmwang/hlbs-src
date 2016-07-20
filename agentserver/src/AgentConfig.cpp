@@ -145,7 +145,6 @@ void AgentConfig::GetQosConf()
 	}
 	
 	TiXmlElement *pElement = NULL;
-	TiXmlElement *pChildElm = NULL;
 	TiXmlElement *pRoot = mDoc->FirstChildElement();
 
 	/** 成功率、时延比例配置 */
@@ -174,10 +173,11 @@ void AgentConfig::GetQosConf()
 	
 	/** 路由重建时间 */
 	pElement = pRoot->FirstChildElement("CFG");
-	const char *szType = NULL, *szRebuild = NULL;
+	//const char *szType = NULL; 
+	const char *szRebuild = NULL;
 	if(NULL != pElement)
 	{
-		szType = pElement->Attribute("TYPE");
+		//szType = pElement->Attribute("TYPE");
 		szRebuild = pElement->Attribute("REBUILD");
 	}
 	mSvrQos->mRebuildTm = szRebuild != NULL ? (atoi(szRebuild)>0 ? atoi(szRebuild):60) : 60;
@@ -203,14 +203,14 @@ void AgentConfig::GetQosConf()
 
 	/** 并发量配置 */
 	pElement = pRoot->FirstChildElement("LIST");
-	const char *szListMax = NULL, *szListMin = NULL, *szListErrMin = NULL, *szListExtendRate = NULL, *szTimeout = NULL;
+	const char *szListMax = NULL, *szListMin = NULL, *szListErrMin = NULL, *szListExtendRate = NULL/*, *szTimeout = NULL*/;
 	if(NULL != pElement)
 	{
 		szListMax = pElement->Attribute("LIST_MAX");
 		szListMin = pElement->Attribute("LIST_MIN");
 		szListErrMin = pElement->Attribute("LIST_ERR_MIN");
 		szListExtendRate = pElement->Attribute("LIST_EXTEND_RATE");
-		szTimeout = pElement->Attribute("LIST_TIMEOUT");
+		//szTimeout = pElement->Attribute("LIST_TIMEOUT");
 	}
 	mSvrQos->mListCfg.mListMax = szListMax != NULL ? (atoi(szListMax)>0 ? atoi(szListMax):400) : 400;
 	mSvrQos->mListCfg.mListMin = szListMin != NULL ? (atoi(szListMin)>0 ? atoi(szListMin):10) : 10;

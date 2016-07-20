@@ -115,7 +115,7 @@ wTcpClient<TASK>* wMTcpClient<TASK>::CreateClient(int iType, string sClientName,
 template <typename TASK>
 bool wMTcpClient<TASK>::AddTcpClientPool(int iType, wTcpClient<TASK> *pTcpClient)
 {
-	W_ASSERT(pTcpClient != NULL; return false);
+	W_ASSERT(pTcpClient != NULL, return false);
 
 	vector<wTcpClient<TASK>*> vTcpClient;
     typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClientPool.find(iType);
@@ -137,12 +137,12 @@ int wMTcpClient<TASK>::ResetTcpClientCount()
 {
 	mTcpClientCount = 0;
     typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClientPool.begin();
-	for (mt; mt != mTcpClientPool.end(); mt++)
+	for (; mt != mTcpClientPool.end(); mt++)
 	{
 		vector<wTcpClient<TASK>* > vTcpClient = mt->second;
-        int iType = mt->first;
+        //int iType = mt->first;
         typename vector<wTcpClient<TASK>*>::iterator vIt = vTcpClient.begin();
-		for (vIt ; vIt != vTcpClient.end() ; vIt++)
+		for (; vIt != vTcpClient.end() ; vIt++)
 		{
 			mTcpClientCount++;
 		}
@@ -183,7 +183,7 @@ void wMTcpClient<TASK>::CheckTimer()
 	}
 
 	mLastTicker += iInterval;
-	if(mCheckTimer.CheckTimer(iInterval))
+	if (mCheckTimer.CheckTimer(iInterval))
 	{
 		CheckTimeout();
 	}
@@ -268,7 +268,7 @@ void wMTcpClient<TASK>::Recv()
 					{
 						LOG_DEBUG(ELOG_KEY, "[system] client tcp socket closed by server");
 					}
-					else if(iLenOrErr == ERR_MSGLEN)
+					else if (iLenOrErr == ERR_MSGLEN)
 					{
 						LOG_ERROR(ELOG_KEY, "[system] client recv message invalid len");
 					}

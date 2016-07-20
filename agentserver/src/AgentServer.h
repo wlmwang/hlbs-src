@@ -22,6 +22,7 @@
 #include "AgentClientTask.h"
 #include "DetectThread.h"
 #include "AgentConfig.h"
+#include "SvrCmd.h"
 
 class AgentServer: public wServer<AgentServer>
 {

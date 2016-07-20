@@ -4,9 +4,9 @@
  * Copyright (C) Hupu, Inc.
  */
 
-#include "AgentServerTask.h"
 #include "SvrCmd.h"
 #include "LoginCmd.h"
+#include "AgentServerTask.h"
 
 AgentServerTask::AgentServerTask()
 {
@@ -42,7 +42,7 @@ int AgentServerTask::VerifyConn()
 		{
 			LOG_ERROR("system", "[client] receive client and verify success from ip(%s) port(%d) with token(%s)", 
 				mSocket->Host().c_str(), mSocket->Port(), pLoginRes->mToken);
-			mConnType = pLoginRes->mConnType;
+			//mConnType = pLoginRes->mConnType;
 			return 0;
 		}
 		LOG_ERROR("system", "[client] receive client and verify failed from ip(%s) port(%d) with token(%s)", 
@@ -57,7 +57,7 @@ int AgentServerTask::Verify()
 	if(!CLIENT_LOGIN) return 0;	//客户端验证
 	
 	LoginReqToken_t stLoginReq;
-	stLoginReq.mConnType = SERVER_AGENT;
+	//stLoginReq.mConnType = SERVER_AGENT;
 	memcpy(stLoginReq.mToken, "Anny", 4);
 	SyncSend((char*)&stLoginReq, sizeof(stLoginReq));
 	return 0;
@@ -91,7 +91,7 @@ int AgentServerTask::ParseRecvMessage(struct wCommand *pCommand, char *pBuffer, 
 		}
 		else
 		{
-			LOG_ERROR(ELOG_KEY, "[system] client send a invalid msg fd(%d) id(%d)", mIO->FD(), pCommand->GetId());
+			LOG_ERROR(ELOG_KEY, "[system] client send a invalid msg fd(%d) id(%d)", mSocket->FD(), pCommand->GetId());
 		}
 	}
 	return 0;
@@ -108,7 +108,7 @@ int AgentServerTask::SyncSvrReq(char *pBuffer, int iLen)
 //agentcmd发来请求。需同步 reload router
 int AgentServerTask::ReloadSvrReq(char *pBuffer, int iLen)
 {
-	AgentServer *pServer = AgentServer::Instance();
+	//AgentServer *pServer = AgentServer::Instance();
 	
 	//TODO.
 	//SvrSetResData_t vRRt;

@@ -4,9 +4,8 @@
  * Copyright (C) Hupu, Inc.
  */
 
+#include "Detect.h"
 #include "AgentServer.h"
-#include "Common.h"
-#include "SvrCmd.h"
 #include "AgentServerTask.h"
 #include "AgentUnixTask.h"
 

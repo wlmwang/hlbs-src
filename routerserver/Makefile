@@ -46,7 +46,7 @@ OBJECTS=./$(BASEPATH)/wLog.o \
 		./$(SRCPATH)/RouterServerTask.o \
 		./$(SRCPATH)/RouterServer.o \
 		./$(SRCPATH)/RouterConfig.o \
-		./$(SRCPATH)/RouterMain.o \
+		./$(SRCPATH)/RouterMain.o
 
 TARGET=routersvrd
 

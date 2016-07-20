@@ -38,11 +38,11 @@ int AgentClientTask::VerifyConn()
 		struct LoginReqToken_t *pLoginRes = (struct LoginReqToken_t*) pBuffer;
 		if (strcmp(pLoginRes->mToken, "Anny") == 0)
 		{
-			LOG_ERROR(ELOG_KEY, "[client] receive client and verify success from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
+			LOG_ERROR(ELOG_KEY, "[client] receive client and verify success from ip(%s) port(%d) with token(%s)", mSocket->Host().c_str(), mSocket->Port(), pLoginRes->mToken);
 			//mConnType = pLoginRes->mConnType;
 			return 0;
 		}
-		LOG_ERROR(ELOG_KEY, "[client] receive client and verify failed from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
+		LOG_ERROR(ELOG_KEY, "[client] receive client and verify failed from ip(%s) port(%d) with token(%s)", mSocket->Host().c_str(), mSocket->Port(), pLoginRes->mToken);
 	}
 	return -1;
 }
@@ -83,7 +83,7 @@ int AgentClientTask::ParseRecvMessage(struct wCommand *pCommand, char *pBuffer, 
 		}
 		else
 		{
-			LOG_ERROR(ELOG_KEY, "[system] client send a invalid msg fd(%d) id(%d)", mIO->FD(), pCommand->GetId());
+			LOG_ERROR(ELOG_KEY, "[system] client send a invalid msg fd(%d) id(%d)", mSocket->FD(), pCommand->GetId());
 		}
 	}
 	return 0;

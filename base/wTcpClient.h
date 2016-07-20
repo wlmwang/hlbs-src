@@ -43,7 +43,7 @@ class wTcpClient : private wNoncopyable
 
 		bool &IsCheckTimer() { return mIsCheckTimer;}
 		string &ClientName() { return mClientName; }
-		bool IsRunning() { return mStatus = CLIENT_RUNNING; }
+		bool IsRunning() { return mStatus == CLIENT_RUNNING; }
 		CLIENT_STATUS &Status() { return mStatus; }
 		int Type() { return mType; }
 

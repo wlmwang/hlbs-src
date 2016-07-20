@@ -15,8 +15,6 @@ AgentMaster::~AgentMaster()
 //进程标题 title = "master process " + argv[0] + ... + argv[argc-1]
 void AgentMaster::PrepareRun()
 {
-    const char *sProcessTitle = "master process(agent)";
-
     //获取config、server对象（在main中已初始化完成）
     mConfig = AgentConfig::Instance();
     if (mConfig == NULL) 
@@ -33,20 +31,20 @@ void AgentMaster::PrepareRun()
 
     const char *sProcessTitle = "master process(agent)";
     size_t size = strlen(sProcessTitle) + 1;
-    for (size_t i = 0; i < mConfig->mProcTitle->mArgc; i++) 
+    for (int i = 0; i < mConfig->mProcTitle->mArgc; i++) 
     {
         size += strlen(mConfig->mProcTitle->mArgv[i]) + 1;
     }
 
     mTitle = new char[size];
     u_char *ptr = (u_char *)memcpy(mTitle, sProcessTitle, strlen(sProcessTitle)) + strlen(sProcessTitle);     //前缀。不要\0结尾
-    for (size_t i = 0; i < mConfig->mProcTitle->mArgc; i++) 
+    for (int i = 0; i < mConfig->mProcTitle->mArgc; i++) 
     {
         *ptr++ = ' ';
-        //ptr = Cpystrn(ptr, (u_char *) mConfig->mProcTitle->mArgv[i], size);
-        ptr = Cpystrn(ptr, (u_char *) mConfig->mProcTitle->mArgv[i], strlen(mConfig->mProcTitle->mArgv[i]));    //不要\0结尾
+        ptr = Cpystrn(ptr, (u_char *) mConfig->mProcTitle->mArgv[i], size);
+        //ptr = Cpystrn(ptr, (u_char *) mConfig->mProcTitle->mArgv[i], strlen(mConfig->mProcTitle->mArgv[i]));    //不要\0结尾
     }
-    *ptr = '\0';
+    //*ptr = '\0';
     mConfig->mProcTitle->Setproctitle(mTitle, "HLBS: ");
 
     mPidFile.FileName() = AGENT_PID_FILE;

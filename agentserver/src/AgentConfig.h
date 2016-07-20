@@ -60,8 +60,8 @@ class AgentConfig : public wConfig<AgentConfig>
 		wMemPool *mMemPool {NULL};
 
 		string mRouteConfFile = ROUTER_XML;
-		char mQosConfFile = QOS_XML;
-		char mBaseConfFile = CONF_XML;
+		string mQosConfFile = QOS_XML;
+		string mBaseConfFile = CONF_XML;
 };
 
 #endif
