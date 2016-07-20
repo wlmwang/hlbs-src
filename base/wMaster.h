@@ -22,10 +22,12 @@
 #include "wWorker.h"
 #include "wChannelCmd.h"	//*channel*_t
 
+class wWorker;
 template <typename T>
 class wMaster : public wSingleton<T>
 {
-	static string mWorkerProcessTitle = "worker process";
+	//TODO.
+	string mWorkerProcessTitle = "worker process";
 	public:
 		wMaster();
 		virtual ~wMaster();
@@ -36,7 +38,7 @@ class wMaster : public wSingleton<T>
 		void MasterExit();
 		
 		void WorkerStart(int n, int type = PROCESS_RESPAWN);
-		pid_t SpawnWorker(void *pData, string sTitle, int type = PROCESS_RESPAWN);
+		pid_t SpawnWorker(string sTitle, int type = PROCESS_RESPAWN);
 		void PassOpenChannel(struct ChannelReqOpen_t *pCh);
 		void PassCloseChannel(struct ChannelReqClose_t *pCh);
 		virtual wWorker* NewWorker(int iSlot = 0);

@@ -29,10 +29,4 @@ enum CLIENT_TYPE
 
 #define AGENT_SHM "/tmp/report-agent.bin"
 
-//Dispatch
-#define DEC_DISP(dispatch) wDispatch<function<int(char*, int)>, int> dispatch
-#define DEC_FUNC(func) int func(char *pBuffer, int iLen)
-#define REG_FUNC(ActIdx, vFunc) wDispatch<function<int(char*, int)>, int>::Func_t {ActIdx, std::bind(vFunc, this, std::placeholders::_1, std::placeholders::_2)}
-#define REG_DISP(dispatch, classname, cmdid, paraid, func) dispatch.Register(classname, W_CMD(cmdid, paraid), REG_FUNC(W_CMD(cmdid, paraid), func));
-
 #endif

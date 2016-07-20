@@ -21,9 +21,9 @@ int wWorkerIpc::PrepareRun()
 	if (InitEpoll() < 0) exit(2);
 
 	//worker自身channel[1]被监听
-	if (mWorker->mMaster != NULL && mWorker->mMaster->mWorkerPool != NULL)
+	if (mWorker != NULL && mWorker->mWorkerPool != NULL)
 	{
-		wChannel *pChannel = &mWorker->mMaster->mWorkerPool[mWorker->mSlot]->mCh;	//当前worker进程表项
+		wChannel *pChannel = &mWorker->mWorkerPool[mWorker->mSlot]->mCh;	//当前worker进程表项
 		if (pChannel != NULL)
 		{
 			wTask *pTask = new wChannelTask(pChannel, mWorker);
@@ -47,22 +47,27 @@ int wWorkerIpc::PrepareRun()
 			exit(2);
 		}
 	}
+
+	return 0;
 }
 
 int wWorkerIpc::Run()
 {
 	LOG_INFO(ELOG_KEY, "[system] worker process sync-channel's thread start");
-
 	mStatus = SERVER_RUNNING;
+
 	do {
+		
 		Recv();
-	} while(IsRunning());
+
+	} while (IsRunning());
+
+	return 0;
 }
 
 int wWorkerIpc::InitEpoll()
 {
-	mEpollFD = epoll_create(LISTEN_BACKLOG); //511
-	if (mEpollFD < 0)
+	if ((mEpollFD = epoll_create(LISTEN_BACKLOG)) < 0)
 	{
 		mErr = errno;
 		LOG_ERROR(ELOG_KEY, "[system] sync-channel's epoll_create failed:%s", strerror(mErr));
@@ -87,8 +92,7 @@ int wWorkerIpc::AddToEpoll(wTask* pTask, int iEvents, int iOp)
 	mEpollEvent.events = iEvents | EPOLLERR | EPOLLHUP; //|EPOLLET
 	mEpollEvent.data.fd = pTask->Socket()->FD();
 	mEpollEvent.data.ptr = pTask;
-	int iRet = epoll_ctl(mEpollFD, iOp, pTask->Socket()->FD(), &mEpollEvent);
-	if (iRet < 0)
+	if (epoll_ctl(mEpollFD, iOp, pTask->Socket()->FD(), &mEpollEvent) < 0)
 	{
 		mErr = errno;
 		LOG_ERROR(ELOG_KEY, "[system] sync-channel's fd(%d) add into epoll failed: %s", pTask->Socket()->FD(), strerror(mErr));
@@ -104,7 +108,7 @@ int wWorkerIpc::AddToTaskPool(wTask* pTask)
 	mTaskPool.push_back(pTask);
 	//epoll_event大小
 	mTaskCount = mTaskPool.size();
-	if (mTaskCount > mEpollEventPool.capacity())
+	if (mTaskCount > (int)mEpollEventPool.capacity())
 	{
 		mEpollEventPool.reserve(mTaskCount * 2);
 	}
@@ -115,8 +119,7 @@ void wWorkerIpc::CleanTaskPool()
 {
 	if (mTaskPool.size() > 0)
 	{
-		vector<wTask*>::iterator it;
-		for (it = mTaskPool.begin(); it != mTaskPool.end(); it++)
+		for (vector<wTask*>::iterator it = mTaskPool.begin(); it != mTaskPool.end(); it++)
 		{
 			(*it)->CloseTask();
 		}

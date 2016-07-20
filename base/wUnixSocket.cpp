@@ -43,8 +43,6 @@ int wUnixSocket::Listen(string sHost, unsigned int nPort)
 		return -1;
 	}
 	mHost = sHost;
-	mSockType = SOCK_LISTEN;
-	mIOFlag = FLAG_RECV;
 
 	if (Bind(mHost) < 0)
 	{
@@ -62,7 +60,7 @@ int wUnixSocket::Listen(string sHost, unsigned int nPort)
 	
 	if (SetNonBlock() < 0) 
 	{
-		LOG_ERROR(ELOG_KEY, "[system] Set listen socket nonblock failed: %d, close it", iFD);
+		LOG_ERROR(ELOG_KEY, "[system] Set listen socket nonblock failed, close it");
 	}
 	return 0;
 }
@@ -74,8 +72,6 @@ int wUnixSocket::Connect(string sHost, unsigned int nPort, float fTimeout)
 		return -1;
 	}
 	mHost = sHost;
-	mSockType = SOCK_CONNECT;
-	mIOFlag = FLAG_RECV;
 
 	string sTmpSock = "unix_";
 	sTmpSock += Itos(getpid()) + ".sock";
@@ -161,7 +157,7 @@ int wUnixSocket::Connect(string sHost, unsigned int nPort, float fTimeout)
 
 int wUnixSocket::Accept(struct sockaddr* pClientSockAddr, socklen_t *pSockAddrSize)
 {
-	if (mFD == FD_UNKNOWN || mSockType != SOCK_LISTEN)
+	if (mFD == FD_UNKNOWN || mSockType != SOCK_TYPE_LISTEN)
 	{
 		return -1;
 	}

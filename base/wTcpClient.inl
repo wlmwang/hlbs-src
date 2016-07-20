@@ -125,7 +125,7 @@ void wTcpClient<T>::CheckTimer()
 template <typename T>
 void wTcpClient<T>::CheckTimeout()
 {
-	W_ASSERT(mIsCheckTimer && mTcpTask != NULL, return);
+	if (!mIsCheckTimer || mTcpTask == NULL) return;
 
 	unsigned long long iNowTime = GetTickCount();
 	unsigned long long iIntervalTime;

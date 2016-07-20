@@ -35,7 +35,7 @@ int wTask::TaskRecv()
 	
 	while (true)
 	{
-		if (iBuffMsgLen < sizeof(int))
+		if ((size_t)iBuffMsgLen < sizeof(int))
 		{
 			break;
 		}
@@ -128,12 +128,12 @@ int wTask::Send2Buf(const char *pCmd, int iLen)
 	}
 	
 	int iMsgLen = iLen + sizeof(int);
-	if ((sizeof(mSendMsgBuff) - mSendWrite + mSendBytes) < iMsgLen) //剩余空间不足
+	if ((int)(sizeof(mSendMsgBuff) - mSendWrite + mSendBytes) < iMsgLen) //剩余空间不足
 	{
 		LOG_ERROR(ELOG_KEY, "[system] send buf not enough. send(%d) need(%d)", sizeof(mSendMsgBuff) - mSendWrite + mSendBytes, iMsgLen);
 		return -2;
 	}
-	else if ((sizeof(mSendMsgBuff) - mSendWrite) < iMsgLen) //写入空间不足
+	else if ((int)(sizeof(mSendMsgBuff) - mSendWrite) < iMsgLen) //写入空间不足
 	{
 		memmove(mSendMsgBuff, mSendMsgBuff + mSendBytes, mSendWrite - mSendBytes);	//清除已处理消息
 		mSendWrite -= mSendBytes;
@@ -194,7 +194,7 @@ int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 			memmove(mTmpRecvMsgBuff, mTmpRecvMsgBuff + iCmdMsgLen, iRecvLen);
 		}
 		
-		if ((iRecvLen < iLen + sizeof(int)) && (iTryCount-- > 0))
+		if (((size_t)iRecvLen < iLen + sizeof(int)) && (iTryCount-- > 0))
 		{
 			usleep(iSleep);
 			continue;
@@ -205,11 +205,11 @@ int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 	int iMsgLen = *(int *)mTmpRecvMsgBuff;
 	if ((iRecvLen <= 0) || (iMsgLen < MIN_CLIENT_MSG_LEN) || (iMsgLen > MAX_CLIENT_MSG_LEN))
 	{
-		LOG_ERROR(ELOG_KEY, "[system] sync recv message invalid len: %d, fd(%d)", iMsgLen, mIO->FD());
+		LOG_ERROR(ELOG_KEY, "[system] sync recv message invalid len: %d, fd(%d)", iMsgLen, mSocket->FD());
 		return ERR_MSGLEN;
 	}
 
-	if (iMsgLen > (iRecvLen - sizeof(int)))	//消息不完整
+	if (iMsgLen > (int)(iRecvLen - sizeof(int)))	//消息不完整
 	{
 		LOG_DEBUG(ELOG_KEY, "[system] sync recv a part of message: real len = %d, now len = %d, call len = %d", iMsgLen, iRecvLen, iLen);
 		return ERR_MSGLEN;

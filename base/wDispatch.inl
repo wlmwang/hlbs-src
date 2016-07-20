@@ -34,7 +34,7 @@ bool wDispatch<T,IDX>::Register(string className, IDX ActIdx, struct Func_t vFun
 }
 
 template<typename T,typename IDX>
-struct Func_t* wDispatch<T,IDX>::GetFuncT(string className, IDX ActIdx)
+struct wDispatch<T,IDX>::Func_t* wDispatch<T,IDX>::GetFuncT(string className, IDX ActIdx)
 {
 	typename map<string, vector<struct Func_t> >::iterator mp = mProc.find(className);
 	if(mp != mProc.end())

@@ -6,7 +6,7 @@
 
 #include "wCore.h"
 #include "wLog.h"
-#include "Command.h"	//pid file
+#include "Common.h"
 #include "AgentConfig.h"
 #include "AgentMaster.h"
 
@@ -39,7 +39,11 @@ int main(int argc, const char *argv[])
 	//daemon
 	if (pConfig->mDaemon == 1)
 	{
+#ifdef PREFIX
+		if (InitDaemon(AGENT_LOCK_FILE, PREFIX) < 0)
+#else
 		if (InitDaemon(AGENT_LOCK_FILE) < 0)
+#endif
 		{
 			LOG_ERROR(ELOG_KEY, "[system] Create daemon failed!");
 			exit(0);

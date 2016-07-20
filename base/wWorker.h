@@ -16,14 +16,13 @@
 #include "wNoncopyable.h"
 #include "wChannel.h"
 #include "wWorkerIpc.h"
-#include "wMaster.h"
 
+class wWorkerIpc;
 class wWorker : public wNoncopyable
 {
 	public:
 		wWorker(int iSlot = 0);
 		virtual ~wWorker();
-
 		/**
 		 * 设置进程标题
 		 */
@@ -32,7 +31,7 @@ class wWorker : public wNoncopyable
 
 		int OpenChannel();
 		void CloseChannel();
-		void PrepareStart(int iSlot, int iType, string sTitle, void* pData);
+		void PrepareStart(int iSlot, int iType, string sTitle, void **pData);
 		void Start(bool bDaemon = true);
 		
 	public:
@@ -41,7 +40,6 @@ class wWorker : public wNoncopyable
 		pid_t mPid {-1};
 		int mPriority {0};				//进程优先级
 		int mRlimitCore {65535};		//连接限制
-		char mWorkingDir[255] {'\0'};	//工作目录
 		
 		string mName;		//进程名
 		int mDetached {0};	//是否已分离
@@ -50,13 +48,14 @@ class wWorker : public wNoncopyable
 		int mStat {0};		//waitpid子进程退出状态
 		int mRespawn {PROCESS_NORESPAWN};	//worker启动模式。退出是否重启
 		int mJustSpawn {PROCESS_JUST_SPAWN};
-
-		int mSlot {0};
+		int mSlot {0};		//进程表分配到索引
 		int mMutexHeld {0};
-		
-		wChannel mCh;	//worker进程channel
 
-		wMaster<wMaster> *mMaster {NULL};
+		//进程表
+		wWorker **mWorkerPool {NULL};
+		int mWorkerNum {0};	//worker总数量
+
+		wChannel mCh;	//worker进程channel
 		wWorkerIpc *mIpc {NULL};	//master-worker ipc
 };
 

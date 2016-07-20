@@ -79,11 +79,7 @@ void wServer<T>::WorkerStart(bool bDaemon)
 
 	//进入服务主循环
 	do {
-		if (mExiting)	//退出
-		{
-			LOG_ERROR(ELOG_KEY, "[system] worker process exiting");
-			WorkerExit();
-		}
+		if (mExiting) WorkerExit();
 		Recv();
 		HandleSignal();
 		Run();
@@ -94,11 +90,7 @@ void wServer<T>::WorkerStart(bool bDaemon)
 template <typename T>
 void wServer<T>::HandleSignal()
 {	
-	if (g_terminate)	//直接退出
-	{
-		LOG_ERROR(ELOG_KEY, "[system] worker process exiting");
-		WorkerExit();
-	}
+	if (g_terminate) WorkerExit();	//直接退出
 	
 	if (g_quit)		//平滑退出
 	{
@@ -108,8 +100,7 @@ void wServer<T>::HandleSignal()
 		if (!mExiting)
 		{
 			mExiting = 1;
-			//关闭listen socket
-			for (vector<wSocket *>::iterator it = mListenSock.begin(); it != mListenSock.end(); it++) (*it)->Close();
+			for (vector<wSocket *>::iterator it = mListenSock.begin(); it != mListenSock.end(); it++) (*it)->Close(); //关闭listen socket
 		}
 	}
 }
@@ -117,12 +108,9 @@ void wServer<T>::HandleSignal()
 template <typename T>
 void wServer<T>::WorkerExit()
 {
-	if (mExiting)
-	{
-		//关闭池
-	}
+	if (mExiting) {/** 关闭连接池 */}
 
-	LOG_ERROR(ELOG_KEY, "[system] worker process exit");
+	LOG_ERROR(ELOG_KEY, "[system] worker process exiting");
 	exit(0);
 }
 
@@ -359,11 +347,11 @@ void wServer<T>::Listener2Epoll()
 	for (vector<wSocket *>::iterator it = mListenSock.begin(); it != mListenSock.end(); it++)
 	{
 		mTask = NULL;
-		if ((*it)->Socket()->SockProto() == SOCK_PROTO_UNIX)
+		if ((*it)->SockProto() == SOCK_PROTO_UNIX)
 		{
 			mTask = NewUnixTask(*it);
 		}
-		else if((*it)->Socket()->SockProto() == SOCK_PROTO_TCP)
+		else if((*it)->SockProto() == SOCK_PROTO_TCP)
 		{
 			mTask = NewTcpTask(*it);
 		}
@@ -538,7 +526,7 @@ void wServer<T>::CheckTimer()
 template <typename T>
 void wServer<T>::CheckTimeout()
 {
-	W_ASSERT(mIsCheckTimer, return);
+	if (!mIsCheckTimer) return;
 
 	unsigned long long iNowTime = GetTickCount();
 	unsigned long long iIntervalTime;

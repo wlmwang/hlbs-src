@@ -10,14 +10,30 @@
 
 SERVER := routerserver agentserver
 
+.PHONY:all clean release debug
+
 all:
-	for d in $(SERVER); do echo; echo "compile $$d now"; echo; $(MAKE) clean dir all -C $$d; done
-
-release:
-	for d in $(SERVER); do sed -i 's/\s\+-D_DEBUG_/ #-D_DEBUG_/' $$d/Makefile; done
-
-debug:
-	for d in $(SERVER); do sed -i 's/#-D_DEBUG_/-D_DEBUG_/' $$d/Makefile; done
+	for d in $(SERVER);
+	do echo;
+	echo "compile $$d now";
+	echo;
+	$(MAKE) clean dir all -C $$d;
+	done
 
 clean:
-	for d in $(SERVER); do echo; echo "clean $$d now"; echo; $(MAKE) clean -C $$d; done
+	for d in $(SERVER);
+	do echo;
+	echo "clean $$d now";
+	echo;
+	$(MAKE) clean -C $$d;
+	done
+
+release:
+	for d in $(SERVER); 
+	do sed -i 's/\s\+-D_DEBUG_/ #-D_DEBUG_/' $$d/Makefile;
+	done
+
+debug:
+	for d in $(SERVER);
+	do sed -i 's/#-D_DEBUG_/-D_DEBUG_/' $$d/Makefile;
+	done

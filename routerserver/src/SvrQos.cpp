@@ -543,7 +543,7 @@ int SvrQos::RouteCheck(struct SvrStat_t* pSvrStat, struct SvrNet_t& stNode, doub
         return 0;
 	}
 
-	time_t nowTm = time(NULL);
+	//time_t nowTm = time(NULL);
     float fErrate = 1 - pSvrStat->mInfo.mOkRate - pSvrStat->mInfo.mAvgErrRate;
     
     //TODO 预取数：初始值为预测的此进程本周期的成功请求数
@@ -801,7 +801,7 @@ int SvrQos::ListRebuild(const struct SvrNet_t &stSvr, struct SvrStat_t* pSvrStat
 	//错误率
 	float fErrRate = (float)iErrCount / (float)iReqCount;
 	//拒绝率
-	float fRejRate = pSvrStat->mInfo.mReqRej / pSvrStat->mInfo.mReqAll;
+	//float fRejRate = pSvrStat->mInfo.mReqRej / pSvrStat->mInfo.mReqAll;
 
 	fErrRate = fErrRate>1 ? 1: fErrRate;
 	pSvrStat->mInfo.mOkRate = 1 - fErrRate;	//重置成功率
@@ -889,7 +889,7 @@ int SvrQos::RebuildRoute(struct SvrKind_t& stItem, int bForce)
     int iReqAll = 0, iReqSuc = 0, iReqRej = 0, iReqErrRet = 0 , iReqErrTm = 0;
     float fAvgErrRate = 0;
     int iRouteTotalReq = 0;
-    float fCfgErrRate = 0, fNodeErrRate = 0, fTotalErrRate = 0, fHeightSucRate = 0,fHighWeight = 0,  fBestLowPri = 1;
+    float fCfgErrRate = 0, fNodeErrRate = 0, fTotalErrRate = 0, fHeightSucRate = 0,fHighWeight = 0 /*,fBestLowPri = 1*/;
 
     //统计数量
     multimap<float, struct SvrNode_t>::iterator it;
@@ -1121,27 +1121,11 @@ int SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, multimap<float, struct Svr
 	}
 	list<struct SvrNode_t>::iterator it = pErrRoute->begin();
 
-	int iCurTm = time(NULL);
+	//int iCurTm = time(NULL);
 
 	//宕机检测、故障恢复
-	int iRet = 0;
-	bool bDelFlag = false;
-	while (it != pErrRoute->end())
-	{
-		bDelFlag = false;
-
-		//故障探测：
-		//1)先进行网络层探测ping connect udp_icmp，网络探测成功后再用业务请求进行探测
-		//2)机器宕机后该sid已经收到超过一定量的请求
-		//3)机器宕机已经超过一定时间，需要进行一次探测
-		
-		//mProbeBegin>0才打开网络层探测
-		if (mDownCfg.mProbeBegin > 0 && iCurTm > it->mStopTime + mDownCfg.mProbeBegin)
-		{
-			/* code */
-		}
-	}
-
+	//agent中实现
+	
     if (pErrRoute->empty())
 	{
         SAFE_DELETE(pErrRoute);

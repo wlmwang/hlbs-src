@@ -18,7 +18,7 @@
 class wChannelTask : public wTask
 {
 	public:
-		wChannelTask(wSocket *pSocket, wWorker pWorker = NULL);
+		wChannelTask(wSocket *pSocket, wWorker *pWorker = NULL);
 
 		virtual int HandleRecvMessage(char *pBuffer, int nLen);
 		int ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int iLen);

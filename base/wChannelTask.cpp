@@ -7,9 +7,9 @@
 #include "wChannelTask.h"
 #include "wMaster.h"
 #include "wChannelCmd.h"
-#include "wSignal.h"	//全局变量
+#include "wSignal.h"
 
-wChannelTask::wChannelTask(wSocket *pSocket, wWorker pWorker) : wTask(pSocket), mWorker(pWorker)
+wChannelTask::wChannelTask(wSocket *pSocket, wWorker *pWorker) : wTask(pSocket), mWorker(pWorker)
 {
 	REG_DISP(mDispatch, "wChannelTask", CMD_CHANNEL_REQ, CHANNEL_REQ_OPEN, &wChannelTask::ChannelOpen);
 	REG_DISP(mDispatch, "wChannelTask", CMD_CHANNEL_REQ, CHANNEL_REQ_CLOSE, &wChannelTask::ChannelClose);
@@ -41,7 +41,7 @@ int wChannelTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int
 		}
 		else
 		{
-			LOG_ERROR(ELOG_KEY, "[system] client send a invalid msg fd(%d) id(%d)", mIO->FD(), pCommand->GetId());
+			LOG_ERROR(ELOG_KEY, "[system] client send a invalid msg fd(%d) id(%d)", mSocket->FD(), pCommand->GetId());
 		}
 	}
 	return 0;
@@ -49,34 +49,34 @@ int wChannelTask::ParseRecvMessage(struct wCommand* pCommand, char *pBuffer, int
 
 int wChannelTask::ChannelOpen(char *pBuffer, int iLen)
 {
-	W_ASSERT(mWorker != NULL && mWorker->mMaster != NULL, return -1);
+	W_ASSERT(mWorker != NULL, return -1);
 
 	struct ChannelReqOpen_t *pCh = (struct ChannelReqOpen_t* )pBuffer;
-	if (mWorker->mMaster != NULL && mWorker->mMaster->mWorkerPool != NULL && mWorker->mMaster->mWorkerPool[pCh->mSlot])
+	if (mWorker->mWorkerPool != NULL && mWorker->mWorkerPool[pCh->mSlot])
 	{
-		LOG_DEBUG(ELOG_KEY, "[system] get channel s:%i pid:%d fd:%d", pCh->mSlot, pCh->mPid, pCh->mFD);
+		LOG_DEBUG(ELOG_KEY, "[system] get channel solt:%i pid:%d fd:%d", pCh->mSlot, pCh->mPid, pCh->mFD);
 
-		mWorker->mMaster->mWorkerPool[pCh->mSlot]->mPid = pCh->mPid;
-		mWorker->mMaster->mWorkerPool[pCh->mSlot]->mCh[0] = pCh->mFD;
+		mWorker->mWorkerPool[pCh->mSlot]->mPid = pCh->mPid;
+		mWorker->mWorkerPool[pCh->mSlot]->mCh[0] = pCh->mFD;
 	}
 	return 0;
 }
 
 int wChannelTask::ChannelClose(char *pBuffer, int iLen)
 {
-	W_ASSERT(mWorker != NULL && mWorker->mMaster != NULL, return -1);
+	W_ASSERT(mWorker != NULL, return -1);
 
 	struct ChannelReqClose_t *pCh = (struct ChannelReqClose_t* )pBuffer;
-	if (mWorker->mMaster != NULL && mWorker->mMaster->mWorkerPool != NULL && mWorker->mMaster->mWorkerPool[pCh->mSlot])
+	if (mWorker->mWorkerPool != NULL && mWorker->mWorkerPool[pCh->mSlot])
 	{
 		LOG_DEBUG(ELOG_KEY, "[system] close channel s:%i pid:%d our:%d fd:%d", pCh->mSlot, pCh->mPid, 
-			mWorker->mMaster->mWorkerPool[pCh->mSlot]->mPid, mWorker->mMaster->mWorkerPool[pCh->mSlot]->mCh[0]);
+			mWorker->mWorkerPool[pCh->mSlot]->mPid, mWorker->mWorkerPool[pCh->mSlot]->mCh[0]);
 		
-		if (close(mWorker->mMaster->mWorkerPool[pCh->mSlot]->mCh[0]) == -1) 
+		if (close(mWorker->mWorkerPool[pCh->mSlot]->mCh[0]) == -1) 
 		{
 			LOG_DEBUG(ELOG_KEY, "[system] close() channel failed: %s", strerror(errno));
 		}
-		mWorker->mMaster->mWorkerPool[pCh->mSlot]->mCh[0] = FD_UNKNOWN; //-1
+		mWorker->mWorkerPool[pCh->mSlot]->mCh[0] = FD_UNKNOWN; //-1
 	}
 	return 0;
 }

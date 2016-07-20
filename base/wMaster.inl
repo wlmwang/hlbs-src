@@ -43,9 +43,8 @@ void wMaster<T>::SingleStart()
 	LOG_INFO(ELOG_KEY, "[system] single process start pid(%d)", getpid());
 
 	mProcess = PROCESS_SINGLE;
-	CreatePidFile();
-	
 	//InitSignals();
+	CreatePidFile();
 
 	//恢复默认信号处理
 	wSignal stSig(SIG_DFL);
@@ -72,8 +71,8 @@ void wMaster<T>::MasterStart()
 		LOG_ERROR(ELOG_KEY, "[system] no more than %d processes can be spawned:", mWorkerNum);
 		return;
 	}
-	CreatePidFile();
 	InitSignals();
+	CreatePidFile();
 	
 	//初始化workerpool内存空间
 	mWorkerPool = new wWorker*[mWorkerNum];
@@ -91,7 +90,7 @@ void wMaster<T>::MasterStart()
 	stSigset.AddSet(SIGQUIT);
 	stSigset.AddSet(SIGTERM);
 	stSigset.AddSet(SIGHUP);	//RECONFIGURE
-	stSigset.AddSet(SIGUSR1);	//
+	stSigset.AddSet(SIGUSR1);
 
     if (stSigset.Procmask() == -1) 
     {
@@ -120,20 +119,19 @@ void wMaster<T>::MasterStart()
     //启动worker进程
     WorkerStart(mWorkerNum, PROCESS_RESPAWN);
 
-	//master进程，信号处理
+    while (true)
 	{
 		HandleSignal();
 		Run();
-	} while (true);
+	};
 }
 
 template <typename T>
 void wMaster<T>::MasterExit()
 {
-	DeletePidFile();
-
 	SAFE_DELETE(mShmAddr);
 	SAFE_DELETE(mMutex);
+	DeletePidFile();
 
     LOG_ERROR(ELOG_KEY, "[system] master process exit");
 	exit(0);
@@ -249,8 +247,6 @@ void wMaster<T>::HandleSignal()
 template <typename T>
 int wMaster<T>::ReapChildren()
 {
-	pid_t pid;
-	
 	int iLive = 0;
 	for (int i = 0; i < mWorkerNum; i++) 
     {
@@ -279,8 +275,7 @@ int wMaster<T>::ReapChildren()
 			//重启worker
 			if (mWorkerPool[i]->mRespawn && !mWorkerPool[i]->mExiting && !g_terminate && !g_quit)
 			{
-				pid = SpawnWorker((void *) this, mWorkerProcessTitle, i);
-				if (pid == -1)
+				if (SpawnWorker(mWorkerProcessTitle, i) == -1)
 				{
 					LOG_ERROR(ELOG_KEY, "[system] could not respawn %d", i);
 					continue;
@@ -317,15 +312,12 @@ int wMaster<T>::ReapChildren()
 template <typename T>
 void wMaster<T>::WorkerStart(int n, int type)
 {
-	pid_t pid;
-	
 	//同步channel fd消息结构
 	struct ChannelReqOpen_t stCh;
 	for (int i = 0; i < mWorkerNum; ++i)
 	{
 		//创建worker进程
-		pid = SpawnWorker((void *) this, mWorkerProcessTitle, type);
-		if (pid == -1)
+		if (SpawnWorker(mWorkerProcessTitle, type) == -1)
 		{
 			LOG_ERROR(ELOG_KEY, "[system] could not fork worker process %d", i);
 			continue;
@@ -340,42 +332,43 @@ void wMaster<T>::WorkerStart(int n, int type)
 template <typename T>
 void wMaster<T>::SignalWorker(int iSigno)
 {
-	int other = 0;
-	int size = 0;
-	
-	struct ChannelReqCmd_s* pCh;
+	int other = 0, size = 0;
+
 	struct ChannelReqQuit_t stChOpen;
 	struct ChannelReqTerminate_t stChClose;
+	struct ChannelReqCmd_s* pCh = NULL;
 	switch (iSigno)
 	{
 		case SIGQUIT:
 			pCh = &stChOpen;
+			pCh->mFD = -1;
 			size = sizeof(struct ChannelReqQuit_t);
 			break;
 			
 		case SIGTERM:
 			pCh = &stChClose;
+			pCh->mFD = -1;
 			size = sizeof(struct ChannelReqTerminate_t);
 			break;
 				
 		default:
 			other = 1;
 	}
-	pCh->mFD = -1;
-	
-	char *pStart = new char[size + sizeof(int)];
-	*(int *)pStart = size;
+
+	char *pStart = NULL;
+	if (!other)
+	{
+		pStart = new char[size + sizeof(int)];
+		*(int *)pStart = size;
+	}
 	
 	for (int i = 0; i < mWorkerNum; i++) 
     {
-        LOG_DEBUG(ELOG_KEY, "[system] child(worker process): %d %d e:%d t:%d d:%d r:%d j:%d", 
-        	i, mWorkerPool[i]->mPid, mWorkerPool[i]->mExiting, mWorkerPool[i]->mExited, 
+        LOG_INFO(ELOG_KEY, "[system] send signal to child(worker process):other(%d),i(%d),pid(%d),exiting(%d),exited(%d),detached(%d),respawn(%d),justspawn(%d)", 
+        	other, i, mWorkerPool[i]->mPid, mWorkerPool[i]->mExiting, mWorkerPool[i]->mExited, 
         	mWorkerPool[i]->mDetached, mWorkerPool[i]->mRespawn, mWorkerPool[i]->mJustSpawn);
 
-        if (mWorkerPool[i]->mDetached || mWorkerPool[i]->mPid == -1) 
-		{
-            continue;
-        }
+        if (mWorkerPool[i]->mDetached || mWorkerPool[i]->mPid == -1) continue;
         
         if (mWorkerPool[i]->mJustSpawn)
         {
@@ -383,10 +376,7 @@ void wMaster<T>::SignalWorker(int iSigno)
         	continue;
         }
 
-		if (mWorkerPool[i]->mExiting && iSigno == SIGQUIT)
-        {
-            continue;
-        }
+		if (mWorkerPool[i]->mExiting && iSigno == SIGQUIT) continue;
 		
         if (!other)
 		{
@@ -394,21 +384,18 @@ void wMaster<T>::SignalWorker(int iSigno)
 			memcpy(pStart + sizeof(int), (char *)pCh, size);
 			if (mWorkerPool[i]->mCh.SendBytes(pStart, size + sizeof(int)) >= 0)
 			{
-				if (iSigno == SIGQUIT || iSigno == SIGTERM)
-				{
-					mWorkerPool[i]->mExiting = 1;
-				}
+				if (iSigno == SIGQUIT || iSigno == SIGTERM) mWorkerPool[i]->mExiting = 1;
 				continue;
 			}
 		}
-					   
-		LOG_ERROR(ELOG_KEY, "[system] kill (%d, %d)", mWorkerPool[i]->mPid, iSigno);
+
+		LOG_INFO(ELOG_KEY, "[system] kill (%d, %d)", mWorkerPool[i]->mPid, iSigno);
 		
         if (kill(mWorkerPool[i]->mPid, iSigno) == -1) 
 		{
             mErr = errno;
-			
 			LOG_ERROR(ELOG_KEY, "[system] kill(%d, %d) failed:%s", mWorkerPool[i]->mPid, iSigno, strerror(mErr));
+            
             if (mErr == ESRCH) 
 			{
                 mWorkerPool[i]->mExited = 1;
@@ -419,13 +406,10 @@ void wMaster<T>::SignalWorker(int iSigno)
             continue;
         }
 		
-        if (iSigno != SIGUSR1) 
-		{
-			mWorkerPool[i]->mExiting = 1;
-        }
+        if (iSigno != SIGUSR1) mWorkerPool[i]->mExiting = 1;
     }
     
-    SAFE_DELETE_VEC(pStart);
+    if (!other) SAFE_DELETE_VEC(pStart);
 }
 
 template <typename T>
@@ -439,12 +423,9 @@ void wMaster<T>::PassOpenChannel(struct ChannelReqOpen_t *pCh)
 	for (int i = 0; i < mWorkerNum; i++) 
     {
 		//当前分配到worker进程表项索引（无需发送给自己）
-        if (i == mSlot|| mWorkerPool[i]->mPid == -1|| mWorkerPool[i]->mCh[0] == FD_UNKNOWN)
-        {
-            continue;
-        }
+        if (i == mSlot|| mWorkerPool[i]->mPid == -1|| mWorkerPool[i]->mCh[0] == FD_UNKNOWN) continue;
 
-        LOG_DEBUG(ELOG_KEY, "[system] pass open channel s:%d pid:%d fd:%d to s:%i pid:%d fd:%d", 
+        LOG_DEBUG(ELOG_KEY, "[system] pass open channel slot(%d) pid(%d) fd(%d) to i(%i) pid(%d) fd(%d)", 
         	pCh->mSlot, pCh->mPid, pCh->mFD, i, mWorkerPool[i]->mPid, mWorkerPool[i]->mCh[0]);
         
         /* TODO: EAGAIN */
@@ -483,7 +464,7 @@ void wMaster<T>::PassCloseChannel(struct ChannelReqClose_t *pCh)
 }
 
 template <typename T>
-pid_t wMaster<T>::SpawnWorker(void *pData, string sTitle, int type)
+pid_t wMaster<T>::SpawnWorker(string sTitle, int type)
 {
 	int idx = 0;
 	if (type >= 0)
@@ -511,7 +492,7 @@ pid_t wMaster<T>::SpawnWorker(void *pData, string sTitle, int type)
     if (ioctl(pWorker->mCh[0], FIOASYNC, &on) == -1) 
     {
     	mErr = errno;
-        LOG_ERROR(ELOG_KEY, "[system] ioctl(FIOASYNC) failed while spawning %s:%s", title, strerror(mErr));
+        LOG_ERROR(ELOG_KEY, "[system] ioctl(FIOASYNC) failed while spawning %s:%s", sTitle.c_str(), strerror(mErr));
         pWorker->CloseChannel();
         return -1;
     }
@@ -520,7 +501,7 @@ pid_t wMaster<T>::SpawnWorker(void *pData, string sTitle, int type)
     if (fcntl(pWorker->mCh[0], F_SETOWN, mPid) == -1) 
     {
     	mErr = errno;
-        LOG_ERROR(ELOG_KEY, "[system] fcntl(F_SETOWN) failed while spawning %s:%s", title, strerror(mErr));
+        LOG_ERROR(ELOG_KEY, "[system] fcntl(F_SETOWN) failed while spawning %s:%s", sTitle.c_str(), strerror(mErr));
         pWorker->CloseChannel();
         return -1;
     }
@@ -530,22 +511,22 @@ pid_t wMaster<T>::SpawnWorker(void *pData, string sTitle, int type)
     {
 	    case -1:
 	    	mErr = errno;
-	        LOG_ERROR(ELOG_KEY, "[system] fork() failed while spawning %s:%s", title, strerror(mErr));
+	        LOG_ERROR(ELOG_KEY, "[system] fork() failed while spawning %s:%s", sTitle.c_str(), strerror(mErr));
 	        pWorker->CloseChannel();
 	        return -1;
 			
 	    case 0:
 	    	//worker进程
 	        mProcess = PROCESS_WORKER;	//进程模式
-	        pWorker->PrepareStart(mSlot, type, title, pData);
+	        void *pData[2];
+	        pData[0] = &mWorkerNum;
+	        pData[1] = mWorkerPool;
+	        pWorker->PrepareStart(mSlot, type, sTitle.c_str(), pData);
 	        pWorker->Start();
 	        _exit(0);
 	        break;
-
-	    default:
-	        break;
     }
-    LOG_INFO(ELOG_KEY, "[system] worker start %s [%d] %d", title, mSlot, pid);
+    LOG_INFO(ELOG_KEY, "[system] worker start %s [%d] %d", sTitle.c_str(), mSlot, pid);
     
     //主进程master更新进程表
     pWorker->mSlot = mSlot;
@@ -692,7 +673,7 @@ void wMaster<T>::ProcessGetStatus()
 			{
                 mWorkerPool[i]->mStat = status;
                 mWorkerPool[i]->mExited = 1;	//退出
-                process = mWorkerPool[i]->mName;
+                process = mWorkerPool[i]->mName.c_str();
                 break;
 			}
 		}

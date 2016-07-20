@@ -127,7 +127,7 @@ ssize_t wChannel::SendBytes(char *vArray, size_t vLen)
     if (n == -1) 
     {
         mErr = errno;
-        if (mErr = EINTR || mErr == EAGAIN) 
+        if ((mErr = EINTR) || (mErr == EAGAIN)) 
         {
             return 0;
         }
@@ -192,9 +192,7 @@ ssize_t wChannel::RecvBytes(char *vArray, size_t vLen)
     }
 
     //是否是打开fd文件描述符channel
-    int iChLen = sizeof(struct ChannelReqOpen_t);
-
-    if (n == iChLen + sizeof(int))
+    if (n == sizeof(struct ChannelReqOpen_t) + sizeof(int))
     {
         struct ChannelReqOpen_t *pChannel = (struct ChannelReqOpen_t*) (vArray + sizeof(int));        
         if (pChannel->GetCmd() == CMD_CHANNEL_REQ && pChannel->GetPara() == CHANNEL_REQ_OPEN)

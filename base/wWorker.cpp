@@ -5,21 +5,12 @@
  */
 
 #include "wWorker.h"
+#include "wSigSet.h"
 //#include "wShm.h"
 //#include "wShmtx.h"
 
 wWorker::wWorker(int iSlot) : mSlot(iSlot)
 {
-#ifdef PREFIX
-	memcpy(mWorkingDir, PREFIX, strlen(PREFIX) + 1);
-#else
-	if (GetCwd(mWorkingDir, sizeof(mWorkingDir)) == -1)
-	{
-		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[system] getcwd failed: %s", strerror(mErr));
-		exit(2);
-	}
-#endif
 	//worker通信 主要通过channel同步个fd，填充进程表
 	mIpc = new wWorkerIpc(this);
 }
@@ -40,13 +31,14 @@ void wWorker::CloseChannel()
 	mCh.Close();
 }
 
-void wWorker::PrepareStart(int iSlot, int iType, string sTitle, void *pData) 
+void wWorker::PrepareStart(int iSlot, int iType, string sTitle, void **pData) 
 {
 	mPid = getpid();
 	mSlot = iSlot;
 	mRespawn = iType;
 	mName = sTitle;
-	mMaster = (wMaster<wMaster> *)pData;
+	mWorkerNum = *(int*)pData[0];
+	mWorkerPool = (wWorker**)pData[1];
 
 	/**
 	 *  设置当前进程优先级。进程默认优先级为0
@@ -76,24 +68,13 @@ void wWorker::PrepareStart(int iSlot, int iType, string sTitle, void *pData)
         }
     }
 	
-    //切换工作目录
-    if (strlen(mWorkingDir) > 0) 
-	{
-		LOG_DEBUG(ELOG_KEY, "[system] worker process chdir(\"%s\")", mWorkingDir);
-        if (chdir((char *)mWorkingDir) == -1) 
-		{
-			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[system] worker process chdir(\"%s\") failed: %s", mWorkingDir, strerror(mErr));
-			exit(2);
-        }
-    }
-	
 	srandom((mPid << 16) ^ time(NULL));  //设置种子值，进程ID+时间
 	
 	//将其他进程的channel[1]关闭，自己的除外
     for (int n = 0; n < mWorkerNum; n++) 
     {
-        if (n == mSlot ||mWorkerPool[n]->mPid == -1|| mWorkerPool[n]->mCh[1] == FD_UNKNOWN) 
+    	LOG_DEBUG(ELOG_KEY, "[system] pid:%d,workernum:%d, n:%d,mch:%d", mPid, mWorkerNum, n, mWorkerPool[n]->mCh[1]);
+        if (n == mSlot || mWorkerPool[n]->mPid == -1|| mWorkerPool[n]->mCh[1] == FD_UNKNOWN) 
         {
             continue;
         }

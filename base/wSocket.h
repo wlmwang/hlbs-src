@@ -101,10 +101,10 @@ class wSocket : private wNoncopyable
 		unsigned short mPort {0};
 		
 		int mFD {FD_UNKNOWN};
-		SOCK_TYPE mSockType {TYPE_UNKNOWN};
-		SOCK_STATUS mSockStatus {STATUS_UNKNOWN};
-		SOCK_PROTO mSockProto {PROTO_UNKNOWN};
-		SOCK_FLAG mSockFlag {FLAG_UNKNOWN};
+		SOCK_TYPE mSockType {SOCK_TYPE_UNKNOWN};
+		SOCK_STATUS mSockStatus {SOCK_STATUS_UNKNOWN};
+		SOCK_PROTO mSockProto {SOCK_PROTO_UNKNOWN};
+		SOCK_FLAG mSockFlag {SOCK_FLAG_UNKNOWN};
 		
 		unsigned long long mRecvTime {0};	//最后接收到数据包的时间戳，毫秒
 		unsigned long long mSendTime {0};	//最后发送数据包时间戳（主要用户心跳检测），毫秒

@@ -15,7 +15,8 @@
 #include "wLog.h"
 #include "wMisc.h"
 #include "wThread.h"
-#include "wWorker.h"	//wWorker.h已包含
+#include "wTask.h"
+#include "wWorker.h"
 
 class wWorker;
 class wWorkerIpc : public wThread

@@ -69,8 +69,6 @@ int wTcpSocket::Listen(string sHost, unsigned int nPort)
 	{
 		return -1;
 	}
-	mSockType = SOCK_LISTEN;
-	mIOFlag = FLAG_RECV;
 
 	if (Bind(sHost, nPort) < 0)
 	{
@@ -98,7 +96,7 @@ int wTcpSocket::Listen(string sHost, unsigned int nPort)
 
 	if (SetNonBlock() < 0) 
 	{
-		LOG_ERROR(ELOG_KEY, "[system] Set listen socket nonblock failed: %d, close it", iFD);
+		LOG_ERROR(ELOG_KEY, "[system] Set listen socket nonblock failed, close it");
 	}
 	return 0;
 }
@@ -111,8 +109,6 @@ int wTcpSocket::Connect(string sHost, unsigned int nPort, float fTimeout)
 	}
 	mHost = sHost;
 	mPort = nPort;
-	mSockType = SOCK_CONNECT;
-	mIOFlag = FLAG_RECV;
 
 	struct sockaddr_in stSockAddr;
 	memset(&stSockAddr, 0, sizeof(sockaddr_in));
@@ -202,7 +198,7 @@ int wTcpSocket::Connect(string sHost, unsigned int nPort, float fTimeout)
 
 int wTcpSocket::Accept(struct sockaddr* pClientSockAddr, socklen_t *pSockAddrSize)
 {
-	if (mFD == FD_UNKNOWN || mSockType != SOCK_LISTEN)
+	if (mFD == FD_UNKNOWN || mSockType != SOCK_TYPE_LISTEN)
 	{
 		return -1;
 	}
@@ -257,7 +253,7 @@ int wTcpSocket::SetTimeout(float fTimeout)
 
 int wTcpSocket::SetSendTimeout(float fTimeout)
 {
-	if (mFD == FD_UNKNOWN || mIOType != TYPE_SOCK) 
+	if (mFD == FD_UNKNOWN) 
 	{
 		return -1;
 	}
@@ -281,7 +277,7 @@ int wTcpSocket::SetSendTimeout(float fTimeout)
 
 int wTcpSocket::SetRecvTimeout(float fTimeout)
 {
-	if (mFD == FD_UNKNOWN || mIOType != TYPE_SOCK) 
+	if (mFD == FD_UNKNOWN) 
 	{
 		return -1;
 	}
@@ -305,7 +301,7 @@ int wTcpSocket::SetRecvTimeout(float fTimeout)
 
 int wTcpSocket::SetKeepAlive(int iIdle, int iIntvl, int iCnt)
 {
-	if (mFD == FD_UNKNOWN || mIOType != TYPE_SOCK) 
+	if (mFD == FD_UNKNOWN) 
 	{
 		return -1;
 	}

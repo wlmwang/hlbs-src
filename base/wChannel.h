@@ -16,9 +16,7 @@
 class wChannel : public wSocket
 {
 	public:
-		wChannel() {}
-		wChannel(SOCK_TYPE eType = TYPE_LISTEN, SOCK_PROTO eProto = PROTO_CHANNEL, SOCK_FLAG eFlag = FLAG_RVSD) : wSocket(eType, eProto, eFlag) {}
-		
+		wChannel(SOCK_TYPE eType = SOCK_TYPE_LISTEN, SOCK_PROTO eProto = SOCK_PROTO_CHANNEL, SOCK_FLAG eFlag = SOCK_FLAG_RVSD) : wSocket(eType, eProto, eFlag) {}
 		/**
 		 * 创建非阻塞channel
 		 * @return 0成功 -1发生错误
