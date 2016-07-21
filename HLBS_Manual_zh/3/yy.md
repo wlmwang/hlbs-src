@@ -2,8 +2,7 @@
 
 ```
 $ cd /usr/local/hlbs/extension/c++
-$ make dir
-$ make
+$ make all
 $ make install
 $ ldconfig
 
@@ -11,7 +10,6 @@ $ cd /usr/local/src/php-5.5.16/ext 	#php源码目录
 $ ./ext_skel --extname=hlbs
 $ cd hlbs
 $ cp –r /usr/local/hlbs/extension/php/hlbs/* .
-$ cp –r /usr/local/hlbs/extension/c++ .
 $ /usr/local/php/bin/phpize		#php安装目录
 $./configure --with-php-config=/usr/local/php/bin/php-config
 $ make
