@@ -24,5 +24,5 @@ $ /usr/local/php/bin/php –m |grep hlbs	#查看是否安装成功
 # 测试
 
 ```
-$ cp /usr/local/hlbs/extension/php/test.php /data/www #修改文件test.php，测试结果
+$ cp /usr/local/webserver/hlbs/extension/php/test.php /data/www #修改文件test.php，测试结果
 ```
