@@ -1,0 +1,53 @@
+
+###############################
+# Copyright (C) Anny Wang.
+# Copyright (C) Hupu, Inc.
+###############################
+
+CXXFLAGS=-std=c++11 -O1 -fPIC -pipe -fno-ident -Wall -Wno-invalid-offsetof
+LDFLAGS=-shared
+
+BASEPATH=../../base
+COMMPATH=./command
+INCPATH=-I./$(BASEPATH) -I./$(COMMPATH)
+LDPATH=
+
+SRCPATH=./
+OBJECTS=./$(BASEPATH)/wMsgQueue.o \
+		./$(BASEPATH)/wMisc.o \
+		./$(BASEPATH)/wSocket.o \
+		./$(BASEPATH)/wTcpSocket.o \
+		./$(BASEPATH)/wUnixSocket.o \
+		./$(BASEPATH)/wTask.o \
+		./$(BASEPATH)/wShm.o \
+		./$(BASEPATH)/wSignal.o \
+		\
+		./$(SRCPATH)/agent_api.o
+
+TARGET=libagent_api.so
+
+.PHONY:all
+all: $(TARGET)
+
+$(TARGET):$(OBJECTS)
+	@echo "Compiling $@"
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+
+%.o:%.cpp
+	$(CXX) $(CXXFLAGS) $(INCPATH) -c $< -o $@
+
+%.d:%.cpp
+	@set -e; rm -f $@; $(CXX) -MM $< $(INCPATH) > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+-include $(OBJECTS:.o=.d)
+
+.PHONY:clean
+clean:
+	-rm -f $(BASEPATH)/*.o $(BASEPATH)/*.d $(BASEPATH)/*.d.*
+	-rm -f $(TARGET) $(SRCPATH)/*.o $(SRCPATH)/*.d $(SRCPATH)/*.d.*
+
+.PHONY:install
+install:
+	-mv -f $(TARGET) /usr/lib
