@@ -12,8 +12,9 @@
 ROOTPATH=\"/usr/local/webserver/hlbs/agentserver/bin\"
 
 CXX=g++
-CXXFLAGS=-std=c++11 -O1 -Wall -Wno-invalid-offsetof -DUSE_LOG4CPP -DLINUX -DPREFIX=$(ROOTPATH) -D_DEBUG_ #-D_MEM_CHECK
-LDFLAGS=-L./$(LDPATH)/tinyxml -L/usr/local/lib -ltinyxml -llog4cpp -lpthread -static
+CXXFLAGS=-std=c++11 -O3 -Wall -Wno-invalid-offsetof -DPREFIX=$(ROOTPATH) -DUSE_LOG4CPP -DLINUX -D_DEBUG_ #-D_MEM_CHECK
+LDFLAGS=-L/usr/local/lib -ltinyxml -llog4cpp -lpthread
+#LDFLAGS=-L./$(LDPATH)/tinyxml -L/usr/local/lib -ltinyxml -llog4cpp -lpthread -static	#静态链接
 
 BASEPATH=../base
 COMMPATH=../command

@@ -167,7 +167,7 @@ int wServer<T>::AddToTaskPool(wTask* pTask)
 
 	mTaskPool.push_back(pTask);
 	mTaskCount = mTaskPool.size();	//epoll_event大小
-	if (mTaskCount > mEpollEventPool.capacity())
+	if (mTaskCount > (int)mEpollEventPool.capacity())
 	{
 		mEpollEventPool.reserve(mTaskCount * 2);
 	}

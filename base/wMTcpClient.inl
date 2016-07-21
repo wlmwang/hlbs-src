@@ -149,7 +149,7 @@ int wMTcpClient<TASK>::ResetTcpClientCount()
 	}
 	
 	//重置容量
-	if (mTcpClientCount > mEpollEventPool.capacity())
+	if (mTcpClientCount > (int)mEpollEventPool.capacity())
 	{
 		mEpollEventPool.reserve(mTcpClientCount * 2);
 	}

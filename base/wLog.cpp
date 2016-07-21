@@ -10,14 +10,14 @@
 #	ifdef LINUX
 #		ifndef LOG4CPP_HAVE_GETTIMEOFDAY 
 #			define LOG4CPP_HAVE_GETTIMEOFDAY
-#		endif // LOG4CPP_HAVE_GETTIMEOFDAY
-#	endif // LINUX
+#		endif
+#	endif
 
 #	include	"log4cpp/Category.hh"
 #	include	"log4cpp/RollingFileAppender.hh"
 #	include	"log4cpp/BasicLayout.hh"
 #	include	"log4cpp/PatternLayout.hh"
-#endif // USE_LOG4CPP
+#endif
 
 //初始一种类型的日志
 int InitLog(const char* vLogName, const char* vLogDir, LogLevel vPriority, unsigned int vMaxFileSize, unsigned int vMaxBackupIndex, bool vAppend)
@@ -64,13 +64,14 @@ int InitLog(const char* vLogName, const char* vLogDir, LogLevel vPriority, unsig
 		trCategory.setPriority((log4cpp::Priority::PriorityLevel) vPriority);
 	}
 #endif
+
 	return 0;
 }
 
 int ReInitLog(const char* vLogName, LogLevel vPriority/*日志等级*/,unsigned int vMaxFileSize/*回卷文件最大长度*/, unsigned int vMaxBackupIndex) /*回卷文件个数*/
 {
-#ifdef USE_LOG4CPP
 
+#ifdef USE_LOG4CPP
 	if (NULL == vLogName)
 	{
 		return -1;
@@ -91,7 +92,6 @@ int ReInitLog(const char* vLogName, LogLevel vPriority/*日志等级*/,unsigned 
 		
 		tpCategory->setPriority(vPriority);
 	}
-
 #endif
 
 	return 0;
@@ -104,13 +104,14 @@ int ShutdownAllLog()
 #ifdef USE_LOG4CPP
 	log4cpp::Category::shutdown();
 #endif
+
 	return 0;
 }
 
 int log(const char* vLogName, int vPriority, const char* vFmt, ... )
 {
-#ifdef USE_LOG4CPP
 
+#ifdef USE_LOG4CPP
 	if ( NULL == vLogName )
 	{
 		return -1;
@@ -127,7 +128,6 @@ int log(const char* vLogName, int vPriority, const char* vFmt, ... )
 	va_start(va, vFmt);
 	tpCategory->logva((log4cpp::Priority::PriorityLevel)vPriority, vFmt, va);
 	va_end(va);
-
 #endif
 
 	return 0;
@@ -138,7 +138,6 @@ int LogDebug(const char* vLogName, const char* vFmt, ... )
 {
 
 #ifdef USE_LOG4CPP
-
 	if (NULL == vLogName)
 	{
 		return -1;
@@ -155,7 +154,6 @@ int LogDebug(const char* vLogName, const char* vFmt, ... )
 	va_start(va, vFmt);
 	tpCategory->logva(log4cpp::Priority::DEBUG, vFmt, va);
 	va_end(va);
-
 #endif
 
 	return 0;	
@@ -164,8 +162,8 @@ int LogDebug(const char* vLogName, const char* vFmt, ... )
 
 int LogInfo(const char* vLogName, const char* vFmt, ... )
 {
-#ifdef USE_LOG4CPP
 
+#ifdef USE_LOG4CPP
 	if (NULL == vLogName)
 	{
 		return -1;
@@ -182,7 +180,6 @@ int LogInfo(const char* vLogName, const char* vFmt, ... )
 	va_start(va, vFmt);
 	tpCategory->logva(log4cpp::Priority::INFO, vFmt, va);
 	va_end(va);
-
 #endif
 
 	return 0;	
@@ -190,8 +187,8 @@ int LogInfo(const char* vLogName, const char* vFmt, ... )
 
 int LogNotice(const char* vLogName, const char* vFmt, ... )
 {
-#ifdef USE_LOG4CPP
 
+#ifdef USE_LOG4CPP
 	if (NULL == vLogName)
 	{
 		return -1;
@@ -208,7 +205,6 @@ int LogNotice(const char* vLogName, const char* vFmt, ... )
 	va_start(va, vFmt);
 	tpCategory->logva(log4cpp::Priority::NOTICE, vFmt, va);
 	va_end(va);
-
 #endif
 
 	return 0;	
@@ -216,8 +212,8 @@ int LogNotice(const char* vLogName, const char* vFmt, ... )
 
 int LogWarn(const char* vLogName, const char* vFmt, ... )
 {
-#ifdef USE_LOG4CPP
 
+#ifdef USE_LOG4CPP
 	if (NULL == vLogName)
 	{
 		return -1;
@@ -234,16 +230,15 @@ int LogWarn(const char* vLogName, const char* vFmt, ... )
 	va_start(va, vFmt);
 	tpCategory->logva(log4cpp::Priority::WARN, vFmt, va);
 	va_end(va);
-
 #endif
 
-	return 0;	
+	return 0;
 }
 
 int LogError(const char* vLogName, const char* vFmt, ... )
 {
-#ifdef USE_LOG4CPP
 
+#ifdef USE_LOG4CPP
 	if (NULL == vLogName)
 	{
 		return -1;
@@ -260,7 +255,6 @@ int LogError(const char* vLogName, const char* vFmt, ... )
 	va_start(va, vFmt);
 	tpCategory->logva(log4cpp::Priority::ERROR, vFmt, va);
 	va_end(va);
-
 #endif
 
 	return 0;	
@@ -272,7 +266,6 @@ int LogFatal(const char* vLogName, const char* vFmt, ... )
 {
 
 #ifdef USE_LOG4CPP
-
 	if ( NULL == vLogName )
 	{
 		return -1;
@@ -289,7 +282,6 @@ int LogFatal(const char* vLogName, const char* vFmt, ... )
 	va_start(va, vFmt);
 	tpCategory->logva(log4cpp::Priority::FATAL, vFmt, va);
 	va_end(va);
-
 #endif
 
 	return 0;	
@@ -298,8 +290,8 @@ int LogFatal(const char* vLogName, const char* vFmt, ... )
 
 int LogDebug_va(const char* vLogName, const char* vFmt, va_list ap)
 {
-#ifdef USE_LOG4CPP
 
+#ifdef USE_LOG4CPP
 	if (NULL == vLogName)
 	{
 		return -1;
@@ -320,8 +312,8 @@ int LogDebug_va(const char* vLogName, const char* vFmt, va_list ap)
 
 int LogNotice_va(const char* vLogName, const char* vFmt, va_list ap)
 {
-#ifdef USE_LOG4CPP
 
+#ifdef USE_LOG4CPP
 	if (NULL == vLogName)
 	{
 		return -1;
@@ -341,8 +333,8 @@ int LogNotice_va(const char* vLogName, const char* vFmt, va_list ap)
 
 int LogInfo_va(const char* vLogName, const char* vFmt, va_list ap)
 {
-#ifdef USE_LOG4CPP
 
+#ifdef USE_LOG4CPP
 	if (NULL == vLogName)
 	{
 		return -1;
@@ -363,8 +355,8 @@ int LogInfo_va(const char* vLogName, const char* vFmt, va_list ap)
 
 int LogWarn_va(const char* vLogName, const char* vFmt, va_list ap)
 {
-#ifdef USE_LOG4CPP
 
+#ifdef USE_LOG4CPP
 	if (NULL == vLogName)
 	{
 		return -1;
@@ -385,8 +377,8 @@ int LogWarn_va(const char* vLogName, const char* vFmt, va_list ap)
 
 int LogError_va(const char* vLogName, const char* vFmt, va_list ap)
 {
-#ifdef USE_LOG4CPP
 
+#ifdef USE_LOG4CPP
 	if (NULL == vLogName)
 	{
 		return -1;
@@ -406,8 +398,8 @@ int LogError_va(const char* vLogName, const char* vFmt, va_list ap)
 
 int LogFatal_va(const char* vLogName, const char* vFmt, va_list ap)
 {
-#ifdef USE_LOG4CPP
 
+#ifdef USE_LOG4CPP
 	if (NULL == vLogName)
 	{
 		return -1;
@@ -420,14 +412,15 @@ int LogFatal_va(const char* vLogName, const char* vFmt, va_list ap)
 	}
 
 	tpCategory->logva(log4cpp::Priority::FATAL, vFmt, ap);
-
 #endif
+
 	return 0;
 }
 
 
 int log_va(const char* vLogName, int vPriority, const char* vFmt, va_list ap)
 {
+
 #ifdef USE_LOG4CPP
 	if (NULL == vLogName)
 	{
@@ -449,8 +442,8 @@ int log_va(const char* vLogName, int vPriority, const char* vFmt, va_list ap)
 
 void Log_bin(const char* vLogName, void* vBin, int vBinLen)
 {
-#ifdef USE_LOG4CPP
 
+#ifdef USE_LOG4CPP
 	char* pBuffer = (char*)vBin;
 	char tmpBuffer[60000] = {0};
 	char strTemp[32] = {0};
@@ -467,7 +460,6 @@ void Log_bin(const char* vLogName, void* vBin, int vBinLen)
 	}
 	
 	LogDebug(vLogName, tmpBuffer );
-	
 #endif
 
 }

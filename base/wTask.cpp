@@ -23,10 +23,7 @@ int wTask::TaskRecv()
 {
 	int iRecvLen = mSocket->RecvBytes(mRecvMsgBuff + mRecvBytes, sizeof(mRecvMsgBuff) - mRecvBytes);
 	
-	if (iRecvLen <= 0)
-	{
-		return iRecvLen;	
-	}
+	if (iRecvLen <= 0) return iRecvLen;
 	mRecvBytes += iRecvLen;	
 
 	char *pBuffer = mRecvMsgBuff;	//从头开始读取
@@ -35,10 +32,7 @@ int wTask::TaskRecv()
 	
 	while (true)
 	{
-		if ((size_t)iBuffMsgLen < sizeof(int))
-		{
-			break;
-		}
+		if ((size_t)iBuffMsgLen < sizeof(int)) break;
 
 		iMsgLen = *(int *)pBuffer;	//完整消息体长度
 
@@ -94,16 +88,11 @@ int wTask::TaskSend()
 	while(true)
 	{
 		iMsgLen = mSendWrite - mSendBytes;
-		if (iMsgLen <= 0)
-		{
-			return 0;
-		}
+		if (iMsgLen <= 0) return 0;
 		
 		iSendLen = mSocket->SendBytes(mSendMsgBuff + mSendBytes, iMsgLen);
-		if (iSendLen < 0)
-		{
-			return iSendLen;
-		}
+		if (iSendLen < 0) return iSendLen;
+
 		mSendBytes += iSendLen;
 		
 		LOG_DEBUG(ELOG_KEY, "[system] send message len: %d, fd(%d)", iMsgLen, mSocket->FD());
@@ -179,10 +168,8 @@ int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 		iRecvLen += iSize;
 		if ((iSize == 0) || (iRecvLen < iCmdMsgLen))
 		{
-			if (iTryCount-- < 0)
-			{
-				break;
-			}
+			if (iTryCount-- < 0) break;
+			
 			usleep(iSleep);
 			continue;
 		}

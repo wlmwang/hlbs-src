@@ -4,14 +4,15 @@
 # Copyright (C) Hupu, Inc.
 ###############################
 
-CXXFLAGS=-std=c++11 -O1 -fno-ident -Wall -Wno-invalid-offsetof
+CXX=g++
+CXXFLAGS=-std=c++11 -O3 -Wall -Wno-invalid-offsetof
 LDFLAGS=
 
 AR=ar rc
 RANLIB=ranlib
 
 BASEPATH=../../base
-COMMPATH=./command
+COMMPATH=../command
 INCPATH=-I./$(BASEPATH) -I./$(COMMPATH)
 LDPATH=
 

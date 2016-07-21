@@ -5,12 +5,12 @@
 ###############################
 
 CXX=g++
-CXXFLAGS=-g -std=c++11 -Wall -Wno-invalid-offsetof
-LDFLAGS=-L/usr/local/lib -lagent_api -llog4cpp -lpthread #-static
+CXXFLAGS=-std=c++11 -O3 -Wall -Wno-invalid-offsetof
+LDFLAGS=-lagent_api #-static
 
 BASEPATH=../../../base
-COMMPATH=../command
-INCPATH=-I./$(BASEPATH) -I./$(COMMPATH) -I../ -L/usr/local/include/log4cpp
+COMMPATH=../../command
+INCPATH=-I./$(BASEPATH) -I./$(COMMPATH) -I../
 
 TARGET=agent_test
 
@@ -20,7 +20,7 @@ $(TARGET): $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
 
 .PHONY:all
-all: $(TARGET)
+	all: $(TARGET)
 
 %.o:%.cpp
 	$(CXX) $(CXXFLAGS) $(INCPATH) -c $< -o $@

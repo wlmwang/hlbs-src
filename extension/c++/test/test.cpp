@@ -13,19 +13,26 @@ int GPSvr()
 	stSvr.mXid = 2;
 
 	string s;
-	cout << "res:" << QueryNode(stSvr, 30, s) << endl;
-	cout << "host:" << stSvr.mHost << endl;
-	cout << "port:" << stSvr.mPort << endl;
-
-	if (stSvr.mHost[0] != 0 && stSvr.mPort > 0)
+	int iRet = QueryNode(stSvr, 30, s);
+	
+	if (iRet >= 0)
 	{
-		cout << "res:" << NotifyCallerRes(stSvr, 0, 2000, s) << endl;
+		cout << "res:" <<  << endl;
+		cout << "host:" << stSvr.mHost << endl;
+		cout << "port:" << stSvr.mPort << endl;
+		return NotifyCallerRes(stSvr, 0, 2000, s);
 	}
-	return 0;
+	return -1;
 }
 
 int main(int argc, char *argv[])
 {
-	GPSvr();
+	int errnum = 0;
+	for (int i = 0; i < 1; i++)
+	{
+		if (GPSvr() < 0) errnum++;
+	}
+	cout << "errnum" << errnum << endl;
+
 	return 0;
 }
