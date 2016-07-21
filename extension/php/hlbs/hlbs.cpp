@@ -19,20 +19,6 @@
 /* $Id$ */
 
 //modify
-
-/*
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <iostream>
-#include <string>
-*/
-
-#include "wCore.h"
-#include "Common.h"
-#include "Svr.h"
-#include "SvrCmd.h"
 #include "agent_api.h"
 
 #ifdef HAVE_CONFIG_H

@@ -12,8 +12,8 @@
 ROOTPATH=\"/usr/local/webserver/hlbs/agentserver/bin\"
 
 CXX=g++
-CXXFLAGS=-std=c++11 -O -Wall -Wno-invalid-offsetof -DPREFIX=$(ROOTPATH) -DUSE_LOG4CPP -DLINUX -D_DEBUG_ #-D_MEM_CHECK
-LDFLAGS=-lpthread -ltinyxml -llog4cpp -L/usr/local/lib
+CXXFLAGS=-std=c++11 -O1 -Wall -Wno-invalid-offsetof -DUSE_LOG4CPP -DLINUX -DPREFIX=$(ROOTPATH) -D_DEBUG_ #-D_MEM_CHECK
+LDFLAGS=-L./$(LDPATH)/tinyxml -L/usr/local/lib -ltinyxml -llog4cpp -lpthread -static
 
 BASEPATH=../base
 COMMPATH=../command
@@ -57,7 +57,7 @@ TARGET=agentsvrd
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	$(CXX) -o $@ $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 %.o:%.cpp
 	$(CXX) $(CXXFLAGS) $(INCPATH) -c $< -o $@

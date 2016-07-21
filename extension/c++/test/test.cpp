@@ -1,5 +1,9 @@
 
-#include "wCore.h"
+/**
+ * Copyright (C) Anny Wang.
+ * Copyright (C) Hupu, Inc.
+ */
+
 #include "agent_api.h"
 
 int GPSvr()
@@ -17,11 +21,11 @@ int GPSvr()
 	{
 		cout << "res:" << NotifyCallerRes(stSvr, 0, 2000, s) << endl;
 	}
+	return 0;
 }
 
 int main(int argc, char *argv[])
 {
-	(ConnectAgent() >= 0) && GPSvr();
-	CloseAgent();
+	GPSvr();
 	return 0;
 }

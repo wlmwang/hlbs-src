@@ -175,7 +175,7 @@ int InitDaemon(const char *filename, const char *prefix)
 	}
 	else
 	{
-		memcpy(dir_path, prefix, strlen(PREFIX) + 1);
+		memcpy(dir_path, prefix, strlen(prefix) + 1);
 	}
 
 	//切换工作目录
