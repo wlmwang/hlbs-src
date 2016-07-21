@@ -1,17 +1,15 @@
 # 安装PHP扩展
 
 ```
-$ cd /usr/local/hlbs/extension/c++
-$ make dir
-$ make
+$ cd /usr/local/webserver/hlbs/extension/c++
+$ make all
 $ make install
 $ ldconfig
 
 $ cd /usr/local/src/php-5.5.16/ext 	#php源码目录
 $ ./ext_skel --extname=hlbs
 $ cd hlbs
-$ cp –r /usr/local/hlbs/extension/php/hlbs/* .
-$ cp –r /usr/local/hlbs/extension/c++ .
+$ cp –r /usr/local/webserver/hlbs/extension/php/hlbs/* .
 $ /usr/local/php/bin/phpize		#php安装目录
 $./configure --with-php-config=/usr/local/php/bin/php-config
 $ make
@@ -26,5 +24,5 @@ $ /usr/local/php/bin/php –m |grep hlbs	#查看是否安装成功
 # 测试
 
 ```
-$ cp /usr/local/hlbs/extension/php/test.php /data/www #修改文件test.php，测试结果
+$ cp /usr/local/webserver/hlbs/extension/php/test.php /data/www #修改文件test.php，测试结果
 ```
