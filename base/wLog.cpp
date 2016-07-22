@@ -97,7 +97,6 @@ int ReInitLog(const char* vLogName, LogLevel vPriority/*日志等级*/,unsigned 
 	return 0;
 }
 
-
 int ShutdownAllLog()
 {
 
@@ -108,7 +107,7 @@ int ShutdownAllLog()
 	return 0;
 }
 
-int log(const char* vLogName, int vPriority, const char* vFmt, ... )
+int Log(const char* vLogName, int vPriority, const char* vFmt, ... )
 {
 
 #ifdef USE_LOG4CPP
@@ -132,7 +131,6 @@ int log(const char* vLogName, int vPriority, const char* vFmt, ... )
 
 	return 0;
 }
-
 
 int LogDebug(const char* vLogName, const char* vFmt, ... )
 {
@@ -158,7 +156,6 @@ int LogDebug(const char* vLogName, const char* vFmt, ... )
 
 	return 0;	
 }
-
 
 int LogInfo(const char* vLogName, const char* vFmt, ... )
 {
@@ -260,8 +257,6 @@ int LogError(const char* vLogName, const char* vFmt, ... )
 	return 0;	
 }
 
-
-
 int LogFatal(const char* vLogName, const char* vFmt, ... )
 {
 
@@ -287,7 +282,6 @@ int LogFatal(const char* vLogName, const char* vFmt, ... )
 	return 0;	
 }
 
-
 int LogDebug_va(const char* vLogName, const char* vFmt, va_list ap)
 {
 
@@ -308,7 +302,6 @@ int LogDebug_va(const char* vLogName, const char* vFmt, va_list ap)
 
 	return 0;
 }
-
 
 int LogNotice_va(const char* vLogName, const char* vFmt, va_list ap)
 {
@@ -352,7 +345,6 @@ int LogInfo_va(const char* vLogName, const char* vFmt, va_list ap)
 	return 0;
 }
 
-
 int LogWarn_va(const char* vLogName, const char* vFmt, va_list ap)
 {
 
@@ -373,7 +365,6 @@ int LogWarn_va(const char* vLogName, const char* vFmt, va_list ap)
 
 	return 0;
 }
-
 
 int LogError_va(const char* vLogName, const char* vFmt, va_list ap)
 {
@@ -417,8 +408,7 @@ int LogFatal_va(const char* vLogName, const char* vFmt, va_list ap)
 	return 0;
 }
 
-
-int log_va(const char* vLogName, int vPriority, const char* vFmt, va_list ap)
+int Log_va(const char* vLogName, int vPriority, const char* vFmt, va_list ap)
 {
 
 #ifdef USE_LOG4CPP
@@ -438,7 +428,6 @@ int log_va(const char* vLogName, int vPriority, const char* vFmt, va_list ap)
 
 	return 0;
 }
-
 
 void Log_bin(const char* vLogName, void* vBin, int vBinLen)
 {

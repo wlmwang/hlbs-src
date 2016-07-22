@@ -10,7 +10,7 @@
 #include <stdarg.h>
 #include "wCore.h"
 
-//error log
+//default errorlog
 #define ELOG_KEY	"error"
 #define ELOG_FILE	"log/error.log"
 #define ELOG_FSIZE  10 * 1024 * 1024
@@ -21,34 +21,37 @@
  * 日志系统开关
  */
 #ifdef USE_LOG4CPP
-#	define INIT_ROLLINGFILE_LOG		InitLog					//初始化一种日志类型（基于回卷文件)
-#	define LOG_SHUTDOWN_ALL			ShutdownAllLog()		//关闭所有类型日志
+#	define	INIT_ROLLINGFILE_LOG(vLogName, vLogDir, vPriority, vMaxFileSize, vMaxBackupIndex, vAppend)	\	//初始化一种日志类型（基于回卷文件)
+			InitLog(vLogName, vLogDir, vPriority, vMaxFileSize, vMaxBackupIndex, vAppend)
+#	define	RE_INIT_LOG(vLogName, vPriority, vMaxFileSize, vMaxBackupIndex) \
+			ReInitLog(vLogName, vPriority, vMaxFileSize, vMaxBackupIndex)
+#	define 	LOG(vLogName, vPriority, vFmt, ... ) \
+			Log(vLogName, vPriority, vFmt, __VA_ARGS__)
 
 #ifdef _DEBUG_
-#	define LOG_DEBUG				LogDebug
+#	define 	LOG_DEBUG(vLogName, vFmt, ...)	LogDebug(vLogName, vFmt, __VA_ARGS__)
 #else
-#	define LOG_DEBUG				
+#	define	LOG_DEBUG(vLogName, vFmt, ...)
 #endif
 
-#	define LOG_NOTICE				LogNotice
-#	define LOG_INFO					LogInfo
-#	define LOG_WARN					LogWarn
-#	define LOG_ERROR				LogError
-#	define LOG_FATAL				LogFatal
-#	define LOG						Log
-#	define RE_INIT_LOG				ReInitLog
+#	define 	LOG_NOTICE(vLogName, vFmt, ...)	LogNotice(vLogName, vFmt, __VA_ARGS__)
+#	define 	LOG_INFO(vLogName, vFmt, ...)	LogInfo(vLogName, vFmt, __VA_ARGS__)
+#	define 	LOG_WARN(vLogName, vFmt, ...)	LogWarn(vLogName, vFmt, __VA_ARGS__)
+#	define 	LOG_ERROR(vLogName, vFmt, ...)	LogError(vLogName, vFmt, __VA_ARGS__)
+#	define 	LOG_FATAL(vLogName, vFmt, ...)	LogFatal(vLogName, vFmt, __VA_ARGS__)
+#	define 	LOG_SHUTDOWN_ALL()	ShutdownAllLog()	//关闭所有类型日志
 
 #else
-#	define INIT_ROLLINGFILE_LOG	
-#	define LOG_SHUTDOWN_ALL		
-#	define LOG_DEBUG
-#	define LOG_NOTICE
-#	define LOG_INFO	
-#	define LOG_WARN
-#	define LOG_ERROR
-#	define LOG_FATAL
-#	define LOG
-#	define RE_INIT_LOG
+#	define 	INIT_ROLLINGFILE_LOG(vLogName, vLogDir, vPriority, vMaxFileSize, vMaxBackupIndex, vAppend)
+#	define 	RE_INIT_LOG(vLogName, vPriority, vMaxFileSize, vMaxBackupIndex)
+#	define 	LOG(vLogName, vPriority, vFmt, ... )
+#	define 	LOG_DEBUG(vLogName, vFmt, ...)
+#	define 	LOG_NOTICE(vLogName, vFmt, ...)
+#	define 	LOG_INFO(vLogName, vFmt, ...)
+#	define 	LOG_WARN(vLogName, vFmt, ...)
+#	define 	LOG_ERROR(vLogName, vFmt, ...)
+#	define 	LOG_FATAL(vLogName, vFmt, ...)
+#	define 	LOG_SHUTDOWN_ALL()
 #endif
 
 //日志等级
@@ -66,16 +69,16 @@ enum LogLevel
 
 //初始化一种类型的日志：如果该类型日志已存在，
 //则重新初始化，如果不存在，则创建。
-int InitLog(const char*	vLogName,						/*日志类型的名称(关键字,由此定位到日志文件)*/
+int InitLog(const char*	 	vLogName,						/*日志类型的名称(关键字,由此定位到日志文件)*/
 			const char*		vLogDir,						/*文件名称(路径)*/
-			LogLevel		vPriority = LEVEL_NOTSET,		/*日志等级*/
-			unsigned int	vMaxFileSize = 10*1024*1024,	/*回卷文件最大长度*/
-			unsigned int	vMaxBackupIndex = 1,			/*回卷文件个数*/
-			bool			vAppend = true);				/*是否截断(默认即可)*/
+			LogLevel	 	vPriority = LEVEL_NOTSET,		/*日志等级*/
+			unsigned int 	vMaxFileSize = 10*1024*1024,	/*回卷文件最大长度*/
+			unsigned int 	vMaxBackupIndex = 1,			/*回卷文件个数*/
+			bool		 	vAppend = true);				/*是否截断(默认即可)*/
 
 //重新给已存在的日志赋值，
 //但是不能改变日志的名称，以及定位的文件。
-int ReInitLog(const char* vLogName, 
+int ReInitLog(const char* 	vLogName, 
 			  LogLevel		vPriority = LEVEL_NOTSET,		/*日志等级*/
 			  unsigned int	vMaxFileSize = 10*1024*1024,	/*回卷文件最大长度*/
 			  unsigned int	vMaxBackupIndex = 1);			/*回卷文件个数*/
@@ -91,7 +94,7 @@ int LogNotice(const char* vLogName, const char* vFmt, ... );
 int LogWarn(const char* vLogName, const char* vFmt, ... );
 int LogError(const char* vLogName, const char* vFmt, ... );
 int LogFatal(const char* vLogName, const char* vFmt, ... );
-int log(const char* vLogName, int vPriority, const char* vFmt, ... );
+int Log(const char* vLogName, int vPriority, const char* vFmt, ... );
 
 void Log_bin(const char* vLogName, void* vBin, int vBinLen );
 
@@ -101,6 +104,6 @@ int LogInfo_va(const char* vLogName, const char* vFmt, va_list ap );
 int LogWarn_va(const char* vLogName, const char* vFmt, va_list ap );
 int LogError_va(const char* vLogName, const char* vFmt, va_list ap );
 int LogFatal_va(const char* vLogName, const char* vFmt, va_list ap );
-int log_va(const char* vLogName, int vPriority, const char* vFmt, va_list ap );
+int Log_va(const char* vLogName, int vPriority, const char* vFmt, va_list ap );
 
 #endif

@@ -6,7 +6,8 @@
 
 #
 # Makefile
-# 需要预先编译lib目录下的log4cpp|tinyxml软件包
+# 动态链接所需库，需.so文件安装到ldconfig加载路径中(/usr/local/lib)
+# 需要预先编译lib目录下的log4cpp、tinyxml软件包
 #
 
 ROOTPATH=\"/usr/local/webserver/hlbs/routerserver/bin\"
@@ -14,7 +15,6 @@ ROOTPATH=\"/usr/local/webserver/hlbs/routerserver/bin\"
 CXX=g++
 CXXFLAGS=-std=c++11 -O3 -Wall -Wno-invalid-offsetof -DPREFIX=$(ROOTPATH) -DUSE_LOG4CPP -DLINUX -D_DEBUG_ #-D_MEM_CHECK
 LDFLAGS=-L/usr/local/lib -ltinyxml -llog4cpp -lpthread
-#LDFLAGS=-L./$(LDPATH)/tinyxml -L/usr/local/lib -ltinyxml -llog4cpp -lpthread -static	#静态链接
 
 BASEPATH=../base
 COMMPATH=../command
