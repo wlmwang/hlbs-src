@@ -21,37 +21,34 @@
  * 日志系统开关
  */
 #ifdef USE_LOG4CPP
-#	define	INIT_ROLLINGFILE_LOG(vLogName, vLogDir, vPriority, vMaxFileSize, vMaxBackupIndex, vAppend)	\	//初始化一种日志类型（基于回卷文件)
-			InitLog(vLogName, vLogDir, vPriority, vMaxFileSize, vMaxBackupIndex, vAppend)
-#	define	RE_INIT_LOG(vLogName, vPriority, vMaxFileSize, vMaxBackupIndex) \
-			ReInitLog(vLogName, vPriority, vMaxFileSize, vMaxBackupIndex)
-#	define 	LOG(vLogName, vPriority, vFmt, ... ) \
-			Log(vLogName, vPriority, vFmt, __VA_ARGS__)
+#	define	INIT_ROLLINGFILE_LOG(vLogName, vLogDir, vPriority, ...)	InitLog(vLogName, vLogDir, vPriority, ##__VA_ARGS__)
+#	define	RE_INIT_LOG(vLogName, vPriority, ...)	ReInitLog(vLogName, vPriority, ##__VA_ARGS__)
+#	define 	LOG(vLogName, vPriority, vFmt, ...)	Log(vLogName, vPriority, vFmt, ##__VA_ARGS__)
 
 #ifdef _DEBUG_
-#	define 	LOG_DEBUG(vLogName, vFmt, ...)	LogDebug(vLogName, vFmt, __VA_ARGS__)
+#	define 	LOG_DEBUG(vLogName, vFmt, ...)	LogDebug(vLogName, vFmt, ##__VA_ARGS__)
 #else
 #	define	LOG_DEBUG(vLogName, vFmt, ...)
 #endif
 
-#	define 	LOG_NOTICE(vLogName, vFmt, ...)	LogNotice(vLogName, vFmt, __VA_ARGS__)
-#	define 	LOG_INFO(vLogName, vFmt, ...)	LogInfo(vLogName, vFmt, __VA_ARGS__)
-#	define 	LOG_WARN(vLogName, vFmt, ...)	LogWarn(vLogName, vFmt, __VA_ARGS__)
-#	define 	LOG_ERROR(vLogName, vFmt, ...)	LogError(vLogName, vFmt, __VA_ARGS__)
-#	define 	LOG_FATAL(vLogName, vFmt, ...)	LogFatal(vLogName, vFmt, __VA_ARGS__)
-#	define 	LOG_SHUTDOWN_ALL()	ShutdownAllLog()	//关闭所有类型日志
+#	define 	LOG_NOTICE(vLogName, vFmt, ...)	LogNotice(vLogName, vFmt, ##__VA_ARGS__)
+#	define 	LOG_INFO(vLogName, vFmt, ...)	LogInfo(vLogName, vFmt, ##__VA_ARGS__)
+#	define 	LOG_WARN(vLogName, vFmt, ...)	LogWarn(vLogName, vFmt, ##__VA_ARGS__)
+#	define 	LOG_ERROR(vLogName, vFmt, ...)	LogError(vLogName, vFmt, ##__VA_ARGS__)
+#	define 	LOG_FATAL(vLogName, vFmt, ...)	LogFatal(vLogName, vFmt, ##__VA_ARGS__)
+#	define 	LOG_SHUTDOWN_ALL	ShutdownAllLog()
 
 #else
-#	define 	INIT_ROLLINGFILE_LOG(vLogName, vLogDir, vPriority, vMaxFileSize, vMaxBackupIndex, vAppend)
-#	define 	RE_INIT_LOG(vLogName, vPriority, vMaxFileSize, vMaxBackupIndex)
-#	define 	LOG(vLogName, vPriority, vFmt, ... )
+#	define 	INIT_ROLLINGFILE_LOG(vLogName, vLogDir, vPriority, ...)
+#	define 	RE_INIT_LOG(vLogName, vPriority, ...)
+#	define 	LOG(vLogName, vPriority, vFmt, ...)
 #	define 	LOG_DEBUG(vLogName, vFmt, ...)
 #	define 	LOG_NOTICE(vLogName, vFmt, ...)
 #	define 	LOG_INFO(vLogName, vFmt, ...)
 #	define 	LOG_WARN(vLogName, vFmt, ...)
 #	define 	LOG_ERROR(vLogName, vFmt, ...)
 #	define 	LOG_FATAL(vLogName, vFmt, ...)
-#	define 	LOG_SHUTDOWN_ALL()
+#	define 	LOG_SHUTDOWN_ALL
 #endif
 
 //日志等级
