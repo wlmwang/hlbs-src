@@ -26,30 +26,30 @@ int wTask::TaskRecv()
 	if (iRecvLen <= 0) return iRecvLen;
 	mRecvBytes += iRecvLen;	
 
-	char *pBuffer = mRecvMsgBuff;	//´ÓÍ·¿ªÊ¼¶ÁÈ¡
-	int iBuffMsgLen = mRecvBytes;	//ÏûÏ¢×Ü×Ö½ÚÊı
+	char *pBuffer = mRecvMsgBuff;	//ä»å¤´å¼€å§‹è¯»å–
+	int iBuffMsgLen = mRecvBytes;	//æ¶ˆæ¯æ€»å­—èŠ‚æ•°
 	int iMsgLen = 0;
 	
 	while (true)
 	{
 		if ((size_t)iBuffMsgLen < sizeof(int)) break;
 
-		iMsgLen = *(int *)pBuffer;	//ÍêÕûÏûÏ¢Ìå³¤¶È
+		iMsgLen = *(int *)pBuffer;	//å®Œæ•´æ¶ˆæ¯ä½“é•¿åº¦
 
-		//ÅĞ¶ÏÏûÏ¢³¤¶È
+		//åˆ¤æ–­æ¶ˆæ¯é•¿åº¦
 		if ((iMsgLen < MIN_CLIENT_MSG_LEN) || (iMsgLen > MAX_CLIENT_MSG_LEN))
 		{
 			LOG_ERROR(ELOG_KEY, "[system] recv message invalid len: %d , fd(%d)", iMsgLen, mSocket->FD());
 			return ERR_MSGLEN;
 		}
 
-		iBuffMsgLen -= iMsgLen + sizeof(int);	//bufÖĞ³ıÈ¥µ±Ç°ÍêÕûÏûÏ¢Ê£ÓàÊı¾İ³¤¶È
-		pBuffer += iMsgLen + sizeof(int);		//Î»ÒÆµ½±¾ÌõÏûÏ¢½áÊøÎ»ÖÃµØÖ·
+		iBuffMsgLen -= iMsgLen + sizeof(int);	//bufä¸­é™¤å»å½“å‰å®Œæ•´æ¶ˆæ¯å‰©ä½™æ•°æ®é•¿åº¦
+		pBuffer += iMsgLen + sizeof(int);		//ä½ç§»åˆ°æœ¬æ¡æ¶ˆæ¯ç»“æŸä½ç½®åœ°å€
 		
-		//Ò»Ìõ²»ÍêÕûÏûÏ¢
+		//ä¸€æ¡ä¸å®Œæ•´æ¶ˆæ¯
 		if (iBuffMsgLen < 0)
 		{
-			//ÖØÖÃbuf±êÊ¶Î»£¬´ıÏÂ´ÎÑ­»·×ö×¼±¸
+			//é‡ç½®bufæ ‡è¯†ä½ï¼Œå¾…ä¸‹æ¬¡å¾ªç¯åšå‡†å¤‡
 			iBuffMsgLen += iMsgLen + sizeof(int);
 			pBuffer -= iMsgLen + sizeof(int);
 			
@@ -57,17 +57,17 @@ int wTask::TaskRecv()
 			break;
 		}
 		
-		//ÒµÎñÂß¼­
-		HandleRecvMessage(pBuffer - iMsgLen, iMsgLen);	//È¥³ı4×Ö½ÚÏûÏ¢³¤¶È±êÊ¶Î»
+		//ä¸šåŠ¡é€»è¾‘
+		HandleRecvMessage(pBuffer - iMsgLen, iMsgLen);	//å»é™¤4å­—èŠ‚æ¶ˆæ¯é•¿åº¦æ ‡è¯†ä½
 	}
 
-	if (iBuffMsgLen == 0) //»º³åÇøÎŞÊı¾İ
+	if (iBuffMsgLen == 0) //ç¼“å†²åŒºæ— æ•°æ®
 	{
 		mRecvBytes = 0;
 	}
 	else
 	{
-		//ÅĞ¶ÏÊ£ÓàµÄ³¤¶È
+		//åˆ¤æ–­å‰©ä½™çš„é•¿åº¦
 		if (iBuffMsgLen < 0)
 		{
 			LOG_ERROR(ELOG_KEY, "[system] the last msg len %d is impossible fd(%d)", iBuffMsgLen, mSocket->FD());
@@ -75,7 +75,7 @@ int wTask::TaskRecv()
 		}
 		
 		mRecvBytes = iBuffMsgLen;
-		memmove(mRecvMsgBuff, pBuffer, iBuffMsgLen);	//Çå³ıÒÑ´¦ÀíÏûÏ¢
+		memmove(mRecvMsgBuff, pBuffer, iBuffMsgLen);	//æ¸…é™¤å·²å¤„ç†æ¶ˆæ¯
 	}
 	
 	return iRecvLen;
@@ -100,7 +100,7 @@ int wTask::TaskSend()
 	
 	if (mSendBytes > 0)
 	{
-		memmove(mSendMsgBuff, mSendMsgBuff + mSendBytes, mSendWrite - mSendBytes);	//Çå³ıÒÑ´¦ÀíÏûÏ¢
+		memmove(mSendMsgBuff, mSendMsgBuff + mSendBytes, mSendWrite - mSendBytes);	//æ¸…é™¤å·²å¤„ç†æ¶ˆæ¯
 		mSendWrite -= mSendBytes;
 		mSendBytes = 0;
 	}
@@ -109,7 +109,7 @@ int wTask::TaskSend()
 
 int wTask::Send2Buf(const char *pCmd, int iLen)
 {
-	//ÅĞ¶ÏÏûÏ¢³¤¶È
+	//åˆ¤æ–­æ¶ˆæ¯é•¿åº¦
 	if ((iLen <= MIN_CLIENT_MSG_LEN) || (iLen > MAX_CLIENT_MSG_LEN))
 	{
 		LOG_ERROR(ELOG_KEY, "[system] write message invalid len %d, fd(%d)", iLen, mSocket->FD());
@@ -117,14 +117,14 @@ int wTask::Send2Buf(const char *pCmd, int iLen)
 	}
 	
 	int iMsgLen = iLen + sizeof(int);
-	if ((int)(sizeof(mSendMsgBuff) - mSendWrite + mSendBytes) < iMsgLen) //Ê£Óà¿Õ¼ä²»×ã
+	if ((int)(sizeof(mSendMsgBuff) - mSendWrite + mSendBytes) < iMsgLen) //å‰©ä½™ç©ºé—´ä¸è¶³
 	{
 		LOG_ERROR(ELOG_KEY, "[system] send buf not enough. send(%d) need(%d)", sizeof(mSendMsgBuff) - mSendWrite + mSendBytes, iMsgLen);
 		return -2;
 	}
-	else if ((int)(sizeof(mSendMsgBuff) - mSendWrite) < iMsgLen) //Ğ´Èë¿Õ¼ä²»×ã
+	else if ((int)(sizeof(mSendMsgBuff) - mSendWrite) < iMsgLen) //å†™å…¥ç©ºé—´ä¸è¶³
 	{
-		memmove(mSendMsgBuff, mSendMsgBuff + mSendBytes, mSendWrite - mSendBytes);	//Çå³ıÒÑ´¦ÀíÏûÏ¢
+		memmove(mSendMsgBuff, mSendMsgBuff + mSendBytes, mSendWrite - mSendBytes);	//æ¸…é™¤å·²å¤„ç†æ¶ˆæ¯
 		mSendWrite -= mSendBytes;
 		mSendBytes = 0;
 	}
@@ -140,7 +140,7 @@ int wTask::Send2Buf(const char *pCmd, int iLen)
 
 int wTask::SyncSend(const char *pCmd, int iLen)
 {
-	//ÅĞ¶ÏÏûÏ¢³¤¶È
+	//åˆ¤æ–­æ¶ˆæ¯é•¿åº¦
 	if ((iLen < MIN_CLIENT_MSG_LEN) || (iLen > MAX_CLIENT_MSG_LEN))
 	{
 		LOG_ERROR(ELOG_KEY, "[system] send message invalid len %d, fd(%d)", iLen, mSocket->FD());
@@ -174,7 +174,7 @@ int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 			continue;
 		}
 
-		pTmpCmd = (struct wCommand*) (mTmpRecvMsgBuff + sizeof(int));	//ĞÄÌø°ü¿ÉÄÜ³öÏÖÔÚ¿ªÍ·
+		pTmpCmd = (struct wCommand*) (mTmpRecvMsgBuff + sizeof(int));	//å¿ƒè·³åŒ…å¯èƒ½å‡ºç°åœ¨å¼€å¤´
 		if (pTmpCmd != NULL && pTmpCmd->GetCmd() == CMD_NULL && pTmpCmd->GetPara() == PARA_NULL)
 		{
 			iRecvLen -= iCmdMsgLen;
@@ -196,7 +196,7 @@ int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
 		return ERR_MSGLEN;
 	}
 
-	if (iMsgLen > (int)(iRecvLen - sizeof(int)))	//ÏûÏ¢²»ÍêÕû
+	if (iMsgLen > (int)(iRecvLen - sizeof(int)))	//æ¶ˆæ¯ä¸å®Œæ•´
 	{
 		LOG_DEBUG(ELOG_KEY, "[system] sync recv a part of message: real len = %d, now len = %d, call len = %d", iMsgLen, iRecvLen, iLen);
 		return ERR_MSGLEN;

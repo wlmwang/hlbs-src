@@ -12,7 +12,7 @@
 
 #pragma pack(1)
 
-//++++++++++++ÇëÇóÊı¾İ½á¹¹
+//++++++++++++è¯·æ±‚æ•°æ®ç»“æ„
 const BYTE CMD_CHANNEL_REQ = 10;
 struct ChannelReqCmd_s : public wCommand
 {
@@ -26,9 +26,9 @@ struct ChannelReqCmd_s : public wCommand
 		mFD = -1;
 	}
 	
-	int mPid;	//·¢ËÍ·½½ø³Ìid
-	int mSlot;	//·¢ËÍ·½½ø³Ì±íÖĞÆ«ÒÆ(ÏÂ±ê)
-	int mFD;	//·¢ËÍ·½ch[0]ÃèÊö·û
+	int mPid;	//å‘é€æ–¹è¿›ç¨‹id
+	int mSlot;	//å‘é€æ–¹è¿›ç¨‹è¡¨ä¸­åç§»(ä¸‹æ ‡)
+	int mFD;	//å‘é€æ–¹ch[0]æè¿°ç¬¦
 };
 
 const BYTE CHANNEL_REQ_OPEN = 1;

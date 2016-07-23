@@ -13,16 +13,16 @@
 #include "wNoncopyable.h"
 
 /**
- *  内存映射
+ *  鍐呭瓨鏄犲皠
  */
 class wMmap : private wNoncopyable
 {
 	public:
 		/**
-		 *  mmap必须以PAGE_SIZE为单位进行映射，而内存也只能以页为单位进行映射，
-		 *  若要映射非PAGE_SIZE整数倍的地址范围，要先进行内存对齐，强行以PAGE_SIZE的倍数大小进行映射
+		 *  mmap蹇呴』浠AGE_SIZE涓哄崟浣嶈繘琛屾槧灏勶紝鑰屽唴瀛樹篃鍙兘浠ラ〉涓哄崟浣嶈繘琛屾槧灏勶紝
+		 *  鑻ヨ鏄犲皠闈濸AGE_SIZE鏁存暟鍊嶇殑鍦板潃鑼冨洿锛岃鍏堣繘琛屽唴瀛樺榻愶紝寮鸿浠AGE_SIZE鐨勫�嶆暟澶у皬杩涜鏄犲皠
 		 *  
-		 *  fd = -1 & flags = MAP_ANONYMOUS 匿名映射，只用于具有亲缘关系的进程间通信
+		 *  fd = -1 & flags = MAP_ANONYMOUS 鍖垮悕鏄犲皠锛屽彧鐢ㄤ簬鍏锋湁浜茬紭鍏崇郴鐨勮繘绋嬮棿閫氫俊
 		 */
 		wMmap(const char *filename, int flags = MAP_SHARED, size_t length = 0, int prot = PROT_READ| PROT_WRITE,  off_t offset = 0, void *start = NULL) 
 		{

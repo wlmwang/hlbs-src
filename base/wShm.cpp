@@ -45,10 +45,10 @@ char *wShm::CreateShm()
 		return NULL;
 	}
 
-	//ÉêÇë¹²ÏíÄÚ´æ
+	//ç”³è¯·å…±äº«å†…å­˜
 	mShmId = shmget(mKey, mSize, IPC_CREAT| IPC_EXCL| 0666);
 	
-	//Èç¹ûÉêÇëÄÚ´æÊ§°Ü
+	//å¦‚æœç”³è¯·å†…å­˜å¤±è´¥
 	if (mShmId < 0) 
 	{
 		if (errno != EEXIST) 
@@ -59,18 +59,18 @@ char *wShm::CreateShm()
 
 		LOG_DEBUG(ELOG_KEY, "[system] share memory is exist now, try to attach it");
 
-		//Èç¹û¸ÃÄÚ´æÒÑ¾­±»ÉêÇë£¬ÔòÉêÇë·ÃÎÊ¿ØÖÆËü
+		//å¦‚æœè¯¥å†…å­˜å·²ç»è¢«ç”³è¯·ï¼Œåˆ™ç”³è¯·è®¿é—®æ§åˆ¶å®ƒ
 		mShmId = shmget(mKey, mSize, 0666);
 
-		//Èç¹ûÊ§°Ü
+		//å¦‚æœå¤±è´¥
 		if (mShmId < 0) 
 		{
 			LOG_DEBUG(ELOG_KEY, "[system] attach to share memory failed: %s, try to touch it", strerror(errno));
 			
-			//²Â²âÊÇ·ñÊÇ¸ÃÄÚ´æ´óĞ¡Ì«Ğ¡£¬ÏÈ»ñÈ¡ÄÚ´æID
+			//çŒœæµ‹æ˜¯å¦æ˜¯è¯¥å†…å­˜å¤§å°å¤ªå°ï¼Œå…ˆè·å–å†…å­˜ID
 			mShmId = shmget(mKey, 0, 0666);
 			
-			//Èç¹ûÊ§°Ü£¬ÔòÎŞ·¨²Ù×÷¸ÃÄÚ´æ£¬Ö»ÄÜÍË³ö
+			//å¦‚æœå¤±è´¥ï¼Œåˆ™æ— æ³•æ“ä½œè¯¥å†…å­˜ï¼Œåªèƒ½é€€å‡º
 			if (mShmId < 0) 
 			{
 				LOG_ERROR(ELOG_KEY, "[system] touch to share memory failed: %s", strerror(errno));
@@ -80,14 +80,14 @@ char *wShm::CreateShm()
 			{
 				LOG_DEBUG(ELOG_KEY, "[system] remove the exist share memory %d", mShmId);
 
-				//Èç¹û³É¹¦£¬ÔòÏÈÉ¾³ıÔ­ÄÚ´æ
+				//å¦‚æœæˆåŠŸï¼Œåˆ™å…ˆåˆ é™¤åŸå†…å­˜
 				if (shmctl(mShmId, IPC_RMID, NULL) < 0) 
 				{
 					LOG_ERROR(ELOG_KEY, "[system] remove share memory failed: %s", strerror(errno));
 					return 0;
 				}
 
-				//ÔÙ´ÎÉêÇë¸ÃIDµÄÄÚ´æ
+				//å†æ¬¡ç”³è¯·è¯¥IDçš„å†…å­˜
 				mShmId = shmget(mKey, mSize, IPC_CREAT|IPC_EXCL|0666);
 				if (mShmId < 0) 
 				{
@@ -111,7 +111,7 @@ char *wShm::CreateShm()
 		return 0;
     }
 
-    //shmÍ·
+    //shmå¤´
 	mShmhead = (struct shmhead_t*) pAddr;
 	mShmhead->mStart = pAddr;
 	mShmhead->mEnd = pAddr + mSize;
@@ -123,7 +123,7 @@ char *wShm::AttachShm()
 {
 	LOG_DEBUG(ELOG_KEY, "[system] try to attach %lld bytes of share memory", mSize);
 	
-	//°ÑĞèÒªÉêÇë¹²ÏíÄÚ´æµÄkeyÖµÉêÇë³öÀ´
+	//æŠŠéœ€è¦ç”³è¯·å…±äº«å†…å­˜çš„keyå€¼ç”³è¯·å‡ºæ¥
 	mKey = ftok(mFilename, mPipeId);
 	if (mKey < 0) 
 	{
@@ -131,7 +131,7 @@ char *wShm::AttachShm()
 		return 0;
 	}
 
-	// ³¢ÊÔ»ñÈ¡
+	// å°è¯•è·å–
 	int mShmId = shmget(mKey, mSize, 0666);
 	if(mShmId < 0) 
 	{
@@ -146,7 +146,7 @@ char *wShm::AttachShm()
 		return 0;
     }
 	
-    //shmÍ·
+    //shmå¤´
 	mShmhead = (struct shmhead_t*) pAddr;
 	return mShmhead->mUsedOff;
 }
@@ -180,13 +180,13 @@ void wShm::FreeShm()
 		return;
 	}
 
-	//¶Ô¹²Ïí²Ù×÷½áÊø£¬·ÖÀë¸Ãshmid_dsÓë¸Ã½ø³Ì¹ØÁª¼ÆÊıÆ÷
+	//å¯¹å…±äº«æ“ä½œç»“æŸï¼Œåˆ†ç¦»è¯¥shmid_dsä¸è¯¥è¿›ç¨‹å…³è”è®¡æ•°å™¨
     if (shmdt(mShmhead->mStart) == -1)
 	{
 		LOG_ERROR(ELOG_KEY, "[system] shmdt(%d) failed", mShmhead->mStart);
     }
 	
-	//É¾³ı¸Ãshmid_ds¹²Ïí´æ´¢¶Î£¨È«²¿½ø³Ì½áÊø²Å»áÕæÕıÉ¾³ı£©
+	//åˆ é™¤è¯¥shmid_dså…±äº«å­˜å‚¨æ®µï¼ˆå…¨éƒ¨è¿›ç¨‹ç»“æŸæ‰ä¼šçœŸæ­£åˆ é™¤ï¼‰
     if (shmctl(mShmId, IPC_RMID, NULL) == -1)
 	{
 		LOG_ERROR(ELOG_KEY, "[system] remove share memory failed: %s", strerror(errno));

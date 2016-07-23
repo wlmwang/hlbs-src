@@ -33,9 +33,9 @@ class wMemPool : private wNoncopyable
 		void Reset();
 		
 	protected:
-		char	*mStart {NULL}; //起始地址
-		char	*mLast {NULL};	//已分配到的地址
-		char	*mEnd {NULL};	//结束地址
+		char	*mStart {NULL}; //璧峰鍦板潃
+		char	*mLast {NULL};	//宸插垎閰嶅埌鐨勫湴鍧�
+		char	*mEnd {NULL};	//缁撴潫鍦板潃
 		int		mSize {0};
 		struct extra_t *mExtra {NULL};
 };

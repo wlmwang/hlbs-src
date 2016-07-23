@@ -47,9 +47,9 @@ class DetectThread : public wThread, public wSingleton<DetectThread>
 
 		wMutex *mDetectMutex {NULL};
 		wMutex *mResultMutex {NULL};
-		map<struct DetectNode_t, struct DetectResult_t> mDetectMapAll;		//¼ì²â¶ÓÁĞ
-		map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewadd;	//ĞÂ¼ÓÈëµÄ,ÓÅÏÈÌ½²â
-		map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewdel;	//ĞÂÉ¾³ıµÄ,ÓÅÏÈÌ½²â
+		map<struct DetectNode_t, struct DetectResult_t> mDetectMapAll;		//æ£€æµ‹é˜Ÿåˆ—
+		map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewadd;	//æ–°åŠ å…¥çš„,ä¼˜å…ˆæ¢æµ‹
+		map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewdel;	//æ–°åˆ é™¤çš„,ä¼˜å…ˆæ¢æµ‹
 };
 
 #endif
