@@ -17,10 +17,11 @@
 class wTask : private wNoncopyable
 {
 	public:
-		wTask() {}
-		wTask(wSocket *pSocket) : mSocket(pSocket) {}
+		wTask();
+		wTask(wSocket *pSocket);
 		virtual ~wTask();
-
+                void Initialize();
+                
 		wSocket *Socket() { return mSocket;}
 		TASK_STATUS &Status() { return mStatus;}
 		bool IsRunning() { return mStatus == TASK_RUNNING;}
@@ -35,9 +36,9 @@ class wTask : private wNoncopyable
 		virtual int ClearbeatOutTimes() { return mHeartbeatTimes = 0; }
 		/**
 		 *  处理接受到数据
-		 *  每条消息大小[2b,128k)
+		 *  每条消息大小[2b,512k)
 		 *  核心逻辑：接受整条消息，然后进入用户定义的业务函数HandleRecvMessage
-		 *  return ：<0 对端发生错误|消息超长 =0 对端关闭(FIN_WAIT1) >0 接受字符
+		 *  return ：<0 对端发生错误|消息超长|对端关闭(FIN_WAIT) =0 稍后重试 >0 接受字符
 		 */
 		virtual int TaskRecv();
 		virtual int TaskSend();
@@ -65,24 +66,27 @@ class wTask : private wNoncopyable
 		 *  同步接受确切长度消息(需保证此sock未加入epoll中，防止出现竞争！！)
 		 *  确保pCmd有足够长的空间接受自此同步消息
 		 */
-		int SyncRecv(char *pCmd, int iLen, int iTimeout = 10/*s*/);
+		int SyncRecv(char vCmd[], int iLen, int iTimeout = 10/*s*/);
 		
 	protected:
 		wSocket	*mSocket {NULL};
 		TASK_STATUS mStatus {TASK_INIT};
 		int mHeartbeatTimes {0};
 		
-		//接收消息的缓冲区 32M
-		int mRecvBytes {0};	//接收的字节数
-		char mRecvMsgBuff[MAX_RECV_BUFFER_LEN] {'\0'};	
-		
-		//发送消息时的临时缓冲区 32M
-		int mSendBytes {0};						//已发送字节数（发送线程更新）
-		int mSendWrite {0};						//发送缓冲被写入字节数（写入线程更新）
-		char mSendMsgBuff[MAX_SEND_BUFFER_LEN] {'\0'};
-		
-		char mTmpSendMsgBuff[MAX_CLIENT_MSG_LEN + sizeof(int)] {'\0'};	//同步发送，临时缓冲区
-		char mTmpRecvMsgBuff[MAX_CLIENT_MSG_LEN + sizeof(int)] {'\0'};	//同步接受，临时缓冲区
+		//临时缓冲区
+                char mTmpBuff[MSG_BUFF_LEN] {'\0'};
+                
+                //接收消息的缓冲区 512K
+                char mRecvBuff[MSG_BUFF_LEN] {'\0'};
+                char *mRecvWrite {NULL};
+                char *mRecvRead {NULL};
+                int  mRecvLen {0}; //已接收数据长度
+                
+                //接收消息的缓冲区 512K
+                char mSendBuff[MSG_BUFF_LEN] {'\0'};
+                char *mSendWrite {NULL};
+                char *mSendRead {NULL};
+                int  mSendLen {0};  //可发送数据长度
 };
 
 #endif
