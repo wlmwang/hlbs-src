@@ -120,7 +120,7 @@ int wUnixSocket::Connect(string sHost, unsigned int nPort, float fTimeout)
                 {
                     Close();
                     LOG_ERROR(ELOG_KEY, "[system] unix connect timeout millisecond=%d", iTimeout);
-                    return ERR_TIMEO;
+                    return ERR_TIMEOUT;
                 }
                 else
                 {

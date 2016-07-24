@@ -11,7 +11,7 @@ RouterConfig::RouterConfig()
 	mSvrQos = SvrQos::Instance();
 	mDoc = new TiXmlDocument();
 	mMemPool = new wMemPool();
-	mMemPool->Create(MEM_POOL_MAX);
+	mMemPool->Create(MEM_POOL_LEN);
 }
 
 RouterConfig::~RouterConfig()
