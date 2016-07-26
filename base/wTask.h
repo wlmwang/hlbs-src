@@ -49,7 +49,7 @@ class wTask : private wNoncopyable
 		/**
 		 * 发送缓冲区是否有数据
 		 */
-		int WritableLen() { return mSendWrite - mSendBytes;}
+		int WritableLen() { return mSendLen;}
 		/**
 		 *  将待发送客户端消息写入buf，等待TaskSend发送
 		 *  return 
@@ -74,19 +74,19 @@ class wTask : private wNoncopyable
 		int mHeartbeatTimes {0};
 		
 		//临时缓冲区
-                char mTmpBuff[MSG_BUFF_LEN] {'\0'};
-                
-                //接收消息的缓冲区 512K
-                char mRecvBuff[MSG_BUFF_LEN] {'\0'};
-                char *mRecvWrite {NULL};
-                char *mRecvRead {NULL};
-                int  mRecvLen {0}; //已接收数据长度
-                
-                //接收消息的缓冲区 512K
-                char mSendBuff[MSG_BUFF_LEN] {'\0'};
-                char *mSendWrite {NULL};
-                char *mSendRead {NULL};
-                int  mSendLen {0};  //可发送数据长度
+        char mTmpBuff[MSG_BUFF_LEN] {'\0'};
+        
+        //接收消息的缓冲区 512K
+        char mRecvBuff[MSG_BUFF_LEN] {'\0'};
+        char *mRecvWrite {NULL};
+        char *mRecvRead {NULL};
+        int  mRecvLen {0}; //已接收数据长度
+        
+        //接收消息的缓冲区 512K
+        char mSendBuff[MSG_BUFF_LEN] {'\0'};
+        char *mSendWrite {NULL};
+        char *mSendRead {NULL};
+        int  mSendLen {0};  //可发送数据长度
 };
 
 #endif

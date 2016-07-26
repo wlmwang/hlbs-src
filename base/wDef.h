@@ -48,14 +48,6 @@
 #define MAX_PACKAGE_LEN 524284  /* 512k-4 */
 #define MIN_PACKAGE_LEN 1
 
-
-//客户端消息主体大小限制
-#define MAX_CLIENT_MSG_LEN 131072   /* 128k */
-#define MIN_CLIENT_MSG_LEN 1
-//服务器之间的发送接收缓冲区大小限制
-#define MAX_SEND_BUFFER_LEN 524288 /* 512k */
-#define MAX_RECV_BUFFER_LEN 524288 /* 512k */
-
 //socket errno
 #define ERR_NOBUFF -96    //socket buf写满 
 #define ERR_TIMEOUT -97	//connect连接超时
@@ -76,13 +68,12 @@
 #define PROCESS_JUST_RESPAWN  -4    //子进程正在重启，该进程创建之后，再次退出时，父进程会重新创建它
 #define PROCESS_DETACHED      -5    //分离进程（热代码替换）
 
+#define PID_PATH		"../log/master.pid"
+#define LOCK_PATH		"../log/master.lock"
+#define ACCEPT_MUTEX	"../log/accept.mutex"	//worker惊群锁
 
 //#define USER  "nobody"
 //#define GROUP  "nobody"
-//#define PID_PATH  "../log/master.pid"
-//#define LOCK_PATH  "../log/master.lock"
-//#define ACCEPT_MUTEX	"../log/accept.mutex"	//worker惊群锁
-
 
 enum MASTER_STATUS
 {

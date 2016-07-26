@@ -14,19 +14,20 @@ int GPSvr()
 
 	string s;
 	int iRet = QueryNode(stSvr, 30, s);
+
+	cout << "ret:" << iRet << endl;
+	cout << "host:" << stSvr.mHost << endl;
+	cout << "port:" << stSvr.mPort << endl;
+
+	if (iRet >= 0)	return NotifyCallerRes(stSvr, 0, 2000, s);
 	
-	if (iRet >= 0)
-	{
-		cout << "res:" <<  << endl;
-		cout << "host:" << stSvr.mHost << endl;
-		cout << "port:" << stSvr.mPort << endl;
-		return NotifyCallerRes(stSvr, 0, 2000, s);
-	}
 	return -1;
 }
 
 int main(int argc, char *argv[])
 {
+	ConnectAgent();
+
 	int errnum = 0;
 	for (int i = 0; i < 1; i++)
 	{
@@ -34,5 +35,6 @@ int main(int argc, char *argv[])
 	}
 	cout << "errnum" << errnum << endl;
 
+	CloseAgent();
 	return 0;
 }

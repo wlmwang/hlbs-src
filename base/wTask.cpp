@@ -36,18 +36,20 @@ int wTask::Heartbeat()
 }
 
 int wTask::TaskRecv()
-{    
+{
     char *pBuffEnd = mRecvBuff + MSG_BUFF_LEN;  //超尾指针
+    if ((pBuffEnd - mRecvWrite) < (int)((sizeof(int) + MIN_PACKAGE_LEN)))   //性能考虑
+    {
+        //memmove(mRecvBuff, mRecvRead, iLen);
+        //mRecvRead = mRecvBuff;
+        //mRecvWrite = mRecvBuff + iLen;
+    }
+    if (mRecvRead != mRecvBuff && mRecvWrite == pBuffEnd) mRecvWrite = mRecvBuff;
+
     int iLen =  mRecvWrite - mRecvRead;
     int iLeftLen = 0;
     if (iLen >= 0)  //正向剩余
     {
-        if ((pBuffEnd - mRecvWrite) < (int)((sizeof(int) + MIN_PACKAGE_LEN)))   //性能考虑
-        {
-            memmove(mRecvBuff, mRecvRead, iLen);
-            mRecvRead = mRecvBuff;
-            mRecvWrite = mRecvBuff + iLen;
-        }
         iLeftLen = pBuffEnd - mRecvWrite;   //可写长度
     }
     else if (iLen < 0)  //分段
@@ -65,7 +67,8 @@ int wTask::TaskRecv()
         mRecvLen += iRecvLen;
         mRecvWrite += iRecvLen;
     }
-    
+    //LOG_DEBUG(ELOG_KEY, "[system] recv buf(%d-%d) rw(%d-%d) iLen(%d) leftlen(%d) movelen(%d) recvLen(%d)", mRecvBuff, pBuffEnd, mRecvRead, mRecvWrite, iLen, iLeftLen, mRecvRead-mRecvBuff, mRecvLen);
+
     int iRealLen = 0;
     do {
         iLen =  mRecvWrite - mRecvRead;
@@ -82,7 +85,7 @@ int wTask::TaskRecv()
                 LOG_ERROR(ELOG_KEY, "[system] recv message invalid len: %d , fd(%d)", iRealLen, mSocket->FD());
                 return ERR_MSGLEN;
             }
-            if (iRealLen > (iLen - sizeof(int)))
+            if (iRealLen > (int)(iLen - sizeof(int)))
             {
                 LOG_DEBUG(ELOG_KEY, "[system] recv a part of message: real len = %d, now len = %d", iRealLen, iLen - sizeof(int));
                 return 0;
@@ -95,7 +98,7 @@ int wTask::TaskRecv()
         else if (iLen <= 0)
         {
             iLeftLen = pBuffEnd - mRecvRead;
-            if (iLeftLen >= sizeof(int))
+            if (iLeftLen >= (int)sizeof(int))
             {
                 iRealLen = *(int *)mRecvRead;
             }
@@ -115,19 +118,20 @@ int wTask::TaskRecv()
                     iRealLen |= tmp << (8 * (i + 1));
                 }
             }
+            LOG_DEBUG(ELOG_KEY, "[system] handle recv buf(%d-%d) rw(%d-%d) iLen(%d) iRealLen(%d) iLeftLen(%d)", mRecvBuff, pBuffEnd, mRecvRead, mRecvWrite, iLen, iRealLen, iLeftLen);
             
             if ((iRealLen < MIN_PACKAGE_LEN) || (iRealLen > MAX_PACKAGE_LEN))
             {
                 LOG_ERROR(ELOG_KEY, "[system] recv message invalid len: %d , fd(%d)", iRealLen, mSocket->FD());
                 return ERR_MSGLEN;
             }
-            if (iRealLen > MSG_BUFF_LEN + iLen - sizeof(int))
+            if (iRealLen > (int)(MSG_BUFF_LEN + iLen - sizeof(int)))
             {
                 LOG_DEBUG(ELOG_KEY, "[system] recv a part of message: real len = %d, now len = %d", iRealLen, MSG_BUFF_LEN - iLen - sizeof(int));
                 return 0;
             }
             
-            if (iRealLen <= iLeftLen - sizeof(int))
+            if (iRealLen <= (int)(iLeftLen - sizeof(int)))
             {
                 HandleRecvMessage(mRecvRead + sizeof(int), iRealLen);  //消息解析，去除4字节消息长度标识位
                 mRecvLen -= iRealLen + sizeof(int);
@@ -140,7 +144,7 @@ int wTask::TaskRecv()
                 
                 HandleRecvMessage(mTmpBuff + sizeof(int), iRealLen);
                 mRecvLen -= iRealLen + sizeof(int);
-                mRecvRead += iRealLen - iLeftLen + sizeof(int)
+                mRecvRead = mRecvBuff + iRealLen - iLeftLen + sizeof(int);
             }
         }
     } while (true);
@@ -192,14 +196,14 @@ int wTask::Send2Buf(const char *pCmd, int iLen)
         LOG_ERROR(ELOG_KEY, "[system] write message invalid len: %d , fd(%d)", iLen, mSocket->FD());
         return ERR_MSGLEN;
     }
-    if (iLen > MSG_BUFF_LEN - mSendLen - sizeof(int))
+    if (iLen > (int)(MSG_BUFF_LEN - mSendLen - sizeof(int)))
     {
         LOG_ERROR(ELOG_KEY, "[system] send buf not enough. send(%d) need(%d)", MSG_BUFF_LEN - mSendLen, iLen + sizeof(int));
         return ERR_NOBUFF;
     }
     
     char *pBuffEnd = mSendBuff + MSG_BUFF_LEN;  //超尾指针
-    if (pBuffEnd - mSendWrite >= iLen + sizeof(int))
+    if (pBuffEnd - mSendWrite >= (int)(iLen + sizeof(int)))
     {
         *(int *)mSendWrite = iLen;
         memcpy(mSendWrite + sizeof(int), pCmd, iLen);
@@ -217,7 +221,7 @@ int wTask::Send2Buf(const char *pCmd, int iLen)
     }
     mSendLen += iLen + sizeof(int);
     
-    LOG_DEBUG(ELOG_KEY, "[system] write message to buf(%d), len(%d)", mSendWrite, iLen);
+    LOG_DEBUG(ELOG_KEY, "[system] write message to buf(%d), len(%d)", MSG_BUFF_LEN - mSendLen, iLen);
     return iLen;
 }
 
@@ -237,12 +241,11 @@ int wTask::SyncSend(const char *pCmd, int iLen)
 
 int wTask::SyncRecv(char vCmd[], int iLen, int iTimeout)
 {
-    long long iSleep = 100;	//100us
+    long long iSleep = 100;
     int iTryCount = iTimeout*1000000 / iSleep;
     int iCmdMsgLen = sizeof(int) + sizeof(struct wCommand);
     struct wCommand* pTmpCmd = 0;
     
-    memset(mTmpBuff, 0, sizeof(mTmpBuff));
     int iSize = 0, iRecvLen = 0;
     do {
         iSize = mSocket->RecvBytes(mTmpBuff + iRecvLen, iLen + sizeof(int) - iRecvLen);
