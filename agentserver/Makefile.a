@@ -54,7 +54,8 @@ OBJECTS=./$(BASEPATH)/wLog.o \
 
 TARGET=agentsvrd
 
-.PHONY:all
+.PHONY:all clean install
+
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
@@ -70,13 +71,11 @@ $(TARGET): $(OBJECTS)
 
 -include $(OBJECTS:.o=.d)
 
-.PHONY:clean
 clean:
 	-rm -f $(BASEPATH)/*.o $(BASEPATH)/*.d $(BASEPATH)/*.d.*
 	-rm -f $(TARGET) $(SRCPATH)/*.o $(SRCPATH)/*.d $(SRCPATH)/*.d.*
 	-rm -rf ./bin ./log
 
-.PHONY:install
 install:
 	-rm -rf ./bin ./log
 	-mkdir ./bin ./log

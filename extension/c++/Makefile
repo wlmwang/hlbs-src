@@ -27,7 +27,8 @@ OBJECTS=./$(BASEPATH)/wMsgQueue.o \
 
 TARGET=libagent_api.so
 
-.PHONY:all
+.PHONY:all clean install
+
 all: $(TARGET)
 
 $(TARGET):$(OBJECTS)
@@ -44,11 +45,9 @@ $(TARGET):$(OBJECTS)
 
 -include $(OBJECTS:.o=.d)
 
-.PHONY:clean
 clean:
 	-rm -f $(BASEPATH)/*.o $(BASEPATH)/*.d $(BASEPATH)/*.d.*
 	-rm -f $(TARGET) $(SRCPATH)/*.o $(SRCPATH)/*.d $(SRCPATH)/*.d.*
 
-.PHONY:install
 install:
 	-mv -f $(TARGET) /usr/lib
