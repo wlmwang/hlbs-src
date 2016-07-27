@@ -59,7 +59,9 @@ if test "$PHP_HLBS" != "no"; then
   dnl
   dnl PHP_SUBST(HLBS_SHARED_LIBADD)
 
+  CXXFLAGS="-std=c++0x"
   PHP_ADD_INCLUDE(/usr/local/webserver/hlbs/base)
+  PHP_ADD_INCLUDE(/usr/local/webserver/hlbs/extension/c++)
   PHP_ADD_INCLUDE(/usr/local/webserver/hlbs/extension/command)
   PHP_ADD_LIBRARY(stdc++, 1, HLBS_SHARED_LIBADD)
   PHP_ADD_LIBRARY_WITH_PATH(agent_api, /usr/lib, HLBS_SHARED_LIBADD)
