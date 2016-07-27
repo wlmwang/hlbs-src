@@ -1,14 +1,37 @@
-# 导读
+# Summary
 
-| 版本 | 日期 | 说明 | 修订 | 审核 |
-| -- | -- | -- | -- | -- |
-| 1.1.0 | 16/04/21 | release | 王利明 | 殷学斌 郑中业 |
+* [导读](README.md)
+* [简介](chapter/README.md)
+* [目标](2/README.md)
+* [安装](3/README.md)
+   * [GCC升级](3/gcc.md)
+   * [第三方软件包安装](3/gg.md)
+   * [一键安装](3/222.md)
+   * [RouterSvrd安装](3/444.md)
+   * [AgentSvrd安装](3/555.md)
+   * [PHP扩展安装](3/yy.md)
+* [启动、停止](3333/README.md)
+   * [RouterSvrd启动、停止](3333/444.md)
+   * [AgentSvrd启动、停止](3333/555.md)
+   * [一键启动、停止](3333/6666.md)
+* [部署](444/README.md)
+* [配置](666/README.md)
+   * [RouterSvrd配置（conf.xml svr.xml）](666/777.md)
+   * [AgentSvrd配置（conf.xml routerxml qos.xml）](666/666.md)
+* [架构](111/README.md)
+   * [RouterSvrd功能列表](111/222.md)
+   * [AgentSvrd功能列表](111/666.md)
+* [算法](555/README.md)
+   * [权重计算](555/777.md)
+   * [路由选择](555/888.md)
+   * [预取数调整](555/9999.md)
+   * [门限调整](555/000.md)
+   * [非压力故障](555/111.md)
+   * [过载判断](555/222.md)
+   * [上报路由](555/333.md)
+   * [重建路由](555/666.md)
+   * [宕机探测线程（过载、非压力故障）](555/7777.md)
+* [日志](log/README.md)
+   * [RouterSvrd日志](log/routersvrd_log.md)
+   * [AgentSvrd日志](log/agentsvr_log.md)
 
-
-## 文档约定
-
-* Svr：配置(svr.xml)在HLBS系统中的后端服务。即为“被调方”的服务。
-
-* CGI：通过HLBS系统获取具体Svr来使用的前端业务。相对Svr属于“调用方”。
-
-* Qos：服务质量。标识各Svr负载大小、服务能力。可简单理解成配置（qos.xml）在HLBS系统中周期大小、比例因子、阈值控制以及Svr实时统计互相作用的一套容错体系。
