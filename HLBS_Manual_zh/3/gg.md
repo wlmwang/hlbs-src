@@ -25,7 +25,7 @@ $ make install #(默认路劲，库：/usr/local/lib	头：/usr/local/include/lo
 ```
 $ cd /etc/ld.so.conf.d
 $ touch hlbs.conf
-$ echo “/usr/local/lib” >> hlbs.conf
+$ echo "/usr/local/lib" >> hlbs.conf
 $ldconfig
 ```
 
