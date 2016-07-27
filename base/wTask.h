@@ -36,7 +36,7 @@ class wTask : private wNoncopyable
 		virtual int ClearbeatOutTimes() { return mHeartbeatTimes = 0; }
 		/**
 		 *  处理接受到数据
-		 *  每条消息大小[2b,512k)
+		 *  每条消息大小[1b,512k]
 		 *  核心逻辑：接受整条消息，然后进入用户定义的业务函数HandleRecvMessage
 		 *  return ：<0 对端发生错误|消息超长|对端关闭(FIN_WAIT) =0 稍后重试 >0 接受字符
 		 */
