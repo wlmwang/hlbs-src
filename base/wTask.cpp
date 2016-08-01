@@ -71,7 +71,7 @@ int wTask::TaskRecv()
         
         if (iLen > 0)  //正向解析
         {
-            iRealLen = *(int *)mRecvRead;
+            memcpy(&iRealLen, mRecvRead, sizeof(iRealLen));
             if (iRealLen < MIN_PACKAGE_LEN || iRealLen > MAX_PACKAGE_LEN)
             {
                 LOG_ERROR(ELOG_KEY, "[system] recv message invalid len: %d , fd(%d)", iRealLen, mSocket->FD());
@@ -92,7 +92,7 @@ int wTask::TaskRecv()
             iLeftLen = pBuffEnd - mRecvRead;
             if (iLeftLen >= (int)sizeof(int))
             {
-                iRealLen = *(int *)mRecvRead;
+                memcpy(&iRealLen, mRecvRead, sizeof(iRealLen));
             }
             else
             {
@@ -268,7 +268,8 @@ int wTask::SyncRecv(char vCmd[], int iLen, int iTimeout)
         break;
     } while (true);
     
-    int iMsgLen = *(int *)mTmpBuff;
+    int iMsgLen;
+    memcpy(&iMsgLen, mTmpBuff, sizeof(iMsgLen));
     if ((iRecvLen <= 0) || (iMsgLen < MIN_PACKAGE_LEN) || (iMsgLen > MAX_PACKAGE_LEN))
     {
         LOG_ERROR(ELOG_KEY, "[system] sync recv message invalid len: %d, fd(%d)", iMsgLen, mSocket->FD());

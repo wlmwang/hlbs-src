@@ -1076,7 +1076,7 @@ int SvrQos::AddErrRoute(struct SvrKind_t& stItem, struct SvrNode_t& stNode)
 {
     map<struct SvrKind_t, list<struct SvrNode_t>* >::iterator reIt = mErrTable.find(stItem);
     list<struct SvrNode_t>* pErrRoute = NULL;
-    int iErrCount = 0;
+    //int iErrCount = 0;
     if (reIt == mErrTable.end())
 	{
         pErrRoute = new list<struct SvrNode_t>;
@@ -1086,14 +1086,10 @@ int SvrQos::AddErrRoute(struct SvrKind_t& stItem, struct SvrNode_t& stNode)
 	else
 	{
         pErrRoute = reIt->second;
-        iErrCount = pErrRoute == NULL ? 0 : pErrRoute->size();
+        //iErrCount = pErrRoute == NULL ? 0 : pErrRoute->size();
 	}
-
 	time_t nowTm = time(NULL);
 	
-	LOG_DEBUG(ELOG_KEY, "[svr] Overload AddErrRoute node, exist count=%d: mod=%d cmd=%d ip=%s port=%u stop_time=%d limit=%d",
-		iErrCount+1,stNode.mNet.mGid,stNode.mNet.mXid,stNode.mNet.mHost,stNode.mNet.mPort,nowTm - stNode.mStopTime,stNode.mStat->mReqCfg.mReqLimit);
-    	
 	//record down server
 	stNode.mStopTime = nowTm;
 	stNode.mReqAllAfterDown = 0;
