@@ -7,29 +7,14 @@
 template <typename TASK>
 wMTcpClient<TASK>::wMTcpClient()
 {
-	Initialize();
-}
-
-template <typename TASK>
-void wMTcpClient<TASK>::Initialize()
-{
 	mLastTicker = GetTickCount();
 	mCheckTimer = wTimer(KEEPALIVE_TIME);
-	mTcpClientCount = 0;
-	mTimeout = 10;
-	mEpollFD = FD_UNKNOWN;
 	memset((void *)&mEpollEvent, 0, sizeof(mEpollEvent));
 	mEpollEventPool.reserve(LISTEN_BACKLOG);
 }
 
 template <typename TASK>
 wMTcpClient<TASK>::~wMTcpClient()
-{
-    Final();
-}
-
-template <typename TASK>
-void wMTcpClient<TASK>::Final()
 {
 	CleanEpoll();
 	CleanTcpClientPool();
@@ -51,11 +36,11 @@ template <typename TASK>
 void wMTcpClient<TASK>::CleanTcpClientPool()
 {
     typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClientPool.begin();
-	for (mt; mt != mTcpClientPool.end(); mt++)
+	for (; mt != mTcpClientPool.end(); mt++)
 	{
 		vector<wTcpClient<TASK>* > vTcpClient = mt->second;
         typename vector<wTcpClient<TASK>*>::iterator vIt = vTcpClient.begin();
-		for (vIt; vIt != vTcpClient.end() ; vIt++)
+		for (; vIt != vTcpClient.end() ; vIt++)
 		{
 			SAFE_DELETE(*vIt);
 		}
@@ -67,12 +52,8 @@ void wMTcpClient<TASK>::CleanTcpClientPool()
 template <typename TASK>
 void wMTcpClient<TASK>::PrepareStart()
 {
-	if (InitEpoll() < 0)
-	{
-		exit(0);
-	}
+	if (InitEpoll() < 0) exit(0);
 }
-
 
 template <typename TASK>
 void wMTcpClient<TASK>::Start(bool bDaemon)
@@ -81,13 +62,7 @@ void wMTcpClient<TASK>::Start(bool bDaemon)
 	do {
 		Recv();
 		CheckTimer();
-	} while(bDaemon);
-}
-
-template <typename TASK>
-int wMTcpClient<TASK>::PrepareRun()
-{
-	return 0;
+	} while (bDaemon);
 }
 
 template <typename TASK>
@@ -100,8 +75,7 @@ int wMTcpClient<TASK>::Run()
 template <typename TASK>
 int wMTcpClient<TASK>::InitEpoll()
 {
-	mEpollFD = epoll_create(LISTEN_BACKLOG);
-	if (mEpollFD < 0)
+	if ((mEpollFD = epoll_create(LISTEN_BACKLOG)) < 0)
 	{
 		mErr = errno;
 		LOG_ERROR(ELOG_KEY, "[system] epoll_create failed:%s", strerror(mErr));
@@ -128,25 +102,21 @@ template <typename TASK>
 wTcpClient<TASK>* wMTcpClient<TASK>::CreateClient(int iType, string sClientName, char *vIPAddress, unsigned short vPort)
 {
 	wTcpClient<TASK>* pTcpClient = new wTcpClient<TASK>(iType, sClientName);
-	int iRet = pTcpClient->ConnectToServer(vIPAddress, vPort);
-	if (iRet >= 0)
+	if (pTcpClient->ConnectToServer(vIPAddress, vPort) >= 0)
 	{
 		pTcpClient->PrepareStart();	//准备启动
 		return pTcpClient;
 	}
 	SAFE_DELETE(pTcpClient);
-	
-	LOG_ERROR(ELOG_KEY, "[system] CreateClient connect to (%s)server faild!",sClientName.c_str());
+	LOG_ERROR(ELOG_KEY, "[system] CreateClient connect to (%s)server faild!", sClientName.c_str());
 	return NULL;
 }
 
 template <typename TASK>
 bool wMTcpClient<TASK>::AddTcpClientPool(int iType, wTcpClient<TASK> *pTcpClient)
 {
-	if (pTcpClient == NULL)
-	{
-		return false;
-	}
+	W_ASSERT(pTcpClient != NULL, return false);
+
 	vector<wTcpClient<TASK>*> vTcpClient;
     typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClientPool.find(iType);
 	if (mt != mTcpClientPool.end())
@@ -167,19 +137,19 @@ int wMTcpClient<TASK>::ResetTcpClientCount()
 {
 	mTcpClientCount = 0;
     typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClientPool.begin();
-	for (mt; mt != mTcpClientPool.end(); mt++)
+	for (; mt != mTcpClientPool.end(); mt++)
 	{
 		vector<wTcpClient<TASK>* > vTcpClient = mt->second;
-        int iType = mt->first;
+        //int iType = mt->first;
         typename vector<wTcpClient<TASK>*>::iterator vIt = vTcpClient.begin();
-		for (vIt ; vIt != vTcpClient.end() ; vIt++)
+		for (; vIt != vTcpClient.end() ; vIt++)
 		{
 			mTcpClientCount++;
 		}
 	}
 	
 	//重置容量
-	if (mTcpClientCount > mEpollEventPool.capacity())
+	if (mTcpClientCount > (int)mEpollEventPool.capacity())
 	{
 		mEpollEventPool.reserve(mTcpClientCount * 2);
 	}
@@ -189,15 +159,14 @@ int wMTcpClient<TASK>::ResetTcpClientCount()
 template <typename TASK>
 int wMTcpClient<TASK>::AddToEpoll(wTcpClient<TASK> *pTcpClient, int iEvent)
 {
-	int iSocketFD = pTcpClient->TcpTask()->IO()->FD();
+	int iSocketFD = pTcpClient->TcpTask()->Socket()->FD();
 	mEpollEvent.events = iEvent;	//客户端事件
 	mEpollEvent.data.fd = iSocketFD;
 	mEpollEvent.data.ptr = pTcpClient;
-	int iRet = epoll_ctl(mEpollFD, EPOLL_CTL_ADD, iSocketFD, &mEpollEvent);
-	if (iRet < 0)
+	if (epoll_ctl(mEpollFD, EPOLL_CTL_ADD, iSocketFD, &mEpollEvent) < 0)
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[system] fd(%d) add into epoll failed: %s", iSocketFD, strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] client fd(%d) add into epoll failed: %s", iSocketFD, strerror(mErr));
 		return -1;
 	}
 	return 0;
@@ -214,7 +183,7 @@ void wMTcpClient<TASK>::CheckTimer()
 	}
 
 	mLastTicker += iInterval;
-	if(mCheckTimer.CheckTimer(iInterval))
+	if (mCheckTimer.CheckTimer(iInterval))
 	{
 		CheckTimeout();
 	}
@@ -224,12 +193,11 @@ template <typename TASK>
 void wMTcpClient<TASK>::CheckTimeout()
 {
     typename map<int, vector<wTcpClient<TASK>*> >::iterator mt = mTcpClientPool.begin();
-	for (mt; mt != mTcpClientPool.end(); mt++)
+	for (; mt != mTcpClientPool.end(); mt++)
 	{
 		vector<wTcpClient<TASK>* > vTcpClient = mt->second;
-		int iType = mt->first;
         typename vector<wTcpClient<TASK>*>::iterator vIt = vTcpClient.begin();
-		for (vIt ; vIt != vTcpClient.end() ; vIt++)
+		for (; vIt != vTcpClient.end() ; vIt++)
 		{
 			if ((*vIt)->IsRunning())
 			{
@@ -239,7 +207,7 @@ void wMTcpClient<TASK>::CheckTimeout()
 			{
 				if (RemoveEpoll(*vIt) >= 0)
 				{
-					RemoveTcpClientPool(iType, *vIt);
+					RemoveTcpClientPool(mt->first, *vIt);
 					vIt--;
 				}
 			}
@@ -250,54 +218,46 @@ void wMTcpClient<TASK>::CheckTimeout()
 template <typename TASK>
 void wMTcpClient<TASK>::Recv()
 {
-	int iRet = epoll_wait(mEpollFD, &mEpollEventPool[0], mTcpClientCount, mTimeout /*10ms*/);
-	if(iRet < 0)
+	int iRet = epoll_wait(mEpollFD, &mEpollEventPool[0], mTcpClientCount, mTimeout);
+	if (iRet < 0)
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[system] epoll_wait failed: %s", strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] client epoll_wait failed: %s", strerror(mErr));
 		return;
 	}
 	
 	wTcpClient<TASK> *pClient = NULL;
 	wTcpTask *pTask = NULL;
-	int iType = 0;
 
 	int iFD = FD_UNKNOWN;
 	int iLenOrErr;
-	TASK_TYPE taskType;
-	SOCK_TYPE sockType;
-	SOCK_STATUS sockStatus;
-	IO_FLAG iOFlag;
-	for(int i = 0 ; i < iRet ; i++)
+	for (int i = 0 ; i < iRet ; i++)
 	{
 		pClient = (wTcpClient<TASK>*) mEpollEventPool[i].data.ptr;
 		pTask = pClient->TcpTask();
-		iType = pClient->Type();
-		
-		iFD = pTask->IO()->FD();
-		sockType = pTask->IO()->SockType();
-		sockStatus = pTask->IO()->SockStatus();
-		iOFlag = pTask->IO()->IOFlag();
-		
-		if(iFD == FD_UNKNOWN)	//不删除此task，让其重连
+		iFD = pTask->Socket()->FD();
+
+		if (iFD == FD_UNKNOWN)	//不删除此task，让其重连
 		{
 			continue;
 		}
 		if (!pClient->IsRunning() || !pTask->IsRunning())	//多数是超时设置
 		{
-			LOG_ERROR(ELOG_KEY, "[system] task status is quit, fd(%d), close it", iFD);
+			LOG_ERROR(ELOG_KEY, "[system] client task status is quit, fd(%d), close it", iFD);
 			pClient->Status() = CLIENT_QUIT;
 			continue;
 		}
 		if (mEpollEventPool[i].events & (EPOLLERR | EPOLLPRI))
 		{
 			mErr = errno;
-			LOG_ERROR(ELOG_KEY, "[system] epoll event recv error from fd(%d): %s, close it", iFD, strerror(mErr));
+			LOG_ERROR(ELOG_KEY, "[system] client epoll event recv error from fd(%d): %s, close it", iFD, strerror(mErr));
 			pClient->Status() = CLIENT_QUIT;
 			continue;
 		}
+		//client start
+		pClient->Start(false);
 
-		if(sockType == SOCK_CONNECT)	//connect event: read|write
+		if (pTask->Socket()->SockType() == SOCK_TYPE_CONNECT && pTask->Socket()->SockStatus() == SOCK_STATUS_CONNECTED)	//connect event: read|write
 		{
 			if (mEpollEventPool[i].events & EPOLLIN)
 			{
@@ -306,18 +266,17 @@ void wMTcpClient<TASK>::Recv()
 				{
 					if (iLenOrErr == ERR_CLOSED)
 					{
-						LOG_DEBUG(ELOG_KEY, "[system] tcp socket closed by server");
+						LOG_DEBUG(ELOG_KEY, "[system] client tcp socket closed by server");
 					}
-					else if(iLenOrErr == ERR_MSGLEN)
+					else if (iLenOrErr == ERR_MSGLEN)
 					{
-						LOG_ERROR(ELOG_KEY, "[system] recv message invalid len");
+						LOG_ERROR(ELOG_KEY, "[system] client recv message invalid len");
 					}
 					else
 					{
-						LOG_ERROR(ELOG_KEY, "[system] EPOLLIN(read) failed or server-socket closed: %s", strerror(pTask->IO()->Errno()));
+						LOG_ERROR(ELOG_KEY, "[system] EPOLLIN(read) failed or server-socket closed: %s", strerror(pTask->Socket()->Errno()));
 					}
-					//pClient->Status() = CLIENT_QUIT;
-					pTask->IO()->FD() = FD_UNKNOWN;		//给重连做准备
+					pTask->Socket()->FD() = FD_UNKNOWN;		//给重连做准备
 				}
 			}
 			else if (mEpollEventPool[i].events & EPOLLOUT)
@@ -325,9 +284,8 @@ void wMTcpClient<TASK>::Recv()
 				//套接口准备好了写入操作
 				if (pTask->TaskSend() < 0)
 				{
-					LOG_ERROR(ELOG_KEY, "[system] EPOLLOUT(write) failed: %s", strerror(pTask->IO()->Errno()));
-					//pClient->Status() = CLIENT_QUIT;
-					pTask->IO()->FD() = FD_UNKNOWN;		//给重连做准备
+					LOG_ERROR(ELOG_KEY, "[system] EPOLLOUT(write) failed: %s", strerror(pTask->Socket()->Errno()));
+					pTask->Socket()->FD() = FD_UNKNOWN;		//给重连做准备
 				}
 			}
 		}
@@ -337,12 +295,12 @@ void wMTcpClient<TASK>::Recv()
 template <typename TASK>
 int wMTcpClient<TASK>::RemoveEpoll(wTcpClient<TASK> *pTcpClient)
 {
-	int iSocketFD = pTcpClient->TcpTask()->IO()->FD();
+	int iSocketFD = pTcpClient->TcpTask()->Socket()->FD();
 	mEpollEvent.data.fd = iSocketFD;
 	if (epoll_ctl(mEpollFD, EPOLL_CTL_DEL, iSocketFD, &mEpollEvent) < 0)
 	{
 		mErr = errno;
-		LOG_ERROR(ELOG_KEY, "[system] epoll remove socket fd(%d) error : %s", iSocketFD, strerror(mErr));
+		LOG_ERROR(ELOG_KEY, "[system] client epoll remove socket fd(%d) error : %s", iSocketFD, strerror(mErr));
 		return -1;
 	}
 	return 0;
@@ -358,7 +316,7 @@ bool wMTcpClient<TASK>::RemoveTcpClientPool(int iType, wTcpClient<TASK> *pTcpCli
 		if (pTcpClient == NULL)
 		{
 			typename vector<wTcpClient<TASK>*>::iterator it = vTcpClient.begin();
-			for (it; it != vTcpClient.end(); it++)
+			for (; it != vTcpClient.end(); it++)
 			{
 				SAFE_DELETE(*it);
 			}

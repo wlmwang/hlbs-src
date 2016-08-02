@@ -16,7 +16,7 @@
 #define SVR_TM_MAX 20
 #define INIT_WEIGHT 100      //默认权重值 
 #define MAX_WEIGHT 1000     //最大权重值
-#define DELAY_MAX 100000000		//最大延时值 100s
+#define DELAY_MAX 100000000	//最大延时值 100s
 
 enum QOS_RTN
 {
@@ -40,8 +40,8 @@ struct SvrNet_t
     int 	mPre {0};		//预取数
     int 	mExpired {0};	//过期时间
 
-	SvrNet_t() {}
-	
+    SvrNet_t() {}
+
 	SvrNet_t(const SvrNet_t &stSvr)
 	{
 		mGid = stSvr.mGid;
@@ -272,6 +272,7 @@ struct SvrInfo_t
     
     int 		mAddSuc {0};			//上个周期与上上个周期成功请求数差值
     int 		mIdle {0};				//add连续核算次数
+    
     SvrInfo_t()
     {
 		mBuildTm.tv_sec = mBuildTm.tv_usec = 0;

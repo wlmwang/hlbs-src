@@ -8,25 +8,21 @@
 
 RouterConfig::RouterConfig()
 {
-	memcpy(mBaseConfFile, CONF_XML, strlen(CONF_XML) + 1);
-	memcpy(mSvrConfFile, SVR_XML, strlen(SVR_XML) + 1);
-	memcpy(mQosConfFile, QOS_XML, strlen(QOS_XML) + 1);
-
 	mSvrQos = SvrQos::Instance();
 	mDoc = new TiXmlDocument();
 	mMemPool = new wMemPool();
-	mMemPool->Create(MEM_POOL_MAX);
+	mMemPool->Create(MEM_POOL_LEN);
 }
 
 RouterConfig::~RouterConfig()
 {
 	SAFE_DELETE(mDoc);
-	SAFE_DELETE(mSvrQos);
+	SAFE_DELETE(mMemPool);
 }
 
 void RouterConfig::GetBaseConf()
 {
-	if (!mDoc->LoadFile(mBaseConfFile))
+	if (!mDoc->LoadFile(mBaseConfFile.c_str()))
 	{
 		LOG_ERROR(ELOG_KEY, "[config] Load config file(conf.xml) failed");
 		exit(2);
@@ -97,7 +93,7 @@ void RouterConfig::GetBaseConf()
 
 void RouterConfig::GetSvrConf()
 {
-	if (!mDoc->LoadFile(mSvrConfFile))
+	if (!mDoc->LoadFile(mSvrConfFile.c_str()))
 	{
 		LOG_ERROR(ELOG_KEY, "[svr] Load config file(svr.xml) failed");
 		exit(2);
@@ -155,7 +151,7 @@ void RouterConfig::GetSvrConf()
 //不能删除节点（可修改WEIGHT=0属性，达到删除节点效果）
 int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 {
-	if (!mDoc->LoadFile(mSvrConfFile))
+	if (!mDoc->LoadFile(mSvrConfFile.c_str()))
 	{
 		LOG_ERROR(ELOG_KEY, "[modify-svr] Load config file(svr.xml) failed");
 		return -1;
@@ -223,7 +219,7 @@ int RouterConfig::GetModSvr(SvrNet_t* pBuffer)
 int RouterConfig::SetModTime()
 {
 	struct stat stBuf;
-	int iRet = stat(mSvrConfFile, &stBuf);
+	int iRet = stat(mSvrConfFile.c_str(), &stBuf);
 	if (iRet == 0)
 	{
 		mMtime = stBuf.st_mtime;
@@ -235,7 +231,7 @@ int RouterConfig::SetModTime()
 bool RouterConfig::IsModTime()
 {
 	struct stat stBuf;
-	int iRet = stat(mSvrConfFile, &stBuf);
+	int iRet = stat(mSvrConfFile.c_str(), &stBuf);
 	if (iRet == 0 && stBuf.st_mtime > mMtime)
 	{
 		return true;
@@ -245,14 +241,13 @@ bool RouterConfig::IsModTime()
 
 void RouterConfig::GetQosConf()
 {
-	if (!mDoc->LoadFile(mQosConfFile))
+	if (!mDoc->LoadFile(mQosConfFile.c_str()))
 	{
 		LOG_ERROR(ELOG_KEY, "[qos] Load config file(qos.xml) failed");
 		exit(2);
 	}
 	
 	TiXmlElement *pElement = NULL;
-	TiXmlElement *pChildElm = NULL;
 	TiXmlElement *pRoot = mDoc->FirstChildElement();
 
 	/** 成功率、时延比例配置 */
@@ -281,10 +276,11 @@ void RouterConfig::GetQosConf()
 	
 	/** 路由重建时间 */
 	pElement = pRoot->FirstChildElement("CFG");
-	const char *szType = NULL, *szRebuild = NULL;
+	//const char *szType = NULL; 
+	const char *szRebuild = NULL;
 	if(NULL != pElement)
 	{
-		szType = pElement->Attribute("TYPE");
+		//szType = pElement->Attribute("TYPE");
 		szRebuild = pElement->Attribute("REBUILD");
 	}
 	mSvrQos->mRebuildTm = szRebuild != NULL ? (atoi(szRebuild)>0 ? atoi(szRebuild):60) : 60;
@@ -310,14 +306,14 @@ void RouterConfig::GetQosConf()
 
 	/** 并发量配置 */
 	pElement = pRoot->FirstChildElement("LIST");
-	const char *szListMax = NULL, *szListMin = NULL, *szListErrMin = NULL, *szListExtendRate = NULL, *szTimeout = NULL;
+	const char *szListMax = NULL, *szListMin = NULL, *szListErrMin = NULL, *szListExtendRate = NULL/*, *szTimeout = NULL*/;
 	if(NULL != pElement)
 	{
 		szListMax = pElement->Attribute("LIST_MAX");
 		szListMin = pElement->Attribute("LIST_MIN");
 		szListErrMin = pElement->Attribute("LIST_ERR_MIN");
 		szListExtendRate = pElement->Attribute("LIST_EXTEND_RATE");
-		szTimeout = pElement->Attribute("LIST_TIMEOUT");
+		//szTimeout = pElement->Attribute("LIST_TIMEOUT");
 	}
 	mSvrQos->mListCfg.mListMax = szListMax != NULL ? (atoi(szListMax)>0 ? atoi(szListMax):400) : 400;
 	mSvrQos->mListCfg.mListMin = szListMin != NULL ? (atoi(szListMin)>0 ? atoi(szListMin):10) : 10;

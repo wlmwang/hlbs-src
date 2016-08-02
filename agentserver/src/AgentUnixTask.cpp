@@ -4,30 +4,32 @@
  * Copyright (C) Hupu, Inc.
  */
 
-#include "AgentUDSocketTask.h"
+#include "SvrCmd.h"
+#include "LoginCmd.h"
+#include "AgentUnixTask.h"
 
-AgentUDSocketTask::AgentUDSocketTask()
+AgentUnixTask::AgentUnixTask()
 {
     Initialize();
 }
 
-AgentUDSocketTask::AgentUDSocketTask(wIO *pIO) : wTcpTask(pIO)
+AgentUnixTask::AgentUnixTask(wSocket *pSocket) : wUnixTask(pSocket)
 {
     Initialize();
 }
 
-void AgentUDSocketTask::Initialize()
+void AgentUnixTask::Initialize()
 {
     mConfig = AgentConfig::Instance();
     mServer = AgentServer::Instance();
-	REG_DISP(mDispatch, "AgentUDSocketTask", CMD_SVR_REQ, SVR_REQ_GXID, &AgentUDSocketTask::GetSvrByGXid);
-	REG_DISP(mDispatch, "AgentUDSocketTask", CMD_SVR_REQ, SVR_REQ_REPORT, &AgentUDSocketTask::ReportSvr);
+	REG_DISP(mDispatch, "AgentUnixTask", CMD_SVR_REQ, SVR_REQ_GXID, &AgentUnixTask::GetSvrByGXid);
+	REG_DISP(mDispatch, "AgentUnixTask", CMD_SVR_REQ, SVR_REQ_REPORT, &AgentUnixTask::ReportSvr);
 }
 
 /**
  *  接受数据
  */
-int AgentUDSocketTask::HandleRecvMessage(char *pBuffer, int nLen)
+int AgentUnixTask::HandleRecvMessage(char *pBuffer, int nLen)
 {
 	W_ASSERT(pBuffer != NULL, return -1);
 	//解析消息
@@ -35,7 +37,7 @@ int AgentUDSocketTask::HandleRecvMessage(char *pBuffer, int nLen)
 	return ParseRecvMessage(pCommand , pBuffer, nLen);
 }
 
-int AgentUDSocketTask::ParseRecvMessage(struct wCommand *pCommand, char *pBuffer, int iLen)
+int AgentUnixTask::ParseRecvMessage(struct wCommand *pCommand, char *pBuffer, int iLen)
 {
 	if (pCommand->GetId() == W_CMD(CMD_NULL, PARA_NULL))
 	{
@@ -44,7 +46,7 @@ int AgentUDSocketTask::ParseRecvMessage(struct wCommand *pCommand, char *pBuffer
 	}
 	else
 	{
-		auto pF = mDispatch.GetFuncT("AgentUDSocketTask", pCommand->GetId());
+		auto pF = mDispatch.GetFuncT("AgentUnixTask", pCommand->GetId());
 
 		if (pF != NULL)
 		{
@@ -52,20 +54,19 @@ int AgentUDSocketTask::ParseRecvMessage(struct wCommand *pCommand, char *pBuffer
 		}
 		else
 		{
-			LOG_ERROR(ELOG_KEY, "[system] client send a invalid msg fd(%d) id(%d)", mIO->FD(), pCommand->GetId());
+			LOG_ERROR(ELOG_KEY, "[system] unix client send a invalid msg fd(%d) id(%d)", mSocket->FD(), pCommand->GetId());
 		}
 	}
 	return 0;
 }
 
 //客户端查询请求(重点考虑此接口~)
-int AgentUDSocketTask::GetSvrByGXid(char *pBuffer, int iLen)
+int AgentUnixTask::GetSvrByGXid(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
 	struct SvrReqGXid_t *pCmd = (struct SvrReqGXid_t* )pBuffer;
 	
 	struct SvrOneRes_t vRRt;
-	//vRRt.mReqId = pCmd->GetId();
 	vRRt.mSvr.mGid = pCmd->mGid;
 	vRRt.mSvr.mXid = pCmd->mXid;
 	if (pConfig->Qos()->QueryNode(vRRt.mSvr) >= 0)
@@ -81,13 +82,12 @@ int AgentUDSocketTask::GetSvrByGXid(char *pBuffer, int iLen)
 }
 
 //客户端发来上报请求(重点考虑此接口~)
-int AgentUDSocketTask::ReportSvr(char *pBuffer, int iLen)
+int AgentUnixTask::ReportSvr(char *pBuffer, int iLen)
 {
 	AgentConfig *pConfig = AgentConfig::Instance();
 	struct SvrReqReport_t *pCmd = (struct SvrReqReport_t* )pBuffer;
 	
 	struct SvrResReport_t vRRt;
-
 	if(pConfig->Qos()->CallerNode(pCmd->mCaller) >= 0)
 	{
 		vRRt.mCode = 1;

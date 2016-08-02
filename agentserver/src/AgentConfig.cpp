@@ -12,25 +12,21 @@
 
 AgentConfig::AgentConfig()
 {
-	memcpy(mRouteConfFile, ROUTER_XML, strlen(ROUTER_XML) + 1);
-	memcpy(mQosConfFile, QOS_XML, strlen(QOS_XML) + 1);
-	memcpy(mBaseConfFile, CONF_XML, strlen(CONF_XML) + 1);
-
 	mSvrQos = SvrQos::Instance();
 	mDoc = new TiXmlDocument();
 	mMemPool = new wMemPool();
-	mMemPool->Create(MEM_POOL_MAX);
+	mMemPool->Create(MEM_POOL_LEN);
 }
 
 AgentConfig::~AgentConfig()
 {
 	SAFE_DELETE(mDoc);
-	SAFE_DELETE(mSvrQos);
+	SAFE_DELETE(mMemPool);
 }
 
 void AgentConfig::GetBaseConf()
 {
-	if (!mDoc->LoadFile(mBaseConfFile))
+	if (!mDoc->LoadFile(mBaseConfFile.c_str()))
 	{
 		LOG_ERROR(ELOG_KEY, "[config] Load config file(conf.xml) failed");
 		exit(2);
@@ -101,7 +97,7 @@ void AgentConfig::GetBaseConf()
 
 void AgentConfig::GetRouterConf()
 {
-	if (!mDoc->LoadFile(mRouteConfFile))
+	if (!mDoc->LoadFile(mRouteConfFile.c_str()))
 	{
 		LOG_ERROR(ELOG_KEY, "[router] Load config file(router.xml) failed");
 		exit(2);
@@ -142,14 +138,13 @@ void AgentConfig::GetRouterConf()
 
 void AgentConfig::GetQosConf()
 {
-	if (!mDoc->LoadFile(mQosConfFile))
+	if (!mDoc->LoadFile(mQosConfFile.c_str()))
 	{
 		LOG_ERROR(ELOG_KEY, "[qos] Load config file(qos.xml) failed");
 		exit(2);
 	}
 	
 	TiXmlElement *pElement = NULL;
-	TiXmlElement *pChildElm = NULL;
 	TiXmlElement *pRoot = mDoc->FirstChildElement();
 
 	/** 成功率、时延比例配置 */
@@ -178,10 +173,11 @@ void AgentConfig::GetQosConf()
 	
 	/** 路由重建时间 */
 	pElement = pRoot->FirstChildElement("CFG");
-	const char *szType = NULL, *szRebuild = NULL;
+	//const char *szType = NULL; 
+	const char *szRebuild = NULL;
 	if(NULL != pElement)
 	{
-		szType = pElement->Attribute("TYPE");
+		//szType = pElement->Attribute("TYPE");
 		szRebuild = pElement->Attribute("REBUILD");
 	}
 	mSvrQos->mRebuildTm = szRebuild != NULL ? (atoi(szRebuild)>0 ? atoi(szRebuild):60) : 60;
@@ -207,14 +203,14 @@ void AgentConfig::GetQosConf()
 
 	/** 并发量配置 */
 	pElement = pRoot->FirstChildElement("LIST");
-	const char *szListMax = NULL, *szListMin = NULL, *szListErrMin = NULL, *szListExtendRate = NULL, *szTimeout = NULL;
+	const char *szListMax = NULL, *szListMin = NULL, *szListErrMin = NULL, *szListExtendRate = NULL/*, *szTimeout = NULL*/;
 	if(NULL != pElement)
 	{
 		szListMax = pElement->Attribute("LIST_MAX");
 		szListMin = pElement->Attribute("LIST_MIN");
 		szListErrMin = pElement->Attribute("LIST_ERR_MIN");
 		szListExtendRate = pElement->Attribute("LIST_EXTEND_RATE");
-		szTimeout = pElement->Attribute("LIST_TIMEOUT");
+		//szTimeout = pElement->Attribute("LIST_TIMEOUT");
 	}
 	mSvrQos->mListCfg.mListMax = szListMax != NULL ? (atoi(szListMax)>0 ? atoi(szListMax):400) : 400;
 	mSvrQos->mListCfg.mListMin = szListMin != NULL ? (atoi(szListMin)>0 ? atoi(szListMin):10) : 10;

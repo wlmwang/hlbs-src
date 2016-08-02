@@ -27,16 +27,12 @@ wSignal::signal_t g_signals[] = {
 	{0, NULL, "", NULL}
 };
 
-wSignal::wSignal() {}
-
 wSignal::wSignal(__sighandler_t  func)
 {
 	mSigAct.sa_handler = func;
 	mSigAct.sa_flags = 0;
 	sigemptyset(&mSigAct.sa_mask);
 }
-
-wSignal::~wSignal() {}
 
 int wSignal::AddMaskSet(int signo)
 {

@@ -4,11 +4,15 @@
  * Copyright (C) Hupu, Inc.
  */
 
+#include "Detect.h"
 #include "AgentServer.h"
+#include "AgentServerTask.h"
+#include "AgentUnixTask.h"
 
 AgentServer::AgentServer() : wServer<AgentServer>("AGENT服务器")
 {
-	Initialize();
+	mConfig = AgentConfig::Instance();
+	mDetectThread = DetectThread::Instance();
 }
 
 AgentServer::~AgentServer() 
@@ -16,11 +20,12 @@ AgentServer::~AgentServer()
 	SAFE_DELETE(mRouterConn);
 }
 
-void AgentServer::Initialize()
+//准备工作
+void AgentServer::PrepareRun()
 {
-	mConfig = AgentConfig::Instance();
-	mDetectThread = DetectThread::Instance();
 	ConnectRouter(); //连接Router服务
+	mDetectThread != NULL && mDetectThread->StartThread(0);	//探测线程，宕机拉起
+	mRouterConn != NULL && mRouterConn->StartThread(0);	//router线程，与router交互
 }
 
 void AgentServer::ConnectRouter()
@@ -28,10 +33,11 @@ void AgentServer::ConnectRouter()
 	AgentConfig::RouterConf_t* pRconf = mConfig->GetOneRouterConf();	//获取一个合法Router服务器配置
 	if (pRconf == NULL)
 	{
-		LOG_ERROR(ELOG_KEY, "[system] Get RouterServer Config failed");
+		LOG_ERROR(ELOG_KEY, "[system] AgentServer get router config failed");
 		exit(0);
 	}
-	
+
+	//客户端
 	mRouterConn = new wMTcpClient<AgentClientTask>();
 	mRouterConn->PrepareStart();
 
@@ -48,28 +54,14 @@ void AgentServer::ConnectRouter()
 	InitSvrReq();
 }
 
-//准备工作
-void AgentServer::PrepareRun()
+wTask* AgentServer::NewTcpTask(wSocket *pSocket)
 {
-	mDetectThread != NULL && mDetectThread->StartThread(0);	//探测线程，宕机拉起
-	mRouterConn != NULL && mRouterConn->StartThread(0);	//router线程，与router交互
+	return new AgentServerTask(pSocket);
 }
 
-void AgentServer::Run() 
+wTask* AgentServer::NewUnixTask(wSocket *pSocket)
 {
-	//...
-}
-
-wTask* AgentServer::NewTcpTask(wIO *pIO)
-{
-	wTask *pTask = new AgentServerTask(pIO);
-	return pTask;
-}
-
-wTask* AgentServer::NewUDSocketTask(wIO *pIO)
-{
-	wTask *pTask = new AgentUDSocketTask(pIO);
-	return pTask;
+	return new AgentUnixTask(pSocket);
 }
 
 /** 发送初始化svr配置请求 */
@@ -84,7 +76,7 @@ int AgentServer::InitSvrReq()
 	wTcpClient<AgentClientTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
 	if (pClient != NULL && pClient->TcpTask())
 	{
-		SvrReqInit_t stSvr;
+		struct SvrReqInit_t stSvr;
 		return pClient->TcpTask()->SyncSend((char *)&stSvr, sizeof(stSvr));
 	}
 	return -1;
@@ -101,7 +93,7 @@ int AgentServer::ReloadSvrReq()
 	wTcpClient<AgentClientTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
 	if (pClient != NULL && pClient->TcpTask())
 	{
-		SvrReqReload_t stSvr;
+		struct SvrReqReload_t stSvr;
 		return pClient->TcpTask()->SyncSend((char *)&stSvr, sizeof(stSvr));
 	}
 	return -1;

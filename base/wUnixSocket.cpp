@@ -4,16 +4,9 @@
  * Copyright (C) Hupu, Inc.
  */
 
-#include "wUDSocket.h"
+#include "wUnixSocket.h"
 
-wUDSocket::wUDSocket()
-{
-	mIOType = TYPE_SOCK;
-	mIOFlag = FLAG_RVSD;
-	mTaskType = TASK_UNIXD;
-}
-
-int wUDSocket::Open()
+int wUnixSocket::Open()
 {
 	if ((mFD = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
 	{
@@ -23,17 +16,16 @@ int wUDSocket::Open()
 	return mFD;
 }
 
-int wUDSocket::Bind(string sPathAddr)
+int wUnixSocket::Bind(string sHost, unsigned int nPort)
 {
 	if (mFD == FD_UNKNOWN)
 	{
 		return -1;
 	}
-
 	struct sockaddr_un stSocketAddr;
 	memset(&stSocketAddr, 0, sizeof(stSocketAddr));
 	stSocketAddr.sun_family = AF_UNIX;
-	strncpy(stSocketAddr.sun_path, sPathAddr.c_str(), sizeof(stSocketAddr.sun_path) - 1);
+	strncpy(stSocketAddr.sun_path, sHost.c_str(), sizeof(stSocketAddr.sun_path) - 1);
 
 	if (bind(mFD, (struct sockaddr *)&stSocketAddr, sizeof(stSocketAddr)) < 0)
 	{
@@ -44,17 +36,15 @@ int wUDSocket::Bind(string sPathAddr)
 	return 0;
 }
 
-int wUDSocket::Listen(string sPathAddr)
+int wUnixSocket::Listen(string sHost, unsigned int nPort)
 {
 	if (mFD == FD_UNKNOWN)
 	{
 		return -1;
 	}
-	mHost = sPathAddr;
-	mSockType = SOCK_LISTEN;
-	mIOFlag = FLAG_RECV;
+	mHost = sHost;
 
-	if (Bind(sPathAddr) < 0)
+	if (Bind(mHost) < 0)
 	{
 		mErr = errno;
 		Close();
@@ -67,20 +57,23 @@ int wUDSocket::Listen(string sPathAddr)
 		Close();
 		return -1;
 	}
+	
+	if (SetNonBlock() < 0) 
+	{
+		LOG_ERROR(ELOG_KEY, "[system] Set listen socket nonblock failed, close it");
+	}
 	return 0;
 }
 
-int wUDSocket::Connect(string sPathAddr, float fTimeout)
+int wUnixSocket::Connect(string sHost, unsigned int nPort, float fTimeout)
 {
 	if (mFD == FD_UNKNOWN)
 	{
 		return -1;
 	}
-	mHost = sPathAddr;
-	mSockType = SOCK_CONNECT;
-	mIOFlag = FLAG_RECV;
+	mHost = sHost;
 
-	string sTmpSock = "/tmp/unix_";
+	string sTmpSock = "unix_";
 	sTmpSock += Itos(getpid()) + ".sock";
 	if (Bind(sTmpSock) < 0)
 	{
@@ -126,7 +119,8 @@ int wUDSocket::Connect(string sPathAddr, float fTimeout)
                 else if(iRet == 0)
                 {
                     Close();
-                    return ERR_TIMEO;
+                    LOG_ERROR(ELOG_KEY, "[system] unix connect timeout millisecond=%d", iTimeout);
+                    return ERR_TIMEOUT;
                 }
                 else
                 {
@@ -136,11 +130,13 @@ int wUDSocket::Connect(string sPathAddr, float fTimeout)
                     {
                     	mErr = errno;
                         Close();
+                        LOG_ERROR(ELOG_KEY, "[system] ip=%s:%d, unix connect getsockopt errno=%d,%s", mHost.c_str(), mPort, mErr, strerror(mErr));
                         return -1;
                     }
                     if(iVal > 0)
                     {
                     	mErr = errno;
+                        LOG_ERROR(ELOG_KEY, "[system] ip=%s:%d, unix connect fail errno=%d,%s", mHost.c_str(), mPort, mErr, strerror(mErr));
                         Close();
                         return -1;
                     }
@@ -151,6 +147,7 @@ int wUDSocket::Connect(string sPathAddr, float fTimeout)
 		else
 		{
 			mErr = errno;
+            LOG_ERROR(ELOG_KEY, "[system] ip=%s:%d, unix connect directly errno=%d,%s", mHost.c_str(), mPort, mErr, strerror(mErr));
 			Close();
 			return -1;
 		}
@@ -158,13 +155,9 @@ int wUDSocket::Connect(string sPathAddr, float fTimeout)
 	return 0;
 }
 
-/**
- *  从客户端接收连接
- *  return ：<0 对端发生错误|对端关闭(FIN_WAIT) =0 稍后重试 >0 文件描述符
- */
-int wUDSocket::Accept(struct sockaddr* pClientSockAddr, socklen_t *pSockAddrSize)
+int wUnixSocket::Accept(struct sockaddr* pClientSockAddr, socklen_t *pSockAddrSize)
 {
-	if (mFD == FD_UNKNOWN || mSockType != SOCK_LISTEN)
+	if (mFD == FD_UNKNOWN || mSockType != SOCK_TYPE_LISTEN)
 	{
 		return -1;
 	}
@@ -194,81 +187,4 @@ int wUDSocket::Accept(struct sockaddr* pClientSockAddr, socklen_t *pSockAddrSize
 	}
 
 	return iNewFD;
-}
-
-/**
- *  从客户端接收原始数据
- *  return ：<0 对端发生错误|消息超长|对端关闭(FIN_WAIT) =0 稍后重试 >0 接受字符
- */
-ssize_t wUDSocket::RecvBytes(char *vArray, size_t vLen)
-{
-	mRecvTime = GetTickCount();
-	
-	ssize_t iRecvLen;
-	while (true)
-	{
-		iRecvLen = recv(mFD, vArray, vLen, 0);
-		if (iRecvLen > 0)
-		{
-			return iRecvLen;
-		}
-		else if (iRecvLen == 0)	//关闭
-		{
-			return ERR_CLOSED;	//FIN
-		}
-		else
-		{
-			mErr = errno;
-			if (mErr == EINTR)	//中断
-			{
-				continue;
-			}
-			if (mErr == EAGAIN || mErr == EWOULDBLOCK)	//暂时无数据可读，可以继续读，或者等待epoll的后续通知
-			{
-				return 0;
-			}
-			
-			return iRecvLen;
-		}
-	}
-}
-
-/**
- *  原始发送客户端数据
- *  return ：<0 对端发生错误 >=0 发送字符
- */
-ssize_t wUDSocket::SendBytes(char *vArray, size_t vLen)
-{
-	mSendTime = GetTickCount();
-	
-	ssize_t iSendLen;
-	size_t iLeftLen = vLen;
-	size_t iHaveSendLen = 0;
-	while (true)
-	{
-		iSendLen = send(mFD, vArray + iHaveSendLen, iLeftLen, 0);
-		if (iSendLen >= 0)
-		{
-			iLeftLen -= iSendLen;
-			iHaveSendLen += iSendLen;
-			if(iLeftLen == 0)
-			{
-				return vLen;
-			}
-		}
-		else
-		{
-			mErr = errno;
-			if (mErr == EINTR) //中断
-			{
-				continue;
-			}
-			if (iSendLen < 0 && (mErr == EAGAIN || mErr == EWOULDBLOCK))	//当前缓冲区写满，可以继续写，或者等待epoll的后续通知
-			{
-				return 0;
-			}
-			
-			return iSendLen;
-		}
-	}
 }

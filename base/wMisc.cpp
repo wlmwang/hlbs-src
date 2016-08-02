@@ -21,11 +21,11 @@ unsigned GetIpByIF(const char* pIfname)
         if (!ioctl(iFD, SIOCGIFCONF, (char*)&ifc))
         {
             iIntrface = ifc.ifc_len / sizeof(struct ifreq); 
-            while(iIntrface-- > 0)
+            while (iIntrface-- > 0)
             {
-                if(strcmp(buf[iIntrface].ifr_name, pIfname) == 0)
+                if (strcmp(buf[iIntrface].ifr_name, pIfname) == 0)
                 {
-                    if(!(ioctl(iFD, SIOCGIFADDR, (char *)&buf[iIntrface])))
+                    if (!(ioctl(iFD, SIOCGIFADDR, (char *)&buf[iIntrface])))
                     {
                         ip = (unsigned)((struct sockaddr_in *)(&buf[iIntrface].ifr_addr))->sin_addr.s_addr;
                     }
@@ -101,10 +101,10 @@ vector<string> Split(string sStr, string sPattern, bool bRepeat)
     sStr += sPattern;  
     int iSize = sStr.size();
   
-    for(int i = 0; i < iSize; i++)  
+    for (int i = 0; i < iSize; i++)  
     {  
         iPos = iNextPos = sStr.find(sPattern, i);
-        if(iPos < iSize)
+        if ((int)iPos < iSize)
         {
             string s = sStr.substr(i, iPos - i);
             vResult.push_back(s);
@@ -155,32 +155,33 @@ int Ngcd(int *arr, int n)
 	return Gcd(arr[n-1], Ngcd(arr, n-1));
 }
 
-int InitDaemon(const char *filename)
+int InitDaemon(const char *filename, const char *prefix)
 {
 	//打开需要锁定的文件
 	if (filename == NULL)
 	{
 		filename = LOCK_PATH;
 	}
-	
-	int err;
+
+	//切换当前目录
 	char dir_path[256] = {0};
-#ifdef PREFIX
-	memcpy(dir_path, PREFIX, strlen(PREFIX) + 1);
-#else
-	if (GetCwd(dir_path, sizeof(dir_path)) == -1)
+	if (prefix == NULL)
 	{
-		err = errno;
-		cout << "[system] getcwd failed: " << strerror(err) << endl;
-		exit(0);
+		if (GetCwd(dir_path, sizeof(dir_path)) == -1)
+		{
+			cout << "[system] getcwd failed: " << strerror(errno) << endl;
+			exit(0);
+		}
 	}
-#endif
+	else
+	{
+		memcpy(dir_path, prefix, strlen(prefix) + 1);
+	}
 
 	//切换工作目录
 	if (chdir(dir_path) == -1) 
 	{
-		err = errno;
-		cout << "[system] Can not change run dir to "<< dir_path << " , init daemon failed: " << strerror(err) << endl;
+		cout << "[system] Can not change run dir to "<< dir_path << " , init daemon failed: " << strerror(errno) << endl;
 		return -1;
 	}
 	umask(0);
@@ -192,12 +193,39 @@ int InitDaemon(const char *filename)
 		return -1;
 	}
 	//独占式锁定文件，防止有相同程序的进程已经启动
-	int ret = flock(lock_fd, LOCK_EX | LOCK_NB);
-	if (ret < 0) 
+	if (flock(lock_fd, LOCK_EX | LOCK_NB) < 0) 
 	{
 		cout << "[system] Lock file failed, server is already running" << endl;
 		return -1;
 	}
+
+    /**
+     * 设置进程的有效uid
+     * 若是以root身份运行，则将worker进程降级, 默认是nobody
+     */
+	/*
+    if (geteuid() == 0) 
+	{
+        if (setgid(GROUP) == -1) 
+		{
+			LOG_ERROR(ELOG_KEY, "[system] setgid(%d) failed: %s", GROUP, strerror(mErr));
+            exit(2);
+        }
+
+        //附加组ID
+        if (initgroups(USER, GROUP) == -1) 
+		{
+			LOG_ERROR(ELOG_KEY, "[system] initgroups(%s, %d) failed: %s", USER, GROUP, strerror(mErr));
+        }
+
+        //用户ID
+        if (setuid(USER) == -1) 
+		{
+			LOG_ERROR(ELOG_KEY, "[system] setuid(%d) failed: %s", USER, strerror(mErr));            
+			exit(2);
+        }
+    }
+	*/
 
 	//第一次fork
 	if (fork() != 0) exit(0);
@@ -218,6 +246,6 @@ int InitDaemon(const char *filename)
 	//再次fork
 	if (fork() != 0) exit(0);
 	
-	unlink(filename);
+	//unlink(filename);
 	return 0;
 }

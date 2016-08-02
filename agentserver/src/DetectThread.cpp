@@ -4,16 +4,8 @@
  * Copyright (C) Hupu, Inc.
  */
 
+#include "Detect.h"
 #include "DetectThread.h"
-
-DetectThread::DetectThread()
-{
-	mDetectLoopUsleep = 100000;
-	mDetectMaxNode = 1000;
-	mPingTimeout = 0.1;
-	mTcpTimeout = 0.8;
-	mDetectNodeInterval = 10;
-}
 
 DetectThread::~DetectThread()
 {
@@ -271,7 +263,7 @@ int DetectThread::AddDetect(const vector<struct DetectNode_t> &vNode)
     mDetectMutex->Lock();
     vector<struct DetectNode_t>::const_iterator it = vNode.begin(), eIt = vNode.end();
     map<struct DetectNode_t, struct DetectResult_t>::iterator itdel;
-    for (it; it != eIt; ++it)
+    for (; it != eIt; ++it)
     {
         const struct DetectNode_t &stNode = *it;
 
@@ -302,7 +294,7 @@ int DetectThread::DelDetect(const vector<struct DetectNode_t> &vNode)
     mDetectMutex->Lock();
     vector<struct DetectNode_t>::const_iterator it = vNode.begin(), eIt = vNode.end();
     map<struct DetectNode_t, struct DetectResult_t>::iterator itdel;
-    for (it; it != eIt; ++it)
+    for (; it != eIt; ++it)
     {
         const struct DetectNode_t &stNode = *it;
 

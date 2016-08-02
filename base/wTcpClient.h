@@ -15,8 +15,7 @@
 #include "wTimer.h"
 #include "wMisc.h"
 #include "wLog.h"
-#include "wSocket.h"
-#include "wIO.h"
+#include "wTcpSocket.h"
 #include "wTask.h"
 #include "wTcpTask.h"
 #include "wNoncopyable.h"
@@ -28,10 +27,12 @@ class wTcpClient : private wNoncopyable
         wTcpClient(int iType, string sClientName);
 		wTcpClient(const wTcpClient&);
 		virtual ~wTcpClient();
-		void Final();
 
-		virtual void PrepareStart();
-		virtual void Start(bool bDaemon = true);
+		void PrepareStart();
+		void Start(bool bDaemon = false);
+		
+		virtual void PrepareRun() {}
+		virtual void Run() {}
 
 		int ConnectToServer(const char *vIPAddress, unsigned short vPort);
 		int ReConnectToServer();
@@ -42,11 +43,11 @@ class wTcpClient : private wNoncopyable
 
 		bool &IsCheckTimer() { return mIsCheckTimer;}
 		string &ClientName() { return mClientName; }
-		bool IsRunning() { return mStatus = CLIENT_RUNNING; }
+		bool IsRunning() { return mStatus == CLIENT_RUNNING; }
 		CLIENT_STATUS &Status() { return mStatus; }
 		int Type() { return mType; }
 
-		virtual wTcpTask* NewTcpTask(wIO *pIO);
+		virtual wTcpTask* NewTcpTask(wSocket *pSocket);
 		wTcpTask* TcpTask() { return mTcpTask; }
 		
 	protected:
@@ -56,9 +57,9 @@ class wTcpClient : private wNoncopyable
 		wTcpTask* mTcpTask {NULL};	//每个客户端只对应一个task
 		CLIENT_STATUS mStatus {CLIENT_INIT};
 
-		unsigned long long mLastTicker {0};
 		wTimer mCheckTimer;
 		wTimer mReconnectTimer;
+		unsigned long long mLastTicker {0};
 		int mReconnectTimes {0};
 		bool mIsCheckTimer {false};
 		bool mIsReconnect {true};

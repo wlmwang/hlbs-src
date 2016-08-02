@@ -4,13 +4,10 @@
  * Copyright (C) Hupu, Inc.
  */
 
-#include <stdarg.h>
-
 #include "wThread.h"
-#include "wLog.h"
 
 /**
- *  Ïß³ÌÈë¿Ú
+ *  çº¿ç¨‹å…¥å£
  */
 void* ThreadProc(void *pvArgs)
 {
@@ -27,29 +24,23 @@ void* ThreadProc(void *pvArgs)
 	}
 
 	pThread->Run();
-
 	return NULL;	//pthread_exit(0);
-}
-
-wThread::wThread()
-{
-	mRunStatus = THREAD_BLOCKED;	//×èÈû
 }
 
 int wThread::StartThread(int join)
 {
 	pthread_attr_init(&mAttr);
-	//ÉèÖÃÏß³Ì×´Ì¬ÎªÓëÏµÍ³ÖÐËùÓÐÏß³ÌÒ»Æð¾ºÕùCPUÊ±¼ä
+	//è®¾ç½®çº¿ç¨‹çŠ¶æ€ä¸ºä¸Žç³»ç»Ÿä¸­æ‰€æœ‰çº¿ç¨‹ä¸€èµ·ç«žäº‰CPUæ—¶é—´
 	pthread_attr_setscope(&mAttr, PTHREAD_SCOPE_SYSTEM);
 	if(join == 1)
 	{
-		pthread_attr_setdetachstate(&mAttr, PTHREAD_CREATE_JOINABLE);	//ÉèÖÃ·Ç·ÖÀëµÄÏß³Ì
+		pthread_attr_setdetachstate(&mAttr, PTHREAD_CREATE_JOINABLE);	//è®¾ç½®éžåˆ†ç¦»çš„çº¿ç¨‹
 		mMutex = new wMutex();
 		mCond = new wCond();
 	}
 	else
 	{
-		pthread_attr_setdetachstate(&mAttr, PTHREAD_CREATE_DETACHED);	//ÉèÖÃ·ÖÀëµÄÏß³Ì
+		pthread_attr_setdetachstate(&mAttr, PTHREAD_CREATE_DETACHED);	//è®¾ç½®åˆ†ç¦»çš„çº¿ç¨‹
 	}
 	
 	mRunStatus = THREAD_RUNNING;
@@ -68,7 +59,7 @@ int wThread::StopThread()
 
 	mMutex->Unlock();
 	
-	//µÈ´ý¸ÃÏß³ÌÖÕÖ¹
+	//ç­‰å¾…è¯¥çº¿ç¨‹ç»ˆæ­¢
 	pthread_join(mTid, NULL);
 
 	return 0;
@@ -76,18 +67,18 @@ int wThread::StopThread()
 
 int wThread::CondBlock()
 {
-	mMutex->Lock();		//»¥³âËø
+	mMutex->Lock();		//äº’æ–¥é”
 
-	while(IsBlocked() || mRunStatus == THREAD_STOPPED)  //Ïß³Ì±»×èÈû»òÕßÍ£Ö¹
+	while(IsBlocked() || mRunStatus == THREAD_STOPPED)  //çº¿ç¨‹è¢«é˜»å¡žæˆ–è€…åœæ­¢
 	{
-		if(mRunStatus == THREAD_STOPPED)  //Èç¹ûÏß³ÌÐèÒªÍ£Ö¹ÔòÖÕÖ¹Ïß³Ì
+		if(mRunStatus == THREAD_STOPPED)  //å¦‚æžœçº¿ç¨‹éœ€è¦åœæ­¢åˆ™ç»ˆæ­¢çº¿ç¨‹
 		{
 			pthread_exit((void *)GetRetVal());
 		}
 		
 		mRunStatus = THREAD_BLOCKED;	//"blocked"
 		
-		mCond->Wait(*mMutex);	//½øÈëÐÝÃß×´Ì¬
+		mCond->Wait(*mMutex);	//è¿›å…¥ä¼‘çœ çŠ¶æ€
 	}
 
 	if(mRunStatus != THREAD_RUNNING)  
@@ -95,9 +86,9 @@ int wThread::CondBlock()
 		//"Thread waked up"
 	}
 	
-	mRunStatus = THREAD_RUNNING;  //Ïß³Ì×´Ì¬±äÎªTHREAD_RUNNING
+	mRunStatus = THREAD_RUNNING;  //çº¿ç¨‹çŠ¶æ€å˜ä¸ºTHREAD_RUNNING
 
-	mMutex->Unlock();	//¸Ã¹ý³ÌÐèÒªÔÚÏß³ÌËøÄÚÍê³É
+	mMutex->Unlock();	//è¯¥è¿‡ç¨‹éœ€è¦åœ¨çº¿ç¨‹é”å†…å®Œæˆ
 	return 0;
 }
 
@@ -107,14 +98,20 @@ int wThread::Wakeup()
 
 	if(!IsBlocked() && mRunStatus == THREAD_BLOCKED)
     {
-		mCond->Signal();	//ÏòÏß³Ì·¢³öÐÅºÅÒÔ»½ÐÑ
+		mCond->Signal();	//å‘çº¿ç¨‹å‘å‡ºä¿¡å·ä»¥å”¤é†’
 	}
 
 	mMutex->Unlock();
 	return 0;
 }
 
-int wThread::CancelThread()
+inline int wThread::CancelThread()
 {
 	return pthread_cancel(mTid);
+}
+
+inline char* wThread::GetRetVal()
+{
+	memcpy(mRetVal, "pthread exited", sizeof("pthread exited"));
+	return mRetVal;
 }

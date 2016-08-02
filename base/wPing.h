@@ -29,7 +29,7 @@ class wPing : private wNoncopyable
 {
 	public:
 		wPing();
-		virtual ~wPing();
+		~wPing();
 		
 		int Open();
 		int Close();

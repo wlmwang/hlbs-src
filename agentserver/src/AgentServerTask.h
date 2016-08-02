@@ -12,11 +12,10 @@
 
 #include "wCore.h"
 #include "wLog.h"
-#include "wTcpTask.h"
+#include "wAssert.h"
 #include "wDispatch.h"
-#include "Common.h"
-#include "SvrCmd.h"
-#include "LoginCmd.h"
+#include "wSocket.h"
+#include "wTcpTask.h"
 #include "AgentConfig.h"
 #include "AgentServer.h"
 
@@ -25,9 +24,9 @@ class AgentServerTask : public wTcpTask
 {
 	public:
 		AgentServerTask();
-		AgentServerTask(wIO *pIO);
-		virtual ~AgentServerTask() {}
+		AgentServerTask(wSocket *pSocket);
 		void Initialize();
+
 		virtual int VerifyConn();
 		virtual int Verify();
 		virtual int HandleRecvMessage(char *pBuffer, int nLen);
@@ -41,8 +40,8 @@ class AgentServerTask : public wTcpTask
 
 	protected:
 		DEC_DISP(mDispatch);
-		AgentConfig *mConfig;
-		AgentServer *mServer;
+		AgentConfig *mConfig {NULL};
+		AgentServer *mServer {NULL};
 };
 
 #endif

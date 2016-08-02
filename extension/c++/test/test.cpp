@@ -1,5 +1,9 @@
 
-#include "wCore.h"
+/**
+ * Copyright (C) Anny Wang.
+ * Copyright (C) Hupu, Inc.
+ */
+
 #include "agent_api.h"
 
 int GPSvr()
@@ -9,19 +13,28 @@ int GPSvr()
 	stSvr.mXid = 2;
 
 	string s;
-	cout << "res:" << QueryNode(stSvr, 30, s) << endl;
+	int iRet = QueryNode(stSvr, 30, s);
+
+	cout << "ret:" << iRet << endl;
 	cout << "host:" << stSvr.mHost << endl;
 	cout << "port:" << stSvr.mPort << endl;
 
-	if (stSvr.mHost[0] != 0 && stSvr.mPort > 0)
-	{
-		cout << "res:" << NotifyCallerRes(stSvr, 0, 2000, s) << endl;
-	}
+	if (iRet >= 0)	return NotifyCallerRes(stSvr, 0, 2000, s);
+	
+	return -1;
 }
 
 int main(int argc, char *argv[])
 {
-	(ConnectAgent() >= 0) && GPSvr();
+	ConnectAgent();
+
+	int errnum = 0;
+	for (int i = 0; i < 1; i++)
+	{
+		if (GPSvr() < 0) errnum++;
+	}
+	cout << "errnum" << errnum << endl;
+
 	CloseAgent();
 	return 0;
 }

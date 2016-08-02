@@ -13,9 +13,11 @@ g++ (GCC) 4.8.x
 
 # 解压软件包
 
+默认安装到/usr/local/webserver/hlbs/目录中，若需更改目录，请务必在安装RouterSvrd、AgentSvrd之前，修改两者目录下的Makefile文件，设置其ROOTPATH值为要安装的目录（php扩展config.m4文件也要做对应路径的修改）
+
 ```
 $ tar –xvf hlbs.tar –C /usr/local/webserver
-$ cd /usr/local/webserver/hlbs #若不解压到此目录，请务必在安装RouterSvrd、AgentSvrd之前，修改两者目录下的Makefile文件。设置其ROOTPATH值为要安装的目录。并且修改php扩展config.m4对应头文件与目录
+$ cd /usr/local/webserver/hlbs
 ```
 
 

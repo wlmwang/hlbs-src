@@ -6,8 +6,20 @@
 
 #include "wCore.h"
 #include "wLog.h"
+#include "Common.h"
 #include "AgentConfig.h"
 #include "AgentMaster.h"
+
+//删除pid、lock文件
+void ProcessExit()
+{
+	AgentMaster *pMaster = AgentMaster::Instance();
+	if ((int)pMaster->mProcess < 2)
+	{
+		unlink(AGENT_LOCK_FILE);
+		unlink(AGENT_PID_FILE);
+	}
+}
 
 int main(int argc, const char *argv[])
 {
@@ -27,7 +39,11 @@ int main(int argc, const char *argv[])
 	//daemon
 	if (pConfig->mDaemon == 1)
 	{
-		if (InitDaemon("../log/agent_hlbs.lock") < 0)
+#ifdef PREFIX
+		if (InitDaemon(AGENT_LOCK_FILE, PREFIX) < 0)
+#else
+		if (InitDaemon(AGENT_LOCK_FILE) < 0)
+#endif
 		{
 			LOG_ERROR(ELOG_KEY, "[system] Create daemon failed!");
 			exit(0);
@@ -46,6 +62,8 @@ int main(int argc, const char *argv[])
 		LOG_ERROR(ELOG_KEY, "[system] AgentMaster instance failed");
 		exit(0);
 	}
+	atexit(ProcessExit);
+	
 	pMaster->PrepareStart();
 	pMaster->SingleStart();
 

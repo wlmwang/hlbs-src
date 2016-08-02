@@ -19,20 +19,6 @@
 /* $Id$ */
 
 //modify
-
-/*
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <iostream>
-#include <string>
-*/
-
-#include "wCore.h"
-#include "Common.h"
-#include "Svr.h"
-#include "SvrCmd.h"
 #include "agent_api.h"
 
 #ifdef HAVE_CONFIG_H
@@ -72,8 +58,8 @@ zend_module_entry hlbs_module_entry = {
 #endif
 	"hlbs",
 	hlbs_functions,
-	NULL, //PHP_MINIT,
-	NULL, //PHP_MSHUTDOWN,
+	PHP_MINIT,
+	PHP_MSHUTDOWN,
 	NULL,
 	NULL,
 	PHP_MINFO(hlbs),
@@ -93,7 +79,6 @@ END_EXTERN_C()
 #endif
 
 //modify
-/*
 PHP_MINIT_FUNCTION(hlbs)
 {
 	ConnectAgent();	//连接agent
@@ -104,7 +89,6 @@ PHP_MSHUTDOWN_FUNCTION(hlbs)
 {
 	CloseAgent();	//连接agent
 }
-*/
 
 //modify
 PHP_MINFO_FUNCTION(hlbs)

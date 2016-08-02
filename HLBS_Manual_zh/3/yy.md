@@ -2,8 +2,7 @@
 
 ```
 $ cd /usr/local/webserver/hlbs/extension/c++
-$ make clean
-$ make
+$ make all
 $ make install
 $ ldconfig
 
@@ -17,6 +16,7 @@ $ make
 $ make test
 $ make install
 $ vim /usr/local/php/etc/php.ini	#添加 extension=hlbs.so
+$ /etc/init.d/php-fpm restart
 $ /usr/local/php/bin/php –m |grep hlbs	#查看是否安装成功
   hlbs #安装成功
 ```

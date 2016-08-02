@@ -13,20 +13,17 @@
 #include "wCore.h"
 #include "wAssert.h"
 #include "wLog.h"
-#include "wTcpTask.h"
 #include "wDispatch.h"
-#include "Common.h"
-#include "SvrCmd.h"
-
-#define AGENTCLT_REG_DISP(cmdid, paraid, func) mDispatch.Register("AgentClientTask", CMD_ID(cmdid, paraid), REG_FUNC(CMD_ID(cmdid, paraid), func));
+#include "wSocket.h"
+#include "wTcpTask.h"
 
 class AgentClientTask : public wTcpTask
 {
 	public:
 		AgentClientTask();
-		AgentClientTask(wIO *pIO);
-		virtual ~AgentClientTask() {}
+		AgentClientTask(wSocket *pSocket);
 		void Initialize();
+
 		virtual int VerifyConn();
 		virtual int Verify();
 		virtual int HandleRecvMessage(char *pBuffer, int nLen);

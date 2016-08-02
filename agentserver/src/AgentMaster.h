@@ -18,18 +18,15 @@
 class AgentMaster : public wMaster<AgentMaster>
 {
 	public:
-		AgentMaster();
 		virtual ~AgentMaster();
-		void Initialize();
 		
 		virtual void PrepareRun();
 		virtual void Run();
-	
+		
 	protected:
-		char *mTitle;
-
-		AgentConfig *mConfig;
-		AgentServer *mServer;
+		char *mTitle {NULL};
+		AgentConfig *mConfig {NULL};
+		AgentServer *mServer {NULL};
 };
 
 #endif

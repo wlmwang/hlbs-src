@@ -7,13 +7,6 @@
 #include "wChannel.h"
 #include "wChannelCmd.h"
 
-wChannel::wChannel() 
-{
-    mIOType = TYPE_SOCK;
-    mTaskType = TASK_UNIXS;
-    mSockType = SOCK_CONNECT;
-}
-
 void wChannel::Close()
 {
     if (mCh[0] == FD_UNKNOWN || close(mCh[0]) == -1) 
@@ -27,15 +20,6 @@ void wChannel::Close()
 		LOG_ERROR(ELOG_KEY, "[system] close() channel failed:%s", strerror(mErr));
     }
 	mFD = FD_UNKNOWN;
-}
-
-int &wChannel::operator[](int i)
-{
-	if (i > 1)
-	{
-		LOG_ERROR(ELOG_KEY, "[system] leap the pale channel");
-	}
-	return mCh[i];
 }
 
 int wChannel::Open()
@@ -91,7 +75,7 @@ ssize_t wChannel::SendBytes(char *vArray, size_t vLen)
 	 *  附属信息
 	 *  发送文件描述符。 msghdr.msg_control 缓冲区必须与 cmsghdr 结构对齐
 	 */
-	ChannelReqCmd_s *pChannel = (ChannelReqCmd_s*) (vArray + sizeof(int));	//去除消息头（消息长度）
+	struct ChannelReqCmd_s *pChannel = (struct ChannelReqCmd_s*) (vArray + sizeof(int));	//去除消息头（消息长度）
 	union 
     {
         struct cmsghdr  cm;
@@ -143,7 +127,7 @@ ssize_t wChannel::SendBytes(char *vArray, size_t vLen)
     if (n == -1) 
     {
         mErr = errno;
-        if (mErr = EINTR || mErr == EAGAIN) 
+        if ((mErr = EINTR) || (mErr == EAGAIN)) 
         {
             return 0;
         }
@@ -208,9 +192,7 @@ ssize_t wChannel::RecvBytes(char *vArray, size_t vLen)
     }
 
     //是否是打开fd文件描述符channel
-    int iChLen = sizeof(struct ChannelReqOpen_t);
-
-    if (n == iChLen + sizeof(int))
+    if (n == sizeof(struct ChannelReqOpen_t) + sizeof(int))
     {
         struct ChannelReqOpen_t *pChannel = (struct ChannelReqOpen_t*) (vArray + sizeof(int));        
         if (pChannel->GetCmd() == CMD_CHANNEL_REQ && pChannel->GetPara() == CHANNEL_REQ_OPEN)
@@ -232,4 +214,13 @@ ssize_t wChannel::RecvBytes(char *vArray, size_t vLen)
     }
 	
     return n;
+}
+
+int &wChannel::operator[](int i)
+{
+    if (i > 1)
+    {
+        LOG_ERROR(ELOG_KEY, "[system] leap the pale channel");
+    }
+    return mCh[i];
 }

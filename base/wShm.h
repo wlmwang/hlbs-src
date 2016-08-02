@@ -30,16 +30,10 @@ class wShm : private wNoncopyable
 
 	public:
 		wShm(const char *filename, int pipeid = 'i', size_t size = MSG_QUEUE_LEN);
-		void Initialize();
-		virtual ~wShm();
+		~wShm();
 
 		char *CreateShm();
 		char *AttachShm();
-		
-		/**
-		 *  TODO.
-		 *  对齐
-		 */
 		char *AllocShm(size_t size = 0);
 		void FreeShm();
 
@@ -50,8 +44,7 @@ class wShm : private wNoncopyable
 		int mShmId {0};
 		
 		size_t mSize {0};
-		shmhead_t *mShmhead {NULL};	//共享内存头信息
-
+		struct shmhead_t *mShmhead {NULL};	//共享内存头信息
 		int mPagesize {0};
 };
 

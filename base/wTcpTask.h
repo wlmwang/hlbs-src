@@ -8,23 +8,17 @@
 #define _W_TCP_TASK_H_
 
 #include "wCore.h"
-#include "wTask.h"
 #include "wCommand.h"
+#include "wTask.h"
 
 class wTcpTask : public wTask
 {
 	public:
-		wTcpTask();
-		wTcpTask(wIO *pIO);
-		void Initialize();
-		virtual ~wTcpTask() {}
-		
-		virtual int VerifyConn();	//验证接收到连接
-		virtual int Verify();		//发送连接验证请求
+		wTcpTask() {}
+		wTcpTask(wSocket *pSocket) : wTask(pSocket) {}
 
-		int ConnType() { return mConnType; }
-	protected:
-		int mConnType {CLIENT}; //客户端类型
+		virtual int VerifyConn() { return 0;}
+		virtual int Verify() { return 0;}
 };
 
 #endif

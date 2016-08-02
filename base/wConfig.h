@@ -18,7 +18,6 @@ template <typename T>
 class wConfig : public wSingleton<T>
 {
 	public:
-		wConfig() {}
 		virtual ~wConfig();
 		virtual int GetOption(int argc, const char *argv[]);
 		void InitProcTitle(int argc, const char *argv[]);

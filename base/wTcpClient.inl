@@ -7,34 +7,27 @@
 template <typename T>
 wTcpClient<T>::wTcpClient(int iType, string sClientName)
 {
+	mType = iType;
+	mClientName = sClientName;
 	mLastTicker = GetTickCount();
 	mCheckTimer = wTimer(KEEPALIVE_TIME);
 	mReconnectTimer = wTimer(KEEPALIVE_TIME);
-	mType = iType;
-	mClientName = sClientName;
 }
 
 template <typename T>
 wTcpClient<T>::~wTcpClient()
 {
-	Final();
-}
-
-template <typename T>
-void wTcpClient<T>::Final()
-{
-	mTcpTask->DeleteIO();
 	SAFE_DELETE(mTcpTask);
 }
 
 template <typename T>
 int wTcpClient<T>::ReConnectToServer()
 {
-	if (mTcpTask != NULL && mTcpTask->IO() != NULL)
+	if (mTcpTask != NULL && mTcpTask->Socket() != NULL)
 	{
-		if (mTcpTask->IO()->FD() < 0)
+		if (mTcpTask->Socket()->FD() < 0)
 		{
-			return ConnectToServer(mTcpTask->IO()->Host().c_str(), mTcpTask->IO()->Port());
+			return ConnectToServer(mTcpTask->Socket()->Host().c_str(), mTcpTask->Socket()->Port());
 		}
 		return 0;
 	}
@@ -44,52 +37,45 @@ int wTcpClient<T>::ReConnectToServer()
 template <typename T>
 int wTcpClient<T>::ConnectToServer(const char *vIPAddress, unsigned short vPort)
 {
-	if (vIPAddress == NULL || vPort == 0) 
-	{
-		return -1;
-	}
-	//SAFE_DELETE(mTcpTask);
+	if (vIPAddress == NULL || vPort == 0) return -1;
 	
-	wSocket* pSocket = new wSocket();
-	int iSocketFD = pSocket->Open();
-	if (iSocketFD < 0)
+	wTcpSocket* pSocket = new wTcpSocket(SOCK_TYPE_CONNECT);
+	if (pSocket->Open() == FD_UNKNOWN)
 	{
-		LOG_ERROR(ELOG_KEY, "[system] create socket failed: %s", strerror(pSocket->Errno()));
+		LOG_ERROR(ELOG_KEY, "[system] client create socket failed: %s", strerror(pSocket->Errno()));
 		SAFE_DELETE(pSocket);
 		return -1;
 	}
 
-	int iRet = pSocket->Connect(vIPAddress, vPort);
-	if (iRet < 0)
+	if (pSocket->Connect(vIPAddress, vPort) < 0)
 	{
-		LOG_ERROR(ELOG_KEY, "[system] connect to server port(%d) failed: %s", vPort, strerror(pSocket->Errno()));
+		LOG_ERROR(ELOG_KEY, "[system] client connect to server port(%d) failed: %s", vPort, strerror(pSocket->Errno()));
 		SAFE_DELETE(pSocket);
 		return -1;
 	}
+	pSocket->SockStatus() = SOCK_STATUS_CONNECTED;
 
-	LOG_DEBUG(ELOG_KEY, "[system] connect to %s:%d successfully", vIPAddress, vPort);
+	LOG_DEBUG(ELOG_KEY, "[system] client connect to %s:%d successfully", vIPAddress, vPort);
 	
-	if (mTcpTask != NULL && mTcpTask->IO() != NULL)
+	//清除旧的socket
+	if (mTcpTask != NULL && mTcpTask->Socket() != NULL)
 	{
-		mTcpTask->DeleteIO();
 		SAFE_DELETE(mTcpTask);
 	}
+
 	mTcpTask = NewTcpTask(pSocket);
-	
 	if (NULL != mTcpTask)
 	{
 		if (mTcpTask->Verify() < 0 || mTcpTask->VerifyConn() < 0)
 		{
-			LOG_ERROR(ELOG_KEY, "[system] connect illegal or verify timeout: %d, close it", iSocketFD);
-			mTcpTask->DeleteIO();
+			LOG_ERROR(ELOG_KEY, "[system] client connect illegal or verify timeout, close it");
 			SAFE_DELETE(mTcpTask);
 			return -1;
 		}
 		mTcpTask->Status() = TASK_RUNNING;
-		if (mTcpTask->IO()->SetNonBlock() < 0) 
+		if (mTcpTask->Socket()->SetNonBlock() < 0) 
 		{
-			LOG_ERROR(ELOG_KEY, "[system] set non block failed: %d, close it", iSocketFD);
-			mTcpTask->DeleteIO();
+			LOG_ERROR(ELOG_KEY, "[system] client set non block failed, close it");
 			SAFE_DELETE(mTcpTask);
 			return -1;
 		}
@@ -102,56 +88,41 @@ template <typename T>
 void wTcpClient<T>::PrepareStart()
 {
 	mStatus = CLIENT_RUNNING;
+	PrepareRun();
 }
 
 template <typename T>
 void wTcpClient<T>::Start(bool bDaemon)
 {
-	//...
+	{
+		Run();
+	} while (bDaemon);
 }
 
 template <typename T>
 void wTcpClient<T>::CheckTimer()
 {
 	unsigned long long iInterval = (unsigned long long)(GetTickCount() - mLastTicker);
-	if (iInterval < 100) 	//100ms
-	{
-		return;
-	}
+	if (iInterval < 100) return;	//100ms
 
 	mLastTicker += iInterval;
-	if(mCheckTimer.CheckTimer(iInterval))
-	{
-		CheckTimeout();
-	}
-	if (mReconnectTimer.CheckTimer(iInterval))
-	{
-		CheckReconnect();
-	}
+	if (mCheckTimer.CheckTimer(iInterval)) CheckTimeout();
+
+	if (mReconnectTimer.CheckTimer(iInterval)) CheckReconnect();
 }
 
 template <typename T>
 void wTcpClient<T>::CheckTimeout()
 {
-	if (!mIsCheckTimer)
-	{
-		return;
-	}
+	if (!mIsCheckTimer || mTcpTask == NULL) return;
 
 	unsigned long long iNowTime = GetTickCount();
 	unsigned long long iIntervalTime;
-	if (mTcpTask == NULL)
-	{
-		return;
-	}
-	SOCK_TYPE sockType = mTcpTask->IO()->SockType();
-	if (sockType != SOCK_CONNECT)
-	{
-		return;
-	}
+
+	if (mTcpTask->Socket()->SockType() != SOCK_TYPE_CONNECT || mTcpTask->Socket()->SockStatus() != SOCK_STATUS_CONNECTED) return;
 	
 	//心跳检测
-	iIntervalTime = iNowTime - mTcpTask->IO()->SendTime();	//上一次发送时间间隔
+	iIntervalTime = iNowTime - mTcpTask->Socket()->SendTime();	//上一次发送时间间隔
 	if (iIntervalTime >= KEEPALIVE_TIME)
 	{
 		if (mIsCheckTimer == true)	//使用业务层心跳机制
@@ -159,9 +130,8 @@ void wTcpClient<T>::CheckTimeout()
 			mTcpTask->Heartbeat();
 			if (mTcpTask->HeartbeatOutTimes())
 			{
-				//mStatus = CLIENT_QUIT;
-				mTcpTask->IO()->FD() = FD_UNKNOWN;
-				LOG_DEBUG(ELOG_KEY, "[system] disconnect server : out of heartbeat times");
+				mTcpTask->Socket()->FD() = FD_UNKNOWN;
+				LOG_DEBUG(ELOG_KEY, "[system] client disconnect server : out of heartbeat times");
 			}
 		}
 		else	//使用keepalive保活机制（此逻辑一般不会被激活。也不必在业务层发送心跳，否则就失去了keepalive原始意义）
@@ -172,9 +142,8 @@ void wTcpClient<T>::CheckTimeout()
 			}
 			if (mTcpTask->HeartbeatOutTimes())
 			{
-				//mStatus = CLIENT_QUIT;
-				mTcpTask->IO()->FD() = FD_UNKNOWN;
-				LOG_DEBUG(ELOG_KEY, "[system] disconnect server : out of keepalive times");
+				mTcpTask->Socket()->FD() = FD_UNKNOWN;
+				LOG_DEBUG(ELOG_KEY, "[system] client disconnect server : out of keepalive times");
 			}
 		}
 	}
@@ -183,42 +152,31 @@ void wTcpClient<T>::CheckTimeout()
 template <typename T>
 void wTcpClient<T>::CheckReconnect()
 {
-	if (!mIsReconnect)
-	{
-		return;
-	}
-
-	if (mTcpTask == NULL)
-	{
-		return;
-	}
-	SOCK_TYPE sockType = mTcpTask->IO()->SockType();
-	if (sockType != SOCK_CONNECT)
-	{
-		return;
-	}
+	if (!mIsReconnect || mTcpTask != NULL) return;
 	
-	if (mTcpTask->IO() != NULL && mTcpTask->IO()->FD() == FD_UNKNOWN)
+	if (mTcpTask->Socket()->SockType() != SOCK_TYPE_CONNECT || mTcpTask->Socket()->SockStatus() != SOCK_STATUS_CONNECTED) return;
+	
+	if (mTcpTask->Socket() != NULL && mTcpTask->Socket()->FD() == FD_UNKNOWN)
 	{
 		if (ReConnectToServer() == 0)
 		{
-			LOG_INFO(ELOG_KEY, "[system] reconnect success: ip(%s) port(%d)", mTcpTask->IO()->Host().c_str(), mTcpTask->IO()->Port());
+			LOG_INFO(ELOG_KEY, "[system] client reconnect success: ip(%s) port(%d)", mTcpTask->Socket()->Host().c_str(), mTcpTask->Socket()->Port());
 		}
 		else
 		{
-			LOG_ERROR(ELOG_KEY, "[system] reconnect failed: ip(%s) port(%d)", mTcpTask->IO()->Host().c_str(), mTcpTask->IO()->Port());
+			LOG_ERROR(ELOG_KEY, "[system] client reconnect failed: ip(%s) port(%d)", mTcpTask->Socket()->Host().c_str(), mTcpTask->Socket()->Port());
 		}
 	}
 }
 
 template <typename T>
-wTcpTask* wTcpClient<T>::NewTcpTask(wIO *pIO)
+wTcpTask* wTcpClient<T>::NewTcpTask(wSocket *pSocket)
 {
 	T *pT = NULL;
 	wTcpTask *pTcpTask = NULL;
 	try
 	{
-		pT = new T(pIO);
+		pT = new T(pSocket);
 		pTcpTask = dynamic_cast<wTcpTask *>(pT);
 	}
 	catch(std::bad_cast& vBc)

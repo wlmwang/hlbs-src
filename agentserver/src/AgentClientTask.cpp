@@ -4,17 +4,17 @@
  * Copyright (C) Hupu, Inc.
  */
 
-#include "AgentServer.h" 
+#include "AgentClientTask.h"
 #include "AgentConfig.h"
 #include "LoginCmd.h"
-#include "AgentClientTask.h"
+#include "SvrCmd.h"
 
 AgentClientTask::AgentClientTask()
 {
     Initialize();
 }
 
-AgentClientTask::AgentClientTask(wIO *pIO) : wTcpTask(pIO)
+AgentClientTask::AgentClientTask(wSocket *pSocket) : wTcpTask(pSocket)
 {
     Initialize();
 }
@@ -31,18 +31,18 @@ int AgentClientTask::VerifyConn()
 	if(!AGENT_LOGIN) return 0;
 	
 	//验证登录消息
-	char pBuffer[sizeof(LoginReqToken_t)];
-	int iLen = SyncRecv(pBuffer, sizeof(LoginReqToken_t));
+	char pBuffer[sizeof(struct LoginReqToken_t)];
+	int iLen = SyncRecv(pBuffer, sizeof(struct LoginReqToken_t));
 	if (iLen > 0)
 	{
-		LoginReqToken_t *pLoginRes = (LoginReqToken_t*) pBuffer;
+		struct LoginReqToken_t *pLoginRes = (struct LoginReqToken_t*) pBuffer;
 		if (strcmp(pLoginRes->mToken, "Anny") == 0)
 		{
-			LOG_ERROR(ELOG_KEY, "[client] receive client and verify success from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
-			mConnType = pLoginRes->mConnType;
+			LOG_ERROR(ELOG_KEY, "[client] receive client and verify success from ip(%s) port(%d) with token(%s)", mSocket->Host().c_str(), mSocket->Port(), pLoginRes->mToken);
+			//mConnType = pLoginRes->mConnType;
 			return 0;
 		}
-		LOG_ERROR(ELOG_KEY, "[client] receive client and verify failed from ip(%s) port(%d) with token(%s)", mIO->Host().c_str(), mIO->Port(), pLoginRes->mToken);
+		LOG_ERROR(ELOG_KEY, "[client] receive client and verify failed from ip(%s) port(%d) with token(%s)", mSocket->Host().c_str(), mSocket->Port(), pLoginRes->mToken);
 	}
 	return -1;
 }
@@ -52,8 +52,8 @@ int AgentClientTask::Verify()
 	if(!ROUTER_LOGIN) return 0;
 	
 	//验证登录
-	LoginReqToken_t stLoginReq;
-	stLoginReq.mConnType = SERVER_AGENT;
+	struct LoginReqToken_t stLoginReq;
+	//stLoginReq.mConnType = SERVER_AGENT;
 	memcpy(stLoginReq.mToken, "Anny", 4);
 	SyncSend((char*)&stLoginReq, sizeof(stLoginReq));
 	return 0;
@@ -83,7 +83,7 @@ int AgentClientTask::ParseRecvMessage(struct wCommand *pCommand, char *pBuffer, 
 		}
 		else
 		{
-			LOG_ERROR(ELOG_KEY, "[system] client send a invalid msg fd(%d) id(%d)", mIO->FD(), pCommand->GetId());
+			LOG_ERROR(ELOG_KEY, "[system] client send a invalid msg fd(%d) id(%d)", mSocket->FD(), pCommand->GetId());
 		}
 	}
 	return 0;

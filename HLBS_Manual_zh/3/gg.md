@@ -12,8 +12,8 @@ $ make install
 
 ```
 $ cd lib/log4cpp
-$ tar –zxvf log4cpp-1.1.2rc1.tar.gz -C /usr/local
-$ cd /usr/local/log4cpp/
+$ tar –zxvf log4cpp-1.1.2rc1.tar.gz
+$ cd log4cpp
 $ ./configure
 $ make
 $ make check
@@ -26,7 +26,7 @@ $ make install #(默认路劲，库：/usr/local/lib	头：/usr/local/include/lo
 $ cd /etc/ld.so.conf.d
 $ touch hlbs.conf
 $ echo "/usr/local/lib" >> hlbs.conf
-$ldconfig
+$ ldconfig
 ```
 
 

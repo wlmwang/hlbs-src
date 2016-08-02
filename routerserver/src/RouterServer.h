@@ -14,22 +14,17 @@
 #include "wLog.h"
 #include "wSingleton.h"
 #include "wTask.h"
-#include "wIO.h"
+#include "wSocket.h"
 #include "wServer.h"
 #include "RouterConfig.h"
-#include "RouterServerTask.h"
-#include "RouterChannelTask.h"
 
 class RouterServer: public wServer<RouterServer>
 {
 	public:
 		RouterServer();
-		virtual ~RouterServer() {}				
 		virtual void Run();
 		
-		virtual wTask* NewTcpTask(wIO *pIO);
-		virtual wTask* NewChannelTask(wIO *pIO);
-
+		virtual wTask* NewTcpTask(wSocket *pSocket);
 		void CheckModSvr();	//检测配置文件是否修改
 		
 	protected:

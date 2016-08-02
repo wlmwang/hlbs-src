@@ -17,15 +17,17 @@
 #include "wFile.h"
 #include "wShm.h"
 #include "wShmtx.h"
-#include "wChannel.h"
 #include "wSigSet.h"
 #include "wSignal.h"
 #include "wWorker.h"
-#include "wChannelCmd.h"
+#include "wChannelCmd.h"	//*channel*_t
 
+class wWorker;
 template <typename T>
 class wMaster : public wSingleton<T>
 {
+	//TODO.
+	string mWorkerProcessTitle = "worker process";
 	public:
 		wMaster();
 		virtual ~wMaster();
@@ -36,7 +38,7 @@ class wMaster : public wSingleton<T>
 		void MasterExit();
 		
 		void WorkerStart(int n, int type = PROCESS_RESPAWN);
-		pid_t SpawnWorker(void* pData, const char *title, int type = PROCESS_RESPAWN);
+		pid_t SpawnWorker(string sTitle, int type = PROCESS_RESPAWN);
 		void PassOpenChannel(struct ChannelReqOpen_t *pCh);
 		void PassCloseChannel(struct ChannelReqClose_t *pCh);
 		virtual wWorker* NewWorker(int iSlot = 0);
@@ -61,7 +63,7 @@ class wMaster : public wSingleton<T>
 		 */
 		virtual void PrepareRun() {}
 		virtual void Run() {}
-		virtual void ReconfigMaster() {}
+		virtual void ReloadMaster() {}
 
 		/**
 		 *  注册信号回调
@@ -73,27 +75,30 @@ class wMaster : public wSingleton<T>
 		 *  更新进程表
 		 */
 		void ProcessGetStatus();
-		
 		int CreatePidFile();
 		void DeletePidFile();
 
 	public:
 		int mErr;
 		MASTER_STATUS mStatus {MASTER_INIT};
-		int mProcess {PROCESS_SINGLE};
+		int mProcess {PROCESS_SINGLE};	//进程类别（master、worker、单进程）
+		
+		//master相关
+		wFile mPidFile;	//pid文件
 		int mNcpu {0};		//cpu个数
 		pid_t mPid {0};		//master进程id
-		int mSlot {0};		//进程表分配到数量
-		int mWorkerNum {0};	//worker总数量
-		wWorker **mWorkerPool {NULL};	//进程表，从0开始
 		
+		//进程表
+		wWorker **mWorkerPool {NULL};
+		int mWorkerNum {0};	//worker总数量
+		int mSlot {0};		//进程表分配到索引
+		
+		//主进程master构建惊群锁（进程共享）
+		int mDelay {500};	//延时时间。默认500ms
 		int mUseMutex {0};	//惊群锁标识
 		int mMutexHeld {0};	//是否持有锁
-		int mDelay {500};		//延时时间。默认500ms
 		wShm *mShmAddr {NULL};	//共享内存
 		wShmtx *mMutex {NULL};	//accept mutex
-
-		wFile mPidFile;	//pid文件
 };
 
 #include "wMaster.inl"

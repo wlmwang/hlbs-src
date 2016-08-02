@@ -90,6 +90,6 @@ vector<string> Split(string sStr, string sPattern, bool bRepeat = true);
 int Gcd(int a, int b);
 int Ngcd(int *arr, int n);
 
-int InitDaemon(const char *filename);
+int InitDaemon(const char *filename, const char *prefix = NULL);
 
 #endif

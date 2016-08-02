@@ -6,151 +6,74 @@
 
 #
 # Makefile
-# 需要预先编译lib目录下的log4cpp|tinyxml软件包
+# 动态链接所需库，需.so文件安装到ldconfig加载路径中(/usr/local/lib)
+# 需要预先编译lib目录下的log4cpp、tinyxml软件包
 #
 
 ROOTPATH=\"/usr/local/webserver/hlbs/routerserver/bin\"
 
-BASEPATH=../base
-
-LIBPATH=../lib
-
-COMMANDPATH=../command
-
 CXX=g++
+CXXFLAGS=-std=c++11 -O3 -Wall -Wno-invalid-offsetof -DPREFIX=$(ROOTPATH) -DUSE_LOG4CPP -DLINUX -D_DEBUG_ #-D_MEM_CHECK
+LDFLAGS=-L/usr/local/lib -ltinyxml -llog4cpp -lpthread
 
-CXXFLAGS=-std=c++11 -Wall -Wno-invalid-offsetof -DPREFIX=$(ROOTPATH) -DUSE_LOG4CPP -DLINUX -D_DEBUG_ #-D_MEM_CHECK #--extra-libs=-lgcc
+BASEPATH=../base
+COMMPATH=../command
+LDPATH=../lib
+INCPATH=-I./$(BASEPATH) -I./$(COMMPATH) -I./$(LDPATH)/tinyxml -I/usr/local/include/log4cpp
 
-LIBS=-llog4cpp -ltinyxml -lpthread
-INCPATH=-I./$(BASEPATH) -I./$(LIBPATH)/tinyxml -I./$(COMMANDPATH) -I/usr/include/log4cpp
-
-DIRS=./log ./bin ./debug
-
-TARGET=./bin/routersvrd
-
-OBJECTS=./debug/wLog.o \
-		./debug/wSignal.o \
-		./debug/wMisc.o \
-		./debug/wShmtx.o \
-		./debug/wShm.o \
-		./debug/wIO.o \
-		./debug/wFile.o \
-		./debug/wSocket.o \
-		./debug/wUDSocket.o \
-		./debug/wChannel.o \
-		./debug/wHttp.o \
-		./debug/wHttpTask.o  \
-		./debug/wTask.o \
-		./debug/wTcpTask.o  \
-		./debug/wUDSocketTask.o \
-		./debug/wChannelTask.o \
-		./debug/wMsgQueue.o \
-		./debug/wMemPool.o \
-		./debug/wProcTitle.o \
-		./debug/wWorker.o \
+SRCPATH=./src
+OBJECTS=./$(BASEPATH)/wLog.o \
+		./$(BASEPATH)/wMisc.o \
+		./$(BASEPATH)/wShm.o \
+		./$(BASEPATH)/wShmtx.o \
+		./$(BASEPATH)/wFile.o \
+		./$(BASEPATH)/wSignal.o \
+		./$(BASEPATH)/wProcTitle.o \
+		./$(BASEPATH)/wMsgQueue.o \
+		./$(BASEPATH)/wMemPool.o \
+		./$(BASEPATH)/wThread.o \
+		./$(BASEPATH)/wSocket.o \
+		./$(BASEPATH)/wChannel.o \
+		./$(BASEPATH)/wTcpSocket.o \
+		./$(BASEPATH)/wUnixSocket.o \
+		./$(BASEPATH)/wTask.o \
+		./$(BASEPATH)/wChannelTask.o \
+		./$(BASEPATH)/wWorker.o \
+		./$(BASEPATH)/wWorkerIpc.o \
 		\
-		./debug/SvrQos.o \
-		./debug/RouterMain.o \
-		./debug/RouterMaster.o \
-		./debug/RouterWorker.o \
-		./debug/RouterConfig.o \
-		./debug/RouterServer.o \
-		./debug/RouterServerTask.o \
-		./debug/RouterChannelTask.o
+		./$(SRCPATH)/SvrQos.o \
+		./$(SRCPATH)/RouterMaster.o \
+		./$(SRCPATH)/RouterWorker.o \
+		./$(SRCPATH)/RouterServerTask.o \
+		./$(SRCPATH)/RouterServer.o \
+		./$(SRCPATH)/RouterConfig.o \
+		./$(SRCPATH)/RouterMain.o
 
-$(TARGET): $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $(TARGET) $(LIBS)
+TARGET=routersvrd
+
+.PHONY:all clean install
 
 all: $(TARGET)
 
-./debug/wLog.o: $(BASEPATH)/wLog.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+$(TARGET): $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-./debug/wSignal.o: $(BASEPATH)/wSignal.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+%.o:%.cpp
+	$(CXX) $(CXXFLAGS) $(INCPATH) -c $< -o $@
 
-./debug/wMisc.o: $(BASEPATH)/wMisc.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+%.d:%.cpp
+	@set -e; rm -f $@; $(CXX) -MM $< $(INCPATH) > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
 
-./debug/wShmtx.o: $(BASEPATH)/wShmtx.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wShm.o: $(BASEPATH)/wShm.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wIO.o: $(BASEPATH)/wIO.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wFile.o: $(BASEPATH)/wFile.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wSocket.o: $(BASEPATH)/wSocket.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wUDSocket.o: $(BASEPATH)/wUDSocket.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wChannel.o: $(BASEPATH)/wChannel.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wHttp.o: $(BASEPATH)/wHttp.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wTask.o: $(BASEPATH)/wTask.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wChannelTask.o: $(BASEPATH)/wChannelTask.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wTcpTask.o: $(BASEPATH)/wTcpTask.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wUDSocketTask.o: $(BASEPATH)/wUDSocketTask.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wHttpTask.o: $(BASEPATH)/wHttpTask.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wMsgQueue.o: $(BASEPATH)/wMsgQueue.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wMemPool.o: $(BASEPATH)/wMemPool.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wProcTitle.o: $(BASEPATH)/wProcTitle.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wWorker.o: $(BASEPATH)/wWorker.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/SvrQos.o: src/SvrQos.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/RouterMain.o: src/RouterMain.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/RouterMaster.o: src/RouterMaster.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/RouterWorker.o: src/RouterWorker.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/RouterConfig.o: src/RouterConfig.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/RouterServer.o: src/RouterServer.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/RouterServerTask.o: src/RouterServerTask.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/RouterChannelTask.o: src/RouterChannelTask.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+-include $(OBJECTS:.o=.d)
 
 clean:
-	#-rm -f $(TARGET) $(OBJECTS)
-	-rm -rf $(DIRS)
+	-rm -f $(BASEPATH)/*.o $(BASEPATH)/*.d $(BASEPATH)/*.d.*
+	-rm -f $(TARGET) $(SRCPATH)/*.o $(SRCPATH)/*.d $(SRCPATH)/*.d.*
+	-rm -rf ./bin ./log
 
-dir:
-	-mkdir $(DIRS)
-	chmod 755 -R $(DIRS)
+install:
+	-rm -rf ./bin ./log
+	-mkdir ./bin ./log
+	-mv $(TARGET) ./bin

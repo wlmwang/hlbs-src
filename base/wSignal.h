@@ -34,17 +34,13 @@ class wSignal : private wNoncopyable
 		    }
 		};
 
-		virtual ~wSignal();
-		wSignal();
+		wSignal() {}
 		wSignal(__sighandler_t  func);	//SIG_DFL(采用缺省的处理方式)，也可以为SIG_IGN
 
 		int AddMaskSet(int signo);	//添加屏蔽集
-		
 		int AddHandler(__sighandler_t  func);
-
 		//添加信号处理
 		int AddSigno(int signo, struct sigaction *oact = NULL);
-		
 		int AddSig_t(const signal_t *pSig);
 
 	protected:

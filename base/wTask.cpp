@@ -6,226 +6,286 @@
 
 #include "wTask.h"
 
-void wTask::DeleteIO()
+wTask::wTask()
 {
-	SAFE_DELETE(mIO);	//mIOΩ®¡¢‘⁄∂—…œ
+    Initialize();
 }
 
-void wTask::CloseTask(int iReason)
+wTask::wTask(wSocket* pSocket) : mSocket(pSocket)
 {
-	mStatus = TASK_QUIT;
-	mIO->Close();
+    Initialize();
 }
 
-int wTask::TaskRecv()
+wTask::~wTask()
 {
-	int iRecvLen = mIO->RecvBytes(mRecvMsgBuff + mRecvBytes, sizeof(mRecvMsgBuff) - mRecvBytes);
-	
-	if (iRecvLen <= 0)
-	{
-		return iRecvLen;	
-	}
-	mRecvBytes += iRecvLen;	
-
-	char *pBuffer = mRecvMsgBuff;	//¥”Õ∑ø™ º∂¡»°
-	int iBuffMsgLen = mRecvBytes;	//œ˚œ¢◊‹◊÷Ω⁄ ˝
-	int iMsgLen = 0;
-	
-	while (true)
-	{
-		if (iBuffMsgLen < sizeof(int))
-		{
-			break;
-		}
-
-		iMsgLen = *(int *)pBuffer;	//ÕÍ’˚œ˚œ¢ÃÂ≥§∂»
-
-		//≈–∂œœ˚œ¢≥§∂»
-		if ((iMsgLen < MIN_CLIENT_MSG_LEN) || (iMsgLen > MAX_CLIENT_MSG_LEN))
-		{
-			LOG_ERROR(ELOG_KEY, "[system] recv message invalid len: %d , fd(%d)", iMsgLen, mIO->FD());
-			return ERR_MSGLEN;
-		}
-
-		iBuffMsgLen -= iMsgLen + sizeof(int);	//buf÷–≥˝»•µ±«∞ÕÍ’˚œ˚œ¢ £”‡ ˝æ›≥§∂»
-		pBuffer += iMsgLen + sizeof(int);		//Œª“∆µΩ±æÃıœ˚œ¢Ω· ¯Œª÷√µÿ÷∑
-		
-		//“ªÃı≤ªÕÍ’˚œ˚œ¢
-		if (iBuffMsgLen < 0)
-		{
-			//÷ÿ÷√buf±Í ∂Œª£¨¥˝œ¬¥Œ—≠ª∑◊ˆ◊º±∏
-			iBuffMsgLen += iMsgLen + sizeof(int);
-			pBuffer -= iMsgLen + sizeof(int);
-			
-			LOG_DEBUG(ELOG_KEY, "[system] recv a part of message: real len = %d, now len = %d", iMsgLen, iBuffMsgLen);
-			break;
-		}
-		
-		//“µŒÒ¬ﬂº≠
-		HandleRecvMessage(pBuffer - iMsgLen, iMsgLen);	//»•≥˝4◊÷Ω⁄œ˚œ¢≥§∂»±Í ∂Œª
-	}
-
-	if (iBuffMsgLen == 0) //ª∫≥Â«¯Œﬁ ˝æ›
-	{
-		mRecvBytes = 0;
-	}
-	else
-	{
-		//≈–∂œ £”‡µƒ≥§∂»
-		if (iBuffMsgLen < 0)
-		{
-			LOG_ERROR(ELOG_KEY, "[system] the last msg len %d is impossible fd(%d)", iBuffMsgLen, mIO->FD());
-			return ERR_MSGLEN;
-		}
-		
-		mRecvBytes = iBuffMsgLen;
-		memmove(mRecvMsgBuff, pBuffer, iBuffMsgLen);	//«Â≥˝“—¥¶¿Ìœ˚œ¢
-	}
-	
-	return iRecvLen;
+    SAFE_DELETE(mSocket);
 }
 
-int wTask::TaskSend()
+void wTask::Initialize()
 {
-	int iSendLen = 0;
-	int iMsgLen = 0;
-	while(true)
-	{
-		iMsgLen = mSendWrite - mSendBytes;
-		if (iMsgLen <= 0)
-		{
-			return 0;
-		}
-		
-		iSendLen = mIO->SendBytes(mSendMsgBuff + mSendBytes, iMsgLen);
-		if (iSendLen < 0)
-		{
-			return iSendLen;
-		}
-		mSendBytes += iSendLen;
-		
-		LOG_DEBUG(ELOG_KEY, "[system] send message len: %d, fd(%d)", iMsgLen, mIO->FD());
-	}
-	
-	if (mSendBytes > 0)
-	{
-		memmove(mSendMsgBuff, mSendMsgBuff + mSendBytes, mSendWrite - mSendBytes);	//«Â≥˝“—¥¶¿Ìœ˚œ¢
-		mSendWrite -= mSendBytes;
-		mSendBytes = 0;
-	}
-	return mSendBytes;
-}
-
-int wTask::SendToBuf(const char *pCmd, int iLen)
-{
-	//≈–∂œœ˚œ¢≥§∂»
-	if ((iLen <= MIN_CLIENT_MSG_LEN) || (iLen > MAX_CLIENT_MSG_LEN))
-	{
-		LOG_ERROR(ELOG_KEY, "[system] write message invalid len %d, fd(%d)", iLen, mIO->FD());
-		return -1;
-	}
-	
-	int iMsgLen = iLen + sizeof(int);
-	if ((sizeof(mSendMsgBuff) - mSendWrite + mSendBytes) < iMsgLen) // £”‡ø’º‰≤ª◊„
-	{
-		LOG_ERROR(ELOG_KEY, "[system] send buf not enough. send(%d) need(%d)", sizeof(mSendMsgBuff) - mSendWrite + mSendBytes, iMsgLen);
-		return -2;
-	}
-	else if ((sizeof(mSendMsgBuff) - mSendWrite) < iMsgLen) //–¥»Îø’º‰≤ª◊„
-	{
-		memmove(mSendMsgBuff, mSendMsgBuff + mSendBytes, mSendWrite - mSendBytes);	//«Â≥˝“—¥¶¿Ìœ˚œ¢
-		mSendWrite -= mSendBytes;
-		mSendBytes = 0;
-	}
-	
-	*(int *)(mSendMsgBuff + mSendWrite) = iLen;
-	memcpy(mSendMsgBuff + mSendWrite + sizeof(int), pCmd, iLen);
-	mSendWrite += iMsgLen;
-
-	LOG_DEBUG(ELOG_KEY, "[system] write message to buf(%d - %d), len(%d)", mSendWrite, mSendBytes, iLen);
-
-	return mSendWrite - mSendBytes;
-}
-
-int wTask::SyncSend(const char *pCmd, int iLen)
-{
-	//≈–∂œœ˚œ¢≥§∂»
-	if ((iLen < MIN_CLIENT_MSG_LEN) || (iLen > MAX_CLIENT_MSG_LEN))
-	{
-		LOG_ERROR(ELOG_KEY, "[system] send message invalid len %d, fd(%d)", iLen, mIO->FD());
-		return -1;
-	}
-	
-	*(int *)mTmpSendMsgBuff = iLen;
-	memcpy(mTmpSendMsgBuff + sizeof(int), pCmd, iLen);
-	return mIO->SendBytes(mTmpSendMsgBuff, iLen + sizeof(int));
-}
-
-int wTask::SyncRecv(char *pCmd, int iLen, int iTimeout)
-{
-	long long iSleep = 100;	//100us
-	int iTryCount = iTimeout*1000000/iSleep;
-
-	memset(mTmpRecvMsgBuff, 0, sizeof(mTmpRecvMsgBuff));
-	int iCmdMsgLen = sizeof(int) + sizeof(struct wCommand);
-	
-	struct wCommand* pTmpCmd = 0;
-	int iSize = 0, iRecvLen = 0;
-	do {
-		iSize = mIO->RecvBytes(mTmpRecvMsgBuff + iRecvLen, iLen + sizeof(int));
-		if (iSize < 0) break;
-		iRecvLen += iSize;
-		if ((iSize == 0) || (iRecvLen < iCmdMsgLen))
-		{
-			if (iTryCount-- < 0)
-			{
-				break;
-			}
-			usleep(iSleep);
-			continue;
-		}
-
-		pTmpCmd = (struct wCommand*) (mTmpRecvMsgBuff + sizeof(int));	//–ƒÃ¯∞¸ø…ƒ‹≥ˆœ÷‘⁄ø™Õ∑
-		if (pTmpCmd != NULL && pTmpCmd->GetCmd() == CMD_NULL && pTmpCmd->GetPara() == PARA_NULL)
-		{
-			iRecvLen -= iCmdMsgLen;
-			memmove(mTmpRecvMsgBuff, mTmpRecvMsgBuff + iCmdMsgLen, iRecvLen);
-		}
-		
-		if ((iRecvLen < iLen + sizeof(int)) && (iTryCount-- > 0))
-		{
-			usleep(iSleep);
-			continue;
-		}
-		break;
-	} while (true);
-	
-	int iMsgLen = *(int *)mTmpRecvMsgBuff;
-	if ((iRecvLen <= 0) || (iMsgLen < MIN_CLIENT_MSG_LEN) || (iMsgLen > MAX_CLIENT_MSG_LEN))
-	{
-		LOG_ERROR(ELOG_KEY, "[system] sync recv message invalid len: %d, fd(%d)", iMsgLen, mIO->FD());
-		return ERR_MSGLEN;
-	}
-
-	if (iMsgLen > (iRecvLen - sizeof(int)))	//œ˚œ¢≤ªÕÍ’˚
-	{
-		LOG_DEBUG(ELOG_KEY, "[system] sync recv a part of message: real len = %d, now len = %d, call len = %d", iMsgLen, iRecvLen, iLen);
-		return ERR_MSGLEN;
-	}
-
-	if (iMsgLen > iLen)
-	{
-		LOG_DEBUG(ELOG_KEY, "[system] sync recv error buffer len, it\'s to short!");
-		return ERR_MSGLEN;
-	}
-	memcpy(pCmd, mTmpRecvMsgBuff + sizeof(int), iLen);
-	return iRecvLen - sizeof(int);
+    mRecvRead = mRecvWrite = mRecvBuff;
+    mSendRead = mSendWrite = mSendBuff;
 }
 
 int wTask::Heartbeat()
 {
-	mHeartbeatTimes++;
-	wCommand vCmd;
-	int iRet = SyncSend((char*)&vCmd, sizeof(vCmd));
-	return iRet;
+    mHeartbeatTimes++;
+    struct wCommand vCmd;
+    int iRet = SyncSend((char *)&vCmd, sizeof(vCmd));
+    return iRet;
+}
+
+int wTask::TaskRecv()
+{
+    char *pBuffEnd = mRecvBuff + MSG_BUFF_LEN; //Ë∂ÖÂ∞æÊåáÈíà
+    if (mRecvRead != mRecvBuff && mRecvWrite == pBuffEnd) mRecvWrite = mRecvBuff; //ÂõûÈÄÄÂèØÂÜôÊåáÈíà
+
+    int iLeftLen;
+    int iLen =  mRecvWrite - mRecvRead;
+    if (iLen >= 0)
+    {
+        iLeftLen = pBuffEnd - mRecvWrite;   //Ê≠£ÂêëÂâ©‰Ωô
+    }
+    else
+    {
+        iLeftLen = -iLen;   //ÂàÜÊÆµÔºå‰∏≠Èó¥Ââ©‰Ωô
+    }
+
+    int iRecvLen = 0;
+    if (mRecvLen < MSG_BUFF_LEN)
+    {
+        iRecvLen = mSocket->RecvBytes(mRecvWrite, iLeftLen);    //Êé•ÂèósocketÊï∞ÊçÆ
+        if (iRecvLen <= 0) return iRecvLen;
+
+        mRecvLen += iRecvLen;
+        mRecvWrite += iRecvLen;
+    }
+
+    LOG_DEBUG(ELOG_KEY, "[system] recv buf(%d-%d) rw(%d-%d) iLen(%d) leftlen(%d) movelen(%d) recvLen(%d) iRecvLen(%d)",
+        mRecvBuff, pBuffEnd, mRecvRead, mRecvWrite, iLen, iLeftLen, mRecvRead-mRecvBuff, mRecvLen, iRecvLen);
+
+    for (int iRealLen = 0; mRecvLen > 0;)
+    {
+        if (mRecvRead == pBuffEnd && mRecvWrite != mRecvBuff)  mRecvRead = mRecvBuff;
+        iLen =  mRecvWrite - mRecvRead;
+        
+        if (iLen > 0)  //Ê≠£ÂêëËß£Êûê
+        {
+            memcpy(&iRealLen, mRecvRead, sizeof(iRealLen));
+            if (iRealLen < MIN_PACKAGE_LEN || iRealLen > MAX_PACKAGE_LEN)
+            {
+                LOG_ERROR(ELOG_KEY, "[system] recv message invalid len: %d , fd(%d)", iRealLen, mSocket->FD());
+                return ERR_MSGLEN;
+            }
+            else if (iRealLen > (int) (iLen - sizeof(int)))
+            {
+                LOG_DEBUG(ELOG_KEY, "[system] recv a part of message: real len = %d, now len = %d", iRealLen, iLen - sizeof(int));
+                return 0;
+            }
+
+            HandleRecvMessage(mRecvRead + sizeof(int), iRealLen);   //Ê∂àÊÅØËß£ÊûêÔºåÂéªÈô§4Â≠óËäÇÊ∂àÊÅØÈïøÂ∫¶Ê†áËØÜ‰Ωç
+            mRecvLen -= iRealLen + sizeof(int);
+            mRecvRead += iRealLen + sizeof(int);
+        }
+        else
+        {
+            iLeftLen = pBuffEnd - mRecvRead;
+            if (iLeftLen >= (int)sizeof(int))
+            {
+                memcpy(&iRealLen, mRecvRead, sizeof(iRealLen));
+            }
+            else
+            {
+                //Â∞èÁ´ØÂ∫è
+                int tmp;
+                iRealLen = 0;
+                for (int i = iLeftLen; i > 0; i--)
+                {
+                    tmp = *(mRecvRead + (sizeof(int) - i -1));
+                    iRealLen |= tmp << (8 * (i + 1));
+                }
+                for (int i = sizeof(int) - iLeftLen; i > 0; i--)
+                {
+                    tmp = *(mRecvRead + (sizeof(int) - i -1));
+                    iRealLen |= tmp << (8 * (i + 1));
+                }
+            }
+
+            if (iRealLen < MIN_PACKAGE_LEN || iRealLen > MAX_PACKAGE_LEN)
+            {
+                LOG_ERROR(ELOG_KEY, "[system] recv message invalid len: %d , fd(%d)", iRealLen, mSocket->FD());
+                return ERR_MSGLEN;
+            }
+            else if (iRealLen > (int)(MSG_BUFF_LEN + iLen - sizeof(int)))
+            {
+                LOG_DEBUG(ELOG_KEY, "[system] recv a part of message: real len = %d, now len = %d", iRealLen, MSG_BUFF_LEN + iLen - sizeof(int));
+                return 0;
+            }
+            
+            if (iRealLen <= (int)(iLeftLen - sizeof(int)))  //Ê≠£ÂêëÂâ©‰Ωô
+            {
+                HandleRecvMessage(mRecvRead + sizeof(int), iRealLen);   //Ê∂àÊÅØËß£ÊûêÔºåÂéªÈô§4Â≠óËäÇÊ∂àÊÅØÈïøÂ∫¶Ê†áËØÜ‰Ωç
+                mRecvLen -= iRealLen + sizeof(int);
+                mRecvRead += iRealLen + sizeof(int);
+            }
+            else
+            {
+                memcpy(mTmpBuff, mRecvRead, iLeftLen);
+                memcpy(mTmpBuff + iLeftLen, mRecvBuff, iRealLen - iLeftLen + sizeof(int));
+                
+                HandleRecvMessage(mTmpBuff + sizeof(int), iRealLen);    //Ê∂àÊÅØËß£ÊûêÔºåÂéªÈô§4Â≠óËäÇÊ∂àÊÅØÈïøÂ∫¶Ê†áËØÜ‰Ωç
+                mRecvLen -= iRealLen + sizeof(int);
+                mRecvRead = mRecvBuff + (iRealLen - iLeftLen + sizeof(int));
+            }
+        }
+    }
+    
+    return iRecvLen;
+}
+
+int wTask::TaskSend()
+{
+    char *pBuffEnd = mSendBuff + MSG_BUFF_LEN;
+    int iLen = 0, iSendLen = 0, iLeftLen = 0;
+    do {        
+        iLen = mSendWrite - mSendRead;
+        if (mSendLen == 0)
+        {
+            return 0;
+        }
+        else if (iLen > 0)
+        {
+            iSendLen = mSocket->SendBytes(mSendRead, mSendLen); //iLen == mSendLen
+            
+            if (iSendLen < 0) return iSendLen;
+            mSendLen -= iSendLen;
+            mSendRead += iSendLen;
+        }
+        else if (iLen <= 0)
+        {
+            iLeftLen = pBuffEnd - mSendRead;
+            memcpy(mTmpBuff, mSendRead, iLeftLen);
+            memcpy(mTmpBuff + iLeftLen, mSendBuff, mSendLen - iLeftLen);
+            iSendLen = mSocket->SendBytes(mTmpBuff, mSendLen);
+            
+            if (iSendLen < 0) return iSendLen;
+            mSendLen -= iSendLen;
+            mSendRead = mSendBuff + mSendLen - iLeftLen;
+        }
+        
+        LOG_DEBUG(ELOG_KEY, "[system] send message len: %d, fd(%d)", iSendLen, mSocket->FD());
+    } while (true);
+    
+    return iSendLen;
+}
+
+int wTask::Send2Buf(const char *pCmd, int iLen)
+{
+    //Âà§Êñ≠Ê∂àÊÅØÈïøÂ∫¶
+    if (iLen < MIN_PACKAGE_LEN || iLen > MAX_PACKAGE_LEN)
+    {
+        LOG_ERROR(ELOG_KEY, "[system] write message invalid len: %d , fd(%d)", iLen, mSocket->FD());
+        return ERR_MSGLEN;
+    }
+    else if (iLen > (int)(MSG_BUFF_LEN - mSendLen - sizeof(int)))
+    {
+        LOG_ERROR(ELOG_KEY, "[system] send buf not enough.left buf(%d) need(%d)", MSG_BUFF_LEN - mSendLen, iLen + sizeof(int));
+        return ERR_NOBUFF;
+    }
+
+    char *pBuffEnd = mSendBuff + MSG_BUFF_LEN;
+    if (mSendRead != mSendBuff && mSendWrite == pBuffEnd) mSendWrite = mSendBuff; //ÂõûÈÄÄÂèØÂÜôÊåáÈíà
+    
+    
+    int iWrLen =  mSendWrite - mSendRead;
+    int iLeftLen = pBuffEnd - mSendWrite;
+    if ((iWrLen >= 0 && iLeftLen >= (int)(iLen + sizeof(int))) || (iWrLen < 0 && -iWrLen >= (int)(iLen + sizeof(int))))
+    {
+        memcpy(mSendWrite, &iLen, sizeof(int));
+        memcpy(mSendWrite + sizeof(int), pCmd, iLen);
+        mSendWrite += iLen + sizeof(int);
+    }
+    else if (iWrLen >= 0 && iLeftLen < (int)(iLen + sizeof(int)))
+    {
+        memcpy(mTmpBuff, &iLen, sizeof(int));
+        memcpy(mTmpBuff + sizeof(int), pCmd, iLen);
+        memcpy(mSendWrite, mTmpBuff, iLeftLen);
+        memcpy(mSendBuff, mTmpBuff + iLeftLen, iLen + sizeof(int) - iLeftLen);
+        mSendWrite = mSendBuff + iLen + sizeof(int) - iLeftLen;
+    }
+    mSendLen += iLen + sizeof(int);
+    
+    LOG_DEBUG(ELOG_KEY, "[system] write message to left buf(%d), message len(%d)", MSG_BUFF_LEN - mSendLen, iLen);
+    return iLen;
+}
+
+int wTask::SyncSend(const char *pCmd, int iLen)
+{
+    //Âà§Êñ≠Ê∂àÊÅØÈïøÂ∫¶
+    if ((iLen < MIN_PACKAGE_LEN) || (iLen > MAX_PACKAGE_LEN))
+    {
+        LOG_ERROR(ELOG_KEY, "[system] write message invalid len: %d , fd(%d)", iLen, mSocket->FD());
+        return ERR_MSGLEN;
+    }
+    
+    memcpy(mTmpBuff, &iLen, sizeof(int));
+    memcpy(mTmpBuff + sizeof(int), pCmd, iLen);
+    return mSocket->SendBytes(mTmpBuff, iLen + sizeof(int));
+}
+
+int wTask::SyncRecv(char vCmd[], int iLen, int iTimeout)
+{
+    long long iSleep = 100;
+    int iTryCount = iTimeout*1000000 / iSleep;
+    int iCmdMsgLen = sizeof(int) + sizeof(struct wCommand);
+    struct wCommand* pTmpCmd = 0;
+    
+    int iSize = 0, iRecvLen = 0;
+    do {
+        iSize = mSocket->RecvBytes(mTmpBuff + iRecvLen, iLen + sizeof(int) - iRecvLen);
+        if (iSize < 0) break;
+        iRecvLen += iSize;
+        
+        if ((iSize == 0) || (iRecvLen < iCmdMsgLen))
+        {
+            if (iTryCount-- < 0) break;
+            usleep(iSleep);
+            continue;
+        }
+
+        pTmpCmd = (struct wCommand*) (mTmpBuff + sizeof(int));	//ÂøÉË∑≥ÂåÖÂπ≤Êâ∞
+        if (pTmpCmd != NULL && pTmpCmd->GetCmd() == CMD_NULL && pTmpCmd->GetPara() == PARA_NULL)
+        {
+            memmove(mTmpBuff, mTmpBuff + iCmdMsgLen, iRecvLen -= iCmdMsgLen);
+            continue;
+        }
+
+        if (((size_t)iRecvLen < iLen + sizeof(int)) && (iTryCount-- > 0))
+        {
+            usleep(iSleep);
+            continue;
+        }
+        break;
+    } while (true);
+    
+    int iMsgLen;
+    memcpy(&iMsgLen, mTmpBuff, sizeof(iMsgLen));
+    if ((iRecvLen <= 0) || (iMsgLen < MIN_PACKAGE_LEN) || (iMsgLen > MAX_PACKAGE_LEN))
+    {
+        LOG_ERROR(ELOG_KEY, "[system] sync recv message invalid len: %d, fd(%d)", iMsgLen, mSocket->FD());
+        return ERR_MSGLEN;
+    }
+    else if (iMsgLen > (int)(iRecvLen - sizeof(int)))	//Ê∂àÊÅØ‰∏çÂÆåÊï¥
+    {
+        LOG_DEBUG(ELOG_KEY, "[system] sync recv a part of message: real len = %d, now len = %d, call len = %d", iMsgLen, iRecvLen, iLen);
+        return ERR_MSGLEN;
+    }
+    else if (iMsgLen != iLen)
+    {
+        LOG_DEBUG(ELOG_KEY, "[system] sync recv error buffer len");
+        return ERR_MSGLEN;
+    }
+    
+    memcpy(vCmd, mTmpBuff + sizeof(int), iLen);
+    return iRecvLen - sizeof(int);
 }

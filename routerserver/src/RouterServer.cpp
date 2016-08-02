@@ -5,22 +5,16 @@
  */
 
 #include "RouterServer.h"
+#include "RouterServerTask.h"
 
-RouterServer::RouterServer() : wServer<RouterServer>("路由服务器")
+RouterServer::RouterServer() : wServer<RouterServer>("router服务器")
 {
 	mConfig = RouterConfig::Instance();
 }
 
-wTask* RouterServer::NewTcpTask(wIO *pIO)
+wTask* RouterServer::NewTcpTask(wSocket *pSocket)
 {
-	wTask *pTask = new RouterServerTask(pIO);
-	return pTask;
-}
-
-wTask* RouterServer::NewChannelTask(wIO *pIO)
-{
-	wTask *pTask = new RouterChannelTask(pIO);
-	return pTask;
+	return new RouterServerTask(pSocket);
 }
 
 void RouterServer::Run()

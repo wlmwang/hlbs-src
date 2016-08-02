@@ -8,18 +8,16 @@
 #define _AGENT_API_H
 
 #include "wCore.h"
-#include "wUDSocket.h"
-#include "wSocket.h"
 #include "wTask.h"
+#include "wUnixSocket.h"
+#include "wTcpSocket.h"
 #include "Common.h"
 #include "Svr.h"
 #include "SvrCmd.h"
 
 struct postHandle_t
 {
-	//wUDSocket mSock;
-	wSocket mSock;
-	wTask mTask;
+	wTask *mTask;
 	bool mConnecting;
 };
 

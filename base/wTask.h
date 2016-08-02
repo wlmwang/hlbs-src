@@ -9,80 +9,84 @@
 
 #include "wCore.h"
 #include "wCommand.h"
-#include "wIO.h"
 #include "wLog.h"
 #include "wMisc.h"
 #include "wNoncopyable.h"
+#include "wSocket.h"
 
 class wTask : private wNoncopyable
 {
 	public:
-		wTask() {}
-		wTask(wIO *pIO) : mIO(pIO) {}
-		virtual ~wTask() {}
+		wTask();
+		wTask(wSocket *pSocket);
+		virtual ~wTask();
+                void Initialize();
+                
+		wSocket *Socket() { return mSocket;}
+		TASK_STATUS &Status() { return mStatus;}
+		bool IsRunning() { return mStatus == TASK_RUNNING;}
 		
-		wIO *IO() { return mIO; }
-		void DeleteIO();
-		TASK_STATUS &Status() { return mStatus; }
-		bool IsRunning() { return mStatus == TASK_RUNNING; }
-		
-		virtual void CloseTask(int iReason);	//iReason¹Ø±ÕÔ­Òò
-		virtual int VerifyConn() { return 0;}	//ÑéÖ¤½ÓÊÕµ½Á¬½Ó
-		virtual int Verify() {return 0;}		//·¢ËÍÁ¬½ÓÑéÖ¤ÇëÇó
+		virtual int VerifyConn() { return 0;}	//éªŒè¯æ¥æ”¶åˆ°è¿æ¥
+		virtual int Verify() {return 0;}		//å‘é€è¿æ¥éªŒè¯è¯·æ±‚
+
+		virtual void CloseTask(int iReason = 0) {}	//iReasonå…³é—­åŸå› 
 		
 		virtual int Heartbeat();
 		virtual int HeartbeatOutTimes() { return mHeartbeatTimes > KEEPALIVE_CNT; }
 		virtual int ClearbeatOutTimes() { return mHeartbeatTimes = 0; }
 		/**
-		 *  ´¦Àí½ÓÊÜµ½Êı¾İ
-		 *  Ã¿ÌõÏûÏ¢´óĞ¡[2b,128k)
-		 *  ºËĞÄÂß¼­£º½ÓÊÜÕûÌõÏûÏ¢£¬È»ºó½øÈëÓÃ»§¶¨ÒåµÄÒµÎñº¯ÊıHandleRecvMessage
-		 *  return £º<0 ¶Ô¶Ë·¢Éú´íÎó|ÏûÏ¢³¬³¤ =0 ¶Ô¶Ë¹Ø±Õ(FIN_WAIT1) >0 ½ÓÊÜ×Ö·û
+		 *  å¤„ç†æ¥å—åˆ°æ•°æ®
+		 *  æ¯æ¡æ¶ˆæ¯å¤§å°[1b,512k]
+		 *  æ ¸å¿ƒé€»è¾‘ï¼šæ¥å—æ•´æ¡æ¶ˆæ¯ï¼Œç„¶åè¿›å…¥ç”¨æˆ·å®šä¹‰çš„ä¸šåŠ¡å‡½æ•°HandleRecvMessage
+		 *  return ï¼š<0 å¯¹ç«¯å‘ç”Ÿé”™è¯¯|æ¶ˆæ¯è¶…é•¿|å¯¹ç«¯å…³é—­(FIN_WAIT) =0 ç¨åé‡è¯• >0 æ¥å—å­—ç¬¦
 		 */
 		virtual int TaskRecv();
-		/**
-		 *  Òì²½·¢ËÍ¿Í»§¶ËÏûÏ¢
-		 *  return 
-		 *  -1 £ºÏûÏ¢³¤¶È²»ºÏ·¨
-		 *  -2 £º·¢ËÍ»º³åÊ£Óà¿Õ¼ä²»×ã£¬ÇëÉÔºóÖØÊÔ
-		 *   0 : ·¢ËÍ³É¹¦
-		 */
-		virtual int SendToBuf(const char *pCmd, int iLen);
-		/**
-		 * ·¢ËÍ»º³åÇøÓĞÊı¾İ
-		 */
-		int WritableLen() { return mSendWrite - mSendBytes; }
 		virtual int TaskSend();
-		
 		/**
-		 *  Í¬²½·¢ËÍÈ·ÇĞ³¤¶ÈÏûÏ¢
+		 * ä¸šåŠ¡é€»è¾‘å…¥å£å‡½æ•°
+		 */
+		virtual int HandleRecvMessage(char *pBuffer, int nLen) { return -1;}
+		/**
+		 * å‘é€ç¼“å†²åŒºæ˜¯å¦æœ‰æ•°æ®
+		 */
+		int WritableLen() { return mSendLen;}
+		/**
+		 *  å°†å¾…å‘é€å®¢æˆ·ç«¯æ¶ˆæ¯å†™å…¥bufï¼Œç­‰å¾…TaskSendå‘é€
+		 *  return 
+		 *  -1 ï¼šæ¶ˆæ¯é•¿åº¦ä¸åˆæ³•
+		 *  -2 ï¼šå‘é€ç¼“å†²å‰©ä½™ç©ºé—´ä¸è¶³ï¼Œè¯·ç¨åé‡è¯•
+		 *   0 : å‘é€æˆåŠŸ
+		 */
+		int Send2Buf(const char *pCmd, int iLen);
+		/**
+		 *  åŒæ­¥å‘é€ç¡®åˆ‡é•¿åº¦æ¶ˆæ¯
 		 */
 		int SyncSend(const char *pCmd, int iLen);
 		/**
-		 *  Í¬²½½ÓÊÜÈ·ÇĞ³¤¶ÈÏûÏ¢(Ğè±£Ö¤´ËsockÎ´¼ÓÈëepollÖĞ£¬·ÀÖ¹³öÏÖ¾ºÕù£¡£¡)
-		 *  È·±£pCmdÓĞ×ã¹»³¤µÄ¿Õ¼ä½ÓÊÜ×Ô´ËÍ¬²½ÏûÏ¢
+		 *  åŒæ­¥æ¥å—ç¡®åˆ‡é•¿åº¦æ¶ˆæ¯(éœ€ä¿è¯æ­¤sockæœªåŠ å…¥epollä¸­ï¼Œé˜²æ­¢å‡ºç°ç«äº‰ï¼ï¼)
+		 *  ç¡®ä¿pCmdæœ‰è¶³å¤Ÿé•¿çš„ç©ºé—´æ¥å—è‡ªæ­¤åŒæ­¥æ¶ˆæ¯
 		 */
-		int SyncRecv(char *pCmd, int iLen, int iTimeout = 10/*s*/);
-		
-		//ÒµÎñÂß¼­Èë¿Úº¯Êı
-		virtual int HandleRecvMessage(char * pBuffer, int nLen) { return -1;}
+		int SyncRecv(char vCmd[], int iLen, int iTimeout = 10/*s*/);
 		
 	protected:
-		wIO	*mIO {NULL};
+		wSocket	*mSocket {NULL};
 		TASK_STATUS mStatus {TASK_INIT};
 		int mHeartbeatTimes {0};
 		
-		//½ÓÊÕÏûÏ¢µÄ»º³åÇø 32M
-		int mRecvBytes {0};	//½ÓÊÕµÄ×Ö½ÚÊı
-		char mRecvMsgBuff[MAX_RECV_BUFFER_LEN] {'\0'};	
-		
-		//·¢ËÍÏûÏ¢Ê±µÄÁÙÊ±»º³åÇø 32M
-		int mSendBytes {0};						//ÒÑ·¢ËÍ×Ö½ÚÊı£¨·¢ËÍÏß³Ì¸üĞÂ£©
-		int mSendWrite {0};						//·¢ËÍ»º³å±»Ğ´Èë×Ö½ÚÊı£¨Ğ´ÈëÏß³Ì¸üĞÂ£©
-		char mSendMsgBuff[MAX_SEND_BUFFER_LEN] {'\0'};
-		
-		char mTmpSendMsgBuff[MAX_CLIENT_MSG_LEN + sizeof(int)] {'\0'};	//Í¬²½·¢ËÍ£¬ÁÙÊ±»º³åÇø
-		char mTmpRecvMsgBuff[MAX_CLIENT_MSG_LEN + sizeof(int)] {'\0'};	//Í¬²½½ÓÊÜ£¬ÁÙÊ±»º³åÇø
+		//ä¸´æ—¶ç¼“å†²åŒº
+        char mTmpBuff[MSG_BUFF_LEN] {'\0'};
+        
+        //æ¥æ”¶æ¶ˆæ¯çš„ç¼“å†²åŒº 512K
+        char mRecvBuff[MSG_BUFF_LEN] {'\0'};
+        char *mRecvWrite {NULL};
+        char *mRecvRead {NULL};
+        int  mRecvLen {0}; //å·²æ¥æ”¶æ•°æ®é•¿åº¦
+        
+        //æ¥æ”¶æ¶ˆæ¯çš„ç¼“å†²åŒº 512K
+        char mSendBuff[MSG_BUFF_LEN] {'\0'};
+        char *mSendWrite {NULL};
+        char *mSendRead {NULL};
+        int  mSendLen {0};  //å¯å‘é€æ•°æ®é•¿åº¦
 };
 
 #endif

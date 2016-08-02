@@ -5,60 +5,49 @@
 ###############################
 
 CXX=g++
+CXXFLAGS=-std=c++11 -O3 -fPIC -pipe -fno-ident -Wall -Wno-invalid-offsetof
+LDFLAGS=-shared
 
-BASEPATH=./base
-CXXFLAGS =-std=c++11 -fPIC -O2 -pipe -fno-ident -Wall -Wno-invalid-offsetof
+BASEPATH=../../base
+COMMPATH=../command
+INCPATH=-I./$(BASEPATH) -I./$(COMMPATH)
+LDPATH=
 
-INCPATH=-I./$(BASEPATH)
-LIBS=-shared
+SRCPATH=./
+OBJECTS=./$(BASEPATH)/wMsgQueue.o \
+		./$(BASEPATH)/wMisc.o \
+		./$(BASEPATH)/wSocket.o \
+		./$(BASEPATH)/wTcpSocket.o \
+		./$(BASEPATH)/wUnixSocket.o \
+		./$(BASEPATH)/wTask.o \
+		./$(BASEPATH)/wShm.o \
+		./$(BASEPATH)/wSignal.o \
+		\
+		./$(SRCPATH)/agent_api.o
 
-TARGET=./debug/libagent_api
+TARGET=libagent_api.so
 
-OBJECTS=./debug/agent_api.o \
-		./debug/wIO.o \
-		./debug/wMsgQueue.o \
-		./debug/wMisc.o \
-		./debug/wSocket.o \
-		./debug/wUDSocket.o \
-		./debug/wTask.o \
-		./debug/wShm.o
+.PHONY:all clean install
 
-all: $(TARGET).so
+all: $(TARGET)
 
-$(TARGET).so:$(OBJECTS)
+$(TARGET):$(OBJECTS)
 	@echo "Compiling $@"
-	$(CXX) $^ -o $@ $(LIBS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-./debug/agent_api.o: agent_api.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+%.o:%.cpp
+	$(CXX) $(CXXFLAGS) $(INCPATH) -c $< -o $@
 
-./debug/wIO.o: $(BASEPATH)/wIO.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+%.d:%.cpp
+	@set -e; rm -f $@; $(CXX) -MM $< $(INCPATH) > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
 
-./debug/wMsgQueue.o: $(BASEPATH)/wMsgQueue.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wMisc.o: $(BASEPATH)/wMisc.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wSocket.o: $(BASEPATH)/wSocket.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wUDSocket.o: $(BASEPATH)/wUDSocket.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wTask.o: $(BASEPATH)/wTask.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
-
-./debug/wShm.o: $(BASEPATH)/wShm.cpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o $@ $<
+-include $(OBJECTS:.o=.d)
 
 clean:
-	-rm -rf ./debug
-	
-dir:
-	-mkdir ./debug
-	chmod 755 -R ./debug
+	-rm -f $(BASEPATH)/*.o $(BASEPATH)/*.d $(BASEPATH)/*.d.*
+	-rm -f $(TARGET) $(SRCPATH)/*.o $(SRCPATH)/*.d $(SRCPATH)/*.d.*
 
 install:
-	-mv -f ./debug/libagent_api.so /usr/lib
+	-mv -f $(TARGET) /usr/lib
