@@ -1,6 +1,5 @@
 # 目录
 
-* [导读](REVIEW.md)
 * [简介](chapter0/README.md)
 * [目标](chapter1/README.md)
 * [安装](chapter2/README.md)
