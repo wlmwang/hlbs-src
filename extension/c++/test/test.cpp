@@ -26,7 +26,7 @@ int GPSvr()
 
 int main(int argc, char *argv[])
 {
-	ConnectAgent();
+	//ConnectAgent();
 
 	int errnum = 0;
 	for (int i = 0; i < 1; i++)
@@ -35,6 +35,6 @@ int main(int argc, char *argv[])
 	}
 	cout << "errnum" << errnum << endl;
 
-	CloseAgent();
+	//CloseAgent();
 	return 0;
 }

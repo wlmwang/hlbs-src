@@ -58,8 +58,8 @@ zend_module_entry hlbs_module_entry = {
 #endif
 	"hlbs",
 	hlbs_functions,
-	PHP_MINIT,
-	PHP_MSHUTDOWN,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	PHP_MINFO(hlbs),
@@ -78,6 +78,7 @@ ZEND_GET_MODULE(hlbs)
 END_EXTERN_C()
 #endif
 
+/*
 //modify
 PHP_MINIT_FUNCTION(hlbs)
 {
@@ -89,6 +90,7 @@ PHP_MSHUTDOWN_FUNCTION(hlbs)
 {
 	CloseAgent();	//连接agent
 }
+*/
 
 //modify
 PHP_MINFO_FUNCTION(hlbs)
