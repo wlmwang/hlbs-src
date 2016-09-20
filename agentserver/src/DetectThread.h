@@ -16,7 +16,7 @@
 #include "wThread.h"
 #include "wSingleton.h"
 #include "wPing.h"
-#include "wSocket.h"
+#include "wTcpSocket.h"
 
 class DetectThread : public wThread, public wSingleton<DetectThread>
 {

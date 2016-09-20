@@ -20,7 +20,7 @@ int DetectThread::PrepareRun()
 	mDetectMutex = new wMutex();
 	mResultMutex = new wMutex();
 	mPing = new wPing();
-	mSocket = new wSocket();
+	mSocket = new wTcpSocket();
 
 	unsigned int nIp = GetIpByIF("eth1");
     if(!nIp) nIp = GetIpByIF("eth0");
