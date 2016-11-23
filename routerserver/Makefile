@@ -7,44 +7,50 @@
 #
 # Makefile
 # 动态链接所需库，需.so文件安装到ldconfig加载路径中(/usr/local/lib)
-# 需要预先编译lib目录下的log4cpp、tinyxml软件包
+# 需要预先编译vendor目录下的protobuf软件包
 #
 
-ROOTPATH=\"/usr/local/webserver/hlbs/routerserver/bin\"
+CXX=g++ -std=c++11
+CXXFLAGS=-O3 -Wall -D_USE_LOGGER_ -D_DEBUG_
+LDFLAGS=-L/usr/local/lib -lpthread -lprotobuf
 
-CXX=g++
-CXXFLAGS=-std=c++11 -O3 -Wall -Wno-invalid-offsetof -DPREFIX=$(ROOTPATH) -DUSE_LOG4CPP -DLINUX -D_DEBUG_ #-D_MEM_CHECK
-LDFLAGS=-L/usr/local/lib -ltinyxml -llog4cpp -lpthread
-
-BASEPATH=../base
+COREPATH=../core
 COMMPATH=../command
-LDPATH=../lib
-INCPATH=-I./$(BASEPATH) -I./$(COMMPATH) -I./$(LDPATH)/tinyxml -I/usr/local/include/log4cpp
+MSGPATH=../message
+VENDOR=../vendor
+INCPATH=-I./$(COREPATH) -I./$(COMMPATH) -I./$(MSGPATH)
 
-SRCPATH=./src
-OBJECTS=./$(BASEPATH)/wLog.o \
-		./$(BASEPATH)/wMisc.o \
-		./$(BASEPATH)/wShm.o \
-		./$(BASEPATH)/wShmtx.o \
-		./$(BASEPATH)/wFile.o \
-		./$(BASEPATH)/wSignal.o \
-		./$(BASEPATH)/wProcTitle.o \
-		./$(BASEPATH)/wMsgQueue.o \
-		./$(BASEPATH)/wMemPool.o \
-		./$(BASEPATH)/wThread.o \
-		./$(BASEPATH)/wSocket.o \
-		./$(BASEPATH)/wChannel.o \
-		./$(BASEPATH)/wTcpSocket.o \
-		./$(BASEPATH)/wUnixSocket.o \
-		./$(BASEPATH)/wTask.o \
-		./$(BASEPATH)/wChannelTask.o \
-		./$(BASEPATH)/wWorker.o \
-		./$(BASEPATH)/wWorkerIpc.o \
+SRCPATH=.
+OBJECTS=./$(COREPATH)/wCrc32c.o \
+		./$(COREPATH)/wEnv.o \
+		./$(COREPATH)/wFile.o \
+		./$(COREPATH)/wLogger.o \
+		./$(COREPATH)/wMisc.o \
+		./$(COREPATH)/wMemPool.o \
+		./$(COREPATH)/wPing.o \
+		./$(COREPATH)/wStatus.o \
+		./$(COREPATH)/wProcTitle.o \
+		./$(COREPATH)/wSignal.o \
+		./$(COREPATH)/wMemPool.o \
+		./$(COREPATH)/wShm.o \
+		./$(COREPATH)/wThread.o \
+		./$(COREPATH)/wSocket.o \
+		./$(COREPATH)/wChannelSocket.o \
+		./$(COREPATH)/wTcpSocket.o \
+		./$(COREPATH)/wUnixSocket.o \
+		./$(COREPATH)/wTask.o \
+		./$(COREPATH)/wChannelTask.o \
+		./$(COREPATH)/wSingleClient.o \
+		./$(COREPATH)/wMultiClient.o \
+		./$(COREPATH)/wMaster.o \
+		./$(COREPATH)/wWorker.o \
+		./$(COREPATH)/wConfig.o \
+		./$(COREPATH)/wServer.o \
+		./$(COREPATH)/wChannel.pb.o \
 		\
 		./$(SRCPATH)/SvrQos.o \
 		./$(SRCPATH)/RouterMaster.o \
-		./$(SRCPATH)/RouterWorker.o \
-		./$(SRCPATH)/RouterServerTask.o \
+		./$(SRCPATH)/RouterTcpTask.o \
 		./$(SRCPATH)/RouterServer.o \
 		./$(SRCPATH)/RouterConfig.o \
 		./$(SRCPATH)/RouterMain.o
@@ -69,10 +75,10 @@ $(TARGET): $(OBJECTS)
 -include $(OBJECTS:.o=.d)
 
 clean:
-	-rm -f $(BASEPATH)/*.o $(BASEPATH)/*.d $(BASEPATH)/*.d.*
+	-rm -f $(COREPATH)/*.o $(COREPATH)/*.d $(COREPATH)/*.d.*
 	-rm -f $(TARGET) $(SRCPATH)/*.o $(SRCPATH)/*.d $(SRCPATH)/*.d.*
 	-rm -rf ./bin ./log
-
+	
 install:
 	-rm -rf ./bin ./log
 	-mkdir ./bin ./log

@@ -5,35 +5,29 @@
  */
 
 #include "RouterServer.h"
-#include "RouterServerTask.h"
+#include "RouterTcpTask.h"
 
-RouterServer::RouterServer() : wServer<RouterServer>("router服务器")
-{
-	mConfig = RouterConfig::Instance();
+const wStatus& RouterServer::NewTcpTask(wSocket* sock, wTask** ptr) {
+	SAFE_NEW(RouterTcpTask(sock, Shard(sock)), *ptr);
+	if (*ptr == NULL) {
+		return mStatus = wStatus::IOError("RouterServer::NewTcpTask", "RouterTcpTask new failed");
+	}
+	return mStatus;
 }
 
-wTask* RouterServer::NewTcpTask(wSocket *pSocket)
-{
-	return new RouterServerTask(pSocket);
+const wStatus& RouterServer::Run() {
+	return CheckModSvr();
 }
 
-void RouterServer::Run()
-{
-	CheckModSvr();
-}
+const wStatus& RouterServer::CheckModSvr() {
+	if (mConfig->IsModTime()) {
+		struct SvrResSync_t svrSync;
+		svrSync.mCode = 0;
 
-//检测配置文件是否修改(增量同步)
-void RouterServer::CheckModSvr()
-{
-	if(mConfig->IsModTime())
-	{
-		struct SvrResSync_t stSvr;
-		stSvr.mCode = 0;
-
-		stSvr.mNum = mConfig->GetModSvr(stSvr.mSvr);	//SvrNet_t
-		if (stSvr.mNum > 0)
-		{
-			Broadcast((char *)&stSvr, sizeof(stSvr));	//广播所有agent
+		mConfig->ParseModSvr(svrSync.mSvr, &stSvr.mNum);
+		if (stSvr.mNum > 0) {
+			Broadcast(reinterpret_cast<char *>(&svrSync), sizeof(svrSync));
 		}
 	}
+	return mStatus.Clear();
 }

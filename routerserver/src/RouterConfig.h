@@ -7,52 +7,39 @@
 #ifndef _ROUTER_CONFIG_H_
 #define _ROUTER_CONFIG_H_
 
-#include <map>
-#include <vector>
-#include <algorithm>
-
 #include "wCore.h"
+#include "wStatus.h"
 #include "wMisc.h"
-#include "wLog.h"
 #include "wConfig.h"
-#include "SvrQos.h"
-#include "wMemPool.h"
 
-#define CONF_XML "../config/conf.xml"
-#define SVR_XML "../config/svr.xml"
-#define QOS_XML "../config/qos.xml"
+using namespace hnet;
 
-class RouterConfig: public wConfig<RouterConfig>
-{
-	public:
-		RouterConfig();
-		virtual ~RouterConfig();
-		
-		void GetBaseConf();
-		void GetSvrConf();
-		void GetQosConf();
+class SvrQos;
+class TiXmlDocument;
 
-		bool IsModTime();
-		int SetModTime();
-		int GetModSvr(SvrNet_t* pBuffer);
-		
-		SvrQos *Qos() { return mSvrQos; }
-	public:
-		char mIPAddr[MAX_IP_LEN] {'\0'};
-		unsigned int mPort {0};
-		unsigned int mBacklog {LISTEN_BACKLOG};
-		unsigned int mWorkers {1};
+class RouterConfig : public wConfig {
+public:
+	RouterConfig();
+	virtual ~RouterConfig();
 
-	protected:
-		time_t mMtime {0};	//svr.xml修改时间
-		
-		SvrQos *mSvrQos {NULL};
-		TiXmlDocument *mDoc {NULL};
-		wMemPool *mMemPool {NULL};
+	const wStatus& ParseBaseConf();
+	const wStatus& ParseSvrConf();
+	const wStatus& ParseQosConf();
+	const wStatus& ParseModSvr(struct SvrNet_t buf[], int32_t* num);	// 获取修改节点。不能删除节点（可修改WEIGHT=0属性，达到删除节点效果）
 
-		string mSvrConfFile = SVR_XML;
-		string mQosConfFile = QOS_XML;
-		string mBaseConfFile = CONF_XML;
+	bool IsModTime();
+	int SetModTime();
+	SvrQos* Qos() { return mSvrQos;}
+
+protected:
+	SvrQos *mSvrQos;
+	TiXmlDocument *mDoc;
+	std::string mSvrFile;
+	std::string mQosFile;
+	std::string mBaseFile;
+
+	// svr.xml修改时间
+	time_t mMtime;
 };
 
 #endif

@@ -6,23 +6,22 @@
 
 #include "Detect.h"
 #include "AgentServer.h"
-#include "AgentServerTask.h"
-#include "AgentUnixTask.h"
+#include "AgentTcpTask.h"
 
-AgentServer::AgentServer() : wServer<AgentServer>("AGENT服务器")
-{
-	mConfig = AgentConfig::Instance();
-	mDetectThread = DetectThread::Instance();
+const wStatus& RouterServer::NewTcpTask(wSocket* sock, wTask** ptr) {
+	SAFE_NEW(AgentTcpTask(sock, Shard(sock)), *ptr);
+	if (*ptr == NULL) {
+		return mStatus = wStatus::IOError("RouterServer::NewTcpTask", "AgentTcpTask new failed");
+	}
+	return mStatus;
 }
 
-AgentServer::~AgentServer() 
-{
+AgentServer::~AgentServer() {
 	SAFE_DELETE(mRouterConn);
 }
 
 //准备工作
-void AgentServer::PrepareRun()
-{
+void AgentServer::PrepareRun() {
 	ConnectRouter(); //连接Router服务
 	mDetectThread != NULL && mDetectThread->StartThread(0);	//探测线程，宕机拉起
 	mRouterConn != NULL && mRouterConn->StartThread(0);	//router线程，与router交互

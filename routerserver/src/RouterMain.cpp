@@ -5,68 +5,82 @@
  */
 
 #include "wCore.h"
-#include "wLog.h"
-#include "Common.h"
+#include "wStatus.h"
+#include "wMisc.h"
 #include "RouterConfig.h"
+#include "RouterServer.h"
 #include "RouterMaster.h"
 
-//删除pid、lock文件
-void ProcessExit()
-{
-	RouterMaster *pMaster = RouterMaster::Instance();
-	if ((int)pMaster->mProcess < 2)
-	{
-		unlink(ROUTER_LOCK_FILE);
-		unlink(ROUTER_PID_FILE);
-	}
-}
+using namespace hnet;
 
-int main(int argc, const char *argv[])
-{
-	//config
-	RouterConfig *pConfig = RouterConfig::Instance();
-	if (pConfig == NULL) 
-	{
-		cout << "[system] RouterConfig instance failed" << endl;
-		exit(0);
+int main(int argc, const char *argv[]) {
+
+	// 创建配置对象
+	RouterConfig *config;
+	SAFE_NEW(RouterConfig, config);
+	if (config == NULL) {
+		return -1;
 	}
-	if (pConfig->GetOption(argc, argv) < 0)
-	{
-		cout << "[system] Command line Option failed" << endl;
-		exit(0);
+	wStatus s;
+
+	// 解析命令行
+	s = config->GetOption(argc, argv);
+	if (!s.Ok()) {
+		return -1;
 	}
-	
-	//daemon && chdir
-	if (pConfig->mDaemon == 1)
-	{
-#ifdef PREFIX
-		if (InitDaemon(ROUTER_LOCK_FILE, PREFIX) < 0)
-#else
-		if (InitDaemon(ROUTER_LOCK_FILE) < 0)
-#endif
-		{
-			LOG_ERROR(ELOG_KEY, "[system] Create daemon failed");
-			exit(0);
+
+	// 版本输出 && 守护进程创建
+	bool version, daemon;
+	if (config->GetConf("version", &version) && version == true) {
+		std::cout << kSoftwareName << kSoftwareVer << std::endl;
+		return -1;
+	} else if (config->GetConf("daemon", &daemon) && daemon == true) {
+		std::string lock_path;
+		config->GetConf("lock_path", &lock_path);
+		if (!misc::InitDaemon(lock_path).Ok()) {
+			std::cout << "create daemon failed" << std::endl;
+			return -1;
 		}
 	}
 
-	//Init config
-	pConfig->GetBaseConf();
-	pConfig->GetSvrConf();
-	pConfig->GetQosConf();
-	
-	//master && server
-	RouterMaster *pMaster = RouterMaster::Instance();
-	if (pMaster == NULL) 
-	{
-		LOG_ERROR(ELOG_KEY, "[system] RouterMaster instance failed");
-		exit(0);
+	// 解析xml配置文件
+	if (!config->ParseBaseConf().Ok()) {
+		return -1;
+	} else if (!config->ParseSvrConf().Ok()) {
+		return -1;
+	} else if (!config->ParseQosConf().Ok()) {
+		return -1;
 	}
-	atexit(ProcessExit);
 
-	pMaster->PrepareStart();
-	pMaster->MasterStart();
+	// 创建服务器对象
+	RouterServer* server;
+	SAFE_NEW(RouterServer(config), server);
+	if (server == NULL) {
+		return -1;
+	}
 
-	LOG_SHUTDOWN_ALL;
+	// 创建master对象
+	RouterMaster* master;
+	SAFE_NEW(RouterMaster("HLBS(router)", server), master);
+	if (master != NULL) {
+		// 接受命令信号
+	    std::string signal;
+	    if (config->GetConf("signal", &signal) && signal.size() > 0) {
+	    	if (master->SignalProcess(signal).Ok()) {
+	    		return 0;
+	    	} else {
+	    		return -1;
+	    	}
+	    } else {
+	    	// 准备服务器
+			s = master->PrepareStart();
+			if (s.Ok()) {
+				// Master-Worker方式开启服务器
+				master->MasterStart();
+			} else {
+				return -1;
+			}
+	    }
+	}
 	return 0;
 }

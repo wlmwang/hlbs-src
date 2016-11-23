@@ -6,15 +6,13 @@
 
 #include "SvrQos.h"
 
-SvrQos::~SvrQos() 
-{
+SvrQos::~SvrQos() {
 	CleanNode();
 }
 
 /** 查找某一节点 */
-map<struct SvrNet_t, struct SvrStat_t*>::iterator SvrQos::SearchNode(const struct SvrNet_t& stSvr)
-{
-	map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
+std::map<struct SvrNet_t, struct SvrStat_t*>::iterator SvrQos::SearchNode(const struct SvrNet_t& stSvr) {
+	std::map<struct SvrNet_t, struct SvrStat_t*>::iterator mapReqIt = mMapReqSvr.find(stSvr);
 	return mapReqIt;
 }
 
