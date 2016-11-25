@@ -71,23 +71,20 @@ const wStatus& RouterConfig::ParseSvrConf() {
 			const char* version = pChildElm->Attribute("VERSION");
 			if (gid != NULL && xid != NULL && host != NULL && port != NULL) {
 
-				struct SvrNet_t stSvr;
-				stSvr.mGid = atoi(gid);
-				stSvr.mXid = atoi(xid);
-				stSvr.mPort = atoi(port);
-				memcpy(stSvr.mHost, host, kMaxHost);
+				struct SvrNet_t svr;
+				svr.mGid = atoi(gid);
+				svr.mXid = atoi(xid);
+				svr.mPort = atoi(port);
+				memcpy(svr.mHost, host, kMaxHost);
 				if (weight != NULL) {
-					stSvr.mWeight = atoi(weight);
+					svr.mWeight = atoi(weight);
 				}
 				if (version != NULL) {
-					stSvr.mVersion = atoi(version);
-				}
-				if (stSvr.mWeight == 0) {
-					continue;
+					svr.mVersion = atoi(version);
 				}
 
 				// 添加配置
-				mSvrQos->SaveNode(stSvr);
+				mSvrQos->SaveNode(svr);
 			} else {
 				wStatus::InvalidArgument("RouterConfig::GetSvrConf Parse configure from svr.xml occur error", logging::NumberToString(i));
 			}
@@ -124,29 +121,29 @@ const wStatus& RouterConfig::ParseModifySvr(struct SvrNet_t buf[], int32_t* num)
 
 			if (gid != NULL && xid != NULL && host != NULL && port != NULL) {
 
-				struct SvrNet_t stSvr;
-				stSvr.mGid = atoi(gid);
-				stSvr.mXid = atoi(xid);
-				stSvr.mPort = atoi(port);
-				memcpy(stSvr.mHost, host, kMaxHost);
+				struct SvrNet_t svr;
+				svr.mGid = atoi(gid);
+				svr.mXid = atoi(xid);
+				svr.mPort = atoi(port);
+				memcpy(svr.mHost, host, kMaxHost);
 				if (weight != NULL) {
-					stSvr.mWeight = atoi(weight);
+					svr.mWeight = atoi(weight);
 				}
 				if (version != NULL) {
-					stSvr.mVersion = atoi(version);
+					svr.mVersion = atoi(version);
 				}
 				
 				// 新配置始终下发，旧配置检测到version变化才下发
-				if (mSvrQos->IsExistNode(stSvr)) {
-					if (mSvrQos->IsVerChange(stSvr)) {
+				if (mSvrQos->IsExistNode(svr)) {
+					if (mSvrQos->IsVerChange(svr)) {
 						// 版本变化，确定下发配置
-						mSvrQos->SaveNode(stSvr);
-						buf[(*num)++] = stSvr;
+						mSvrQos->SaveNode(svr);
+						buf[(*num)++] = svr;
 					}
 				} else {
 					// 添加新配置
-					mSvrQos->SaveNode(stSvr);
-					buf[(*num)++] = stSvr;
+					mSvrQos->SaveNode(svr);
+					buf[(*num)++] = svr;
 				}
 			} else {
 				wStatus::InvalidArgument("RouterConfig::ParseModifySvr Parse configure from svr.xml occur error", logging::NumberToString(i));

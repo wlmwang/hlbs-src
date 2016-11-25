@@ -14,8 +14,7 @@ SvrQos::~SvrQos() {
 }
 
 bool SvrQos::IsExistNode(const struct SvrNet_t& svr) {
-	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
-	if (mapReqIt == mMapReqSvr.end()) {
+	if (mMapReqSvr.find(svr) == mMapReqSvr.end()) {
 		return false;
 	}
 	return true;
@@ -24,7 +23,7 @@ bool SvrQos::IsExistNode(const struct SvrNet_t& svr) {
 bool SvrQos::IsVerChange(const struct SvrNet_t& svr) {
 	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
 	if (mapReqIt != mMapReqSvr.end()) {
-		struct SvrNet_t& kind = const_cast<struct SvrNet_t&> (mapReqIt->first);
+		const struct SvrNet_t& kind = mapReqIt->first;
 		if (kind.mVersion != svr.mVersion) {
 			return true;
 		}
@@ -43,14 +42,15 @@ const wStatus& SvrQos::GetNodeAll(struct SvrNet_t buf[], int32_t* num) {
 const wStatus& SvrQos::SaveNode(const struct SvrNet_t& svr) {
 	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
 	if (mapReqIt == mMapReqSvr.end()) {
-		// 添加新svr节点
 		return AddNode(svr);
-	} else {
-		return ModifyNode(svr);
 	}
+	return ModifyNode(svr);
 }
 
 const wStatus& SvrQos::AddNode(const struct SvrNet_t& svr) {
+	if (svr.mWeight == 0) {
+		return mStatus = wStatus::IOError("SvrQos::AddNode failed", "the node weight=0");
+	}
 	struct SvrStat_t* stat;
 	SAFE_NEW(SvrStat_t, stat);
 	if (stat == NULL) {
@@ -97,7 +97,6 @@ const wStatus& SvrQos::DeleteNode(const struct SvrNet_t& svr) {
     SvrStat_t* stat = mapReqIt->second;
     mMapReqSvr.erase(mapReqIt);
     SAFE_DELETE(stat);
-
     return DeleteRouteNode(svr);
 }
 

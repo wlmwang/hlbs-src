@@ -114,7 +114,8 @@ struct SvrResData_t : public SvrResCmd_s {
 public:
 	SvrResData_t() : SvrResCmd_s(SVR_RES_DATA), mReqId(0), mNum(0) { }
 
-	int8_t mReqId;	// 包括all|id|name|gid/xid的wCommand::mId  区分请求cmd
+	// 包括all|id|name|gid/xid的wCommand::mId  区分请求cmd
+	int8_t mReqId;
 	int32_t mNum;
 	struct SvrNet_t mSvr[kMaxNum];
 };
@@ -124,6 +125,7 @@ const uint8_t SVR_ONE_RES = 4;
 struct SvrOneRes_t : public SvrResCmd_s {
 public:
 	SvrOneRes_t() : SvrResCmd_s(SVR_ONE_RES),mNum(0) { }
+
 	int32_t mNum;
 	struct SvrNet_t mSvr;
 };

@@ -30,7 +30,7 @@ public:
 	bool IsVerChange(const struct SvrNet_t& svr);
 
 	// 获取所有节点
-	const wStatus& GetNodeAll(struct SvrNet_t vBuffer[], int32_t* num);
+	const wStatus& GetNodeAll(struct SvrNet_t buf[], int32_t* num);
 	// 保存节点信息
 	const wStatus& SaveNode(const struct SvrNet_t& svr);
 	// 添加新节点&&路由

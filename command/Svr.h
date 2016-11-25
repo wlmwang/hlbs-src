@@ -76,7 +76,7 @@ public:
         } else if (mPort > other.mPort) {
         	return false;
         }
-        return memcmp(mHost, other.mHost, kMaxHost) < 0 ? true : false;
+        return ::strcmp(mHost, other.mHost, kMaxHost) < 0 ? true : false;
 	}
 
 	// 忽略 weight version 比较
@@ -88,7 +88,7 @@ public:
         } else if (mPort != other.mPort) {
             return false;
         }
-        return !memcmp(mHost, other.mHost, kMaxHost);
+        return !::strcmp(mHost, other.mHost, kMaxHost);
     }
 };
 
@@ -127,7 +127,6 @@ public:
         }
         return true;
     }
-
 };
 
 #pragma pack()
