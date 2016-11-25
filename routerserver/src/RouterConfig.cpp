@@ -5,30 +5,26 @@
  */
 
 #include "RouterConfig.h"
-#include "tinyxml.h"
 #include "wMisc.h"
 #include "Svr.h"
-#include "SvrQos.h"
 
-const kConfXml[]	= "../config/conf.xml";
-const kSvrXml[]		= "../config/svr.xml";
-const kQosXml[]		= "../config/qos.xml";
+const char kConfXml[]	= "../config/conf.xml";
+const char kSvrXml[]	= "../config/svr.xml";
+const char kQosXml[]	= "../config/qos.xml";
 
 RouterConfig::RouterConfig() : mSvrFile(kSvrXml), mQosFile(kQosXml), mBaseFile(kConfXml), mMtime(0) {
 	SAFE_NEW(SvrQos, mSvrQos);
-	SAFE_NEW(TiXmlDocument, mDoc);
 }
 
 RouterConfig::~RouterConfig() {
 	SAFE_DELETE(mSvrQos);
-	SAFE_DELETE(mDoc);
 }
 
 const wStatus& RouterConfig::ParseBaseConf() {
-	if (!mDoc->LoadFile(mBaseFile.c_str())) {
+	if (!mDoc.LoadFile(mBaseFile.c_str())) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::GetBaseConf Load configure(config.xml) file failed", "");
 	}
-	TiXmlElement *pRoot = mDoc->FirstChildElement();
+	TiXmlElement *pRoot = mDoc.FirstChildElement();
 	if (NULL == pRoot) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::GetBaseConf Read root from configure file(conf.xml) failed", "");
 	}
@@ -54,10 +50,10 @@ const wStatus& RouterConfig::ParseBaseConf() {
 }
 
 const wStatus& RouterConfig::ParseSvrConf() {
-	if (!mDoc->LoadFile(mSvrFile.c_str())) {
+	if (!mDoc.LoadFile(mSvrFile.c_str())) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::GetSvrConf Load configure(svr.xml) file failed", "");
 	}
-	TiXmlElement *pRoot = mDoc->FirstChildElement();
+	TiXmlElement *pRoot = mDoc.FirstChildElement();
 	if (NULL == pRoot) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::GetSvrConf Read root from configure file(svr.xml) failed", "");
 	}
@@ -97,22 +93,21 @@ const wStatus& RouterConfig::ParseSvrConf() {
 			}
 		}
 	} else {
-		return wStatus::InvalidArgument("RouterConfig::GetSvrConf Get SVRS node from svr.xml failed", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::GetSvrConf Get SVRS node from svr.xml failed", "");
 	}
 
 	// 记录svr.xml文件更新时间
-	SetModTime();
-
+	SetMtime();
 	return mStatus.Clear();
 }
 
-const wStatus& RouterConfig::GetModSvr(struct SvrNet_t buf[], int32_t* num) {
-	if (!mDoc->LoadFile(mSvrFile.c_str())) {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::GetModSvr Load configure(svr.xml) file failed", "");
+const wStatus& RouterConfig::ParseModifySvr(struct SvrNet_t buf[], int32_t* num) {
+	if (!mDoc.LoadFile(mSvrFile.c_str())) {
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseModifySvr Load configure(svr.xml) file failed", "");
 	}
-	TiXmlElement *pRoot = mDoc->FirstChildElement();
+	TiXmlElement *pRoot = mDoc.FirstChildElement();
 	if (NULL == pRoot) {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::GetModSvr Read root from configure file(svr.xml) failed", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseModifySvr Read root from configure file(svr.xml) failed", "");
 	}
 
 	TiXmlElement* pElement = pRoot->FirstChildElement("SVRS");
@@ -154,23 +149,24 @@ const wStatus& RouterConfig::GetModSvr(struct SvrNet_t buf[], int32_t* num) {
 					buf[(*num)++] = stSvr;
 				}
 			} else {
-				wStatus::InvalidArgument("RouterConfig::GetModSvr Parse configure from svr.xml occur error", logging::NumberToString(i));
+				wStatus::InvalidArgument("RouterConfig::ParseModifySvr Parse configure from svr.xml occur error", logging::NumberToString(i));
 			}
 		}
 
 		// 记录svr.xml文件更新时间
-		SetModTime();
+		SetMtime();
 	} else {
-		return wStatus::InvalidArgument("RouterConfig::GetSvrConf Get SVRS node from svr.xml failed", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseModifySvr Get SVRS node from svr.xml failed", "");
 	}
+
 	return mStatus.Clear();
 }
 
 const wStatus& RouterConfig::ParseQosConf() {
-	if (!mDoc->LoadFile(mQosFile.c_str())) {
+	if (!mDoc.LoadFile(mQosFile.c_str())) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::GetQosConf Load configure(qos.xml) file failed", "");
 	}
-	TiXmlElement *pRoot = mDoc->FirstChildElement();
+	TiXmlElement *pRoot = mDoc.FirstChildElement();
 	if (NULL == pRoot) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::GetQosConf Read root from configure file(qos.xml) failed", "");
 	}
@@ -316,19 +312,18 @@ const wStatus& RouterConfig::ParseQosConf() {
 	return mStatus.Clear();
 }
 
-int RouterConfig::SetModTime() {
+const wStatus& RouterConfig::SetMtime() {
 	struct stat stBuf;
-	int iRet = stat(mSvrFile.c_str(), &stBuf);
-	if (iRet == 0) {
-		return mMtime = stBuf.st_mtime;
+	if (stat(mSvrFile.c_str(), &stBuf) == 0) {
+		mMtime = stBuf.st_mtime;
+		return mStatus.Clear();
 	}
-	return iRet; // -1
+	return mStatus = wStatus::IOError("RouterConfig::SetMtime svr.xml failed", strerror(errno));
 }
 
-bool RouterConfig::IsModTime() {
+bool RouterConfig::GetMtime() {
 	struct stat stBuf;
-	int iRet = stat(mSvrFile.c_str(), &stBuf);
-	if (iRet == 0 && stBuf.st_mtime > mMtime) {
+	if (stat(mSvrFile.c_str(), &stBuf) == 0 && stBuf.st_mtime > mMtime) {
 		return true;
 	}
 	return false;

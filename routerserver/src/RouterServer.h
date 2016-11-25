@@ -22,7 +22,7 @@ public:
 	virtual const wStatus& NewTcpTask(wSocket* sock, wTask** ptr);
 
 	// 检测配置文件是否修改(增量同步)
-    const wStatus& CheckModSvr();
+    const wStatus& CheckSvr();
 };
 
 #endif

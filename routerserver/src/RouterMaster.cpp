@@ -4,9 +4,9 @@
  * Copyright (C) Hupu, Inc.
  */
 
-#include "Common.h"
 #include "RouterMaster.h"
-#include "RouterWorker.h"
+#include "RouterServer.h"
+#include "RouterConfig.h"
 
 const wStatus& RouterMaster::PrepareRun() {
 	mWorkerNum = 1;
@@ -14,6 +14,8 @@ const wStatus& RouterMaster::PrepareRun() {
 }
 
 const wStatus& RouterMaster::Reload() {
+	RouterConfig* config = mServer->Config<RouterConfig*>();
+
 	mStatus = config->ParseBaseConf();
 	if (!mStatus.Ok()) {
 		return mStatus;

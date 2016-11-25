@@ -12,7 +12,6 @@
 #include "wSignal.h"
 #include "wWorker.h"
 #include "wTask.h"
-#include "wServer.h"
 #include "wChannel.pb.h"
 
 namespace hnet {
@@ -338,7 +337,7 @@ const wStatus& wMaster::HandleSignal() {
 		if (!Reload().Ok()) {
 			exit(2);
 		}
-
+		
 		// 启动新worker
 		WorkerStart(mWorkerNum, kProcessJustRespawn);
 		

@@ -8,10 +8,15 @@
 #define _ROUTER_MASTER_H_
 
 #include "wCore.h"
+#include "wStatus.h"
 #include "wMaster.h"
+
+using namespace hnet;
 
 class RouterMaster : public wMaster {
 public:
+	RouterMaster(const std::string& title, wServer* server) : wMaster(title, server) { }
+
 	virtual const wStatus& PrepareRun();
 	virtual const wStatus& Reload();
 };

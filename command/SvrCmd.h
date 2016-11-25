@@ -11,6 +11,8 @@
 #include "wCommand.h"
 #include "Svr.h"
 
+using namespace hnet;
+
 #pragma pack(1)
 
 /** 服务端消息通信 router、agent */
@@ -71,7 +73,7 @@ public:
 const uint8_t CMD_SVR_RES = 61;
 struct SvrResCmd_s : public wCommand {
 public:
-	SvrResCmd_s(BYTE para) : wCommand(CMD_SVR_RES, para), mCode(0) { }
+	SvrResCmd_s(uint8_t para) : wCommand(CMD_SVR_RES, para), mCode(0) { }
 
 	int8_t mCode;
 };

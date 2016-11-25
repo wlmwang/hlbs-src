@@ -12,15 +12,16 @@
 
 CXX=g++ -std=c++11
 CXXFLAGS=-O3 -Wall -D_USE_LOGGER_ -D_DEBUG_
-LDFLAGS=-L/usr/local/lib -lpthread -lprotobuf
 
 COREPATH=../core
 COMMPATH=../command
 MSGPATH=../message
 VENDOR=../vendor
-INCPATH=-I./$(COREPATH) -I./$(COMMPATH) -I./$(MSGPATH)
 
-SRCPATH=.
+INCPATH=-I./$(COREPATH) -I./$(COMMPATH) -I./$(MSGPATH)
+LDFLAGS=-L/usr/local/lib -lprotobuf -ltinyxml -lpthread
+
+SRCPATH=./src
 OBJECTS=./$(COREPATH)/wCrc32c.o \
 		./$(COREPATH)/wEnv.o \
 		./$(COREPATH)/wFile.o \
