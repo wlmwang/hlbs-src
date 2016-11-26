@@ -22,11 +22,11 @@ RouterConfig::~RouterConfig() {
 
 const wStatus& RouterConfig::ParseBaseConf() {
 	if (!mDoc.LoadFile(mBaseFile.c_str())) {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::GetBaseConf Load configure(config.xml) file failed", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseBaseConf Load configure(conf.xml) file failed", "");
 	}
 	TiXmlElement *pRoot = mDoc.FirstChildElement();
 	if (NULL == pRoot) {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::GetBaseConf Read root from configure file(conf.xml) failed", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseBaseConf Read root from configure(conf.xml) failed", "");
 	}
 	
 	// 服务器侦听地址
@@ -40,10 +40,10 @@ const wStatus& RouterConfig::ParseBaseConf() {
 			SetIntConf("port", atoi(port));
 			SetIntConf("worker", atoi(worker));
 		} else {
-			return mStatus = wStatus::InvalidArgument("RouterConfig::GetBaseConf Get SERVER host or port from conf.xml failed", "");
+			return mStatus = wStatus::InvalidArgument("RouterConfig::ParseBaseConf Get SERVER host or port from conf.xml failed", "");
 		}
 	} else {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::GetBaseConf Get SERVER node from conf.xml failed", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseBaseConf Get SERVER node from conf.xml failed", "");
 	}
 
 	return mStatus.Clear();
@@ -51,11 +51,11 @@ const wStatus& RouterConfig::ParseBaseConf() {
 
 const wStatus& RouterConfig::ParseSvrConf() {
 	if (!mDoc.LoadFile(mSvrFile.c_str())) {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::GetSvrConf Load configure(svr.xml) file failed", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseSvrConf Load configure(svr.xml) file failed", "");
 	}
 	TiXmlElement *pRoot = mDoc.FirstChildElement();
 	if (NULL == pRoot) {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::GetSvrConf Read root from configure file(svr.xml) failed", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseSvrConf Read root from configure(svr.xml) failed", "");
 	}
 	
 	// SVR配置
@@ -86,11 +86,11 @@ const wStatus& RouterConfig::ParseSvrConf() {
 				// 添加配置
 				mSvrQos->SaveNode(svr);
 			} else {
-				wStatus::InvalidArgument("RouterConfig::GetSvrConf Parse configure from svr.xml occur error", logging::NumberToString(i));
+				wStatus::InvalidArgument("RouterConfig::ParseSvrConf Parse configure from svr.xml occur error", logging::NumberToString(i));
 			}
 		}
 	} else {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::GetSvrConf Get SVRS node from svr.xml failed", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseSvrConf Get SVRS node from svr.xml failed", "");
 	}
 
 	// 记录svr.xml文件更新时间
@@ -104,7 +104,7 @@ const wStatus& RouterConfig::ParseModifySvr(struct SvrNet_t buf[], int32_t* num)
 	}
 	TiXmlElement *pRoot = mDoc.FirstChildElement();
 	if (NULL == pRoot) {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseModifySvr Read root from configure file(svr.xml) failed", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseModifySvr Read root from configure(svr.xml) failed", "");
 	}
 
 	TiXmlElement* pElement = pRoot->FirstChildElement("SVRS");
@@ -161,11 +161,11 @@ const wStatus& RouterConfig::ParseModifySvr(struct SvrNet_t buf[], int32_t* num)
 
 const wStatus& RouterConfig::ParseQosConf() {
 	if (!mDoc.LoadFile(mQosFile.c_str())) {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::GetQosConf Load configure(qos.xml) file failed", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseQosConf Load configure(qos.xml) file failed", "");
 	}
 	TiXmlElement *pRoot = mDoc.FirstChildElement();
 	if (NULL == pRoot) {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::GetQosConf Read root from configure file(qos.xml) failed", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseQosConf Read root from configure(qos.xml) failed", "");
 	}
 	
 	// 成功率、时延比例配置
@@ -296,15 +296,15 @@ const wStatus& RouterConfig::ParseQosConf() {
 	}
 
 	if (!(mSvrQos->mReqCfg.mReqExtendRate > 0.001 && mSvrQos->mReqCfg.mReqExtendRate < 101)) {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::GetQosConf invalid !((REQ_EXTEND_RATE[%f] > 0.001) && (REQ_EXTEND_RATE[%f] < 101))", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseQosConf invalid !((REQ_EXTEND_RATE[%f] > 0.001) && (REQ_EXTEND_RATE[%f] < 101))", "");
 	} else if (mSvrQos->mReqCfg.mReqErrMin >= 1) {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::GetQosConf invalid REQ_ERR_MIN[%f] > 1", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseQosConf invalid REQ_ERR_MIN[%f] > 1", "");
 	} else if (mSvrQos->mDownCfg.mPossbileDownErrRate > 1 || mSvrQos->mDownCfg.mPossbileDownErrRate < 0.01) {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::GetQosConf invalid DOWN_ERR_RATE[%f] > 1 || DOWN_ERR_RATE[%f] < 0.01", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseQosConf invalid DOWN_ERR_RATE[%f] > 1 || DOWN_ERR_RATE[%f] < 0.01", "");
 	} else if (mSvrQos->mDownCfg.mProbeTimes < 3) {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::GetQosConf invalid TIMES[%d] < 3", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseQosConf invalid TIMES[%d] < 3", "");
 	} else if (mSvrQos->mReqCfg.mRebuildTm < 3) {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::GetQosConf invalid REBUILD[%d] < 3", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseQosConf invalid REBUILD[%d] < 3", "");
 	}
 	return mStatus.Clear();
 }

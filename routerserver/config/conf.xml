@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ROOT>
 	<!--服务器监听地址-->
-	<SERVER HOST="0.0.0.0" PORT="10006" PROTOCOL="TCP" BACKLOG="1024" WORKER="1"/>
+	<SERVER HOST="0.0.0.0" PORT="10006" PROTOCOL="TCP" WORKER="1"/>
 </ROOT>
