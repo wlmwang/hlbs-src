@@ -16,16 +16,11 @@ const wStatus& RouterMaster::PrepareRun() {
 const wStatus& RouterMaster::Reload() {
 	RouterConfig* config = mServer->Config<RouterConfig*>();
 
-	mStatus = config->ParseBaseConf();
-	if (!mStatus.Ok()) {
+	if (!(mStatus = config->ParseBaseConf()).Ok()) {
 		return mStatus;
-	}
-	mStatus = config->ParseSvrConf();
-	if (!mStatus.Ok()) {
+	} else if (!(mStatus = config->ParseSvrConf()).Ok()) {
 		return mStatus;
-	}
-	mStatus = config->ParseQosConf();
-	if (!mStatus.Ok()) {
+	} else if (!(mStatus = config->ParseQosConf()).Ok()) {
 		return mStatus;
 	}
 	return mStatus.Clear();
