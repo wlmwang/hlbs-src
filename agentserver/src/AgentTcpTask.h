@@ -12,6 +12,8 @@
 #include "wMisc.h"
 #include "wTcpTask.h"
 
+using namespace hnet;
+
 class AgentTcpTask : public wTcpTask {
 public:
 	AgentTcpTask(wSocket *socket, int32_t type);

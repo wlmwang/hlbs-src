@@ -4,96 +4,41 @@
  * Copyright (C) Hupu, Inc.
  */
 
-#include "Detect.h"
 #include "AgentServer.h"
+#include "AgentConfig.h"
 #include "AgentTcpTask.h"
+#include "AgentClient.h"
+#include "Detect.h"
 
-const wStatus& RouterServer::NewTcpTask(wSocket* sock, wTask** ptr) {
+AgentServer::AgentServer(wConfig* config) : wServer(config) {
+	SAFE_NEW(AgentClient(config), mAgentClient);
+}
+
+AgentServer::~AgentServer() {
+	SAFE_DELETE(mAgentClient);
+}
+
+const wStatus& AgentServer::NewTcpTask(wSocket* sock, wTask** ptr) {
 	SAFE_NEW(AgentTcpTask(sock, Shard(sock)), *ptr);
 	if (*ptr == NULL) {
-		return mStatus = wStatus::IOError("RouterServer::NewTcpTask", "AgentTcpTask new failed");
+		return mStatus = wStatus::IOError("AgentServer::NewTcpTask", "AgentTcpTask new failed");
 	}
 	return mStatus;
 }
 
-AgentServer::~AgentServer() {
-	SAFE_DELETE(mRouterConn);
+/*
+virtual const wStatus& AgentServer::NewChannelTask(wSocket* sock, wTask** ptr) {
+	SAFE_NEW(AgentChannelTask(sock, mMaster, Shard(sock)), *ptr);
+    if (*ptr == NULL) {
+		return mStatus = wStatus::IOError("AgentServer::AgentChannelTask", "new failed");
+    }
+    return mStatus;
 }
+*/
 
-//准备工作
-void AgentServer::PrepareRun() {
-	ConnectRouter(); //连接Router服务
-	mDetectThread != NULL && mDetectThread->StartThread(0);	//探测线程，宕机拉起
-	mRouterConn != NULL && mRouterConn->StartThread(0);	//router线程，与router交互
-}
-
-void AgentServer::ConnectRouter()
-{
-	AgentConfig::RouterConf_t* pRconf = mConfig->GetOneRouterConf();	//获取一个合法Router服务器配置
-	if (pRconf == NULL)
-	{
-		LOG_ERROR(ELOG_KEY, "[system] AgentServer get router config failed");
-		exit(0);
+const wStatus& AgentServer::PrepareRun() {
+	if (!(mStatus = mAgentClient->PrepareStart()).Ok()) {
+		return mStatus;
 	}
-
-	//客户端
-	mRouterConn = new wMTcpClient<AgentClientTask>();
-	mRouterConn->PrepareStart();
-
-	//连接router
-	bool bRet = mRouterConn->GenerateClient(SERVER_ROUTER, "ROUTER SERVER", pRconf->mIPAddr, pRconf->mPort);
-	if (!bRet)
-	{
-		LOG_ERROR(ELOG_KEY, "[system] Connect to RouterServer failed");
-		exit(0);
-	}
-	LOG_DEBUG(ELOG_KEY, "[system] Connect to RouterServer success, ip(%s) port(%d)", pRconf->mIPAddr, pRconf->mPort);
-	
-	//初始化svr配置
-	InitSvrReq();
-}
-
-wTask* AgentServer::NewTcpTask(wSocket *pSocket)
-{
-	return new AgentServerTask(pSocket);
-}
-
-wTask* AgentServer::NewUnixTask(wSocket *pSocket)
-{
-	return new AgentUnixTask(pSocket);
-}
-
-/** 发送初始化svr配置请求 */
-int AgentServer::InitSvrReq()
-{
-	wMTcpClient<AgentClientTask>* pRouterConn = RouterConn();	//客户端连接
-	if (pRouterConn == NULL)
-	{
-		return -1;
-	}
-
-	wTcpClient<AgentClientTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
-	if (pClient != NULL && pClient->TcpTask())
-	{
-		struct SvrReqInit_t stSvr;
-		return pClient->TcpTask()->SyncSend((char *)&stSvr, sizeof(stSvr));
-	}
-	return -1;
-}
-
-/** 发送重载svr配置请求 */
-int AgentServer::ReloadSvrReq()
-{
-	wMTcpClient<AgentClientTask>* pRouterConn = RouterConn();
-	if (pRouterConn == NULL)
-	{
-		return -1;
-	}
-	wTcpClient<AgentClientTask>* pClient = pRouterConn->OneTcpClient(SERVER_ROUTER);
-	if (pClient != NULL && pClient->TcpTask())
-	{
-		struct SvrReqReload_t stSvr;
-		return pClient->TcpTask()->SyncSend((char *)&stSvr, sizeof(stSvr));
-	}
-	return -1;
+	return mStatus = mAgentClient->StartThread();
 }

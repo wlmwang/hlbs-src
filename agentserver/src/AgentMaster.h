@@ -8,10 +8,15 @@
 #define _AGENT_MASTER_H_
 
 #include "wCore.h"
+#include "wStatus.h"
 #include "wMaster.h"
+
+using namespace hnet;
 
 class AgentMaster : public wMaster {
 public:
+	AgentMaster(const std::string& title, wServer* server) : wMaster(title, server) { }
+
 	virtual const wStatus& PrepareRun();
 	virtual const wStatus& Reload();
 };

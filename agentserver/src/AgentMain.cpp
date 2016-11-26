@@ -11,6 +11,8 @@
 #include "AgentServer.h"
 #include "AgentMaster.h"
 
+using namespace hnet;
+
 int main(int argc, const char *argv[]) {
 
 	// 创建配置对象
@@ -24,6 +26,7 @@ int main(int argc, const char *argv[]) {
 	// 解析命令行
 	s = config->GetOption(argc, argv);
 	if (!s.Ok()) {
+		std::cout << s.ToString() << std::endl;
 		return -1;
 	}
 

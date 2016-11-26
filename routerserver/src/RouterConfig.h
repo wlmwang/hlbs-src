@@ -9,9 +9,8 @@
 
 #include "wCore.h"
 #include "wStatus.h"
-#include "wMisc.h"
-#include "wConfig.h"
 #include "tinyxml.h"
+#include "wConfig.h"
 #include "SvrQos.h"
 
 using namespace hnet;

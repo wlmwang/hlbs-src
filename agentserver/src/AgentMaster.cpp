@@ -4,24 +4,22 @@
  * Copyright (C) Hupu, Inc.
  */
 
-#include "Common.h"
 #include "AgentMaster.h"
+#include "AgentServer.h"
+#include "AgentConfig.h"
 
 const wStatus& AgentMaster::PrepareRun() {
 	return mStatus.Clear();
 }
 
 const wStatus& AgentMaster::Reload() {
-	mStatus = config->ParseBaseConf();
-	if (!mStatus.Ok()) {
+	AgentConfig* config = mServer->Config<AgentConfig*>();
+
+	if (!(mStatus = config->ParseBaseConf()).Ok()) {
 		return mStatus;
-	}
-	mStatus = config->ParseRouterConf();
-	if (!mStatus.Ok()) {
+	} else if (!(mStatus = config->ParseRouterConf()).Ok()) {
 		return mStatus;
-	}
-	mStatus = config->ParseQosConf();
-	if (!mStatus.Ok()) {
+	} else if (!(mStatus = config->ParseQosConf()).Ok()) {
 		return mStatus;
 	}
 	return mStatus.Clear();
