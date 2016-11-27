@@ -18,6 +18,7 @@ const int32_t	kMaxNum		= 255;
 const int32_t	kInitWeight = 100;
 const int32_t	kMaxWeight	= 1000;
 const int64_t	kDelayMax	= 100000000;	// 最大延时值 100s
+const int64_t	kOkLoadMax	= 1000000;		// 最大成功率负载
 
 using namespace hnet;
 
@@ -152,7 +153,7 @@ public:
 // 访问量的配置信息
 struct SvrReqCfg_t {
 public:
-	int32_t mReqLimit;		// 访问量控制的阀值
+	int32_t mReqLimit;		// 访问量控制的阀值(门限)
 	int32_t	mReqMax;		// 访问量控制的最大值
 	int32_t	mReqMin;		// 访问量控制的最小值
 	int32_t	mReqCount;		// 访问量控制的实际值（请求数）
@@ -190,7 +191,7 @@ public:
 	int32_t 		mLastReqErrRet;
 	int32_t 		mLastReqErrTm;
 	int32_t  		mLastReqSuc;
-	bool  			mLastErr;			// 门限扩张标识 true：收缩  false：扩张
+	bool  			mLastErr;			// 门限扩张标识。 收缩：true  扩张：false
 	int32_t 		mLastAlarmReq;		// 参考值。请求数扩张门限（上一周期数量），判断扩展是否有效
 	int32_t 		mLastAlarmSucReq;	// 参考值。成功请求数扩张门限
 	int32_t 		mPreAll;			// 路由被分配次数 + 预测本周期成功请求次数
@@ -341,10 +342,10 @@ public:
 	struct SvrNet_t		mNet;	// 路由信息
 	struct SvrStat_t	*mStat;	// 路由统计 && 阈值
 
-	float mKey;					//关键值，初始化为 mInfo.mLoadX = 1
+	float mKey;					// 关键值，初始化为 mInfo.mLoadX = 1
 
-	int32_t mStopTime;			//宕机记录信息
-	int32_t mReqAllAfterDown;	//宕机以来所有请求数量
+	int32_t mStopTime;			// 宕机记录信息
+	int32_t mReqAllAfterDown;	// 宕机以来所有请求数量
     
     /** 宕机相关的额外恢复条件 */
 	int32_t mDownTimeTrigerProbeEx;		//时间

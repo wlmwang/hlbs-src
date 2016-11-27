@@ -30,21 +30,43 @@ public:
 	// 节点是否变化（新配置始终下发，旧配置检测到version变化才下发）
 	bool IsVerChange(const struct SvrNet_t& svr);
 
-	// 获取所有节点
+	// 获取 最优节点
+	const wStatus& QueryNode(struct SvrNet_t& svr);
+	// 上报 调用结果
+	const wStatus& CallerNode(const struct SvrCaller_t& caller);
+	// 获取 所有节点
 	const wStatus& GetNodeAll(struct SvrNet_t buf[], int32_t* num);
-	// 保存节点信息
+	// 保存 节点信息
 	const wStatus& SaveNode(const struct SvrNet_t& svr);
-	// 添加新节点&&路由
+	// 添加 新节点&&路由
 	const wStatus& AddNode(const struct SvrNet_t& svr);
 	// 修改 节点&&路由 权重（权重为0删除节点）
 	const wStatus& ModifyNode(const struct SvrNet_t& svr);
 	// 删除 节点&&路由
 	const wStatus& DeleteNode(const struct SvrNet_t& svr);
-	// 清除所有路由信息
+	// 清除 所有路由信息
 	const wStatus& CleanNode();
 
 protected:
 	friend class AgentConfig;
+
+	// 重建路由
+	const wStatus& RebuildRoute(struct SvrKind_t& kind, bool force = false);
+	// 路由节点重建
+	const wStatus& RouteNodeRebuild(const struct SvrNet_t &svr, struct SvrStat_t* stat);
+	// 节点访问量控制重建
+	const wStatus& ReqRebuild(const struct SvrNet_t &svr, struct SvrStat_t* stat);
+
+	//  重建宕机路由（故障恢复，恢复后放入pSvrNode指针中）
+	const wStatus& RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* pSvrNode, float pri = 1, float lowOkRate = 1, uint32_t bigDelay = 1)
+
+	// 单次获取路由
+	const wStatus& GetRouteNode(struct SvrNet_t& svr);
+
+	const wStatus& AddErrRoute(struct SvrKind_t& kind, struct SvrNode_t& node)
+
+	// 单次分配路由检查，如果有路由分配产生，则更新相关统计计数
+	const wStatus& RouteCheck(struct SvrStat_t* pSvrStat, struct SvrNet_t& stNode, double dFirstReq, bool bFirstRt)
 
 	// 添加新路由
 	const wStatus& AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t* stat);
