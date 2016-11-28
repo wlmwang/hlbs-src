@@ -13,7 +13,6 @@
 #include "wStatus.h"
 #include "wNoncopyable.h"
 #include "SvrCmd.h"
-//#include "DetectThread.h"
 
 using namespace hnet;
 
@@ -27,7 +26,7 @@ public:
 
 	// 指定节点是否存在
 	bool IsExistNode(const struct SvrNet_t& svr);
-	// 节点是否变化（新配置始终下发，旧配置检测到version变化才下发）
+	// 节点是否变化。节点不存在时，接口认为“版本变化”（新配置始终下发，旧配置检测到version变化才下发）
 	bool IsVerChange(const struct SvrNet_t& svr);
 
 	// 获取 最优节点
@@ -50,12 +49,14 @@ public:
 protected:
 	friend class AgentConfig;
 
-	// 重建路由
+	// 重建该类路由
 	const wStatus& RebuildRoute(struct SvrKind_t& kind, bool force = false);
 	// 路由节点重建
 	const wStatus& RouteNodeRebuild(const struct SvrNet_t &svr, struct SvrStat_t* stat);
 	// 节点访问量控制重建
 	const wStatus& ReqRebuild(const struct SvrNet_t &svr, struct SvrStat_t* stat);
+	// 门限扩张值
+	int32_t GetAddCount(const struct SvrStat_t* stat, int32_t reqCount);
 
 	//  重建宕机路由（故障恢复，恢复后放入pSvrNode指针中）
 	const wStatus& RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* pSvrNode, float pri = 1, float lowOkRate = 1, uint32_t bigDelay = 1)
@@ -71,7 +72,9 @@ protected:
 	// 添加新路由
 	const wStatus& AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t* stat);
 	// 删除路由节点
-	const wStatus& DeleteRouteNode(const struct SvrNet_t& stSvr);
+	const wStatus& DeleteRouteNode(const struct SvrNet_t& svr);
+	// 修改路由节点
+	const wStatus& ModifyRouteNode(const struct SvrNet_t& svr);
 	// 加载阈值配置
 	const wStatus& LoadStatCfg(const struct SvrNet_t& svr, struct SvrStat_t* stat);
 
@@ -86,9 +89,9 @@ protected:
 	bool mAllReqMin;	// 所有节点都过载
 	float mAvgErrRate;	// 错误平均值，过载时
 
-	std::map<struct SvrNet_t, struct SvrStat_t*> mMapReqSvr;	// 节点信息。路由-统计，一对一
-	std::map<struct SvrKind_t, std::multimap<float, struct SvrNode_t>* > mRouteTable;	// 路由信息。种类-节点，一对多
-	std::map<struct SvrKind_t, std::list<struct SvrNode_t>* > mErrTable;	// 宕机路由表
+	std::map<struct SvrNet_t, struct SvrStat_t*> mMapReqSvr;	// 节点信息。1:1，节点-统计
+	std::map<struct SvrKind_t, std::multimap<float, struct SvrNode_t>* > mRouteTable;	// 路由信息。1:n，种类-节点
+	std::map<struct SvrKind_t, std::list<struct SvrNode_t>* > mErrTable;	// 宕机路由表，1:n，种类-节点
 
 	typedef std::map<struct SvrNet_t, struct SvrStat_t*> MapSvr_t;
 	typedef std::map<struct SvrNet_t, struct SvrStat_t*>::iterator MapSvrIt_t;

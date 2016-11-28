@@ -24,7 +24,7 @@ using namespace hnet;
 
 #pragma pack(1)
 
-// Svr 基础属性 && 通信结构
+// 节点信息（基础信息）
 struct SvrNet_t {
 public:
 	int32_t		mGid;			// 一级id
@@ -93,7 +93,7 @@ public:
     }
 };
 
-// 调用请求
+// 上报调用信息
 struct SvrCaller_t {
 public:
 	int32_t mCallerGid;		// 主调一级id
@@ -150,7 +150,7 @@ public:
 			mProbeBegin(3), mProbeInterval(10), mProbeNodeExpireTime(600) { }
 };
 
-// 访问量的配置信息
+// 节点访问量的配置信息（含门限）
 struct SvrReqCfg_t {
 public:
 	int32_t mReqLimit;		// 访问量控制的阀值(门限)
@@ -166,7 +166,7 @@ public:
 			mReqErrMin(0.5), mReqExtendRate(0.2) { }
 };
 
-// 访问统计
+// 节点统计信息
 struct SvrInfo_t {
 public:
 	struct timeval	mBuildTm;			// 统计信息开始时间，每个节点 rebuild 时刻的绝对时间
@@ -191,8 +191,8 @@ public:
 	int32_t 		mLastReqErrRet;
 	int32_t 		mLastReqErrTm;
 	int32_t  		mLastReqSuc;
-	bool  			mLastErr;			// 门限扩张标识。 收缩：true  扩张：false
-	int32_t 		mLastAlarmReq;		// 参考值。请求数扩张门限（上一周期数量），判断扩展是否有效
+	bool  			mLastErr;			// 上周期请求门限是否过度扩张。 是：true  否：false
+	int32_t 		mLastAlarmReq;		// 上周期门限扩张值
 	int32_t 		mLastAlarmSucReq;	// 参考值。成功请求数扩张门限
 	int32_t 		mPreAll;			// 路由被分配次数 + 预测本周期成功请求次数
 
@@ -209,7 +209,7 @@ public:
 	int32_t         mSPreAll;
     
 	int32_t 		mAddSuc;			// 上个周期与上上个周期成功请求数差值
-	int32_t 		mIdle;				// add连续核算次数
+	int32_t 		mIdle;				// 空闲周期
     
     SvrInfo_t() : mReqAll(0), mReqRej(0), mReqSuc(0),mReqErrRet(0), mReqErrTm(0),mLoadX(1.0),mOkLoad(1.0),mDelayLoad(1.0),mDelayLoadAmplify(0.0),mOkRate(1.0),
     		mAvgTm(1),mTotalUsec(1), mAvgErrRate(0.0),mLastReqAll(0),mLastReqRej(0),mLastReqErrRet(0),mLastReqErrTm(0),mLastReqSuc(0),mLastErr(false),mLastAlarmReq(0),
@@ -221,10 +221,10 @@ public:
     void InitInfo(const struct SvrNet_t& svr) { }
 };
 
-// svr阈值（便于自行自行扩张收缩）、统计结构
+// 节点阈值（含门限） && 统计 信息
 struct SvrStat_t {
 public:
-	struct SvrReqCfg_t		mReqCfg;	// 访问量配置
+	struct SvrReqCfg_t		mReqCfg;	// 访问量配置 && 门限
 	struct SvrInfo_t		mInfo;		// 统计信息
 	
 	void Reset() {
@@ -257,8 +257,7 @@ public:
 	}
 };
 
-// 路由分类
-// 由mGid、mXid组成的一类svr（便于分类路由）
+// 分类节点信息（由mGid、mXid组成的一类节点）
 struct SvrKind_t {
 	int32_t		mGid;
 	int32_t		mXid;
@@ -269,7 +268,7 @@ struct SvrKind_t {
     int32_t 	mPtm; 				// rebuild 时刻的绝对时间 time_t
     int32_t 	mRebuildTm; 		// rebuild 的时间间隔
 	float 		mWeightSum;
-	int64_t 	mAccess64tm;		//最近访问时间 微妙
+	int64_t 	mAccess64tm;		// 最近访问时间 微妙
 	int32_t 	mPindex;
 	
 	SvrKind_t() : mGid(0),mXid(0),mOverload(0),mPtotalErrRate(0.0),mPsubCycCount(0),mRebuildTm(3),mWeightSum(0),mPindex(0) {
@@ -334,36 +333,34 @@ struct SvrKind_t {
     }
 };
 
-/**
- * Svr节点信息
- */
+// 节点信息
 struct SvrNode_t {
 public:
-	struct SvrNet_t		mNet;	// 路由信息
-	struct SvrStat_t	*mStat;	// 路由统计 && 阈值
+	struct SvrNet_t  mNet;	// 节点信息
+	struct SvrStat_t *mStat;// 节点统计 && 阈值、门限
 
 	float mKey;					// 关键值，初始化为 mInfo.mLoadX = 1
 
 	int32_t mStopTime;			// 宕机记录信息
 	int32_t mReqAllAfterDown;	// 宕机以来所有请求数量
     
-    /** 宕机相关的额外恢复条件 */
-	int32_t mDownTimeTrigerProbeEx;		//时间
-	int32_t mReqCountTrigerProbeEx;		//请求数量
+    // 宕机相关的额外恢复条件
+	int32_t mDownTimeTrigerProbeEx;		// 时间
+	int32_t mReqCountTrigerProbeEx;		// 请求数量
     
-    bool mIsDetecting; 		//是否处在 "探测宕机是否恢复" 的状态
+    bool mIsDetecting; 		// 是否处在 "探测宕机是否恢复" 的状态
 
     SvrNode_t() : mStat(NULL),mKey(0.0),mStopTime(0),mReqAllAfterDown(0),mDownTimeTrigerProbeEx(0),
     		mReqCountTrigerProbeEx(0),mIsDetecting(false) { }
     
-	SvrNode_t(const struct SvrNet_t& nt, struct SvrStat_t* pStat) {
-        if (pStat == NULL) {
+	SvrNode_t(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
+        mNet  = svr;
+        mStat = stat;
+		if (stat == NULL) {
             mKey = 1;
         } else {
-            mKey = pStat->mInfo.mLoadX;
+            mKey = stat->mInfo.mLoadX;
         }
-        mNet = nt;
-        mStat = pStat;
 	}
 };
 
