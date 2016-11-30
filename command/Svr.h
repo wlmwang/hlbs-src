@@ -194,7 +194,7 @@ public:
 	bool  			mLastErr;			// 上周期请求门限是否过度扩张。 是：true  否：false
 	int32_t 		mLastAlarmReq;		// 上周期门限扩张值
 	int32_t 		mLastAlarmSucReq;	// 参考值。成功请求数扩张门限
-	int32_t 		mPreAll;			// 路由被分配次数 + 预测本周期成功请求次数
+	int32_t 		mPreAll;			// 路由被分配次数
 
 	int32_t 		mCityId;			// 被调所属城市id
 	int32_t 		mOffSide {0};		// 被调节点与主调异地标志，默认为0， 1标为异地
@@ -206,7 +206,7 @@ public:
 	int32_t			mSReqSuc;			// 成功的请求数(统计用)
 	int32_t			mSReqErrRet;		// 失败的请求数(统计用)
 	int32_t			mSReqRrrTm;			// 超时的请求数(统计用)
-	int32_t         mSPreAll;
+	int32_t         mSPreAll;			// 路由被分配次数(统计)
     
 	int32_t 		mAddSuc;			// 上个周期与上上个周期成功请求数差值
 	int32_t 		mIdle;				// 空闲周期
@@ -269,7 +269,7 @@ struct SvrKind_t {
     int32_t 	mRebuildTm; 		// rebuild 的时间间隔
 	float 		mWeightSum;
 	int64_t 	mAccess64tm;		// 最近访问时间 微妙
-	int32_t 	mPindex;
+	int32_t 	mPindex;			// 分类路由轮转索引
 	
 	SvrKind_t() : mGid(0),mXid(0),mOverload(0),mPtotalErrRate(0.0),mPsubCycCount(0),mRebuildTm(3),mWeightSum(0),mPindex(0) {
         mPtm = time(NULL);

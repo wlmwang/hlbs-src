@@ -49,26 +49,23 @@ public:
 protected:
 	friend class AgentConfig;
 
+	// 门限扩张值
+	int32_t GetAddCount(const struct SvrStat_t* stat, int32_t reqCount);
 	// 重建该类路由
 	const wStatus& RebuildRoute(struct SvrKind_t& kind, bool force = false);
 	// 路由节点重建
 	const wStatus& RouteNodeRebuild(const struct SvrNet_t &svr, struct SvrStat_t* stat);
 	// 节点访问量控制重建
 	const wStatus& ReqRebuild(const struct SvrNet_t &svr, struct SvrStat_t* stat);
-	// 门限扩张值
-	int32_t GetAddCount(const struct SvrStat_t* stat, int32_t reqCount);
-
-	//  重建宕机路由（故障恢复，恢复后放入pSvrNode指针中）
-	const wStatus& RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* pSvrNode, float pri = 1, float lowOkRate = 1, uint32_t bigDelay = 1)
+	//  重建宕机路由（故障恢复，恢复后放入multiNode指针中）
+	const wStatus& RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* multiNode, float maxLoad = 1.0, float lowOkRate = 1.0, uint32_t bigDelay = 1);
 
 	// 单次获取路由
 	const wStatus& GetRouteNode(struct SvrNet_t& svr);
-
-	const wStatus& AddErrRoute(struct SvrKind_t& kind, struct SvrNode_t& node)
-
 	// 单次分配路由检查，如果有路由分配产生，则更新相关统计计数
-	const wStatus& RouteCheck(struct SvrStat_t* pSvrStat, struct SvrNet_t& stNode, double dFirstReq, bool bFirstRt)
-
+	const wStatus& RouteCheck(struct SvrStat_t* stat, struct SvrNet_t& stNode, double firstLoad, bool firstSvr);
+	// 添加宕机路由
+	const wStatus& AddErrRoute(struct SvrKind_t& kind, struct SvrNode_t& node);
 	// 添加新路由
 	const wStatus& AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t* stat);
 	// 删除路由节点
@@ -85,7 +82,6 @@ protected:
 	int mDelayWeight;	// 时延因子 1~100000
 	int mRebuildTm;		// 重建时间间隔 默认为60s
 	int mReqTimeout;	// 请求超时时间 默认为500ms
-	int mPreRoute;		// 是否开启预取缓存功能。开启后可以预先将某个gid, xid对应的host,port加载到内存中，以节省访问资源。
 	bool mAllReqMin;	// 所有节点都过载
 	float mAvgErrRate;	// 错误平均值，过载时
 
