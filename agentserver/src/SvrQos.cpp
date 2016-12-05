@@ -122,8 +122,8 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& stSvr) {
 
 	MultiMapNode_t* pTable = rtIt->second;
 	if (pTable == NULL || pTable->empty()) {
-		//SAFE_DELETE(pTable);
-		//mRouteTable.erase(rtIt);
+		SAFE_DELETE(pTable);
+		mRouteTable.erase(rtIt);
 		return mStatus = wStatus::IOError("SvrQos::GetRouteNode failed, empty table", "");
 	}
 
@@ -540,7 +540,8 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, MultiMapNode_t*
 	ListNodeIt_t it = pErrRoute->begin();
 	while (it != pErrRoute->end()) {
 		struct DetectResult_t stRes;
-		iDetectStat = -1;  //-2: 没root权限探测  -1:网络探测失败 0:网络探测成功
+		// -2: 没root权限探测  -1:网络探测失败 0:网络探测成功
+		iDetectStat = -1;
 
 		//故障探测：
 		//1)先进行网络层探测ping connect udp_icmp，网络探测成功后再用业务请求进行探测
