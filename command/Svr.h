@@ -194,7 +194,7 @@ public:
 	bool  			mLastErr;			// 上周期请求门限是否过度扩张。 是：true  否：false
 	int32_t 		mLastAlarmReq;		// 上周期门限扩张值
 	int32_t 		mLastAlarmSucReq;	// 参考值。成功请求数扩张门限
-	int32_t 		mPreAll;			// 路由被分配次数
+	int32_t 		mPreAll;			// 路由被分配次数 + 预取数
 
 	int32_t 		mCityId;			// 被调所属城市id
 	int32_t 		mOffSide;			// 被调节点与主调异地标志，默认为0， 1标为异地
@@ -209,7 +209,7 @@ public:
 	int32_t         mSPreAll;			// 路由被分配次数(统计)
     
 	int32_t 		mAddSuc;			// 上个周期与上上个周期成功请求数差值
-	int32_t 		mIdle;				// 空闲周期
+	int32_t 		mIdle;				// 空闲周期统计
     
     SvrInfo_t() : mReqAll(0), mReqRej(0), mReqSuc(0),mReqErrRet(0), mReqErrTm(0),mLoadX(1.0),mOkLoad(1.0),mDelayLoad(1.0),mDelayLoadAmplify(0.0),mOkRate(1.0),
     		mAvgTm(1),mTotalUsec(1), mAvgErrRate(0.0),mLastReqAll(0),mLastReqRej(0),mLastReqErrRet(0),mLastReqErrTm(0),mLastReqSuc(0),mLastErr(false),mLastAlarmReq(0),
