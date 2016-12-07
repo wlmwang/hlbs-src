@@ -80,7 +80,7 @@ public:
         return ::strcmp(mHost, other.mHost, kMaxHost) < 0 ? true : false;
 	}
 
-	// 忽略 weight version 比较
+	// 忽略 weight version ==比较
     bool operator==(const SvrNet_t &other) const {
         if (mGid != other.mGid) {
             return false;
@@ -142,9 +142,9 @@ public:
 	float mPossbileDownErrRate;		// 宕机错误率阈值
 
     // mProbeBegin >0 才打开自探测
-	int32_t mProbeBegin {0};
-	int32_t mProbeInterval {0};
-	int32_t mProbeNodeExpireTime {0};
+	int32_t mProbeBegin;
+	int32_t mProbeInterval;
+	int32_t mProbeNodeExpireTime;
 
 	SvrDownCfg_t() : mReqCountTrigerProbe(100000), mDownTimeTrigerProbe(600), mProbeTimes(3), mPossibleDownErrReq(10), mPossbileDownErrRate(0.5),
 			mProbeBegin(3), mProbeInterval(10), mProbeNodeExpireTime(600) { }
@@ -197,7 +197,7 @@ public:
 	int32_t 		mPreAll;			// 路由被分配次数
 
 	int32_t 		mCityId;			// 被调所属城市id
-	int32_t 		mOffSide {0};		// 被调节点与主调异地标志，默认为0， 1标为异地
+	int32_t 		mOffSide;			// 被调节点与主调异地标志，默认为0， 1标为异地
 
 	int32_t 		mContErrCount;		// 连续失败次数累积
 
@@ -218,7 +218,7 @@ public:
 		mBuildTm.tv_sec = mBuildTm.tv_usec = 0;
     }
 
-    void InitInfo(const struct SvrNet_t& svr) { }
+    void InitInfo(struct SvrNet_t& svr) { }
 };
 
 // 节点阈值（含门限） && 统计 信息
@@ -354,13 +354,18 @@ public:
     		mReqCountTrigerProbeEx(0),mIsDetecting(false) { }
     
 	SvrNode_t(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
-        mNet  = svr;
-        mStat = stat;
-		if (stat == NULL) {
+		if (!stat) {
             mKey = 1;
         } else {
             mKey = stat->mInfo.mLoadX;
         }
+        mNet  = svr;
+        mStat = stat;
+        mStopTime = 0;
+        mReqAllAfterDown = 0;
+        mIsDetecting = false;
+        mDownTimeTrigerProbeEx = 0;
+        mReqCountTrigerProbeEx = 0;
 	}
 };
 

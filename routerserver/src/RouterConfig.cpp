@@ -186,8 +186,8 @@ const wStatus& RouterConfig::ParseQosConf() {
 	//  路由重建时间
 	pElement = pRoot->FirstChildElement("CFG");
 	if (NULL != pElement) {
-		if (pElement->Attribute("REBUILD") != NULL) {
-			mSvrQos->mRebuildTm = atoi(pElement->Attribute("REBUILD"));
+		if (pElement->Attribute("REBUILD_TM") != NULL) {
+			mSvrQos->mRebuildTm = atoi(pElement->Attribute("REBUILD_TM"));
 		} else {
 			mSvrQos->mRebuildTm = 60;
 		}
@@ -199,7 +199,7 @@ const wStatus& RouterConfig::ParseQosConf() {
 		if (pElement->Attribute("REQ_MAX") != NULL) {
 			mSvrQos->mReqCfg.mReqMax = atoi(pElement->Attribute("REQ_MAX"));
 		} else {
-			mSvrQos->mReqCfg.mReqMax = 10000;
+			mSvrQos->mReqCfg.mReqMax = 100000;
 		}
 
 		if (pElement->Attribute("REQ_MIN") != NULL) {
@@ -234,7 +234,7 @@ const wStatus& RouterConfig::ParseQosConf() {
 		if (pElement->Attribute("BEGIN") != NULL) {
 			mSvrQos->mDownCfg.mProbeBegin = atoi(pElement->Attribute("BEGIN"));
 		} else {
-			mSvrQos->mDownCfg.mProbeBegin = 3;
+			mSvrQos->mDownCfg.mProbeBegin = 1;
 		}
 
 		if (pElement->Attribute("INTERVAL") != NULL) {
@@ -291,10 +291,6 @@ const wStatus& RouterConfig::ParseQosConf() {
         mSvrQos->mRateWeight = 1;
     }
 
-    if (mSvrQos->mReqCfg.mPreTime <= 0 || mSvrQos->mReqCfg.mPreTime > (mSvrQos->mRebuildTm / 2)) {
-		mSvrQos->mReqCfg.mPreTime = 2;
-	}
-
 	if (!(mSvrQos->mReqCfg.mReqExtendRate > 0.001 && mSvrQos->mReqCfg.mReqExtendRate < 101)) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseQosConf invalid !((REQ_EXTEND_RATE[%f] > 0.001) && (REQ_EXTEND_RATE[%f] < 101))", "");
 	} else if (mSvrQos->mReqCfg.mReqErrMin >= 1) {
@@ -304,7 +300,11 @@ const wStatus& RouterConfig::ParseQosConf() {
 	} else if (mSvrQos->mDownCfg.mProbeTimes < 3) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseQosConf invalid TIMES[%d] < 3", "");
 	} else if (mSvrQos->mReqCfg.mRebuildTm < 3) {
-		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseQosConf invalid REBUILD[%d] < 3", "");
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseQosConf invalid REBUILD_TM[%d] < 3", "");
+	}
+
+    if (mSvrQos->mReqCfg.mPreTime <= 0 || mSvrQos->mReqCfg.mPreTime > (mSvrQos->mRebuildTm / 2)) {
+		mSvrQos->mReqCfg.mPreTime = 2;
 	}
 	return mStatus.Clear();
 }

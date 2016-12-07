@@ -80,9 +80,10 @@ const wStatus& SvrQos::DeleteNode(const struct SvrNet_t& svr) {
     }
 
     struct SvrStat_t* stat = mapReqIt->second;
-    SAFE_DELETE(stat);
     mMapReqSvr.erase(mapReqIt);
-    return DeleteRouteNode(svr);
+    DeleteRouteNode(svr);
+    SAFE_DELETE(stat);
+    return mStatus;
 }
 
 const wStatus& SvrQos::LoadStatCfg(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
@@ -287,15 +288,13 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
             SAFE_DELETE(table);
         }
 
-        //wStatus::IOError("SvrQos::RebuildRoute failed, recovery kind's error multiple node", "");
-        return mStatus.Clear();
+        return mStatus;
 	}
 
 	MultiMapNode_t* table = rtIt->second;
 	if (table == NULL || table->empty()) {
-        SAFE_DELETE(table);
-        mRouteTable.erase(rtIt);
-        return mStatus = wStatus::IOError("SvrQos::RebuildRoute failed, cannot find kind's multiple node", "");
+        wStatus::IOError("SvrQos::RebuildRoute failed, cannot find kind's multiple node", "")
+        return mStatus;
 	}
 	struct SvrKind_t& stKind = const_cast<struct SvrKind_t&>(rtIt->first);
 
@@ -306,13 +305,12 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
 	}
     if (!force && (tm - stKind.mPtm < stKind.mRebuildTm)) {
     	// 如果非强制更新，并且还没到路由rebuild时间直接返回，默认一分钟rebuild一次
-    	//wStatus::IOError("SvrQos::RebuildRoute failed, rebuild time is not reach", "");
-    	return mStatus.Clear();
+    	return mStatus;
     }
-    // rebuild时间 TODO
+    // rebuild时间
     kind.mPtm = stKind.mPtm = tm;
 
-    bool errRateBig = true;  // 所有被调都过载标志
+    bool errRateBig = true;  // 所有被调都过载标志(非压力故障标志)
     int32_t routeTotalReq = 0; // 请求总数
 
     uint64_t lowDelay = kDelayMax;	// 路由最低延时时间
@@ -941,18 +939,19 @@ const wStatus& SvrQos::AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t
     for (MultiMapNodeRIt_t it = table->rbegin(); it != table->rend(); ++it) {
         struct SvrNode_t& node = it->second;
 
-        // 初始化统计
-        // 目的：解决被调扩容时，新加的服务器流量会瞬间爆增，然后在一个周期内恢复正常（正在运行时，突然新加一个服务器，
-        // 如果mPreAll=0，GetRoute函数分配服务器时，会连续分配该新加的服务器）
-        stat->mInfo = node.mStat->mInfo;
-
-        // 初始化阈值
-        stat->mReqCfg.mReqLimit = node.mStat->mReqCfg.mReqLimit;
-        stat->mReqCfg.mReqMin = node.mStat->mReqCfg.mReqMin;
-        stat->mReqCfg.mReqMax = node.mStat->mReqCfg.mReqMax;
-        stat->mReqCfg.mReqErrMin = node.mStat->mReqCfg.mReqErrMin;
-        stat->mReqCfg.mReqExtendRate = node.mStat->mReqCfg.mReqExtendRate;
-        break;
+        if (node.mStat->mInfo.mOffSide == 0) {
+            // 初始化统计
+            // 目的：解决被调扩容时，新加的服务器流量会瞬间爆增，然后在一个周期内恢复正常（正在运行时，突然新加一个服务器，
+            // 如果mPreAll=0，GetRoute函数分配服务器时，会连续分配该新加的服务器）
+            stat->mInfo = node.mStat->mInfo;
+            // 初始化阈值
+            stat->mReqCfg.mReqLimit = node.mStat->mReqCfg.mReqLimit;
+            stat->mReqCfg.mReqMin = node.mStat->mReqCfg.mReqMin;
+            stat->mReqCfg.mReqMax = node.mStat->mReqCfg.mReqMax;
+            stat->mReqCfg.mReqErrMin = node.mStat->mReqCfg.mReqErrMin;
+            stat->mReqCfg.mReqExtendRate = node.mStat->mReqCfg.mReqExtendRate;
+            break;
+        }
     }
 
     struct SvrNode_t node(svr, stat);

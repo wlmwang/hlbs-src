@@ -94,10 +94,11 @@ const wStatus& SvrQos::DeleteNode(const struct SvrNet_t& svr) {
         return mStatus = wStatus::IOError("SvrQos::DeleteNode failed", "cannot find node");
     }
 
-    SvrStat_t* stat = mapReqIt->second;
+    struct SvrStat_t* stat = mapReqIt->second;
     mMapReqSvr.erase(mapReqIt);
+    DeleteRouteNode(svr);
     SAFE_DELETE(stat);
-    return DeleteRouteNode(svr);
+    return mStatus;
 }
 
 const wStatus& SvrQos::LoadStatCfg(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
@@ -121,18 +122,20 @@ const wStatus& SvrQos::AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t
     // 路由表中已有相关节点，取优先级最低的那个作为新节点统计信息的默认值
     for (MultiMapNodeRIt_t it = table->rbegin(); it != table->rend(); ++it) {
         struct SvrNode_t& node = it->second;
-        // 初始化阈值
-        stat->mReqCfg.mReqLimit = node.mStat->mReqCfg.mReqLimit;
-        stat->mReqCfg.mReqMin = node.mStat->mReqCfg.mReqMin;
-        stat->mReqCfg.mReqMax = node.mStat->mReqCfg.mReqMax;
-        stat->mReqCfg.mReqErrMin = node.mStat->mReqCfg.mReqErrMin;
-        stat->mReqCfg.mReqExtendRate = node.mStat->mReqCfg.mReqExtendRate;
 
-        // 初始化统计
-        // 正在运行时，突然新加一个服务器，如果mPreAll=0，GetRoute函数分配服务器时，会连续分配该新加的服务器
-        // 导致：被调扩容时，新加的服务器流量会瞬间爆增，然后在一个周期内恢复正常
-        stat->mInfo = node.mStat->mInfo;
-        break;
+        if (node.mStat->mInfo.mOffSide == 0) {
+            // 初始化统计
+            // 目的：解决被调扩容时，新加的服务器流量会瞬间爆增，然后在一个周期内恢复正常（正在运行时，突然新加一个服务器，
+            // 如果mPreAll=0，GetRoute函数分配服务器时，会连续分配该新加的服务器）
+            stat->mInfo = node.mStat->mInfo;
+            // 初始化阈值
+            stat->mReqCfg.mReqLimit = node.mStat->mReqCfg.mReqLimit;
+            stat->mReqCfg.mReqMin = node.mStat->mReqCfg.mReqMin;
+            stat->mReqCfg.mReqMax = node.mStat->mReqCfg.mReqMax;
+            stat->mReqCfg.mReqErrMin = node.mStat->mReqCfg.mReqErrMin;
+            stat->mReqCfg.mReqExtendRate = node.mStat->mReqCfg.mReqExtendRate;
+            break;
+        }
     }
 
     struct SvrNode_t node(svr, stat);
