@@ -51,6 +51,8 @@ protected:
 
 	// 门限扩张值
 	int32_t GetAddCount(const struct SvrStat_t* stat, int32_t reqCount);
+	// 单次分配路由检查，如果有路由分配产生，则更新相关统计计数
+	int32_t RouteCheck(struct SvrStat_t* stat, struct SvrNet_t& svr, double firstLoad, bool firstSvr);
 	// 重建该类路由，并清理相关统计
 	const wStatus& RebuildRoute(struct SvrKind_t& kind, bool force = false);
 	// 路由节点重建
@@ -59,9 +61,6 @@ protected:
 	const wStatus& ReqRebuild(const struct SvrNet_t &svr, struct SvrStat_t* stat);
 	//  重建宕机路由（故障恢复，恢复后放入multiNode指针中）
 	const wStatus& RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* multiNode, float maxLoad = 1.0, float lowOkRate = 1.0, uint32_t bigDelay = 1);
-
-	// 单次分配路由检查，如果有路由分配产生，则更新相关统计计数
-	int RouteCheck(struct SvrStat_t* stat, struct SvrNet_t& svr, double firstLoad, bool firstSvr);
 	// 单次获取路由
 	const wStatus& GetRouteNode(struct SvrNet_t& svr);
 	// 添加宕机路由

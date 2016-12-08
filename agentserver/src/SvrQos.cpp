@@ -827,7 +827,7 @@ const wStatus& SvrQos::ReqRebuild(const struct SvrNet_t &svr, struct SvrStat_t* 
     return mStatus;
 }
 
-int SvrQos::RouteCheck(struct SvrStat_t* stat, struct SvrNet_t& svr, double firstLoad, bool firstSvr) {
+int32_t SvrQos::RouteCheck(struct SvrStat_t* stat, struct SvrNet_t& svr, double firstLoad, bool firstSvr) {
 	if (stat->mInfo.mOffSide == 1) {
 		return -2;
 	}
