@@ -383,7 +383,7 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
 
     // 全部节点都过载（非压力故障）
     if (errRateBig) {
-    	// 所有节点过载平均错误率  // 通知 TODO
+    	// 所有节点过载平均错误率
     	float avgErrRate = totalErrRate / table->size();
     	stKind.mPtotalErrRate += avgErrRate;
     	stKind.mPsubCycCount++;
@@ -505,22 +505,21 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
     return mStatus.Clear();
 }
 
-const wStatus& SvrQos::AddErrRoute(struct SvrKind_t& stItem, struct SvrNode_t& stNode) {
-	MapNodeIt_t reIt = mErrTable.find(stItem);
-
-	ListNode_t* pErrRoute;
+const wStatus& SvrQos::AddErrRoute(struct SvrKind_t& kind, struct SvrNode_t& node) {
+	ListNode_t* ListRoute = NULL;
+	MapNodeIt_t reIt = mErrTable.find(kind);
     if (reIt == mErrTable.end()) {
-        SAFE_NEW(ListNode_t, pErrRoute);
-        stItem.mRebuildTm = stNode.mStat->mReqCfg.mRebuildTm;
-        mErrTable.insert(std::make_pair(stItem, pErrRoute));
+        SAFE_NEW(ListNode_t, ListRoute);
+        kind.mRebuildTm = node.mStat->mReqCfg.mRebuildTm;
+        mErrTable.insert(std::make_pair(kind, ListRoute));
     } else {
-        pErrRoute = reIt->second;
+    	ListRoute = reIt->second;
 	}
 
 	// record down node
-	stNode.mStopTime = static_cast<int32_t>(time(NULL));
-	stNode.mReqAllAfterDown = 0;
-    pErrRoute->push_back(stNode);
+    node.mStopTime = static_cast<int32_t>(time(NULL));
+	node.mReqAllAfterDown = 0;
+    ListRoute->push_back(node);
     return mStatus.Clear();
 }
 
