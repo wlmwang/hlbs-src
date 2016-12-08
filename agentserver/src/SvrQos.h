@@ -46,6 +46,8 @@ public:
 	// 清除 所有路由信息
 	const wStatus& CleanNode();
 
+	mDetectThread*& Detect() { return mDetectThread;}
+
 protected:
 	friend class AgentConfig;
 
@@ -102,6 +104,7 @@ protected:
     typedef std::list<struct SvrNode_t> ListNode_t;
     typedef std::list<struct SvrNode_t>::iterator ListNodeIt_t;
 
+    DetectThread* mDetectThread;
 	wStatus mStatus;
 };
 

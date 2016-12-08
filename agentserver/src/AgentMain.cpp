@@ -53,6 +53,13 @@ int main(int argc, const char *argv[]) {
 		return -1;
 	}
 
+	// 探测线程
+	s = config->StartDetectThread();
+	if (!s.Ok()) {
+		std::cout << s.ToString() << std::endl;
+		return -1;
+	}
+
 	// 创建服务器对象
 	AgentServer* server;
 	SAFE_NEW(AgentServer(config), server);

@@ -15,10 +15,23 @@ const char kQosXml[]	= "../config/qos.xml";
 
 AgentConfig::AgentConfig() : mRouterFile(kRouterXml), mQosFile(kQosXml), mBaseFile(kConfXml) {
 	SAFE_NEW(SvrQos, mSvrQos);
+	SAFE_NEW(DetectThread, mDetectThread);
 }
 
 AgentConfig::~AgentConfig() {
 	SAFE_DELETE(mSvrQos);
+	SAFE_DELETE(mDetectThread);
+}
+
+const wStatus& AgentConfig::StartDetectThread() {
+	// 探测线程，宕机拉起
+	if (!(mStatus = mDetectThread->PrepareStart()).Ok()) {
+		return mStatus;
+	} else if (!(mStatus = mDetectThread->StartThread()).Ok()) {
+		return mStatus;
+	}
+	mSvrQos->Detect() = mDetectThread;
+	return mStatus.Clear();
 }
 
 const wStatus& AgentConfig::ParseBaseConf() {

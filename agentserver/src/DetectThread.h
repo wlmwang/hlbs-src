@@ -21,35 +21,39 @@
 
 class DetectThread : public wThread {
 public:
+	DetectThread();
 	virtual ~DetectThread();
 
-	virtual int PrepareRun();
-	virtual int Run();
+    virtual const wStatus& PrepareRun();
+    virtual const wStatus& Run();
 
-	int DelDetect(const vector<struct DetectNode_t> &vNode);
-	int AddDetect(const vector<struct DetectNode_t> &vNode);
-	int GetDetectResult(struct DetectNode_t &stNode, struct DetectResult_t& stRes);
+    const wStatus& DelDetect(const vector<struct DetectNode_t>& node);
+	const wStatus& AddDetect(const vector<struct DetectNode_t>& node);
+	const wStatus& GetDetectResult(const struct DetectNode_t& node, struct DetectResult_t& res, int32_t* ret);
 	int DoDetectNode(const struct DetectNode_t& stNode, struct DetectResult_t& stRes);
 
 protected:
-	wPing *mPing {NULL};
-	wSocket *mSocket {NULL};
-	int mPollFD {FD_UNKNOWN};
+	wPing *mPing;
+	wSocket *mSocket;
+	int32_t mPollFD;
 
-	time_t mNowTm {0};
-	unsigned int mLocalIp {0};
-	unsigned int mDetectLoopUsleep {100000};
-	unsigned int mDetectMaxNode {1000};
-	unsigned int mDetectNodeInterval {10};
+	time_t mNowTm;
+	uint32_t mLocalIp;
+	uint32_t mDetectLoopUsleep;
+	uint32_t mDetectMaxNode;
+	uint32_t mDetectNodeInterval;
 
-	float mPingTimeout {0.1};
-	float mTcpTimeout {0.8};
+	float mPingTimeout;
+	float mTcpTimeout;
 
-	wMutex *mDetectMutex {NULL};
-	wMutex *mResultMutex {NULL};
-	std::map<struct DetectNode_t, struct DetectResult_t> mDetectMapAll;		//检测队列
-	std::map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewadd;	//新加入的,优先探测
-	std::map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewdel;	//新删除的,优先探测
+	wMutex *mDetectMutex;
+	wMutex *mResultMutex;
+	std::map<struct DetectNode_t, struct DetectResult_t> mDetectMapAll;		// 检测队列
+	std::map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewadd;	// 新加入待检测节点，优先探测
+	std::map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewdel;	// 新加入待删除节点，优先探测
+
+	typedef std::vector<struct DetectNode_t>::const_iterator VecCIt_t;
+	typedef std::map<struct DetectNode_t, struct DetectResult_t>::iterator MapDetectIt_t;
 
 	wStatus mStatus;
 };

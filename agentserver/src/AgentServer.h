@@ -25,7 +25,7 @@ public:
 	//virtual const wStatus& NewChannelTask(wSocket* sock, wTask** ptr);
 
 protected:
-	AgentClient *mAgentClient;
+	AgentClient* mAgentClient;
 };
 
 #endif

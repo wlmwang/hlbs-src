@@ -523,56 +523,60 @@ const wStatus& SvrQos::AddErrRoute(struct SvrKind_t& kind, struct SvrNode_t& nod
     return mStatus.Clear();
 }
 
-const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, MultiMapNode_t* pSvrNode, float iPri, float fLowOkRate, uint32_t iBigDelay) {
-	MapNodeIt_t reIt = mErrTable.find(stItem);
+const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* multiNode, float iPri, float fLowOkRate, uint32_t iBigDelay) {
+	MapNodeIt_t reIt = mErrTable.find(kind);
     if (reIt == mErrTable.end()) {
-        //wStatus::IOError("SvrQos::RebuildErrRoute failed, kind's error multiple node", "");
         return mStatus.Clear();
     }
 
     ListNode_t* pErrRoute = reIt->second;
-    if (pErrRoute == NULL || pErrRoute->empty()) {
+    if (pErrRoute != NULL && pErrRoute->empty()) {
         SAFE_DELETE(pErrRoute);
 		mErrTable.erase(reIt);
-		return mStatus = wStatus::IOError("SvrQos::RebuildErrRoute failed, cannot find kind's multiple node", "");
+
+		//wStatus::IOError("SvrQos::RebuildErrRoute failed, cannot find kind's multiple node", "");
+		return mStatus.Clear();
 	}
 
+    // 全部过载
     if (mAllReqMin) {
 		iPri = 1;
 	}
 
-	std::vector<struct DetectNode_t> vDetectNodeadd, vDetectNodedel;
+    int32_t tm = static_cast<int32_t>(time(NULL));
 
-	int iCurTm = time(NULL);
+	std::vector<struct DetectNode_t> detectNodeadd, detectNodedel;
+
 	// 宕机检测、故障恢复
 	int iRet = -1;
 	int iDetectStat = -1;
+	bool del_flag;
 
 	ListNodeIt_t it = pErrRoute->begin();
 	while (it != pErrRoute->end()) {
+		del_flag = false;
+
 		struct DetectResult_t stRes;
+
 		// -2: 没root权限探测  -1:网络探测失败 0:网络探测成功
 		iDetectStat = -1;
 
-		//故障探测：
-		//1)先进行网络层探测ping connect udp_icmp，网络探测成功后再用业务请求进行探测
-		//2)机器宕机后该sid已经收到超过一定量的请求
-		//3)机器宕机已经超过一定时间，需要进行一次探测
+		// 故障探测：（mProbeBegin > 0 才打开网络层探测）
+		//	1) 先进行网络层探测ping connect udp_icmp，网络探测成功后再用业务请求进行探测
+		//	2) 机器宕机后该kind已经收到超过一定量的请求
+		//	3) 机器宕机已经超过一定时间，需要进行一次探测
 
-		//mProbeBegin>0 才打开网络层探测
-		if (mDownCfg.mProbeBegin > 0 && iCurTm > it->mStopTime + mDownCfg.mProbeBegin) {
-			struct DetectNode_t stDetectNode(it->mNet.mHost, it->mNet.mPort, iCurTm, iCurTm + mDownCfg.mProbeNodeExpireTime);
-			iRet = mDetectThread->GetDetectResult(stDetectNode, stRes);
-
-			LOG_ERROR(ELOG_KEY, "[svr] RebuildErrRoute detect ret=%d,code=%d,type=%d,gid=%d xid=%d host=%s port=%u after_stop_time=%d,reqall_after_down=%d,expire=%d,limit=%d",
-				iRet, stRes.mRc, stRes.mDetectType, it->mNet.mGid,it->mNet.mXid,it->mNet.mHost, it->mNet.mPort,
-				iCurTm - it->mStopTime, it->mReqAllAfterDown, stDetectNode.mExpireTime - stDetectNode.mCreateTime, it->mStat->mReqCfg.mReqLimit);
+		if (mDownCfg.mProbeBegin > 0 && tm > it->mStopTime + mDownCfg.mProbeBegin) {
+			struct DetectNode_t detectNode(it->mNet.mHost, it->mNet.mPort, tm, tm + mDownCfg.mProbeNodeExpireTime);
+			iRet = mDetectThread->GetDetectResult(detectNode, stRes);
 
 			if (iRet < 0) {
 				// not found
-				vDetectNodeadd.push_back(stDetectNode);
+				detectNodeadd.push_back(detectNode);
 			} else if (iRet == 0) {
+				// has detected
 				if (stRes.mRc < 0) {
+					// detect fail
 					if (stRes.mRc == NOT_PRI) {
 						//没有root权限，无法raw socket进行探测
 						iDetectStat = -2;
@@ -580,19 +584,19 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, MultiMapNode_t*
 						iDetectStat = -1;
 					}
 				} else if (stRes.mDetectType == DETECT_TCP || stRes.mDetectType == DETECT_UDP) {
-					//tcp or udp success, other fail
-					vDetectNodedel.push_back(stDetectNode);
-					//bDelFlag = true;
+					// tcp or udp success, other fail
+					detectNodedel.push_back(detectNode);
+					del_flag = true;
 					iDetectStat = 0;
 				} else {
-					//tcp or udp fail
+					// tcp or udp fail
 					iDetectStat = -1;
 				}
 			}
 		}
 
 		// 在没达到恢复条件之前，如果网络探测成功，提前恢复
-		if (!mAllReqMin && (iCurTm - it->mStopTime < mDownCfg.mDownTimeTrigerProbe) && (it->mReqAllAfterDown < mDownCfg.mReqCountTrigerProbe)) {
+		if (!mAllReqMin && (tm - it->mStopTime < mDownCfg.mDownTimeTrigerProbe) && (it->mReqAllAfterDown < mDownCfg.mReqCountTrigerProbe)) {
 			if (iDetectStat != 0) {
 				// 探测不成功
 				it++;
@@ -620,6 +624,7 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, MultiMapNode_t*
             it->mStat->mInfo.mOkRate = fLowOkRate;
             it->mStat->mInfo.mAvgTm = iBigDelay;
         }
+
 		// 统计置0
 		it->mStat->mInfo.mReqAll = 0;
 		it->mStat->mInfo.mSReqAll = 0;
@@ -630,11 +635,12 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, MultiMapNode_t*
 		it->mStat->mInfo.mReqErrRet = 0;
 		it->mStat->mInfo.mSReqErrRet = 0;
 		it->mStat->mInfo.mReqErrTm = 0;
-		//it->mStat->mInfo.mSReqErrTm = 0;
+		it->mStat->mInfo.mSReqErrTm = 0;
 
-		LOG_ERROR(ELOG_KEY, "[svr] RebuildErrRoute failed(cannot find errroute routenode in list) gid(%d),xid(%d)",stItem.mGid,stItem.mXid);
-
-        pSvrNode->insert(make_pair(iPri, *it));
+		if (!del_flag) {
+			detectNodedel.push_back(DetectNode_t(it->mNet.mHost, it->mNet.mPort, tm, tm + mDownCfg.mProbeNodeExpireTime));
+		}
+		multiNode->insert(make_pair(iPri, *it));
         pErrRoute->erase(it++);
 	}
 
@@ -643,14 +649,13 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& stItem, MultiMapNode_t*
 		mErrTable.erase(reIt);
 	}
 
-    if (!vDetectNodeadd.empty()) {
-    	mDetectThread->AddDetect(vDetectNodeadd);
+    if (!detectNodeadd.empty()) {
+    	mDetectThread->AddDetect(detectNodeadd);
     }
 
-    if (!vDetectNodedel.empty()) {
-    	mDetectThread->DelDetect(vDetectNodedel);
+    if (!detectNodedel.empty()) {
+    	mDetectThread->DelDetect(detectNodedel);
     }
-
 	return mStatus.Clear();
 }
 

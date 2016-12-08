@@ -8,7 +8,6 @@
 #include "AgentConfig.h"
 #include "AgentTcpTask.h"
 #include "AgentClient.h"
-#include "Detect.h"
 
 AgentServer::AgentServer(wConfig* config) : wServer(config) {
 	SAFE_NEW(AgentClient(config), mAgentClient);
