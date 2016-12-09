@@ -102,15 +102,15 @@ const bool		kAcceptTurn = true;
 const bool		kHeartbeatTurn = true;
 
 // 根据具体项目修改
-const char      kSoftwareName[]   = "HNET";
-const char      kSoftwareVer[]    = "0.0.2";
+const char      kSoftwareName[]   = "HLBS";
+const char      kSoftwareVer[]    = "2.3.1";
 
 const uid_t     kDeamonUser = 0;
 const gid_t     kDeamonGroup = 0;
 
-const char      kLockPath[] = "hnet.lock";
-const char      kPidPath[] = "hnet.pid";
-const char      kLogPath[] = "hnet.log";
+const char      kLockPath[] = "../log/hlbs.lock";
+const char      kPidPath[] = "../log/hlbs.pid";
+const char      kLogPath[] = "../log/hlbs.log";
 
 const char      kToken[] = "Anny Wang";
 
