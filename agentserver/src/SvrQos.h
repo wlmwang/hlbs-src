@@ -17,6 +17,7 @@
 using namespace hnet;
 
 class AgentConfig;
+class DetectThread;
 
 class SvrQos : private wNoncopyable {
 public:

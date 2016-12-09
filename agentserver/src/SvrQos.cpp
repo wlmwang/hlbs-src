@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include "SvrQos.h"
+#include "DetectThread.h"
 
 SvrQos::~SvrQos() {
 	CleanNode();
@@ -523,7 +524,7 @@ const wStatus& SvrQos::AddErrRoute(struct SvrKind_t& kind, struct SvrNode_t& nod
     return mStatus.Clear();
 }
 
-const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* multiNode, float iPri, float fLowOkRate, uint32_t iBigDelay) {
+const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* multiNode, float maxLoad, float lowOkRate, uint32_t bigDelay) {
 	MapNodeIt_t reIt = mErrTable.find(kind);
     if (reIt == mErrTable.end()) {
         return mStatus.Clear();
@@ -533,71 +534,61 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* m
     if (pErrRoute != NULL && pErrRoute->empty()) {
         SAFE_DELETE(pErrRoute);
 		mErrTable.erase(reIt);
-
-		//wStatus::IOError("SvrQos::RebuildErrRoute failed, cannot find kind's multiple node", "");
 		return mStatus.Clear();
 	}
 
-    // 全部过载
+    // 全部过载，机器恢复后，负载设为最小
     if (mAllReqMin) {
-		iPri = 1;
+    	maxLoad = 1;
 	}
 
     int32_t tm = static_cast<int32_t>(time(NULL));
-
 	std::vector<struct DetectNode_t> detectNodeadd, detectNodedel;
 
 	// 宕机检测、故障恢复
-	int iRet = -1;
-	int iDetectStat = -1;
+	int32_t ret, detectStat;
 	bool del_flag;
 
 	ListNodeIt_t it = pErrRoute->begin();
 	while (it != pErrRoute->end()) {
+		// -1:网络探测失败 0:网络探测成功
+		detectStat = -1;
 		del_flag = false;
-
-		struct DetectResult_t stRes;
-
-		// -2: 没root权限探测  -1:网络探测失败 0:网络探测成功
-		iDetectStat = -1;
 
 		// 故障探测：（mProbeBegin > 0 才打开网络层探测）
 		//	1) 先进行网络层探测ping connect udp_icmp，网络探测成功后再用业务请求进行探测
 		//	2) 机器宕机后该kind已经收到超过一定量的请求
 		//	3) 机器宕机已经超过一定时间，需要进行一次探测
-
+		struct DetectResult_t res;
 		if (mDownCfg.mProbeBegin > 0 && tm > it->mStopTime + mDownCfg.mProbeBegin) {
 			struct DetectNode_t detectNode(it->mNet.mHost, it->mNet.mPort, tm, tm + mDownCfg.mProbeNodeExpireTime);
-			iRet = mDetectThread->GetDetectResult(detectNode, stRes);
 
-			if (iRet < 0) {
-				// not found
+			mDetectThread->GetDetectResult(detectNode, res, &ret);
+			if (ret < 0) {
+				// not found node
 				detectNodeadd.push_back(detectNode);
-			} else if (iRet == 0) {
+			} else if (ret == 0) {
 				// has detected
-				if (stRes.mRc < 0) {
+
+				if (res.mRc < 0) {
 					// detect fail
-					if (stRes.mRc == NOT_PRI) {
-						//没有root权限，无法raw socket进行探测
-						iDetectStat = -2;
-					} else {
-						iDetectStat = -1;
-					}
-				} else if (stRes.mDetectType == DETECT_TCP || stRes.mDetectType == DETECT_UDP) {
-					// tcp or udp success, other fail
+					detectStat = -1;
+				} else if (res.mDetectType == DETECT_TCP || res.mDetectType == DETECT_UDP) {
+					// TCP or UDP success
+					// 删除探测节点
 					detectNodedel.push_back(detectNode);
 					del_flag = true;
-					iDetectStat = 0;
+					detectStat = 0;
 				} else {
-					// tcp or udp fail
-					iDetectStat = -1;
+					// 非法类型
+					detectStat = -1;
 				}
 			}
 		}
 
 		// 在没达到恢复条件之前，如果网络探测成功，提前恢复
 		if (!mAllReqMin && (tm - it->mStopTime < mDownCfg.mDownTimeTrigerProbe) && (it->mReqAllAfterDown < mDownCfg.mReqCountTrigerProbe)) {
-			if (iDetectStat != 0) {
+			if (detectStat != 0) {
 				// 探测不成功
 				it++;
 				continue;
@@ -605,24 +596,26 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* m
 		}
 
 		// 达到恢复条件，如果网络探测失败，推迟恢复
-		if ((mDownCfg.mProbeBegin > 0) && (-1 == iDetectStat)) {
+		if (mDownCfg.mProbeBegin > 0 && detectStat == -1) {
 	        it++;
 	        continue;
 		}
 
-		it->mStat->mReqCfg.mReqLimit = mDownCfg.mProbeTimes;
+		// 刚刚从故障机列表中放到正常机器列表，处在探测状态
 		it->mIsDetecting = true;
-		it->mKey = iPri;
+		it->mKey = maxLoad;
+		it->mStat->mReqCfg.mReqLimit = mDownCfg.mProbeTimes;
 
 		if (mAllReqMin) {
+			// 全部过载
             it->mStat->mInfo.mAvgErrRate = mAvgErrRate;
             it->mStat->mInfo.mLoadX = 1;
             it->mStat->mInfo.mOkLoad = 1;
             it->mStat->mInfo.mDelayLoad = 1;
         } else {
-            it->mStat->mInfo.mLoadX = iPri;
-            it->mStat->mInfo.mOkRate = fLowOkRate;
-            it->mStat->mInfo.mAvgTm = iBigDelay;
+            it->mStat->mInfo.mLoadX = maxLoad;
+            it->mStat->mInfo.mOkRate = lowOkRate;
+            it->mStat->mInfo.mAvgTm = bigDelay;
         }
 
 		// 统计置0
@@ -640,7 +633,7 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* m
 		if (!del_flag) {
 			detectNodedel.push_back(DetectNode_t(it->mNet.mHost, it->mNet.mPort, tm, tm + mDownCfg.mProbeNodeExpireTime));
 		}
-		multiNode->insert(make_pair(iPri, *it));
+		multiNode->insert(make_pair(maxLoad, *it));
         pErrRoute->erase(it++);
 	}
 

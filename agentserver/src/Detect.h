@@ -76,7 +76,7 @@ struct DetectResult_t {
     time_t mNextDetectTime;     // 下次检测时间
 
     DetectResult_t() {
-        mRc = DETECT_INIT_VALUE;
+        mRc = -999;
         mDetectType = -1;
 
         mElapse = 0;

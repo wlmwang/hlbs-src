@@ -9,6 +9,7 @@
 
 #include <map>
 #include <list>
+#include <vector>
 #include "wCore.h"
 #include "wStatus.h"
 #include "wNoncopyable.h"
@@ -30,7 +31,7 @@ public:
     const wStatus& DelDetect(const vector<struct DetectNode_t>& node);
 	const wStatus& AddDetect(const vector<struct DetectNode_t>& node);
 	const wStatus& GetDetectResult(const struct DetectNode_t& node, struct DetectResult_t& res, int32_t* ret);
-	int DoDetectNode(const struct DetectNode_t& stNode, struct DetectResult_t& stRes);
+	const wStatus& DoDetectNode(const struct DetectNode_t& stNode, struct DetectResult_t& stRes);
 
 protected:
 	wPing *mPing;
@@ -52,8 +53,9 @@ protected:
 	std::map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewadd;	// 新加入待检测节点，优先探测
 	std::map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewdel;	// 新加入待删除节点，优先探测
 
-	typedef std::vector<struct DetectNode_t>::const_iterator VecCIt_t;
+	typedef std::map<struct DetectNode_t, struct DetectResult_t> MapDetect_t;
 	typedef std::map<struct DetectNode_t, struct DetectResult_t>::iterator MapDetectIt_t;
+	typedef std::vector<struct DetectNode_t>::const_iterator VecCIt_t;
 
 	wStatus mStatus;
 };
