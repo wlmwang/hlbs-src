@@ -23,7 +23,7 @@ DetectThread::~DetectThread() {
 }
 
 const wStatus& DetectThread::PrepareRun() {
-	mLocalIp = GetIpByIF("eth1")? GetIpByIF("eth1"): (GetIpByIF("eth0")? GetIpByIF("eth0"): 0);
+	mLocalIp = misc::GetIpByIF("eth1")? misc::GetIpByIF("eth1"): (misc::GetIpByIF("eth0")? misc::GetIpByIF("eth0"): 0);
     return mStatus.Clear();
 }
 
@@ -169,7 +169,8 @@ const wStatus& DetectThread::DoDetectNode(const struct DetectNode_t& node, struc
 		// TCP detect start
 		misc::GetTimeofday(&stStarttv);
     	if ((mStatus = mSocket->Open()).Ok()) {
-    		mStatus = mSocket->Connect(node.mIp.c_str(), node.mPort, mTcpTimeout);
+    		int64_t ret;
+    		mStatus = mSocket->Connect(&ret, node.mIp.c_str(), node.mPort, mTcpTimeout);
     	}
 
     	if (!mStatus.Ok()) {
@@ -226,7 +227,7 @@ const wStatus& DetectThread::GetDetectResult(const struct DetectNode_t& node, st
     return mStatus.Clear();
 }
 
-const wStatus& DetectThread::AddDetect(const vector<struct DetectNode_t>& node) {
+const wStatus& DetectThread::AddDetect(const std::vector<struct DetectNode_t>& node) {
     mDetectMutex->Lock();
     MapDetectIt_t itdel;
     for (VecCIt_t it = node.begin(); it != node.end(); ++it) {

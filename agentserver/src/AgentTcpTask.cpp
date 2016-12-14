@@ -8,7 +8,7 @@
 #include "AgentConfig.h"
 #include "SvrCmd.h"
 
-AgentClientTask::AgentTcpTask(wSocket *socket, int32_t type) : wTcpTask(socket, type) {
+AgentTcpTask::AgentTcpTask(wSocket *socket, int32_t type) : wTcpTask(socket, type) {
 	On(CMD_SVR_REQ, SVR_REQ_GXID, &AgentTcpTask::GetSvrByGXid, this);
 	On(CMD_SVR_REQ, SVR_REQ_REPORT, &AgentTcpTask::ReportSvr, this);
 }
@@ -22,11 +22,10 @@ int AgentTcpTask::GetSvrByGXid(struct Request_t *request) {
 	vRRt.mSvr.mGid = cmd->mGid;
 	vRRt.mSvr.mXid = cmd->mXid;
 	
-	if (config->Qos()->QueryNode(vRRt.mSvr) >= 0) {
+	if (config->Qos()->QueryNode(vRRt.mSvr).Ok()) {
 		vRRt.mNum = 1;
+		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
 	}
-
-	AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
 	return 0;
 }
 
@@ -36,10 +35,9 @@ int AgentTcpTask::ReportSvr(struct Request_t *request) {
 	AgentConfig* config = Server()->Config<AgentConfig*>();
 	
 	struct SvrResReport_t vRRt;
-	if (config->Qos()->CallerNode(cmd->mCaller) >= 0) {
+	if (config->Qos()->CallerNode(cmd->mCaller).Ok()) {
 		vRRt.mCode = 1;
+		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
 	}
-
-	AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
 	return 0;
 }

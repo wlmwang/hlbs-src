@@ -29,7 +29,7 @@ public:
 	const wStatus& StartDetectThread();
 
 	SvrQos* Qos() { return mSvrQos;}
-	mDetectThread* Detect() { return mDetectThread;}
+	DetectThread* Detect() { return mDetectThread;}
 
 protected:
 	SvrQos* mSvrQos;

@@ -9,6 +9,7 @@
 #include <cmath>
 #include "wLogger.h"
 #include "SvrQos.h"
+#include "Detect.h"
 #include "DetectThread.h"
 
 SvrQos::~SvrQos() {
@@ -331,7 +332,7 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
 
 	MultiMapNode_t* table = rtIt->second;
 	if (table == NULL || table->empty()) {
-        wStatus::IOError("SvrQos::RebuildRoute failed, cannot find kind's multiple node", "")
+        wStatus::IOError("SvrQos::RebuildRoute failed, cannot find kind's multiple node", "");
         return mStatus;
 	}
 	struct SvrKind_t& stKind = const_cast<struct SvrKind_t&>(rtIt->first);
@@ -399,10 +400,10 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
     		it->second.mNet.mWeight = kInitWeight;
     	}
 
-    	totalErrRate += nodeErrRate;							// 路由失败率总和
-    	heightSucRate = std::max(heightSucRate, info.mOkRate);	// 路由最高成功率
-    	lowDelay = std::min(lowDelay, info.mAvgTm);				// 路由最低延时时间
-    	highWeight = std::max(highWeight, static_cast<float>(it->second.mNet.mWeight));		// 路由最高权重值
+    	totalErrRate += nodeErrRate; // 路由失败率总和
+    	heightSucRate = heightSucRate >= info.mOkRate? heightSucRate: info.mOkRate;	// 路由最高成功率
+    	lowDelay = lowDelay >= info.mAvgTm? info.mAvgTm: lowDelay; // 路由最低延时时间
+    	highWeight = highWeight >= it->second.mNet.mWeight? highWeight: it->second.mNet.mWeight; // 路由最高权重值
     }
     if (lowDelay <= 0) {
     	lowDelay = 1;
@@ -438,7 +439,7 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
 	SAFE_NEW(MultiMapNode_t, newTable);
 
 	// 访问量控制错误率最小值
-	float cfgErrRate = 0
+	float cfgErrRate = 0;
 	// 最大负载（最低权限）
 	float bestLowPri = 1.0;
 	// 最小成功率
@@ -473,7 +474,7 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
 
         if (info.mOffSide == 0) {
         	// 只计算同城就近接入节点
-        	bestLowPri = std::max(bestLowPri, info.mLoadX);
+        	bestLowPri = bestLowPri >= info.mLoadX? bestLowPri: info.mLoadX;
         }
 
         // 恢复路由 || 宕机路由
@@ -483,8 +484,8 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
         if (reqLimit > pStat->mReqCfg.mReqMin) {
         	if (info.mOffSide == 0) {
         		//只计算同城就近接入节点
-            	bestLowSucRate = std::min(bestLowSucRate, node.mStat->mInfo.mOkRate);
-            	bestBigDelay = std::max(bestBigDelay, node.mStat->mInfo.mAvgTm);
+            	bestLowSucRate = bestLowSucRate >= node.mStat->mInfo.mOkRate? node.mStat->mInfo.mOkRate: bestLowSucRate;
+            	bestBigDelay = bestBigDelay >= node.mStat->mInfo.mAvgTm? bestBigDelay: node.mStat->mInfo.mAvgTm;
         	}
         	// 加入节点路由
         	newTable->insert(std::make_pair(node.mKey, node));
@@ -659,7 +660,7 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* m
 		if (!del_flag) {
 			detectNodedel.push_back(DetectNode_t(it->mNet.mHost, it->mNet.mPort, tm, tm + mDownCfg.mProbeNodeExpireTime));
 		}
-		multiNode->insert(make_pair(maxLoad, *it));
+		multiNode->insert(std::make_pair(maxLoad, *it));
         pErrRoute->erase(it++);
 	}
 
@@ -681,10 +682,10 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* m
 int32_t SvrQos::GetAddCount(const struct SvrStat_t* stat, int32_t reqCount) {
     if (stat->mInfo.mLastErr) {
     	// 上周期存在过度扩张
-        return std::max(((stat->mInfo.mLastAlarmReq - reqCount) * stat->mReqCfg.mReqExtendRate), stat->mReqCfg.mReqMin);
+        return std::max(((stat->mInfo.mLastAlarmReq - reqCount) * stat->mReqCfg.mReqExtendRate), static_cast<float>(stat->mReqCfg.mReqMin));
     } else {
     	// 上周期不存在过度扩张
-        return std::max((stat->mReqCfg.mReqLimit * stat->mReqCfg.mReqExtendRate/stat->mInfo.mDelayLoad), stat->mReqCfg.mReqMin);
+        return std::max((stat->mReqCfg.mReqLimit * stat->mReqCfg.mReqExtendRate/stat->mInfo.mDelayLoad), static_cast<float>(stat->mReqCfg.mReqMin));
     }
 }
 
@@ -881,7 +882,7 @@ int32_t SvrQos::RouteCheck(struct SvrStat_t* stat, struct SvrNet_t& svr, double 
 		    stat->mInfo.mPreAll++;
 
 		    // 过载
-		    wStatus::IOError("SvrQos::RouteCheck failed, the SvrNet overload", "")
+		    wStatus::IOError("SvrQos::RouteCheck failed, the SvrNet overload", "");
             return -1;
         }
 		stat->mInfo.mPreAll++;

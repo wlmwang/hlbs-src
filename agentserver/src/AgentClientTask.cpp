@@ -9,9 +9,9 @@
 #include "SvrCmd.h"
 
 AgentClientTask::AgentClientTask(wSocket *socket, int32_t type) : wTcpTask(socket, type) {
-	On(CMD_SVR_RES, SVR_RES_INIT, &AgentTcpTask::InitSvrRes, this);
-	On(CMD_SVR_RES, SVR_RES_RELOAD, &AgentTcpTask::ReloadSvrRes, this);
-	On(CMD_SVR_RES, SVR_RES_SYNC, &AgentTcpTask::SyncSvrRes, this);
+	On(CMD_SVR_RES, SVR_RES_INIT, &AgentClientTask::InitSvrRes, this);
+	On(CMD_SVR_RES, SVR_RES_RELOAD, &AgentClientTask::ReloadSvrRes, this);
+	On(CMD_SVR_RES, SVR_RES_SYNC, &AgentClientTask::SyncSvrRes, this);
 }
 
 // router发来init相响应

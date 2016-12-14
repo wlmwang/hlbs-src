@@ -37,14 +37,14 @@ struct DetectNode_t {
         mExpireTime = expire;
     }
 
-    DetectNode_t(const string& ip, uint16_t port, time_t tm, time_t expire) {
+    DetectNode_t(const std::string& ip, uint16_t port, time_t tm, time_t expire) {
         mIp = ip;
         mPort = port;
         mCreateTime = tm;
         mExpireTime = expire;
     }
 
-    bool operator<(const DetectNode_t const &o) const {
+    bool operator<(const DetectNode_t &o) const {
         int cmp = ::strcmp(mIp.c_str(), o.mIp.c_str());
         if (cmp < 0) {
             return true;

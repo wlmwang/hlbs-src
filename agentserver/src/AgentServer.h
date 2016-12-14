@@ -14,6 +14,8 @@
 
 using namespace hnet;
 
+class AgentClient;
+
 class AgentServer : public wServer {
 public:
 	AgentServer(wConfig* config);
