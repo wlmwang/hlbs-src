@@ -10,6 +10,8 @@
 #include "wCore.h"
 #include "wMisc.h"
 
+const char kSvrLog[] = "../log/svr.log";
+
 const int8_t	kMaxHost	= 16;
 
 // 每次请求svr最多个数
@@ -77,7 +79,7 @@ public:
         } else if (mPort > other.mPort) {
         	return false;
         }
-        return ::strcmp(mHost, other.mHost, kMaxHost) < 0 ? true : false;
+        return ::strcmp(mHost, other.mHost) < 0 ? true : false;
 	}
 
 	// 忽略 weight version ==比较
@@ -89,7 +91,7 @@ public:
         } else if (mPort != other.mPort) {
             return false;
         }
-        return !::strcmp(mHost, other.mHost, kMaxHost);
+        return !::strcmp(mHost, other.mHost);
     }
 };
 
@@ -218,7 +220,7 @@ public:
 		mBuildTm.tv_sec = mBuildTm.tv_usec = 0;
     }
 
-    void InitInfo(struct SvrNet_t& svr) { }
+    void InitInfo(const struct SvrNet_t& svr) { }
 };
 
 // 节点阈值（含门限） && 统计 信息

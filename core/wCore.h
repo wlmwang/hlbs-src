@@ -101,18 +101,16 @@ const bool		kAcceptTurn = true;
 // 心跳开关
 const bool		kHeartbeatTurn = true;
 
-// 根据具体项目修改
-const char      kSoftwareName[]   = "HLBS";
-const char      kSoftwareVer[]    = "2.3.1";
-
 const uid_t     kDeamonUser = 0;
 const gid_t     kDeamonGroup = 0;
+
+// 根据具体项目修改
+const char      kSoftwareName[]   = "HLBS";
+const char      kSoftwareVer[]    = "HLBS-2.3.1;HNET-0.0.2";
 
 const char      kLockPath[] = "../log/hlbs.lock";
 const char      kPidPath[] = "../log/hlbs.pid";
 const char      kLogPath[] = "../log/hlbs.log";
-
-const char      kToken[] = "Anny Wang";
 
 // message消息协议
 const int8_t	kMpCommand = 1;

@@ -77,6 +77,8 @@ int main(int argc, const char *argv[]) {
 			s = master->PrepareStart();
 			if (s.Ok()) {
 				// Master-Worker方式开启服务器
+				// 考虑到router服务压力很小因素，故让其单进程运行。RouterMaster::mWorkerNum=1
+				// 单进程模式RouterMaster::SingleStart()，目前版本（HNET0.0.2）并不完善
 				master->MasterStart();
 			} else {
 				return -1;

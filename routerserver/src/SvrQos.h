@@ -49,6 +49,8 @@ protected:
 	const wStatus& AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t* stat);
 	// 删除路由节点
 	const wStatus& DeleteRouteNode(const struct SvrNet_t& stSvr);
+	// 修改路由节点
+	const wStatus& ModifyRouteNode(const struct SvrNet_t& svr);
 	// 加载阈值配置
 	const wStatus& LoadStatCfg(const struct SvrNet_t& svr, struct SvrStat_t* stat);
 
