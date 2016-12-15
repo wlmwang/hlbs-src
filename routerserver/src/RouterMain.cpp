@@ -62,7 +62,7 @@ int main(int argc, const char *argv[]) {
 
 	// 创建master对象
 	RouterMaster* master;
-	SAFE_NEW(RouterMaster("HLBS(router)", server), master);
+	SAFE_NEW(RouterMaster("HLBS(*router*)", server), master);
 	if (master != NULL) {
 		// 接受命令信号
 	    std::string signal;

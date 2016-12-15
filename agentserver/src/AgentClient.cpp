@@ -29,7 +29,7 @@ const wStatus& AgentClient::PrepareRun() {
 
     // 连接服务器
 	if (!AddConnect(kType, host, port).Ok()) {
-		std::cout << "connect error:" << mStatus.ToString() << std::endl;
+		return mStatus;
 	}
 	return InitSvrReq();
 }

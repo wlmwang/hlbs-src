@@ -69,7 +69,7 @@ int main(int argc, const char *argv[]) {
 
 	// 创建master对象
 	AgentMaster* master;
-	SAFE_NEW(AgentMaster("HLBS(agent)", server), master);
+	SAFE_NEW(AgentMaster("HLBS(*agent*)", server), master);
 	if (master != NULL) {
 		// 接受命令信号
 	    std::string signal;
