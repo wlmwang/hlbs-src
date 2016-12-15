@@ -31,6 +31,8 @@ const wStatus& AgentClient::PrepareRun() {
 	if (!AddConnect(kType, host, port).Ok()) {
 		return mStatus;
 	}
+
+	// 初始化路由
 	return InitSvrReq();
 }
 
