@@ -4,11 +4,16 @@
  * Copyright (C) Hupu, Inc.
  */
 
+#ifndef _AGENT_CLIENT_H_
+#define _AGENT_CLIENT_H_
+
 #include "wCore.h"
 #include "wStatus.h"
 #include "wMultiClient.h"
 
 using namespace hnet;
+
+const int kType = 0;
 
 class AgentClient : public wMultiClient {
 public:
@@ -23,3 +28,5 @@ public:
 	// 发送重载svr配置请求
 	const wStatus& ReloadSvrReq();
 };
+
+#endif

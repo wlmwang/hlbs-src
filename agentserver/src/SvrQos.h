@@ -99,9 +99,9 @@ protected:
 	bool mAllReqMin;	// 所有节点都过载
 	float mAvgErrRate;	// 错误平均值，过载时
 
-	std::map<struct SvrNet_t, struct SvrStat_t*> mMapReqSvr;	// 节点信息。1:1，节点-统计
-	std::map<struct SvrKind_t, std::multimap<float, struct SvrNode_t>* > mRouteTable;	// 路由信息。1:n，种类-节点
-	std::map<struct SvrKind_t, std::list<struct SvrNode_t>* > mErrTable;	// 宕机路由表，1:n，种类-节点
+	MapSvr_t mMapReqSvr;	// 节点信息。1:1，节点-统计
+	MapKind_t mRouteTable;	// 路由信息。1:n，种类-节点
+	MapNode_t mErrTable;	// 宕机路由表，1:n，种类-节点
 
     DetectThread* mDetectThread;
 	wStatus mStatus;

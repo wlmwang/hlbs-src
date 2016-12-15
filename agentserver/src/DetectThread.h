@@ -23,16 +23,17 @@
 class DetectThread : public wThread {
 	typedef std::map<struct DetectNode_t, struct DetectResult_t> MapDetect_t;
 	typedef std::map<struct DetectNode_t, struct DetectResult_t>::iterator MapDetectIt_t;
-	typedef std::vector<struct DetectNode_t>::const_iterator VecCIt_t;
+	typedef std::vector<struct DetectNode_t> VecNode_t;
+	typedef std::vector<struct DetectNode_t>::const_iterator VecNodeIt_t;
 public:
 	DetectThread();
 	virtual ~DetectThread();
 
-    virtual const wStatus& PrepareRun();
-    virtual const wStatus& Run();
+	virtual const wStatus& PrepareThread();
+    virtual const wStatus& RunThread();
 
-    const wStatus& DelDetect(const std::vector<struct DetectNode_t>& node);
-	const wStatus& AddDetect(const std::vector<struct DetectNode_t>& node);
+    const wStatus& DelDetect(const VecNode_t& node);
+	const wStatus& AddDetect(const VecNode_t& node);
 	const wStatus& GetDetectResult(const struct DetectNode_t& node, struct DetectResult_t& res, int32_t* ret);
 	const wStatus& DoDetectNode(const struct DetectNode_t& stNode, struct DetectResult_t& stRes);
 
@@ -52,9 +53,9 @@ protected:
 
 	wMutex *mDetectMutex;
 	wMutex *mResultMutex;
-	std::map<struct DetectNode_t, struct DetectResult_t> mDetectMapAll;		// 检测队列
-	std::map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewadd;	// 新加入待检测节点，优先探测
-	std::map<struct DetectNode_t, struct DetectResult_t> mDetectMapNewdel;	// 新加入待删除节点，优先探测
+	MapDetect_t mDetectMapAll;		// 检测队列
+	MapDetect_t mDetectMapNewadd;	// 新加入待检测节点，优先探测
+	MapDetect_t mDetectMapNewdel;	// 新加入待删除节点，优先探测
 
 	wStatus mStatus;
 };

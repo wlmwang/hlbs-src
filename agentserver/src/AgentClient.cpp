@@ -4,11 +4,13 @@
  * Copyright (C) Hupu, Inc.
  */
 
+#include "AgentClient.h"
 #include "AgentServer.h"
 #include "AgentConfig.h"
 #include "AgentClientTask.h"
+#include "SvrCmd.h"
 
-const wStatus& AgentClient::NewTcpTask(wSocket* sock, wTask** ptr, int type = 0) {
+const wStatus& AgentClient::NewTcpTask(wSocket* sock, wTask** ptr, int type) {
 	SAFE_NEW(AgentClientTask(sock, type), *ptr);
 	if (*ptr == NULL) {
 		return mStatus = wStatus::IOError("AgentClient::NewTcpTask", "new AgentClientTask failed");
@@ -26,20 +28,18 @@ const wStatus& AgentClient::PrepareRun() {
     }
 
     // 连接服务器
-	int type = 1;
-	if (!AddConnect(type, host, port).Ok()) {
+	if (!AddConnect(kType, host, port).Ok()) {
 		std::cout << "connect error:" << mStatus.ToString() << std::endl;
 	}
-
 	return InitSvrReq();
 }
 
 const wStatus& AgentClient::InitSvrReq() {
 	struct SvrReqInit_t svr;
-	return Broadcast(reinterpret_cast<char*>(&svr), sizeof(svr), type);
+	return Broadcast(reinterpret_cast<char*>(&svr), sizeof(svr), kType);
 }
 
 const wStatus& AgentClient::ReloadSvrReq() {
 	struct SvrReqReload_t svr;
-	return Broadcast(reinterpret_cast<char*>(&svr), sizeof(svr), type);
+	return Broadcast(reinterpret_cast<char*>(&svr), sizeof(svr), kType);
 }

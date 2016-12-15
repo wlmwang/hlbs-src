@@ -22,7 +22,6 @@ public:
 	virtual ~AgentServer();
 
 	virtual const wStatus& PrepareRun();
-	virtual const wStatus& Run();
 	virtual const wStatus& NewTcpTask(wSocket* sock, wTask** ptr);
 	//virtual const wStatus& NewChannelTask(wSocket* sock, wTask** ptr);
 

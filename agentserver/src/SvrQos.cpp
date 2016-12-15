@@ -52,7 +52,7 @@ const wStatus& SvrQos::AddNode(const struct SvrNet_t& svr) {
 	SAFE_NEW(SvrStat_t, stat);
 
 	if (!LoadStatCfg(svr, stat).Ok()) {
-		LOG_DEBUG(kSvrLog, "SvrQos::AddNode add SvrNet Failed(LoadStatCfg failed), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		LOG_ERROR(kSvrLog, "SvrQos::AddNode add SvrNet Failed(LoadStatCfg failed), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		SAFE_DELETE(stat);
 		return mStatus;
@@ -72,6 +72,8 @@ const wStatus& SvrQos::ModifyNode(const struct SvrNet_t& svr) {
 	LOG_DEBUG(kSvrLog, "SvrQos::ModifyNode modify SvrNet start, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 	if (svr.mWeight < 0) {
+		LOG_ERROR(kSvrLog, "SvrQos::ModifyNode modify SvrNet_t Failed(the SvrNet(weight<0)), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		return mStatus = wStatus::IOError("SvrQos::ModifyNode failed, the SvrNet(weight<0) will be ignore", "");
 	} else if (svr.mWeight == 0) {
 		// 权重为0删除节点
@@ -89,7 +91,7 @@ const wStatus& SvrQos::ModifyNode(const struct SvrNet_t& svr) {
 const wStatus& SvrQos::DeleteNode(const struct SvrNet_t& svr) {
 	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
     if (mapReqIt == mMapReqSvr.end()) {
-		LOG_DEBUG(kSvrLog, "SvrQos::DeleteNode delete SvrNet_t Failed(cannot find the SvrNet), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		LOG_ERROR(kSvrLog, "SvrQos::DeleteNode delete SvrNet_t Failed(cannot find the SvrNet), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
         return mStatus = wStatus::IOError("SvrQos::DeleteNode failed, cannot find the SvrNet", "");
     }
@@ -127,7 +129,7 @@ const wStatus& SvrQos::QueryNode(struct SvrNet_t& svr) {
 
 const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 	if (svr.mGid <= 0 || svr.mXid <= 0) {
-		LOG_DEBUG(kSvrLog, "SvrQos::GetRouteNode the SvrNet_t invalid, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		LOG_ERROR(kSvrLog, "SvrQos::GetRouteNode the SvrNet_t invalid, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		return mStatus = wStatus::IOError("SvrQos::GetRouteNode failed, the SvrNet_t invalid", "");
 	}
@@ -152,7 +154,7 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 
 	MultiMapNode_t* pTable = rtIt->second;
 	if (pTable == NULL || pTable->empty()) {
-		LOG_DEBUG(kSvrLog, "SvrQos::GetRouteNode the SvrNet_t not exists(empty table), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		LOG_ERROR(kSvrLog, "SvrQos::GetRouteNode the SvrNet_t not exists(empty table), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		return mStatus = wStatus::IOError("SvrQos::GetRouteNode failed, empty table", "");
 	}
@@ -229,6 +231,8 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
             	// 整体过载
                 it->second.mStat->mInfo.mReqRej++;
                 it->second.mStat->mInfo.mSReqRej++;
+        		LOG_ERROR(kSvrLog, "SvrQos::GetRouteNode all SvrNet_t overload, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d),ReqRej(%d)",
+        				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight, it->second.mStat->mInfo.mReqRej);
                 return mStatus = wStatus::IOError("SvrQos::GetRouteNode failed, all Node Overload", "");
             }
 		}
@@ -272,6 +276,8 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 
 const wStatus& SvrQos::CallerNode(const struct SvrCaller_t& caller) {
 	if (caller.mCalledGid <= 0 || caller.mCalledXid <= 0 || caller.mPort <= 0 || caller.mHost[0] == 0) {
+		LOG_ERROR(kSvrLog, "SvrQos::CallerNode report failed, GID(%d),XID(%d),HOST(%s),PORT(%d)",
+				caller.mCalledGid, caller.mCalledXid, caller.mHost, caller.mPort);
 		return mStatus = wStatus::IOError("SvrQos::CallerNode failed", "illegal caller data");
 	}
 
@@ -279,7 +285,7 @@ const wStatus& SvrQos::CallerNode(const struct SvrCaller_t& caller) {
 	svr.mGid = caller.mCalledGid;
 	svr.mXid = caller.mCalledXid;
 	svr.mPort = caller.mPort;
-	memcpy(svr.mHost, caller.mHost, strlen(caller.mHost)+1);
+	::memcpy(svr.mHost, caller.mHost, kMaxHost);
 
 	int64_t usec = caller.mReqUsetimeUsec;
 	if (caller.mReqUsetimeUsec <= 0) {
@@ -288,6 +294,8 @@ const wStatus& SvrQos::CallerNode(const struct SvrCaller_t& caller) {
 
 	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
     if (mapReqIt == mMapReqSvr.end()) {
+		LOG_ERROR(kSvrLog, "SvrQos::CallerNode report failed(caller not found), GID(%d),XID(%d),HOST(%s),PORT(%d)",
+				caller.mCalledGid, caller.mCalledXid, caller.mHost, caller.mPort);
 		return mStatus = wStatus::IOError("SvrQos::CallerNode failed", "cannot find caller node");
     }
 
@@ -319,20 +327,19 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
 		MultiMapNode_t* table;
 		SAFE_NEW(MultiMapNode_t, table);
         // 重建宕机路由
-        if (RebuildErrRoute(kind, table).Ok() && !table->empty()) {
+        if (RebuildErrRoute(kind, table, 1, 1, 1).Ok() && !table->empty()) {
         	// 有ping测试通过路由
         	kind.mPindex = 0;
             mRouteTable.insert(std::make_pair(kind, table));
         } else {
             SAFE_DELETE(table);
         }
-
         return mStatus;
 	}
 
 	MultiMapNode_t* table = rtIt->second;
 	if (table == NULL || table->empty()) {
-        wStatus::IOError("SvrQos::RebuildRoute failed, cannot find kind's multiple node", "");
+		LOG_ERROR(kSvrLog, "SvrQos::RebuildRoute rebuild failed(kind not found), GID(%d),XID(%d)", kind.mGid, kind.mXid);
         return mStatus;
 	}
 	struct SvrKind_t& stKind = const_cast<struct SvrKind_t&>(rtIt->first);
@@ -356,6 +363,7 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
     float heightSucRate = 0.0;		// 路由最高成功率
     float totalErrRate = 0.0;		// 路由失败率总和
     float highWeight = 0.0;			// 路由最高权重值
+	float cfgErrRate = 0.0;			// 访问量控制错误率最小值
 
     // 统计数量
     for (MultiMapNodeIt_t it = table->begin(); it != table->end(); it++) {
@@ -367,6 +375,7 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
     	int32_t reqErrRet = info.mReqErrRet;
     	int32_t reqErrTm = info.mReqErrTm;
 
+    	cfgErrRate = it->second.mStat->mReqCfg.mReqErrMin;
     	routeTotalReq += reqAll - reqRej;
     	if (reqAll < reqSuc + reqErrRet + reqErrTm) {
     		// 重置总请求数
@@ -389,7 +398,13 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
     		stKind.mPtotalErrRate= 0;
     	} else {
     		// 节点过载
-    		wStatus::IOError("SvrQos::RebuildRoute Overload(one) error rate > configure ERR_RATE", "");
+            char alartInfo[512];
+            ::snprintf(alartInfo, sizeof(alartInfo) -1 , "SvrQos::RebuildRoute one SvrNet_t ready to overload,GID(%d),XID(%d),HOST(%s),PORT(%d),"
+            		"ReqLimit(%d) ReqAll(%d) ReqSuc(%d) ReqRej(%d) reqErrRet(%d) reqErrTm(%d) server SvrNet_t errRate(%f)(%f)  > configure ERR_RATE(%f)",
+					stKind.mGid, stKind.mXid, it->second.mNet.mHost, it->second.mNet.mPort,
+					it->second.mStat->mReqCfg.mReqLimit, reqAll, reqSuc, reqRej, reqErrRet, reqErrTm, nodeErrRate, info.mAvgErrRate, cfgErrRate);
+
+    		LOG_ERROR(kSvrLog, alartInfo);
     		// SendMobileMsg();
     	}
 
@@ -419,7 +434,12 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
     	// 该类kind下所有节点过载平均错误率
     	mAvgErrRate = stKind.mPtotalErrRate / stKind.mPsubCycCount;
 
-	    wStatus::IOError("SvrQos::RebuildRoute Overload(all) error rate > configure ERR_RATE", "");
+    	char alartInfo[512];
+        ::snprintf(alartInfo, sizeof(alartInfo) -1 , "SvrQos::RebuildRoute all SvrNet_t ready to overload,GID(%d),XID(%d),"
+        		"avgErrRate(%f) server all SvrNet_t errRate > configure ERR_RATE(%f)",
+				stKind.mGid, stKind.mXid, avgErrRate, cfgErrRate);
+
+        LOG_ERROR(kSvrLog, alartInfo);
 	    // SendMobileMsg();
     }
 
@@ -438,8 +458,6 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
 	MultiMapNode_t* newTable;
 	SAFE_NEW(MultiMapNode_t, newTable);
 
-	// 访问量控制错误率最小值
-	float cfgErrRate = 0;
 	// 最大负载（最低权限）
 	float bestLowPri = 1.0;
 	// 最小成功率
@@ -516,7 +534,12 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
             }
         }
 
-	    wStatus::IOError("SvrQos::RebuildRoute Overload(all) req_limit < configure REQ_LIMIT", "");
+        char alartInfo[512];
+        ::snprintf(alartInfo, sizeof(alartInfo) -1 , "SvrQos::RebuildRoute all SvrNet_t overload,GID(%d),XID(%d),"
+        		"avgErrRate(%f) server all SvrNet_t minErr > configure ERR_RATE(%f)",
+				stKind.mGid, stKind.mXid, mAvgErrRate, cfgErrRate);
+
+        LOG_ERROR(kSvrLog, alartInfo);
 	    // SendMobileMsg();
 	}
 
