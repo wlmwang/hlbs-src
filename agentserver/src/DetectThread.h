@@ -21,11 +21,12 @@
 #include "SvrCmd.h"
 
 class DetectThread : public wThread {
+public:
 	typedef std::map<struct DetectNode_t, struct DetectResult_t> MapDetect_t;
 	typedef std::map<struct DetectNode_t, struct DetectResult_t>::iterator MapDetectIt_t;
 	typedef std::vector<struct DetectNode_t> VecNode_t;
 	typedef std::vector<struct DetectNode_t>::const_iterator VecNodeIt_t;
-public:
+
 	DetectThread();
 	virtual ~DetectThread();
 
@@ -43,7 +44,7 @@ protected:
 	int32_t mPollFD;
 
 	time_t mNowTm;
-	uint32_t mLocalIp;
+	uint32_t mLocalIp;	// 本机IP地址
 	uint32_t mDetectLoopUsleep;
 	uint32_t mDetectMaxNode;
 	uint32_t mDetectNodeInterval;

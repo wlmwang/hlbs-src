@@ -31,11 +31,14 @@ const wStatus& DetectThread::PrepareThread() {
 
 const wStatus& DetectThread::RunThread() {
 	char sIp[32] = {0};
-	inet_ntop(AF_INET, &mLocalIp, sIp, sizeof(sIp));
+	// 本机IP地址
+	::inet_ntop(AF_INET, &mLocalIp, sIp, sizeof(sIp));
 
 	mNowTm = time(NULL);
     time_t nextReadtm = mNowTm;
     time_t readIntervaltm = 60;
+
+	//LOG_DEBUG(kSvrLog, "DetectThread::RunThread detect start, UID(%d),GID(%d),EUID(%d),EGID(%d)", ::getuid(), ::getgid(), ::geteuid(), ::getegid());
 
 	while (true) {
 		mDetectMutex->Lock();
@@ -56,7 +59,7 @@ const wStatus& DetectThread::RunThread() {
         mDetectMutex->Unlock();
 
         if (!stlNewadd.empty() || !stlNewdel.empty()) {
-        	//
+        	LOG_DEBUG(kSvrLog, "DetectThread::RunThread newAdd size(%d), newDel size(%d)", stlNewadd.size(), stlNewdel.size());
         }
 
         // 删除探测节点; 仅需在删除时, 最小粒度加锁，最小粒度不阻塞查询
@@ -106,10 +109,10 @@ const wStatus& DetectThread::RunThread() {
 		}
 
         // 删除过期的节点, 仅需在删除时, 最小粒度加锁，最小粒度不阻塞查询
-        uint32_t iExpireNodeSize = vExpireNode.size();
-        if (iExpireNodeSize > 0) {
+        uint32_t expireNodeSize = vExpireNode.size();
+        if (expireNodeSize > 0) {
             mResultMutex->Lock();
-            for(uint32_t i = 0; i < iExpireNodeSize; ++i) {
+            for(uint32_t i = 0; i < expireNodeSize; ++i) {
                 struct DetectNode_t& stNode = vExpireNode[i];
 
                 MapDetectIt_t itFind = mDetectMapAll.find(stNode);
@@ -120,19 +123,23 @@ const wStatus& DetectThread::RunThread() {
             mResultMutex->Unlock();
         }
 
-        uint32_t iDetectCount = mDetectMapAll.size();
-        if (iDetectCount > 0 || iExpireNodeSize > 0) {
-            if (iDetectCount >= mDetectMaxNode) {
+        uint32_t detectCount = mDetectMapAll.size();
+        if (detectCount > 0 || expireNodeSize > 0) {
+            if (detectCount >= mDetectMaxNode) {
             	// 清除
                 mResultMutex->Lock();
-                mDetectMapAll.clear();
-                mResultMutex->Unlock();
+            	LOG_ERROR(kSvrLog, "DetectThread::RunThread detect node count(%d) >= detect max node(%d), clean all!", detectCount, mDetectMaxNode);
+
+            	mDetectMapAll.clear();
+            	mResultMutex->Unlock();
             }
             if (nextReadtm + readIntervaltm < mNowTm) {
                 nextReadtm = mNowTm;
+
+                LOG_DEBUG(kSvrLog, "DetectThread::RunThread detect node count(%d), expire node count(%d)", detectCount, expireNodeSize);
             }
         }
-        usleep(mDetectLoopUsleep);
+        ::usleep(mDetectLoopUsleep);
 	}
 	return mStatus.Clear();
 }
@@ -270,7 +277,6 @@ const wStatus& DetectThread::DelDetect(const VecNode_t& node) {
         	// 删除新加入待检测节点
             mDetectMapNewadd.erase(itdel);
         }
-
         // 添加新加入待删除节点
         mDetectMapNewdel.insert(std::make_pair(stNode, DetectResult_t()));
     }

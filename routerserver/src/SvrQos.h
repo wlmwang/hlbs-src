@@ -19,6 +19,19 @@ using namespace hnet;
 class RouterConfig;
 
 class SvrQos : private wNoncopyable {
+	typedef std::map<struct SvrNet_t, struct SvrStat_t*> MapSvr_t;
+	typedef std::map<struct SvrNet_t, struct SvrStat_t*>::iterator MapSvrIt_t;
+
+	typedef std::map<struct SvrKind_t, std::multimap<float, struct SvrNode_t>* > MapKind_t;
+	typedef std::map<struct SvrKind_t, std::multimap<float, struct SvrNode_t>* >::iterator MapKindIt_t;
+	typedef std::multimap<float, struct SvrNode_t> MultiMapNode_t;
+	typedef std::multimap<float, struct SvrNode_t>::iterator MultiMapNodeIt_t;
+	typedef std::multimap<float, struct SvrNode_t>::reverse_iterator MultiMapNodeRIt_t;
+
+    typedef std::map<struct SvrKind_t, std::list<struct SvrNode_t>* > MapNode_t;
+    typedef std::map<struct SvrKind_t, std::list<struct SvrNode_t>* >::iterator MapNodeIt_t;
+    typedef std::list<struct SvrNode_t> ListNode_t;
+    typedef std::list<struct SvrNode_t>::iterator ListNodeIt_t;
 public:
 	~SvrQos();
 	SvrQos() : mRateWeight(7), mDelayWeight(1), mRebuildTm(60), mReqTimeout(500),
@@ -65,23 +78,9 @@ protected:
 	bool mAllReqMin;	// 所有节点都过载
 	float mAvgErrRate;	// 错误平均值，过载时
 
-	std::map<struct SvrNet_t, struct SvrStat_t*> mMapReqSvr;	// 节点信息。路由-统计，一对一
-	std::map<struct SvrKind_t, std::multimap<float, struct SvrNode_t>* > mRouteTable;	// 路由信息。种类-节点，一对多
-	std::map<struct SvrKind_t, std::list<struct SvrNode_t>* > mErrTable;	// 宕机路由表
-
-	typedef std::map<struct SvrNet_t, struct SvrStat_t*> MapSvr_t;
-	typedef std::map<struct SvrNet_t, struct SvrStat_t*>::iterator MapSvrIt_t;
-
-	typedef std::map<struct SvrKind_t, std::multimap<float, struct SvrNode_t>* > MapKind_t;
-	typedef std::map<struct SvrKind_t, std::multimap<float, struct SvrNode_t>* >::iterator MapKindIt_t;
-	typedef std::multimap<float, struct SvrNode_t> MultiMapNode_t;
-	typedef std::multimap<float, struct SvrNode_t>::iterator MultiMapNodeIt_t;
-	typedef std::multimap<float, struct SvrNode_t>::reverse_iterator MultiMapNodeRIt_t;
-
-    typedef std::map<struct SvrKind_t, std::list<struct SvrNode_t>* > MapNode_t;
-    typedef std::map<struct SvrKind_t, std::list<struct SvrNode_t>* >::iterator MapNodeIt_t;
-    typedef std::list<struct SvrNode_t> ListNode_t;
-    typedef std::list<struct SvrNode_t>::iterator ListNodeIt_t;
+	MapSvr_t mMapReqSvr;	// 节点信息。1:1，节点-统计
+	MapKind_t mRouteTable;	// 路由信息。1:n，种类-节点
+	MapNode_t mErrTable;	// 宕机路由表，1:n，种类-节点
 
 	wStatus mStatus;
 };
