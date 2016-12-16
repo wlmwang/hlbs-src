@@ -38,6 +38,9 @@ virtual const wStatus& AgentServer::NewChannelTask(wSocket* sock, wTask** ptr) {
 const wStatus& AgentServer::PrepareRun() {
 	if (!(mStatus = mAgentClient->PrepareStart()).Ok()) {
 		return mStatus;
+	} else if (!(mStatus = mAgentClient->StartThread()).Ok()) {
+		return mStatus;
 	}
-	return mStatus = mAgentClient->StartThread();
+	// 初始化路由
+	return mStatus = mAgentClient->InitSvrReq();
 }

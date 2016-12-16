@@ -12,6 +12,7 @@
 #include "wCore.h"
 #include "wStatus.h"
 #include "wNoncopyable.h"
+#include "wMutex.h"
 #include "SvrCmd.h"
 
 using namespace hnet;
@@ -103,6 +104,7 @@ protected:
 	MapKind_t mRouteTable;	// 路由信息。1:n，种类-节点
 	MapNode_t mErrTable;	// 宕机路由表，1:n，种类-节点
 
+	wMutex mMutex;	// TcpTask|ClientTask更新路由锁
     DetectThread* mDetectThread;
 	wStatus mStatus;
 };

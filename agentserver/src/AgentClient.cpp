@@ -26,14 +26,8 @@ const wStatus& AgentClient::PrepareRun() {
     if (config == NULL || !config->GetConf("router_host", &host) || !config->GetConf("router_port", &port)) {
     	return mStatus = wStatus::IOError("AgentClient::PrepareRun failed", "Config() is null or host|port is illegal");
     }
-
-    // 连接服务器
-	if (!AddConnect(kType, host, port).Ok()) {
-		return mStatus;
-	}
-
-	// 初始化路由
-	return InitSvrReq();
+	// 连接服务器
+	return AddConnect(kType, host, port);
 }
 
 const wStatus& AgentClient::InitSvrReq() {

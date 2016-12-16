@@ -17,15 +17,22 @@ SvrQos::~SvrQos() {
 }
 
 bool SvrQos::IsExistNode(const struct SvrNet_t& svr) {
-	if (mMapReqSvr.find(svr) == mMapReqSvr.end()) {
+	mMutex.Lock();
+	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
+	MapSvrIt_t mapEndIt = mMapReqSvr.end();
+	mMutex.Unlock();
+	if (mapReqIt == mapEndIt) {
 		return false;
 	}
 	return true;
 }
 
 bool SvrQos::IsVerChange(const struct SvrNet_t& svr) {
+	mMutex.Lock();
 	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
-	if (mapReqIt != mMapReqSvr.end()) {
+	MapSvrIt_t mapEndIt = mMapReqSvr.end();
+	mMutex.Unlock();
+	if (mapReqIt != mapEndIt) {
 		const struct SvrNet_t& kind = mapReqIt->first;
 		if (kind.mVersion == svr.mVersion) {
 			return false;
@@ -63,15 +70,17 @@ const wStatus& SvrQos::AddNode(const struct SvrNet_t& svr) {
 		return mStatus;
 	}
 
+	mMutex.Lock();
+	LOG_DEBUG(kSvrLog, "SvrQos::AddNode add SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
+
 	// 重建绝对时间
 	stat->mReqCfg.mRebuildTm = mRebuildTm;
 	misc::GetTimeofday(&stat->mInfo.mBuildTm);
 	mMapReqSvr.insert(std::make_pair(svr, stat));
-
-	LOG_DEBUG(kSvrLog, "SvrQos::AddNode add SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
-			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
-
-	return AddRouteNode(svr, stat);
+	mStatus = AddRouteNode(svr, stat);
+	mMutex.Unlock();
+	return mStatus;
 }
 
 const wStatus& SvrQos::ModifyNode(const struct SvrNet_t& svr) {
@@ -88,47 +97,50 @@ const wStatus& SvrQos::ModifyNode(const struct SvrNet_t& svr) {
 		return DeleteNode(svr);
 	} else {
 		// 修改weight
+		mMutex.Lock();
 		MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
 		struct SvrNet_t& oldsvr = const_cast<struct SvrNet_t&>(mapReqIt->first);
 		oldsvr.mVersion = svr.mVersion;
 		oldsvr.mWeight = svr.mWeight < kMaxWeight? svr.mWeight: kMaxWeight;
-		return ModifyRouteNode(svr);
+		mStatus = ModifyRouteNode(svr);
+		mMutex.Unlock();
+		return mStatus;
 	}
 }
 
 const wStatus& SvrQos::DeleteNode(const struct SvrNet_t& svr) {
+	mMutex.Lock();
 	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
-    if (mapReqIt == mMapReqSvr.end()) {
+	MapSvrIt_t mapEndIt = mMapReqSvr.end();
+	mMutex.Unlock();
+	if (mapReqIt == mapEndIt) {
 		LOG_ERROR(kSvrLog, "SvrQos::DeleteNode delete SvrNet_t failed(cannot find the SvrNet_t), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
         return mStatus = wStatus::IOError("SvrQos::DeleteNode failed, cannot find the SvrNet_t", "");
     }
 
-    struct SvrStat_t* stat = mapReqIt->second;
-    mMapReqSvr.erase(mapReqIt);
-    DeleteRouteNode(svr);
-    SAFE_DELETE(stat);
-
-	LOG_DEBUG(kSvrLog, "SvrQos::DeleteNode delete SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+	mMutex.Lock();
+    LOG_DEBUG(kSvrLog, "SvrQos::DeleteNode delete SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
+    struct SvrStat_t* stat = mapReqIt->second;
+    mMapReqSvr.erase(mapReqIt);
+    mStatus = DeleteRouteNode(svr);
+    SAFE_DELETE(stat);
+	mMutex.Unlock();
     return mStatus;
-}
-
-const wStatus& SvrQos::LoadStatCfg(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
-	stat->mInfo.InitInfo(svr);
-	stat->mReqCfg = mReqCfg;
-	return mStatus.Clear();
 }
 
 const wStatus& SvrQos::GetNodeAll(struct SvrNet_t buf[], int32_t* num) {
 	LOG_DEBUG(kSvrLog, "SvrQos::GetNodeAll get all SvrNet_t start");
 
+	mMutex.Lock();
 	*num = 0;
 	for (MapSvrIt_t mapReqIt = mMapReqSvr.begin(); mapReqIt != mMapReqSvr.end(); mapReqIt++) {
 		buf[(*num)++] = mapReqIt->first;
 	}
+	mMutex.Unlock();
 	return mStatus.Clear();
 }
 
@@ -136,7 +148,68 @@ const wStatus& SvrQos::QueryNode(struct SvrNet_t& svr) {
 	LOG_DEBUG(kSvrLog, "SvrQos::QueryNode query SvrNet_t start, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
-	return GetRouteNode(svr);
+	mMutex.Lock();
+	mStatus = GetRouteNode(svr);
+	mMutex.Unlock();
+	return mStatus;
+}
+
+const wStatus& SvrQos::CallerNode(const struct SvrCaller_t& caller) {
+	if (caller.mCalledGid <= 0 || caller.mCalledXid <= 0 || caller.mPort <= 0 || caller.mHost[0] == 0) {
+		LOG_ERROR(kSvrLog, "SvrQos::CallerNode report failed(caller data illegal), GID(%d),XID(%d),HOST(%s),PORT(%d)",
+				caller.mCalledGid, caller.mCalledXid, caller.mHost, caller.mPort);
+
+		return mStatus = wStatus::IOError("SvrQos::CallerNode failed, caller data illegal", "");
+	}
+
+	struct SvrNet_t svr;
+	svr.mGid = caller.mCalledGid;
+	svr.mXid = caller.mCalledXid;
+	svr.mPort = caller.mPort;
+	::memcpy(svr.mHost, caller.mHost, kMaxHost);
+
+	int64_t usec = caller.mReqUsetimeUsec;
+	if (caller.mReqUsetimeUsec <= 0) {
+		usec = 1;
+	}
+
+	mMutex.Lock();
+	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
+	MapSvrIt_t mapEndIt = mMapReqSvr.end();
+	mMutex.Unlock();
+    if (mapReqIt == mapEndIt) {
+		LOG_ERROR(kSvrLog, "SvrQos::CallerNode report failed(cannot find caller), GID(%d),XID(%d),HOST(%s),PORT(%d)",
+				caller.mCalledGid, caller.mCalledXid, caller.mHost, caller.mPort);
+
+		return mStatus = wStatus::IOError("SvrQos::CallerNode report failed, cannot find caller node from MapReqSvr", "");
+    }
+
+    mMutex.Lock();
+    struct SvrStat_t* pSvrStat = mapReqIt->second;
+    if (caller.mReqRet >= 0) {
+    	// 成功
+    	pSvrStat->mInfo.mReqSuc += caller.mReqCount;
+    	pSvrStat->mInfo.mSReqSuc += caller.mReqCount;
+    	pSvrStat->mInfo.mTotalUsec += usec;
+    	pSvrStat->mInfo.mContErrCount = 0;
+    } else {
+    	// 失败
+    	pSvrStat->mInfo.mReqErrRet += caller.mReqCount;
+    	pSvrStat->mInfo.mSReqErrRet += caller.mReqCount;
+    	pSvrStat->mInfo.mContErrCount += caller.mReqCount;
+    }
+
+    // 重建route
+    struct SvrKind_t kind(svr);
+    mStatus = RebuildRoute(kind);
+    mMutex.Unlock();
+    return mStatus;
+}
+
+const wStatus& SvrQos::LoadStatCfg(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
+	stat->mInfo.InitInfo(svr);
+	stat->mReqCfg = mReqCfg;
+	return mStatus.Clear();
 }
 
 const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
@@ -293,52 +366,6 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight, stKind.mPindex);
 
 	return mStatus.Clear();
-}
-
-const wStatus& SvrQos::CallerNode(const struct SvrCaller_t& caller) {
-	if (caller.mCalledGid <= 0 || caller.mCalledXid <= 0 || caller.mPort <= 0 || caller.mHost[0] == 0) {
-		LOG_ERROR(kSvrLog, "SvrQos::CallerNode report failed(caller data illegal), GID(%d),XID(%d),HOST(%s),PORT(%d)",
-				caller.mCalledGid, caller.mCalledXid, caller.mHost, caller.mPort);
-
-		return mStatus = wStatus::IOError("SvrQos::CallerNode failed, caller data illegal", "");
-	}
-
-	struct SvrNet_t svr;
-	svr.mGid = caller.mCalledGid;
-	svr.mXid = caller.mCalledXid;
-	svr.mPort = caller.mPort;
-	::memcpy(svr.mHost, caller.mHost, kMaxHost);
-
-	int64_t usec = caller.mReqUsetimeUsec;
-	if (caller.mReqUsetimeUsec <= 0) {
-		usec = 1;
-	}
-
-	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
-    if (mapReqIt == mMapReqSvr.end()) {
-		LOG_ERROR(kSvrLog, "SvrQos::CallerNode report failed(cannot find caller), GID(%d),XID(%d),HOST(%s),PORT(%d)",
-				caller.mCalledGid, caller.mCalledXid, caller.mHost, caller.mPort);
-
-		return mStatus = wStatus::IOError("SvrQos::CallerNode report failed, cannot find caller node from MapReqSvr", "");
-    }
-
-    struct SvrStat_t* pSvrStat = mapReqIt->second;
-    if (caller.mReqRet >= 0) {
-    	// 成功
-    	pSvrStat->mInfo.mReqSuc += caller.mReqCount;
-    	pSvrStat->mInfo.mSReqSuc += caller.mReqCount;
-    	pSvrStat->mInfo.mTotalUsec += usec;
-    	pSvrStat->mInfo.mContErrCount = 0;
-    } else {
-    	// 失败
-    	pSvrStat->mInfo.mReqErrRet += caller.mReqCount;
-    	pSvrStat->mInfo.mSReqErrRet += caller.mReqCount;
-    	pSvrStat->mInfo.mContErrCount += caller.mReqCount;
-    }
-
-    // 重建route
-    struct SvrKind_t kind(svr);
-    return RebuildRoute(kind);
 }
 
 const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {

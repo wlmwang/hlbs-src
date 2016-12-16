@@ -8,10 +8,6 @@
 #include "AgentServer.h"
 #include "AgentConfig.h"
 
-const wStatus& AgentMaster::PrepareRun() {
-	return mStatus.Clear();
-}
-
 const wStatus& AgentMaster::Reload() {
 	AgentConfig* config = mServer->Config<AgentConfig*>();
 

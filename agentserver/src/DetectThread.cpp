@@ -30,9 +30,9 @@ const wStatus& DetectThread::PrepareThread() {
 }
 
 const wStatus& DetectThread::RunThread() {
-	char sIp[32] = {0};
-	// 本机IP地址
-	::inet_ntop(AF_INET, &mLocalIp, sIp, sizeof(sIp));
+	// 本机字符串IP地址
+	char ip[32] = {0};
+	::inet_ntop(AF_INET, static_cast<void*>(&mLocalIp), ip, sizeof(ip));
 
 	mNowTm = time(NULL);
     time_t nextReadtm = mNowTm;
@@ -45,10 +45,9 @@ const wStatus& DetectThread::RunThread() {
 
 		if (mDetectMapNewadd.empty() && mDetectMapAll.empty()) {
             mDetectMapNewdel.clear();
-
             mDetectMutex->Unlock();
             // 100ms
-            usleep(mDetectLoopUsleep);
+            ::usleep(mDetectLoopUsleep);
             continue;
 		}
 
@@ -67,7 +66,7 @@ const wStatus& DetectThread::RunThread() {
             mResultMutex->Lock();
             for(MapDetectIt_t itDel = stlNewdel.begin(); itDel != stlNewdel.end(); ++itDel) {
                 const struct DetectNode_t& node = itDel->first;
-                std::map<struct DetectNode_t, struct DetectResult_t>::iterator itFind = mDetectMapAll.find(node);
+                MapDetectIt_t itFind = mDetectMapAll.find(node);
                 if (itFind != mDetectMapAll.end()) {
                     mDetectMapAll.erase(itFind);
                 }
