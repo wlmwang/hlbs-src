@@ -24,6 +24,9 @@ int AgentClientTask::InitSvrRes(struct Request_t *request) {
 			config->Qos()->SaveNode(cmd->mSvr[i]);
 		}
 	}
+
+	// 同步其他worker进程
+	SyncWorker(cmd, sizeof(struct SvrResInit_t));
 	return 0;
 }
 
@@ -39,6 +42,9 @@ int AgentClientTask::ReloadSvrRes(struct Request_t *request) {
 			config->Qos()->SaveNode(cmd->mSvr[i]);
 		}
 	}
+
+	// 同步其他worker进程
+	SyncWorker(cmd, sizeof(struct SvrResReload_t));
 	return 0;
 }
 
@@ -52,5 +58,8 @@ int AgentClientTask::SyncSvrRes(struct Request_t *request) {
 			config->Qos()->ModifyNode(cmd->mSvr[i]);
 		}
 	}
+
+	// 同步其他worker进程
+	SyncWorker(cmd, sizeof(struct SvrResSync_t));
 	return 0;
 }

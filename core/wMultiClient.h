@@ -20,6 +20,7 @@
 #include "wTimer.h"
 #include "wThread.h"
 #include "wConfig.h"
+#include "wServer.h"
 
 namespace hnet {
 
@@ -32,7 +33,7 @@ class wTask;
 // 多用于与服务端长连，守护监听服务端消息
 class wMultiClient : public wThread {
 public:
-    wMultiClient(wConfig* config);
+    wMultiClient(wConfig* config, wServer* server = NULL);
     virtual ~wMultiClient();
 
     // 添加连接
@@ -50,6 +51,10 @@ public:
     const wStatus& Broadcast(const google::protobuf::Message* msg, int type = kClientNumShard);
     const wStatus& Send(wTask *task, char *cmd, size_t len);
     const wStatus& Send(wTask *task, const google::protobuf::Message* msg);
+
+    // 广播消息至worker进程 ，blacksolt为黑名单（代理调用wServer::NotifyWorker）
+    const wStatus& NotifyWorker(char *cmd, int len, uint32_t solt = kMaxProcess, const std::vector<uint32_t>* blacksolt = NULL);
+    const wStatus& NotifyWorker(const google::protobuf::Message* msg, uint32_t solt = kMaxProcess, const std::vector<uint32_t>* blacksolt = NULL);
 
     const wStatus& PrepareStart();
     const wStatus& Start();
@@ -74,6 +79,9 @@ public:
 
     template<typename T = wConfig*>
     inline T& Config() { return reinterpret_cast<T&>(mConfig);}
+
+    template<typename T = wServer*>
+    inline T& Server() { return reinterpret_cast<T&>(mServer);}
 
 protected:
     const wStatus& Recv();
@@ -109,6 +117,7 @@ protected:
     std::vector<wTask*> mTaskPool[kClientNumShard];
     wMutex mTaskPoolMutex[kClientNumShard];
     wConfig* mConfig;
+    wServer* mServer;
 
     wStatus mStatus;
 };

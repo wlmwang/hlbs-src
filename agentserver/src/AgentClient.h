@@ -17,7 +17,7 @@ const int kType = 0;
 
 class AgentClient : public wMultiClient {
 public:
-	AgentClient(wConfig* config) : wMultiClient(config) { }
+	AgentClient(wConfig* config, wServer* server = NULL) : wMultiClient(config, server) { }
 
 	virtual const wStatus& PrepareRun();
 	virtual const wStatus& NewTcpTask(wSocket* sock, wTask** ptr, int type = 0);
