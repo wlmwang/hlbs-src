@@ -6,35 +6,32 @@
 
 #include "agent_api.h"
 
-int GPSvr()
-{
-	struct SvrNet_t stSvr;
-	stSvr.mGid = 1;
-	stSvr.mXid = 2;
+int GetReportSvr() {
+	struct SvrNet_t svr;
+	svr.mGid = 1;
+	svr.mXid = 2;
 
-	string s;
-	int iRet = QueryNode(stSvr, 30, s);
+	std::string s;
+	int ret = QueryNode(svr, 30, s);
 
-	cout << "ret:" << iRet << endl;
-	cout << "host:" << stSvr.mHost << endl;
-	cout << "port:" << stSvr.mPort << endl;
+	std::cout << "ret:" << ret << std::endl;
+	std::cout << "host:" << svr.mHost << std::endl;
+	std::cout << "port:" << svr.mPort << std::endl;
 
-	if (iRet >= 0)	return NotifyCallerRes(stSvr, 0, 2000, s);
-	
+	if (ret == kOk)	{
+		return NotifyCallerRes(svr, 0, 2000, s);
+	}
 	return -1;
 }
 
-int main(int argc, char *argv[])
-{
-	//ConnectAgent();
-
-	int errnum = 0;
-	for (int i = 0; i < 1; i++)
-	{
-		if (GPSvr() < 0) errnum++;
+int main(int argc, char *argv[]) {
+	int errNum = 0;
+	for (int i = 0; i < 1; i++) {
+		if (GetReportSvr() < 0) {
+			errNum++;
+		}
 	}
-	cout << "errnum" << errnum << endl;
+	cout << "errNum:" << errNum << endl;
 
-	//CloseAgent();
 	return 0;
 }

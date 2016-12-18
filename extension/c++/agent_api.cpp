@@ -6,127 +6,119 @@
 
 #include "agent_api.h"
 
-struct postHandle_t g_handle;
+struct postHandle_t g_handle = {NULL, false};
 
-int QueryNode(struct SvrNet_t &stSvr, double iTimeOut, string &sErr)
-{
-	struct SvrReqGXid_t stCmd;
-	stCmd.mGid = stSvr.mGid;
-	stCmd.mXid = stSvr.mXid;
-	int iRet = -1;
-
-	if (ConnectAgent() < 0) return iRet;
-
-	//查询请求
-	if (g_handle.mTask != NULL && g_handle.mTask->SyncSend((char*)&stCmd, sizeof(stCmd)) > 0)
-	{
-		//接受返回
-		char vBuffer[sizeof(struct SvrOneRes_t)];
-		int iLen = g_handle.mTask->SyncRecv(vBuffer, sizeof(struct SvrOneRes_t), iTimeOut);
-		if (iLen > 0)
-		{
-			struct SvrOneRes_t *pRes = (struct SvrOneRes_t*) vBuffer;
-			stSvr.mPort = pRes->mSvr.mPort;
-			memcpy(stSvr.mHost, pRes->mSvr.mHost, strlen(pRes->mSvr.mHost) + 1);
-			iRet = 0;
-		}
-		else
-		{
-			iRet = -3;
-		}
-	}
-	else
-	{
-		iRet = -2;
-	}
-	
-	CloseAgent();
-	return iRet;
-}
-
-int NotifyCallerRes(const struct SvrNet_t &stSvr, int iResult, long long iUsetimeUsec, string &sErr)
-{
-	struct SvrReqReport_t stCmd;
-	int iRet = -1;
-	
-	stCmd.mCaller.mCalledGid = stSvr.mGid;
-	stCmd.mCaller.mCalledXid = stSvr.mXid;
-	stCmd.mCaller.mPort = stSvr.mPort;
-	stCmd.mCaller.mReqRet = iResult;
-	stCmd.mCaller.mReqCount = 1;
-	stCmd.mCaller.mReqUsetimeUsec = iUsetimeUsec;
-	memcpy(stCmd.mCaller.mHost, stSvr.mHost, strlen(stSvr.mHost) + 1);
-
-	if (ConnectAgent() < 0) return iRet;
-
-	//上报请求
-	if (g_handle.mTask != NULL && g_handle.mTask->SyncSend((char*)&stCmd, sizeof(stCmd)) > 0)
-	{
-		//接受返回
-		char vBuffer[sizeof(struct SvrResReport_t)];
-		int iLen = g_handle.mTask->SyncRecv(vBuffer, sizeof(struct SvrResReport_t));
-		if (iLen > 0)
-		{
-			struct SvrResReport_t *pRes = (struct SvrResReport_t*) vBuffer;
-			iRet = pRes->mCode;
-		}
-		else
-		{
-			iRet = -3;
-		}
-	}
-	else
-	{
-		iRet = -2;
-	}
-
-	CloseAgent();
-	return iRet;
-}
-
-int NotifyCallerNum(const struct SvrNet_t &stSvr, int iReqCount)
-{
-	return -1;
-}
-
-int ConnectAgent()
-{
-	if (g_handle.mConnecting == true && g_handle.mTask != NULL) return 0;
-	
-	CloseAgent();
-
-#if !SOCKET_HANDLE
-	wSocket *pSocket = new wTcpSocket(SOCK_TYPE_CONNECT);
-#else
-	wSocket *pSocket = new wUnixSocket(SOCK_TYPE_CONNECT);
-#endif
-	
-	if (pSocket->Open() >= 0)
-	{
-		if (pSocket->SockProto() == SOCK_PROTO_TCP)
-		{
-			if (pSocket->Connect(AGENT_HOST, AGENT_PORT) >= 0)
-			{
-				g_handle.mTask = new wTask(pSocket);
-				return 0;
+int QueryNode(struct SvrNet_t &svr, double timeout, std::string &err) {
+	AgentRet_t ret = ConnectAgent();
+	if (ret != kOk) {
+		//
+	} else if (g_handle.mConnecting == true && g_handle.mTask != NULL) {
+		struct SvrReqGXid_t cmd;
+		cmd.mGid = svr.mGid;
+		cmd.mXid = svr.mXid;
+		ssize_t size;
+		// 查询请求
+		if (g_handle.mTask->SyncSend(static_cast<char*>(&cmd), sizeof(cmd), &size).Ok() && size == sizeof(struct SvrReqGXid_t)) {
+			// 接受返回
+			char buff[kPackageSize];
+			if (g_handle.mTask->SyncRecv(buff, &size, timeout).Ok() && size == sizeof(struct SvrOneRes_t)) {
+				struct SvrOneRes_t *res = static_cast<struct SvrOneRes_t*>(buff);
+				if (res->mCode == 0 && res->mNum == 1) {
+					svr.mPort = res->mSvr.mPort;
+					memcpy(svr.mHost, res->mSvr.mHost, kMaxHost);
+					ret = kOk;
+				} else {
+					ret = kDataError;
+				}
+			} else {
+				ret = kRecvError;
 			}
+		} else {
+			ret = kSendError;
 		}
-		else if (pSocket->SockProto() == SOCK_PROTO_UNIX)
-		{
-			if (pSocket->Connect(AGENT_HOST, AGENT_TIMEOUT) >= 0)
-			{
-				g_handle.mTask = new wTask(pSocket);
-				return 0;
-			}
-		}
+	} else {
+		ret = kConnError;
 	}
 
 	CloseAgent();
-	return -1;
+	return ret;
 }
 
-void CloseAgent()
-{
-	g_handle.mConnecting = false;
+int NotifyCallerRes(const struct SvrNet_t &svr, int res, uint64_t usec, string &err) {
+	AgentRet_t ret = ConnectAgent();
+	if (ret != kOk) {
+		//
+	} else if (g_handle.mConnecting == true && g_handle.mTask != NULL) {
+		struct SvrReqReport_t cmd;
+		memcpy(cmd.mCaller.mHost, svr.mHost, kMaxHost);
+		cmd.mCaller.mCalledGid = svr.mGid;
+		cmd.mCaller.mCalledXid = svr.mXid;
+		cmd.mCaller.mPort = svr.mPort;
+		cmd.mCaller.mReqRet = res;
+		cmd.mCaller.mReqUsetimeUsec = usec;
+		cmd.mCaller.mReqCount = 1;
+		ssize_t size;
+		// 上报请求
+		if (g_handle.mTask->SyncSend(static_cast<char*>(&cmd), sizeof(cmd), &size).Ok() && size == sizeof(struct SvrReqReport_t)) {
+			// 接受返回
+			char buff[kPackageSize];
+			if (g_handle.mTask->SyncRecv(buff, &size, timeout).Ok() && size == sizeof(struct SvrResReport_t)) {
+				struct SvrResReport_t *res = static_cast<struct SvrResReport_t*>(buff);
+				if (res->mCode == 0) {
+					ret = kOk;
+				} else {
+					ret = kDataError;
+				}
+			} else {
+				ret = kRecvError;
+			}
+		} else {
+			ret = kSendError;
+		}
+	} else {
+		ret = kConnError;
+	}
+
+	CloseAgent();
+	return ret;
+}
+
+int ConnectAgent() {
+	// 已连接
+	if (g_handle.mConnecting == true && g_handle.mTask != NULL) {
+		return kOk;
+	}
+	CloseAgent();
+	
+	wSocket *sock;
+	if (kAgentSocket == 0) {
+		SAFE_NEW(wUnixSocket(kStConnect), sock);
+	} else if (kAgentSocket == 1) {
+		SAFE_NEW(wTcpSocket(kStConnect), sock);
+	} else if (kAgentSocket == 2) {
+		//SAFE_NEW(wUdpSocket(kStConnect), sock);
+	} else {
+		return kUnknown;
+	}
+	
+	if (sock->Open().Ok()) {
+		int64_t ret;
+		if (sock->Connect(&ret, kAgentHost, kAgentPort, kAgentTimeout).Ok()) {
+			SAFE_NEW(wTask(sock), g_handle.mTask);
+			return kOk;
+		}
+	}
+	CloseAgent();
+
+	return kConnError;
+}
+
+int CloseAgent() {
 	SAFE_DELETE(g_handle.mTask);
+	g_handle.mConnecting = false;
+	return kOk;
+}
+
+int NotifyCallerNum(const struct SvrNet_t &svr, int reqCount) {
+	return kOk;
 }
