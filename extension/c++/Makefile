@@ -4,8 +4,8 @@
 # Copyright (C) Hupu, Inc.
 ###############################
 
-CXX=g++
-CXXFLAGS=-std=c++11 -O3 -fPIC -pipe -fno-ident -Wall -Wno-invalid-offsetof
+CXX=g++ -std=c++11
+CXXFLAGS=-O3 -fPIC -pipe -fno-ident -Wall -Wno-invalid-offsetof
 LDFLAGS=-shared
 
 BASEPATH=../../base

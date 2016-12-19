@@ -26,6 +26,9 @@ int AgentTcpTask::GetSvrByGXid(struct Request_t *request) {
 		vRRt.mNum = 1;
 		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
 	}
+
+	// 同步其他worker进程
+	SyncWorker(cmd, sizeof(struct SvrReqGXid_t));
 	return 0;
 }
 
@@ -39,5 +42,8 @@ int AgentTcpTask::ReportSvr(struct Request_t *request) {
 		vRRt.mCode = 1;
 		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
 	}
+
+	// 同步其他worker进程
+	SyncWorker(cmd, sizeof(struct SvrReqReport_t));
 	return 0;
 }
