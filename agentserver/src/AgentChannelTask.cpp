@@ -8,7 +8,7 @@
 #include "AgentConfig.h"
 #include "SvrCmd.h"
 
-AgentChannelTask::AgentChannelTask(wSocket *socket, wMaster *master, int32_t type = 0) : wChannelTask(socket, master, type) {
+AgentChannelTask::AgentChannelTask(wSocket *socket, wMaster *master, int32_t type) : wChannelTask(socket, master, type) {
 	On(CMD_SVR_RES, SVR_RES_INIT, &AgentChannelTask::InitSvrRes, this);
 	On(CMD_SVR_RES, SVR_RES_RELOAD, &AgentChannelTask::ReloadSvrRes, this);
 	On(CMD_SVR_RES, SVR_RES_SYNC, &AgentChannelTask::SyncSvrRes, this);
