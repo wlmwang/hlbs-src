@@ -151,6 +151,9 @@ const wStatus& SvrQos::QueryNode(struct SvrNet_t& svr) {
 	mMutex.Lock();
 	mStatus = GetRouteNode(svr);
 	mMutex.Unlock();
+
+	LOG_DEBUG(kSvrLog, "SvrQos::QueryNode query SvrNet_t end, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 	return mStatus;
 }
 
