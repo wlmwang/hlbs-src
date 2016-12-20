@@ -18,7 +18,7 @@
 using namespace hnet;
 
 // 0:"UNIX"  1:"TCP" 2:"UDP"
-const uint8_t	kAgentSocket	= 0;
+const uint8_t	kAgentSocket	= 1;
 const char		kAgentHost[]	= "127.0.0.1";
 const uint16_t	kAgentPort		= 10007;
 const uint64_t	kAgentTimeout	= 30;

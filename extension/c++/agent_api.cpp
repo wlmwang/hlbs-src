@@ -100,6 +100,7 @@ int ConnectAgent() {
 	if (sock->Open().Ok()) {
 		int64_t ret;
 		if (sock->Connect(&ret, kAgentHost, kAgentPort, kAgentTimeout).Ok()) {
+			g_handle.mConnecting = true;
 			SAFE_NEW(wTask(sock), g_handle.mTask);
 			return kOk;
 		}

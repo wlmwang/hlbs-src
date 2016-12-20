@@ -6,21 +6,39 @@
 
 CXX=g++ -std=c++11
 CXXFLAGS=-O3 -fPIC -pipe -fno-ident -Wall
-LDFLAGS=-shared
 
 COREPATH=../../core
 COMMPATH=../../command
 INCPATH=-I./$(COREPATH) -I./$(COMMPATH)
-LDPATH=
+LDFLAGS=-shared
 
 SRCPATH=./
-OBJECTS=./$(COREPATH)/wStatus.o \
-		./$(COREPATH)/wMisc.o \
+OBJECTS=./$(COREPATH)/wCrc32c.o \
+		./$(COREPATH)/wEnv.o \
+		./$(COREPATH)/wFile.o \
 		./$(COREPATH)/wLogger.o \
+		./$(COREPATH)/wMisc.o \
+		./$(COREPATH)/wMemPool.o \
+		./$(COREPATH)/wPing.o \
+		./$(COREPATH)/wStatus.o \
+		./$(COREPATH)/wProcTitle.o \
+		./$(COREPATH)/wSignal.o \
+		./$(COREPATH)/wMemPool.o \
+		./$(COREPATH)/wShm.o \
+		./$(COREPATH)/wThread.o \
 		./$(COREPATH)/wSocket.o \
+		./$(COREPATH)/wChannelSocket.o \
 		./$(COREPATH)/wTcpSocket.o \
 		./$(COREPATH)/wUnixSocket.o \
 		./$(COREPATH)/wTask.o \
+		./$(COREPATH)/wChannelTask.o \
+		./$(COREPATH)/wSingleClient.o \
+		./$(COREPATH)/wMultiClient.o \
+		./$(COREPATH)/wMaster.o \
+		./$(COREPATH)/wWorker.o \
+		./$(COREPATH)/wConfig.o \
+		./$(COREPATH)/wServer.o \
+		./$(COREPATH)/wChannel.pb.o \
 		\
 		./$(SRCPATH)/agent_api.o
 

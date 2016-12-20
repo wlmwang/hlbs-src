@@ -6,12 +6,11 @@
 
 CXX=g++ -std=c++11
 CXXFLAGS=-O3 -Wall
-LDFLAGS=-lagent_api -static
 
-#COREPATH=../../core
-#COMMPATH=../../command
-#INCPATH=-I./$(COREPATH) -I./$(COMMPATH)
-#LDPATH=
+COREPATH=../../../core
+COMMPATH=../../../command
+INCPATH=-I./$(COREPATH) -I./$(COMMPATH) -I../
+LDFLAGS=-L/usr/local/lib -lprotobuf -lpthread -lagent_api
 
 SRCPATH=./
 OBJECTS=./$(SRCPATH)/test.o

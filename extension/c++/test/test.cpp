@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 			errNum++;
 		}
 	}
-	cout << "errNum:" << errNum << endl;
+	std::cout << "errNum:" << errNum << std::endl;
 
 	return 0;
 }

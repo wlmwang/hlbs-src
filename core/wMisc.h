@@ -125,8 +125,7 @@ inline const char* IP2Text(u_long ip) {
 }
 
 inline uint32_t Text2IP(const char* cp) {
-	// typedef in_addr_t u_long
-    return static_cast<uint32_t>(inet_addr(cp));
+    return static_cast<uint32_t>(inet_addr(cp));    // typedef in_addr_t u_long
 }
 
 inline void GetTimeofday(struct timeval* pVal) {
