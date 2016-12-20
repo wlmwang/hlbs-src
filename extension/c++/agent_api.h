@@ -43,7 +43,7 @@ extern struct postHandle_t g_handle;
 int QueryNode(struct SvrNet_t &svr, double timeout, std::string &err);
 
 // 调用结果上报
-int NotifyCallerRes(const struct SvrNet_t &svr, int res, uint64_t usec, string &err);
+int NotifyCallerRes(const struct SvrNet_t &svr, int res, uint64_t usec, std::string &err);
 
 // 调用数上报
 int NotifyCallerNum(const struct SvrNet_t &svr, int reqCount);

@@ -5,23 +5,22 @@
 ###############################
 
 CXX=g++ -std=c++11
-CXXFLAGS=-O3 -fPIC -pipe -fno-ident -Wall -Wno-invalid-offsetof
+CXXFLAGS=-O3 -fPIC -pipe -fno-ident -Wall
 LDFLAGS=-shared
 
-BASEPATH=../../base
-COMMPATH=../command
-INCPATH=-I./$(BASEPATH) -I./$(COMMPATH)
+COREPATH=../../core
+COMMPATH=../../command
+INCPATH=-I./$(COREPATH) -I./$(COMMPATH)
 LDPATH=
 
 SRCPATH=./
-OBJECTS=./$(BASEPATH)/wMsgQueue.o \
-		./$(BASEPATH)/wMisc.o \
-		./$(BASEPATH)/wSocket.o \
-		./$(BASEPATH)/wTcpSocket.o \
-		./$(BASEPATH)/wUnixSocket.o \
-		./$(BASEPATH)/wTask.o \
-		./$(BASEPATH)/wShm.o \
-		./$(BASEPATH)/wSignal.o \
+OBJECTS=./$(COREPATH)/wStatus.o \
+		./$(COREPATH)/wMisc.o \
+		./$(COREPATH)/wLogger.o \
+		./$(COREPATH)/wSocket.o \
+		./$(COREPATH)/wTcpSocket.o \
+		./$(COREPATH)/wUnixSocket.o \
+		./$(COREPATH)/wTask.o \
 		\
 		./$(SRCPATH)/agent_api.o
 
@@ -46,8 +45,8 @@ $(TARGET):$(OBJECTS)
 -include $(OBJECTS:.o=.d)
 
 clean:
-	-rm -f $(BASEPATH)/*.o $(BASEPATH)/*.d $(BASEPATH)/*.d.*
+	-rm -f $(COREPATH)/*.o $(COREPATH)/*.d $(COREPATH)/*.d.*
 	-rm -f $(TARGET) $(SRCPATH)/*.o $(SRCPATH)/*.d $(SRCPATH)/*.d.*
-
+	
 install:
 	-mv -f $(TARGET) /usr/lib

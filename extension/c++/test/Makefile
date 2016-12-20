@@ -4,23 +4,29 @@
 # Copyright (C) Hupu, Inc.
 ###############################
 
-CXX=g++
-CXXFLAGS=-std=c++11 -O3 -Wall -Wno-invalid-offsetof
-LDFLAGS=-lagent_api #-static
+CXX=g++ -std=c++11
+CXXFLAGS=-O3 -Wall
+LDFLAGS=-lagent_api -static
 
-BASEPATH=../../../base
-COMMPATH=../../command
-INCPATH=-I./$(BASEPATH) -I./$(COMMPATH) -I../
+#COREPATH=../../core
+#COMMPATH=../../command
+#INCPATH=-I./$(COREPATH) -I./$(COMMPATH)
+#LDPATH=
 
-TARGET=agent_test
-
-OBJECTS=test.o
+SRCPATH=./
+OBJECTS=./$(SRCPATH)/test.o
 
 $(TARGET): $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
 
-.PHONY:all
-	all: $(TARGET)
+TARGET=agent_test
+
+.PHONY:all clean install
+
+all: $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 %.o:%.cpp
 	$(CXX) $(CXXFLAGS) $(INCPATH) -c $< -o $@
@@ -32,7 +38,5 @@ $(TARGET): $(OBJECTS)
 
 -include $(OBJECTS:.o=.d)
 
-.PHONY:clean
 clean:
-	-rm -f $(BASEPATH)/*.o $(BASEPATH)/*.d $(BASEPATH)/*.d.*
-	-rm -f $(TARGET) $(OBJECTS) ./*.d ./*.d.*
+	-rm -f $(TARGET) $(SRCPATH)/*.o $(SRCPATH)/*.d $(SRCPATH)/*.d.*
