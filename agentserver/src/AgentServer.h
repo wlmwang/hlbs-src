@@ -14,19 +14,12 @@
 
 using namespace hnet;
 
-class AgentClient;
-
 class AgentServer : public wServer {
 public:
-	AgentServer(wConfig* config);
-	virtual ~AgentServer();
+	AgentServer(wConfig* config) : wServer(config) { }
 
-	virtual const wStatus& PrepareRun();
 	virtual const wStatus& NewTcpTask(wSocket* sock, wTask** ptr);
 	virtual const wStatus& NewChannelTask(wSocket* sock, wTask** ptr);
-
-protected:
-	AgentClient* mAgentClient;
 };
 
 #endif

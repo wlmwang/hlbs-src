@@ -52,6 +52,7 @@ OBJECTS=./$(COREPATH)/wCrc32c.o \
 		./$(SRCPATH)/SvrQos.o \
 		./$(SRCPATH)/DetectThread.o \
 		./$(SRCPATH)/AgentMaster.o \
+		./$(SRCPATH)/AgentWorker.o \
 		./$(SRCPATH)/AgentTcpTask.o \
 		./$(SRCPATH)/AgentClientTask.o \
 		./$(SRCPATH)/AgentChannelTask.o \
