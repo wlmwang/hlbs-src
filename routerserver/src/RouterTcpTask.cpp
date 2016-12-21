@@ -23,8 +23,6 @@ int RouterTcpTask::InitSvrReq(struct Request_t *request) {
 	if (config->Qos()->GetNodeAll(vRRt.mSvr, &vRRt.mNum).Ok()) {
 		vRRt.mCode = 0;
 		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
-
-		LOG_DEBUG(kSvrLog, "RouterTcpTask::InitSvrReq send all SvrNet_t Success, code(%d), number(%d)", vRRt.mCode, vRRt.mNum);
 	}
 	return 0;
 }
@@ -41,8 +39,6 @@ int RouterTcpTask::ReloadSvrReq(struct Request_t *request) {
 	if (config->ParseModifySvr(vRRt.mSvr, &vRRt.mNum).Ok()) {
 		vRRt.mCode = 0;
 		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
-
-		LOG_DEBUG(kSvrLog, "RouterTcpTask::ReloadSvrReq reload and send all SvrNet_t Success, code(%d), number(%d)", vRRt.mCode, vRRt.mNum);
 	}
 	return 0;
 }

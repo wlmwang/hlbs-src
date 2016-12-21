@@ -4,67 +4,50 @@
 # Copyright (C) Hupu, Inc.
 ###############################
 
-CXX=g++ -std=c++11
-CXXFLAGS=-O3 -fPIC -pipe -fno-ident -Wall
+#
+# gcc 4.8+(gdb7.6+)
+# 需要预先编译vendor目录下的protobuf软件包；core下hnet
+# 所需的.so文件建议安装到ldconfig加载路径中(/usr/local/lib)
+#
 
-COREPATH=../../core
-COMMPATH=../../command
-INCPATH=-I./$(COREPATH) -I./$(COMMPATH)
-LDFLAGS=-shared
+CC		:= g++
+CFLAGS	:= -Wall -O3 -std=c++11 -D_USE_LOGGER_ -D_DEBUG_
+LDFLAGS	:= #-static
 
-SRCPATH=./
-OBJECTS=./$(COREPATH)/wCrc32c.o \
-		./$(COREPATH)/wEnv.o \
-		./$(COREPATH)/wFile.o \
-		./$(COREPATH)/wLogger.o \
-		./$(COREPATH)/wMisc.o \
-		./$(COREPATH)/wMemPool.o \
-		./$(COREPATH)/wPing.o \
-		./$(COREPATH)/wStatus.o \
-		./$(COREPATH)/wProcTitle.o \
-		./$(COREPATH)/wSignal.o \
-		./$(COREPATH)/wMemPool.o \
-		./$(COREPATH)/wShm.o \
-		./$(COREPATH)/wThread.o \
-		./$(COREPATH)/wSocket.o \
-		./$(COREPATH)/wChannelSocket.o \
-		./$(COREPATH)/wTcpSocket.o \
-		./$(COREPATH)/wUnixSocket.o \
-		./$(COREPATH)/wTask.o \
-		./$(COREPATH)/wChannelTask.o \
-		./$(COREPATH)/wSingleClient.o \
-		./$(COREPATH)/wMultiClient.o \
-		./$(COREPATH)/wMaster.o \
-		./$(COREPATH)/wWorker.o \
-		./$(COREPATH)/wConfig.o \
-		./$(COREPATH)/wServer.o \
-		./$(COREPATH)/wChannel.pb.o \
-		\
-		./$(SRCPATH)/agent_api.o
+# 第三方库
+DIR_INC		:= /usr/local/include/hnet
+DIR_LIB		:= /usr/local/lib
+LIBFLAGS	:= -L${DIR_LIB} -lpthread -lprotobuf -ltinyxml -lhnet
 
-TARGET=libagent_api.so
+# 主目录,message,command目录
+DIR_SRC		:= ./
+DIR_MSG		:= ../../message/
+DIR_CMD		:= ../../command/
+
+# 头文件
+INCFLAGS	:= -I${DIR_INC} -I${DIR_SRC} -I${DIR_MSG} -I${DIR_CMD}
+
+# 源文件
+CPP_SRC	:= $(wildcard ${DIR_SRC}*.cpp)
+CC_SRC	:= $(wildcard ${DIR_MSG}*.cc)
+
+# 编译文件
+OBJ		:= $(patsubst %.cpp, ${DIR_SRC}%.o, $(notdir ${CPP_SRC})) $(patsubst %.cc, ${DIR_SRC}%.o, $(notdir ${CC_SRC}))
+
+TARGET	:= agent_test
 
 .PHONY:all clean install
 
 all: $(TARGET)
 
-$(TARGET):$(OBJECTS)
-	@echo "Compiling $@"
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+$(TARGET): $(OBJ)
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBFLAGS) $(LDFLAGS)
 
-%.o:%.cpp
-	$(CXX) $(CXXFLAGS) $(INCPATH) -c $< -o $@
+$(DIR_SRC)%.o:${DIR_SRC}%.cpp
+	$(CC) $(CFLAGS) $(INCFLAGS) -c $< -o $@
 
-%.d:%.cpp
-	@set -e; rm -f $@; $(CXX) -MM $< $(INCPATH) > $@.$$$$; \
-	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
-	rm -f $@.$$$$
-
--include $(OBJECTS:.o=.d)
+$(DIR_SRC)%.o:${DIR_MSG}%.cc
+	$(CC) $(CCFLAGS) $(INCFLAGS) -c $< -o $@
 
 clean:
-	-rm -f $(COREPATH)/*.o $(COREPATH)/*.d $(COREPATH)/*.d.*
-	-rm -f $(TARGET) $(SRCPATH)/*.o $(SRCPATH)/*.d $(SRCPATH)/*.d.*
-	
-install:
-	-mv -f $(TARGET) /usr/lib
+	-rm -f $(TARGET) $(DIR_SRC)*.o $(DIR_MSG)*.o
