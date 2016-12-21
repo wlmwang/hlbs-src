@@ -30,10 +30,17 @@ int main(int argc, const char *argv[]) {
 		return -1;
 	}
 
+	// 设置相关相关配置
+	soft::SetSoftName("HLBS(*router*) -");
+	soft::SetSoftVer("2.3.0");
+	soft::SetLockPath("../log/hlbs.lock");
+	soft::SetPidPath("../log/hlbs.pid");
+	soft::SetLogPath("../log/hlbs.log");
+
 	// 版本输出 && 守护进程创建
 	bool version, daemon;
 	if (config->GetConf("version", &version) && version == true) {
-		std::cout << kSoftwareName << kSoftwareVer << std::endl;
+		std::cout << soft::GetSoftName() << soft::GetSoftVer() << std::endl;
 		return -1;
 	} else if (config->GetConf("daemon", &daemon) && daemon == true) {
 		std::string lock_path;
