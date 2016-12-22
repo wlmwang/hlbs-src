@@ -18,9 +18,6 @@ AgentClientTask::AgentClientTask(wSocket *socket, int32_t type) : wTcpTask(socke
 int AgentClientTask::InitSvrRes(struct Request_t *request) {
 	struct SvrResInit_t* cmd = reinterpret_cast<struct SvrResInit_t*>(request->mBuf);
 
-	// 同步其他worker进程
-	SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrResInit_t));
-
 	AgentConfig* config = Client()->Config<AgentConfig*>();
 	if (cmd->mCode == 0 && cmd->mNum > 0) {
 		for (int32_t i = 0; i < cmd->mNum; i++) {
@@ -42,9 +39,6 @@ int AgentClientTask::ReloadSvrRes(struct Request_t *request) {
 			config->Qos()->SaveNode(cmd->mSvr[i]);
 		}
 	}
-
-	// 同步其他worker进程
-	SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrResReload_t));
 	return 0;
 }
 
@@ -58,8 +52,5 @@ int AgentClientTask::SyncSvrRes(struct Request_t *request) {
 			config->Qos()->ModifyNode(cmd->mSvr[i]);
 		}
 	}
-
-	// 同步其他worker进程
-	SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrResSync_t));
 	return 0;
 }
