@@ -22,6 +22,6 @@ const wStatus& AgentWorker::PrepareRun() {
 	} else if (!(mStatus = mAgentClient->StartThread()).Ok()) {
 		return mStatus;
 	}
-	// 初始化路由
+	// 所有worker进程都初始化自身路由（AgentClientTask请求响应无需进程间同步操作）
 	return mStatus = mAgentClient->InitSvrReq();
 }

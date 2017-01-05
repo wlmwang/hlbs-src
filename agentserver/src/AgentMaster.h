@@ -17,6 +17,7 @@ class AgentMaster : public wMaster {
 public:
 	AgentMaster(const std::string& title, wServer* server) : wMaster(title, server) { }
 
+	virtual const wStatus& PrepareRun();
 	virtual const wStatus& NewWorker(uint32_t slot, wWorker** ptr);
 	virtual const wStatus& Reload();
 };

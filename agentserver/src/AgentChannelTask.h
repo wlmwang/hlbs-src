@@ -22,6 +22,8 @@ public:
 	int InitSvrRes(struct Request_t *request);
 	int ReloadSvrRes(struct Request_t *request);
 	int SyncSvrRes(struct Request_t *request);
+	int GetSvrByGXid(struct Request_t *request);
+	int ReportSvr(struct Request_t *request);
 };
 
 #endif
