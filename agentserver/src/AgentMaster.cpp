@@ -9,11 +9,6 @@
 #include "AgentServer.h"
 #include "AgentConfig.h"
 
-const wStatus& AgentMaster::PrepareRun() {
-	mWorkerNum = mNcpu;
-	return mStatus.Clear();
-}
-
 const wStatus& AgentMaster::NewWorker(uint32_t slot, wWorker** ptr) {
     SAFE_NEW(AgentWorker(mTitle, slot, this), *ptr);
     if (*ptr == NULL) {

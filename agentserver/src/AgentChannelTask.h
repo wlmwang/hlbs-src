@@ -19,9 +19,6 @@ class AgentChannelTask : public wChannelTask {
 public:
 	AgentChannelTask(wSocket *socket, wMaster *master, int32_t type = 0);
 
-	int InitSvrRes(struct Request_t *request);
-	int ReloadSvrRes(struct Request_t *request);
-	int SyncSvrRes(struct Request_t *request);
 	int GetSvrByGXid(struct Request_t *request);
 	int ReportSvr(struct Request_t *request);
 };
