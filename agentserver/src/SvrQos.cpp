@@ -145,8 +145,7 @@ const wStatus& SvrQos::GetNodeAll(struct SvrNet_t buf[], int32_t* num) {
 }
 
 const wStatus& SvrQos::QueryNode(struct SvrNet_t& svr) {
-	LOG_DEBUG(kSvrLog, "SvrQos::QueryNode query SvrNet_t start, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
-			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
+	LOG_DEBUG(kSvrLog, "SvrQos::QueryNode query SvrNet_t start, GID(%d),XID(%d)", svr.mGid, svr.mXid);
 
 	mMutex.Lock();
 	mStatus = GetRouteNode(svr);
@@ -158,36 +157,65 @@ const wStatus& SvrQos::QueryNode(struct SvrNet_t& svr) {
 }
 
 const wStatus& SvrQos::CallerNode(const struct SvrCaller_t& caller) {
+	LOG_DEBUG(kSvrLog, "SvrQos::CallerNode report SvrCaller_t start, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d),ReqRet(%d),ReqCount(%d),ReqUsetimeUsec(%lld)",
+			caller.mCalledGid, caller.mCalledXid, caller.mHost, caller.mPort, caller.mReqRet, caller.mReqCount, caller.mReqUsetimeUsec);
+
+	mMutex.Lock();
+	mStatus = ReportNode(caller);
+	mMutex.Unlock();
+
+	// 调试信息
+	SvrKind_t kind;
+	kind.mGid = caller.mCalledGid;
+	kind.mXid = caller.mCalledXid;
+
+	MapKindIt_t mapIt = mRouteTable.find(kind);
+	if (mapIt != mRouteTable.end()) {
+		MultiMapNode_t* mapNode = mapIt->second;
+		for (MultiMapNodeIt_t it = mapNode->begin(); it != mapNode->end(); it++) {
+			struct SvrNet_t svr = it->second.mNet;
+			struct SvrStat_t stat = *it->second.mStat;
+
+			LOG_DEBUG(kSvrLog, "SvrQos::CallerNode RouteTable, LOADX(%f),GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d),"
+					"ReqLimit(%d),ReqMax(%d),ReqMin(%d),ReqCount(%d),ReqErrMin(%f),ReqExtendRate(%f)"
+					"ReqAll(%d),ReqRej(%d),ReqSuc(%d),ReqErrRet(%d),ReqErrTm(%d),LoadX(%f),OkLoad(%f),DelayLoad(%f),AvgTm(%d),AvgErrRate(%f)",
+					it->first, svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight,
+					stat.mReqCfg.mReqLimit, stat.mReqCfg.mReqMax,stat.mReqCfg.mReqMin, stat.mReqCfg.mReqCount, stat.mReqCfg.mReqErrMin, stat.mReqCfg.mReqExtendRate,
+					stat.mInfo.mReqAll, stat.mInfo.mReqRej, stat.mInfo.mReqSuc, stat.mInfo.mReqErrRet, stat.mInfo.mReqErrTm,
+					stat.mInfo.mLoadX, stat.mInfo.mOkLoad, stat.mInfo.mDelayLoad, stat.mInfo.mAvgTm, stat.mInfo.mAvgErrRate);
+		}
+	}
+    return mStatus;
+}
+
+const wStatus& SvrQos::ReportNode(const struct SvrCaller_t& caller) {
 	if (caller.mCalledGid <= 0 || caller.mCalledXid <= 0 || caller.mPort <= 0 || caller.mHost[0] == 0) {
-		LOG_ERROR(kSvrLog, "SvrQos::CallerNode report failed(caller data illegal), GID(%d),XID(%d),HOST(%s),PORT(%d)",
+		LOG_ERROR(kSvrLog, "SvrQos::ReportNode report failed(caller data illegal), GID(%d),XID(%d),HOST(%s),PORT(%d)",
 				caller.mCalledGid, caller.mCalledXid, caller.mHost, caller.mPort);
 
-		return mStatus = wStatus::IOError("SvrQos::CallerNode failed, caller data illegal", "");
+		return mStatus = wStatus::IOError("SvrQos::ReportNode failed, caller data illegal", "");
 	}
 
 	struct SvrNet_t svr;
 	svr.mGid = caller.mCalledGid;
 	svr.mXid = caller.mCalledXid;
 	svr.mPort = caller.mPort;
-	::memcpy(svr.mHost, caller.mHost, kMaxHost);
+	memcpy(svr.mHost, caller.mHost, kMaxHost);
 
 	int64_t usec = caller.mReqUsetimeUsec;
 	if (caller.mReqUsetimeUsec <= 0) {
 		usec = 1;
 	}
 
-	mMutex.Lock();
 	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
 	MapSvrIt_t mapEndIt = mMapReqSvr.end();
-	mMutex.Unlock();
     if (mapReqIt == mapEndIt) {
-		LOG_ERROR(kSvrLog, "SvrQos::CallerNode report failed(cannot find caller), GID(%d),XID(%d),HOST(%s),PORT(%d)",
+		LOG_ERROR(kSvrLog, "SvrQos::ReportNode report failed(cannot find caller), GID(%d),XID(%d),HOST(%s),PORT(%d)",
 				caller.mCalledGid, caller.mCalledXid, caller.mHost, caller.mPort);
 
-		return mStatus = wStatus::IOError("SvrQos::CallerNode report failed, cannot find caller node from MapReqSvr", "");
+		return mStatus = wStatus::IOError("SvrQos::ReportNode report failed, cannot find caller node from MapReqSvr", "");
     }
 
-    mMutex.Lock();
     struct SvrStat_t* pSvrStat = mapReqIt->second;
     if (caller.mReqRet >= 0) {
     	// 成功
@@ -205,7 +233,6 @@ const wStatus& SvrQos::CallerNode(const struct SvrCaller_t& caller) {
     // 重建route
     struct SvrKind_t kind(svr);
     mStatus = RebuildRoute(kind);
-    mMutex.Unlock();
     return mStatus;
 }
 

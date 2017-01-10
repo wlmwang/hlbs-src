@@ -34,6 +34,7 @@ class SvrQos : private wNoncopyable {
     typedef std::map<struct SvrKind_t, std::list<struct SvrNode_t>* >::iterator MapNodeIt_t;
     typedef std::list<struct SvrNode_t> ListNode_t;
     typedef std::list<struct SvrNode_t>::iterator ListNodeIt_t;
+
 public:
 	~SvrQos();
 	SvrQos() : mRateWeight(7), mDelayWeight(1), mRebuildTm(60), mReqTimeout(500),mAllReqMin(false), mAvgErrRate(0.0) { }
@@ -65,6 +66,8 @@ public:
 protected:
 	friend class AgentConfig;
 
+	// 上报 调用结果
+	const wStatus& ReportNode(const struct SvrCaller_t& caller);
 	// 门限扩张值
 	int32_t GetAddCount(const struct SvrStat_t* stat, int32_t reqCount);
 	// 单次分配路由检查，如果有路由分配产生，则更新相关统计计数

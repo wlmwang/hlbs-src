@@ -16,10 +16,10 @@ int QueryNode(struct SvrNet_t &svr, double timeout, std::string &err) {
 		cmd.mXid = svr.mXid;
 		ssize_t size;
 		// 查询请求
-		if (g_handle.mTask->SyncSend(reinterpret_cast<char*>(&cmd), sizeof(cmd), &size).Ok()) {
+		if (g_handle.mTask->SyncSend(reinterpret_cast<char*>(&cmd), sizeof(struct SvrReqGXid_t), &size).Ok()) {
 			// 接受返回
 			char buff[kPackageSize];
-			if (g_handle.mTask->SyncRecv(buff, &size, timeout).Ok()) {
+			if (g_handle.mTask->SyncRecv(buff, &size, timeout).Ok() && size == sizeof(struct SvrReqGXid_t)) {
 				struct SvrOneRes_t *res = reinterpret_cast<struct SvrOneRes_t*>(buff);
 				if (res->mCode == 0 && res->mNum == 1) {
 					svr.mPort = res->mSvr.mPort;
@@ -55,10 +55,10 @@ int NotifyCallerRes(const struct SvrNet_t &svr, int res, uint64_t usec, std::str
 		cmd.mCaller.mReqCount = 1;
 		ssize_t size;
 		// 上报请求
-		if (g_handle.mTask->SyncSend(reinterpret_cast<char*>(&cmd), sizeof(cmd), &size).Ok()) {
+		if (g_handle.mTask->SyncSend(reinterpret_cast<char*>(&cmd), sizeof(struct SvrReqReport_t), &size).Ok()) {
 			// 接受返回
 			char buff[kPackageSize];
-			if (g_handle.mTask->SyncRecv(buff, &size).Ok()) {
+			if (g_handle.mTask->SyncRecv(buff, &size).Ok() && size = sizeof(struct SvrReqReport_t)) {
 				struct SvrResReport_t *res = reinterpret_cast<struct SvrResReport_t*>(buff);
 				if (res->mCode == 0) {
 					ret = kOk;

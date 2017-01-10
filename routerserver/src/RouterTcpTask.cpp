@@ -16,7 +16,7 @@ RouterTcpTask::RouterTcpTask(wSocket *socket, int32_t type) : wTcpTask(socket, t
 
 // 向单个agent发送init回应
 int RouterTcpTask::InitSvrReq(struct Request_t *request) {
-	RouterConfig* config = Server()->Config<RouterConfig*>();
+	RouterConfig* config = Config<RouterConfig*>();
 
 	struct SvrResInit_t vRRt;
 	// 获取所有节点
@@ -29,7 +29,7 @@ int RouterTcpTask::InitSvrReq(struct Request_t *request) {
 
 // 向单个agent发送reload响应
 int RouterTcpTask::ReloadSvrReq(struct Request_t *request) {
-	RouterConfig* config = Server()->Config<RouterConfig*>();
+	RouterConfig* config = Config<RouterConfig*>();
 
 	// 清除node节点
 	config->Qos()->CleanNode();

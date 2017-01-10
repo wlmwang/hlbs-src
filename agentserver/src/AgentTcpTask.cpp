@@ -16,7 +16,7 @@ AgentTcpTask::AgentTcpTask(wSocket *socket, int32_t type) : wTcpTask(socket, typ
 // 客户端查询请求
 int AgentTcpTask::GetSvrByGXid(struct Request_t *request) {
 	struct SvrReqGXid_t* cmd = reinterpret_cast<struct SvrReqGXid_t*>(request->mBuf);
-	AgentConfig* config = Server()->Config<AgentConfig*>();
+	AgentConfig* config = Config<AgentConfig*>();
 	
 	struct SvrOneRes_t vRRt;
 	vRRt.mSvr.mGid = cmd->mGid;
@@ -27,15 +27,15 @@ int AgentTcpTask::GetSvrByGXid(struct Request_t *request) {
 		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
 	}
 
-	// 同步其他worker进程 TODO
-	// SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrReqGXid_t));
+	// 同步其他worker进程
+	SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrReqGXid_t));
 	return 0;
 }
 
 // 客户端发来上报请求
 int AgentTcpTask::ReportSvr(struct Request_t *request) {
 	struct SvrReqReport_t* cmd = reinterpret_cast<struct SvrReqReport_t*>(request->mBuf);
-	AgentConfig* config = Server()->Config<AgentConfig*>();
+	AgentConfig* config = Config<AgentConfig*>();
 	
 	struct SvrResReport_t vRRt;
 	if (config->Qos()->CallerNode(cmd->mCaller).Ok()) {
@@ -43,7 +43,7 @@ int AgentTcpTask::ReportSvr(struct Request_t *request) {
 		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
 	}
 
-	// 同步其他worker进程 TODO
-	//SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrReqReport_t));
+	// 同步其他worker进程
+	SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrReqReport_t));
 	return 0;
 }
