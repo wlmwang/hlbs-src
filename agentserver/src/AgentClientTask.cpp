@@ -49,7 +49,7 @@ int AgentClientTask::SyncSvrRes(struct Request_t *request) {
 
 	if (cmd->mCode == 0 && cmd->mNum > 0) {
 		for (int32_t i = 0; i < cmd->mNum; i++) {
-			config->Qos()->ModifyNode(cmd->mSvr[i]);
+			config->Qos()->SaveNode(cmd->mSvr[i]);
 		}
 	}
 	return 0;
