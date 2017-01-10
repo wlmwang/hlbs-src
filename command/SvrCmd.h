@@ -55,7 +55,7 @@ public:
 const uint8_t SVR_REQ_GXID = 4;
 struct SvrReqGXid_t : public SvrReqCmd_s {
 public:
-	SvrReqGXid_t() : SvrReqCmd_s(SVR_REQ_GXID), mGid(0), mXid(0) { }
+	SvrReqGXid_t() : SvrReqCmd_s(SVR_REQ_GXID), mGid(0), mXid(0), mPort(0) { }
 
 	int32_t mGid;
 	int32_t mXid;

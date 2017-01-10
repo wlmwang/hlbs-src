@@ -28,7 +28,7 @@ int GetReportSvr() {
 
 int main(int argc, char *argv[]) {
 	int errNum = 0;
-	for (int i = 0; i < 1; i++) {
+	for (int i = 0; i < 1000; i++) {
 		if (GetReportSvr() != kOk) {
 			errNum++;
 		}

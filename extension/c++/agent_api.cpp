@@ -19,9 +19,9 @@ int QueryNode(struct SvrNet_t &svr, double timeout, std::string &err) {
 		if (g_handle.mTask->SyncSend(reinterpret_cast<char*>(&cmd), sizeof(struct SvrReqGXid_t), &size).Ok()) {
 			// 接受返回
 			char buff[kPackageSize];
-			if (g_handle.mTask->SyncRecv(buff, &size, timeout).Ok() && size == sizeof(struct SvrReqGXid_t)) {
+			if (g_handle.mTask->SyncRecv(buff, &size, timeout).Ok() && size == sizeof(struct SvrOneRes_t)) {
 				struct SvrOneRes_t *res = reinterpret_cast<struct SvrOneRes_t*>(buff);
-				if (res->mCode == 0 && res->mNum == 1) {
+				if (res->mCode == 0 && res->mNum == 1 && res->mSvr.mPort > 0) {
 					svr.mPort = res->mSvr.mPort;
 					memcpy(svr.mHost, res->mSvr.mHost, kMaxHost);
 					ret = kOk;
@@ -45,6 +45,7 @@ int QueryNode(struct SvrNet_t &svr, double timeout, std::string &err) {
 int NotifyCallerRes(const struct SvrNet_t &svr, int res, uint64_t usec, std::string &err) {
 	int ret = ConnectAgent();
 	if (ret == kOk && g_handle.mConnecting == true && g_handle.mTask != NULL) {
+		// 上报数据
 		struct SvrReqReport_t cmd;
 		memcpy(cmd.mCaller.mHost, svr.mHost, kMaxHost);
 		cmd.mCaller.mCalledGid = svr.mGid;
@@ -53,12 +54,13 @@ int NotifyCallerRes(const struct SvrNet_t &svr, int res, uint64_t usec, std::str
 		cmd.mCaller.mReqRet = res;
 		cmd.mCaller.mReqUsetimeUsec = usec;
 		cmd.mCaller.mReqCount = 1;
+
 		ssize_t size;
 		// 上报请求
 		if (g_handle.mTask->SyncSend(reinterpret_cast<char*>(&cmd), sizeof(struct SvrReqReport_t), &size).Ok()) {
 			// 接受返回
 			char buff[kPackageSize];
-			if (g_handle.mTask->SyncRecv(buff, &size).Ok() && size = sizeof(struct SvrReqReport_t)) {
+			if (g_handle.mTask->SyncRecv(buff, &size).Ok() && size == sizeof(struct SvrResReport_t)) {
 				struct SvrResReport_t *res = reinterpret_cast<struct SvrResReport_t*>(buff);
 				if (res->mCode == 0) {
 					ret = kOk;

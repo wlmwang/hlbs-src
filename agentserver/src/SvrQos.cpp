@@ -157,7 +157,7 @@ const wStatus& SvrQos::QueryNode(struct SvrNet_t& svr) {
 }
 
 const wStatus& SvrQos::CallerNode(const struct SvrCaller_t& caller) {
-	LOG_DEBUG(kSvrLog, "SvrQos::CallerNode report SvrCaller_t start, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d),ReqRet(%d),ReqCount(%d),ReqUsetimeUsec(%lld)",
+	LOG_DEBUG(kSvrLog, "SvrQos::CallerNode report SvrCaller_t start, GID(%d),XID(%d),HOST(%s),PORT(%d),ReqRet(%d),ReqCount(%d),ReqUsetimeUsec(%lld)",
 			caller.mCalledGid, caller.mCalledXid, caller.mHost, caller.mPort, caller.mReqRet, caller.mReqCount, caller.mReqUsetimeUsec);
 
 	mMutex.Lock();
