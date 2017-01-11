@@ -23,13 +23,17 @@ const wStatus& RouterServer::Run() {
 const wStatus& RouterServer::CheckSvr() {
 	RouterConfig* config = Config<RouterConfig*>();
 
-	if (config->GetMtime()) {
+	if (config->IsModifySvr()) {
 		// 增量下发svr.xml更新配置
-		struct SvrResSync_t sync;
-		if (config->ParseModifySvr(sync.mSvr, &sync.mNum).Ok() && sync.mNum > 0) {
-			sync.mCode = 0;
-			Broadcast(reinterpret_cast<char *>(&sync), sizeof(sync));
-		}
+		int32_t start = 0;
+		struct SvrResSync_t vRRt;
+		do {
+			if (config->ParseModifySvr(vRRt.mSvr, &vRRt.mNum, start, kMaxNum).Ok() && vRRt.mNum > 0) {
+				vRRt.mCode = 0;
+				Broadcast(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
+			}
+			start += vRRt.mNum;
+		} while (vRRt.mNum >= kMaxNum);
 	}
 	return mStatus.Clear();
 }

@@ -18,12 +18,17 @@ RouterTcpTask::RouterTcpTask(wSocket *socket, int32_t type) : wTcpTask(socket, t
 int RouterTcpTask::InitSvrReq(struct Request_t *request) {
 	RouterConfig* config = Config<RouterConfig*>();
 
-	struct SvrResInit_t vRRt;
 	// 获取所有节点
-	if (config->Qos()->GetNodeAll(vRRt.mSvr, &vRRt.mNum).Ok()) {
-		vRRt.mCode = 0;
-		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
-	}
+	int32_t start = 0;
+	ssize_t size;
+	struct SvrResInit_t vRRt;
+	do {
+		if (config->Qos()->GetNodeAll(vRRt.mSvr, &vRRt.mNum, start, kMaxNum).Ok() && vRRt.mNum > 0) {
+			vRRt.mCode = 0;
+			SyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt), &size);
+		}
+		start += vRRt.mNum;
+	} while (vRRt.mNum >= kMaxNum);
 	return 0;
 }
 
@@ -31,14 +36,19 @@ int RouterTcpTask::InitSvrReq(struct Request_t *request) {
 int RouterTcpTask::ReloadSvrReq(struct Request_t *request) {
 	RouterConfig* config = Config<RouterConfig*>();
 
-	// 清除node节点
+	// 重新加载配置
 	config->Qos()->CleanNode();
+	config->ParseSvrConf();
 
+	int32_t start = 0;
+	ssize_t size;
 	struct SvrResReload_t vRRt;
-	// 重新读取svr.xml文件
-	if (config->ParseModifySvr(vRRt.mSvr, &vRRt.mNum).Ok()) {
-		vRRt.mCode = 0;
-		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
-	}
+	do {
+		if (config->Qos()->GetNodeAll(vRRt.mSvr, &vRRt.mNum, start, kMaxNum).Ok() && vRRt.mNum > 0) {
+			vRRt.mCode = 0;
+			SyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt), &size);
+		}
+		start += vRRt.mNum;
+	} while (vRRt.mNum >= kMaxNum);
 	return 0;
 }

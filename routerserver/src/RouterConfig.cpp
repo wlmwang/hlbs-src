@@ -45,7 +45,6 @@ const wStatus& RouterConfig::ParseBaseConf() {
 	} else {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseBaseConf Get SERVER node from conf.xml failed", "");
 	}
-
 	return mStatus.Clear();
 }
 
@@ -70,23 +69,26 @@ const wStatus& RouterConfig::ParseSvrConf() {
 			const char* weight = pChildElm->Attribute("WEIGHT");
 			const char* version = pChildElm->Attribute("VERSION");
 			if (gid != NULL && xid != NULL && host != NULL && port != NULL) {
-
 				struct SvrNet_t svr;
 				svr.mGid = atoi(gid);
 				svr.mXid = atoi(xid);
 				svr.mPort = atoi(port);
 				memcpy(svr.mHost, host, kMaxHost);
-				if (weight != NULL) {
-					svr.mWeight = atoi(weight);
-				}
 				if (version != NULL) {
 					svr.mVersion = atoi(version);
 				}
+				if (weight != NULL) {
+					svr.mWeight = atoi(weight);
+				}
 
-				// 添加配置
-				mSvrQos->SaveNode(svr);
+				// 添加新配置
+				if (svr.mWeight > 0 && !mSvrQos->IsExistNode(svr)) {
+					mSvrQos->SaveNode(svr);
+				} else {
+					LOG_ERROR(kSvrLog, "RouterConfig::ParseSvrConf Parse configure from svr.xml occur error(weight<=0 or exists this SvrNet_t), line : %d", i);
+				}
 			} else {
-				wStatus::InvalidArgument("RouterConfig::ParseSvrConf Parse configure from svr.xml occur error", logging::NumberToString(i));
+				LOG_ERROR(kSvrLog, "RouterConfig::ParseSvrConf Parse configure from svr.xml occur error, line : %d", i);
 			}
 		}
 	} else {
@@ -98,7 +100,7 @@ const wStatus& RouterConfig::ParseSvrConf() {
 	return mStatus.Clear();
 }
 
-const wStatus& RouterConfig::ParseModifySvr(struct SvrNet_t buf[], int32_t* num) {
+const wStatus& RouterConfig::ParseModifySvr(struct SvrNet_t buf[], int32_t* num, int32_t start, int32_t size) {
 	if (!mDoc.LoadFile(mSvrFile.c_str())) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseModifySvr Load configure(svr.xml) file failed", "");
 	}
@@ -112,50 +114,52 @@ const wStatus& RouterConfig::ParseModifySvr(struct SvrNet_t buf[], int32_t* num)
 		int i = 0;
 		*num = 0;
 		for (TiXmlElement* pChildElm = pElement->FirstChildElement(); pChildElm != NULL ; pChildElm = pChildElm->NextSiblingElement(), i++) {
+			if (i < start) {
+				continue;
+			}
 			const char* gid = pChildElm->Attribute("GID");
 			const char* xid = pChildElm->Attribute("XID");
 			const char* host = pChildElm->Attribute("HOST");
 			const char* port = pChildElm->Attribute("PORT");
 			const char* weight = pChildElm->Attribute("WEIGHT");
 			const char* version = pChildElm->Attribute("VERSION");
-
 			if (gid != NULL && xid != NULL && host != NULL && port != NULL) {
-
 				struct SvrNet_t svr;
 				svr.mGid = atoi(gid);
 				svr.mXid = atoi(xid);
 				svr.mPort = atoi(port);
 				memcpy(svr.mHost, host, kMaxHost);
-				if (weight != NULL) {
-					svr.mWeight = atoi(weight);
-				}
 				if (version != NULL) {
 					svr.mVersion = atoi(version);
 				}
-				
-				// 新配置始终下发，旧配置检测到version变化才下发
-				if (mSvrQos->IsExistNode(svr)) {
+				if (weight != NULL) {
+					svr.mWeight = atoi(weight);
+				}
+
+				if (svr.mWeight >= 0 && mSvrQos->IsExistNode(svr)) {
+					// 旧配置检测到version变化才下发
 					if (mSvrQos->IsVerChange(svr)) {
-						// 版本变化，确定下发配置
 						mSvrQos->SaveNode(svr);
 						buf[(*num)++] = svr;
 					}
-				} else {
+				} else if (svr.mWeight >= 0) {
 					// 添加新配置
 					mSvrQos->SaveNode(svr);
 					buf[(*num)++] = svr;
 				}
+
+				if (*num >= size) {
+					break;
+				}
 			} else {
-				wStatus::InvalidArgument("RouterConfig::ParseModifySvr Parse configure from svr.xml occur error", logging::NumberToString(i));
+				LOG_ERROR(kSvrLog, "RouterConfig::ParseModifySvr Parse configure from svr.xml occur error, line : %d", i);
 			}
 		}
-
 		// 记录svr.xml文件更新时间
 		SetMtime();
 	} else {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseModifySvr Get SVRS node from svr.xml failed", "");
 	}
-
 	return mStatus.Clear();
 }
 
@@ -318,7 +322,7 @@ const wStatus& RouterConfig::SetMtime() {
 	return mStatus = wStatus::IOError("RouterConfig::SetMtime svr.xml failed", strerror(errno));
 }
 
-bool RouterConfig::GetMtime() {
+bool RouterConfig::IsModifySvr() {
 	struct stat stBuf;
 	if (stat(mSvrFile.c_str(), &stBuf) == 0 && stBuf.st_mtime > mMtime) {
 		return true;

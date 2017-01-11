@@ -32,6 +32,7 @@ class SvrQos : private wNoncopyable {
     typedef std::map<struct SvrKind_t, std::list<struct SvrNode_t>* >::iterator MapNodeIt_t;
     typedef std::list<struct SvrNode_t> ListNode_t;
     typedef std::list<struct SvrNode_t>::iterator ListNodeIt_t;
+
 public:
 	~SvrQos();
 	SvrQos() : mRateWeight(7), mDelayWeight(1), mRebuildTm(60), mReqTimeout(500),
@@ -43,7 +44,7 @@ public:
 	bool IsVerChange(const struct SvrNet_t& svr);
 
 	// 获取所有节点
-	const wStatus& GetNodeAll(struct SvrNet_t buf[], int32_t* num);
+	const wStatus& GetNodeAll(struct SvrNet_t buf[], int32_t* num, int32_t start, int32_t size);
 	// 保存节点信息
 	const wStatus& SaveNode(const struct SvrNet_t& svr);
 	// 添加新节点&&路由

@@ -132,12 +132,13 @@ const wStatus& SvrQos::DeleteNode(const struct SvrNet_t& svr) {
     return mStatus;
 }
 
-const wStatus& SvrQos::GetNodeAll(struct SvrNet_t buf[], int32_t* num) {
-	LOG_DEBUG(kSvrLog, "SvrQos::GetNodeAll get all SvrNet_t start");
+const wStatus& SvrQos::GetNodeAll(struct SvrNet_t buf[], int32_t* num, int32_t start, int32_t size) {
+	LOG_DEBUG(kSvrLog, "SvrQos::GetNodeAll get all SvrNet_t start, [%d, %d]", start, size);
 
 	mMutex.Lock();
 	*num = 0;
-	for (MapSvrIt_t mapReqIt = mMapReqSvr.begin(); mapReqIt != mMapReqSvr.end(); mapReqIt++) {
+	MapSvrIt_t mapReqIt = mMapReqSvr.begin();
+	for (std::advance(mapReqIt, start); mapReqIt != mMapReqSvr.end() && *num < size; mapReqIt++) {
 		buf[(*num)++] = mapReqIt->first;
 	}
 	mMutex.Unlock();

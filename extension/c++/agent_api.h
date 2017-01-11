@@ -26,10 +26,10 @@ const uint64_t	kAgentTimeout	= 30;
 enum AgentRet_t {
 	kOk = 0,
 	kUnknown = -1,
-	kConnError = -2,
+	kConnError = -2,	// agent gone
 	kSendError = -3,
 	kRecvError = -4,
-	kDataError = -5
+	kDataError = -5		// overload
 };
 
 struct postHandle_t {

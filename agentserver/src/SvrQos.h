@@ -49,7 +49,7 @@ public:
 	// 上报 调用结果
 	const wStatus& CallerNode(const struct SvrCaller_t& caller);
 	// 获取 所有节点
-	const wStatus& GetNodeAll(struct SvrNet_t buf[], int32_t* num);
+	const wStatus& GetNodeAll(struct SvrNet_t buf[], int32_t* num, int32_t start, int32_t size);
 	// 保存 节点信息
 	const wStatus& SaveNode(const struct SvrNet_t& svr);
 	// 添加 新节点&&路由
