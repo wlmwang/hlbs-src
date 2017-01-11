@@ -39,7 +39,9 @@ public:
     int32_t 	mPre;			// 预取数
     int32_t 	mExpired;		// 过期时间
 
-    SvrNet_t() : mGid(0), mXid(0), mWeight(kInitWeight), mVersion(0), mPort(0), mPre(0), mExpired(0)  { }
+    SvrNet_t() : mGid(0), mXid(0), mWeight(kInitWeight), mVersion(0), mPort(0), mPre(0), mExpired(0)  {
+    	memset(mHost, 0, kMaxHost);
+    }
 
 	SvrNet_t(const SvrNet_t& other) {
 		mGid = other.mGid;
@@ -112,7 +114,9 @@ public:
 	int32_t mTid;			// 进程id（为实现）
 	
 	SvrCaller_t() : mCallerGid(0), mCallerXid(0), mCalledGid(0), mCalledXid(0), mPort(0),
-			mReqRet(0), mReqCount(0), mReqUsetimeUsec(0), mTid(0) { }
+			mReqRet(0), mReqCount(0), mReqUsetimeUsec(0), mTid(0) {
+		memset(mHost, 0, kMaxHost);
+	}
 
 	bool operator==(const SvrCaller_t &other) const {
         if (mCallerGid != other.mCallerGid) {
