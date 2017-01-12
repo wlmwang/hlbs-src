@@ -261,7 +261,7 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 
 		LOG_ERROR(kSvrLog, "SvrQos::GetRouteNode get failed(the SvrNet_t not exists from mRouteTable), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
-		// todo
+		// TODO
 		// 路由不存在
 		// 反向注册路由
 		return mStatus;
@@ -278,46 +278,62 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 		return mStatus = wStatus::IOError("SvrQos::GetRouteNode failed, empty table", "");
 	}
 
-    // 已分配到第几个路由
-	int32_t iIndex = stKind.mPindex;
-	if (iIndex >= static_cast<int32_t>(pTable->size())) {
-		stKind.mPindex = iIndex = 0;
-	}
-
 	MultiMapNodeIt_t it = pTable->begin();
+
+	// 已分配到第几个路由
+	int32_t index = stKind.mPindex;
+	if (index >= static_cast<int32_t>(pTable->size())) {
+		stKind.mPindex = index = 0;
+	}
 
 	// 此次WRR轮转的负载分配限度（首节点的 mKey = mLoadX 是最小值）
 	double firstReq = it->second.mKey * it->second.mStat->mInfo.mPreAll;
 	bool firstSvr = false;
 
-	std::advance(it, iIndex);
+	if (svr.mPort <= 0 || svr.mHost[0] == 0) {
+		// 择优获取路由
+		std::advance(it, index);
+		if (index != 0) {
+			double dCurAdjReq = it->second.mKey * it->second.mStat->mInfo.mPreAll;
 
-	if (iIndex != 0) {
-		double dCurAdjReq = it->second.mKey * it->second.mStat->mInfo.mPreAll;
+			// 此处采用round_robin的经典算法，获得目标路由
+			// 如果不是第一个路由,  获得比第一个路由的负载更低的路由
+			while (dCurAdjReq >= firstReq) {
+				do {
+					++index;
+					it = pTable->begin();
+					if (index >= static_cast<int32_t>(pTable->size())) {
+						stKind.mPindex = index = 0;
+						break;
+					}
+					std::advance(it, index);
+				} while (it->second.mStat->mInfo.mOffSide == 1);
 
-		// 此处采用round_robin的经典算法，获得目标路由
-		// 如果不是第一个路由,  获得比第一个路由的负载更低的路由
-		while (dCurAdjReq >= firstReq) {
-			do {
-				++iIndex;
-				it = pTable->begin();
-				if (iIndex >= static_cast<int32_t>(pTable->size())) {
-					stKind.mPindex = iIndex = 0;
+				if (index == 0) {
 					break;
 				}
-				std::advance(it, iIndex);
-			} while (it->second.mStat->mInfo.mOffSide == 1);
-
-			if (iIndex == 0) {
+				dCurAdjReq = it->second.mKey * it->second.mStat->mInfo.mPreAll;
+				stKind.mPindex = index;
+			}
+		}
+	} else {
+		// 获取固定路由
+		for (index = 0; it != it.end(); it++, index++) {
+			if (it->second.mNet == svr) {
 				break;
 			}
-			dCurAdjReq = it->second.mKey * it->second.mStat->mInfo.mPreAll;
-			stKind.mPindex = iIndex;
+		}
+		// TODO
+		if (index >= static_cast<int32_t>(pTable->size())) {
+			LOG_ERROR(kSvrLog, "SvrQos::GetRouteNode get failed(the SvrNet_t invalid), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+					svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
+
+			return mStatus = wStatus::IOError("SvrQos::GetRouteNode get failed, the SvrNet_t invalid", "");
 		}
 	}
 
 	// 未找到合适节点 或 第一个节点即为合适节点
-	if (iIndex == 0) {
+	if (index == 0) {
 		firstSvr = true;
 	}
 
@@ -329,17 +345,17 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
     // 检测分配路由，如果有路由分配产生，则更新相关统计计数
     int ret;
 	while ((ret = RouteCheck(it->second.mStat, svr, firstReq, firstSvr)) != 0) {
-		iIndex++;
+		index++;
 		firstSvr = false;
-		if (iIndex >= static_cast<int32_t>(pTable->size())) {
-			iIndex = 0;
+		if (index >= static_cast<int32_t>(pTable->size())) {
+			index = 0;
 			firstSvr = true;
 		}
 
-		if (iIndex == stKind.mPindex) {
+		if (index == stKind.mPindex) {
 			// 一个轮回
 			it = pTable->begin();
-			std::advance(it, iIndex);
+			std::advance(it, index);
 
             if (ret == -2) {
             	memcpy(svr.mHost, it->second.mNet.mHost, sizeof(svr.mHost));
@@ -359,7 +375,7 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 		}
 
 		it = pTable->begin();
-		std::advance(it, iIndex);
+		std::advance(it, index);
 		memcpy(svr.mHost, it->second.mNet.mHost, sizeof(svr.mHost));
 		svr.mPort = it->second.mNet.mPort;
 		svr.mWeight = it->second.mNet.mWeight;
@@ -373,12 +389,12 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 	if (pTable->begin() == it) {
 		it++;
 		if (it != pTable->end() && (it->second.mStat->mInfo.mPreAll * it->second.mKey < firstReq)) {
-			if ((iIndex + 1) < static_cast<int32_t>(pTable->size())) {
-				iIndex++;
+			if ((index + 1) < static_cast<int32_t>(pTable->size())) {
+				index++;
 			} else {
-				iIndex = 0;
+				index = 0;
 			}
-			stKind.mPindex = iIndex;
+			stKind.mPindex = index;
 		}
 		return mStatus.Clear();
 	}
@@ -386,8 +402,8 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
     // 如果不是第一个路由,  若负载比第一个路由大，滚动到下一个路由
 	firstReq = pTable->begin()->second.mKey * pTable->begin()->second.mStat->mInfo.mPreAll;
 	if (it->second.mStat->mInfo.mPreAll * it->second.mKey >= firstReq) {
-		if ((iIndex + 1) < static_cast<int32_t>(pTable->size())) {
-			stKind.mPindex = iIndex + 1;
+		if ((index + 1) < static_cast<int32_t>(pTable->size())) {
+			stKind.mPindex = index + 1;
 		} else {
 			stKind.mPindex = 0;
 		}

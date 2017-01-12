@@ -26,6 +26,8 @@ int AgentTcpTask::GetSvrByGXid(struct Request_t *request) {
 		vRRt.mNum = 1;
 		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
 		// 同步其他worker进程
+		memcpy(cmd->mHost, vRRt.mSvr.mHost, kMaxHost);
+		cmd->mPort = vRRt.mSvr.mPort;
 		SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrReqGXid_t));
 	} else {
 		vRRt.mCode = -1;
