@@ -20,10 +20,11 @@ int AgentChannelTask::GetSvrByGXid(struct Request_t *request) {
 
 	vRRt.mSvr.mGid = cmd->mGid;
 	vRRt.mSvr.mXid = cmd->mXid;
-	if (config->Qos()->QueryNode(vRRt.mSvr).Ok()) {
-		vRRt.mCode = 0;
-		vRRt.mNum = 1;
+	if (cmd->mPort > 0 && cmd->mHost[0] != 0) {
+		memcpy(vRRt.mSvr.mHost, cmd->mHost, kMaxHost);
+		vRRt.mSvr.mPort = cmd->mPort;
 	}
+	config->Qos()->QueryNode(vRRt.mSvr);
 	return 0;
 }
 
@@ -32,8 +33,6 @@ int AgentChannelTask::ReportSvr(struct Request_t *request) {
 	AgentConfig* config = Config<AgentConfig*>();
 
 	struct SvrResReport_t vRRt;
-	if (config->Qos()->CallerNode(cmd->mCaller).Ok()) {
-		vRRt.mCode = 0;
-	}
+	config->Qos()->CallerNode(cmd->mCaller);
 	return 0;
 }

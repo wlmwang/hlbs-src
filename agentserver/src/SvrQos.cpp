@@ -270,19 +270,19 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 	struct SvrKind_t& stKind = const_cast<struct SvrKind_t&>(rtIt->first);
     stKind.mAccess64tm = misc::GetTimeofday();
 
-	MultiMapNode_t* pTable = rtIt->second;
-	if (pTable == NULL || pTable->empty()) {
+	MultiMapNode_t* table = rtIt->second;
+	if (table == NULL || table->empty()) {
 		LOG_ERROR(kSvrLog, "SvrQos::GetRouteNode get failed(the SvrNet_t not exists(empty table)), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
 		return mStatus = wStatus::IOError("SvrQos::GetRouteNode failed, empty table", "");
 	}
 
-	MultiMapNodeIt_t it = pTable->begin();
+	MultiMapNodeIt_t it = table->begin();
 
 	// 已分配到第几个路由
 	int32_t index = stKind.mPindex;
-	if (index >= static_cast<int32_t>(pTable->size())) {
+	if (index >= static_cast<int32_t>(table->size())) {
 		stKind.mPindex = index = 0;
 	}
 
@@ -301,8 +301,8 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 			while (dCurAdjReq >= firstReq) {
 				do {
 					++index;
-					it = pTable->begin();
-					if (index >= static_cast<int32_t>(pTable->size())) {
+					it = table->begin();
+					if (index >= static_cast<int32_t>(table->size())) {
 						stKind.mPindex = index = 0;
 						break;
 					}
@@ -318,17 +318,16 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 		}
 	} else {
 		// 获取固定路由
-		for (index = 0; it != it.end(); it++, index++) {
+		for (index = 0; it != table->end(); index++,it++) {
 			if (it->second.mNet == svr) {
 				break;
 			}
 		}
-		// TODO
-		if (index >= static_cast<int32_t>(pTable->size())) {
-			LOG_ERROR(kSvrLog, "SvrQos::GetRouteNode get failed(the SvrNet_t invalid), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		if (index >= static_cast<int32_t>(table->size())) {
+			LOG_ERROR(kSvrLog, "SvrQos::GetRouteNode get failed(the SvrNet_t not found), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 					svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
-			return mStatus = wStatus::IOError("SvrQos::GetRouteNode get failed, the SvrNet_t invalid", "");
+			return mStatus = wStatus::IOError("SvrQos::GetRouteNode get failed, the SvrNet_t not found", "");
 		}
 	}
 
@@ -347,14 +346,14 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 	while ((ret = RouteCheck(it->second.mStat, svr, firstReq, firstSvr)) != 0) {
 		index++;
 		firstSvr = false;
-		if (index >= static_cast<int32_t>(pTable->size())) {
+		if (index >= static_cast<int32_t>(table->size())) {
 			index = 0;
 			firstSvr = true;
 		}
 
 		if (index == stKind.mPindex) {
 			// 一个轮回
-			it = pTable->begin();
+			it = table->begin();
 			std::advance(it, index);
 
             if (ret == -2) {
@@ -374,7 +373,7 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
             }
 		}
 
-		it = pTable->begin();
+		it = table->begin();
 		std::advance(it, index);
 		memcpy(svr.mHost, it->second.mNet.mHost, sizeof(svr.mHost));
 		svr.mPort = it->second.mNet.mPort;
@@ -386,10 +385,10 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 	svr.mExpired = tm + stKind.mRebuildTm - (tm - stKind.mPtm);
 
 	// 如果是第一个路由, 获取负载更低的路由（探测下一个路由）
-	if (pTable->begin() == it) {
+	if (table->begin() == it) {
 		it++;
-		if (it != pTable->end() && (it->second.mStat->mInfo.mPreAll * it->second.mKey < firstReq)) {
-			if ((index + 1) < static_cast<int32_t>(pTable->size())) {
+		if (it != table->end() && (it->second.mStat->mInfo.mPreAll * it->second.mKey < firstReq)) {
+			if ((index + 1) < static_cast<int32_t>(table->size())) {
 				index++;
 			} else {
 				index = 0;
@@ -400,9 +399,9 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 	}
 
     // 如果不是第一个路由,  若负载比第一个路由大，滚动到下一个路由
-	firstReq = pTable->begin()->second.mKey * pTable->begin()->second.mStat->mInfo.mPreAll;
+	firstReq = table->begin()->second.mKey * table->begin()->second.mStat->mInfo.mPreAll;
 	if (it->second.mStat->mInfo.mPreAll * it->second.mKey >= firstReq) {
-		if ((index + 1) < static_cast<int32_t>(pTable->size())) {
+		if ((index + 1) < static_cast<int32_t>(table->size())) {
 			stKind.mPindex = index + 1;
 		} else {
 			stKind.mPindex = 0;

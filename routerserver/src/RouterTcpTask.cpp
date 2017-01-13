@@ -20,11 +20,12 @@ int RouterTcpTask::InitSvrReq(struct Request_t *request) {
 
 	// 获取所有节点
 	int32_t start = 0;
+	ssize_t size;
 	struct SvrResInit_t vRRt;
 	do {
 		if (config->Qos()->GetNodeAll(vRRt.mSvr, &vRRt.mNum, start, kMaxNum).Ok() && vRRt.mNum > 0) {
 			vRRt.mCode = 0;
-			AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
+			SyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt), &size);
 		}
 		start += vRRt.mNum;
 	} while (vRRt.mNum >= kMaxNum);
@@ -40,11 +41,12 @@ int RouterTcpTask::ReloadSvrReq(struct Request_t *request) {
 	config->ParseSvrConf();
 
 	int32_t start = 0;
+	ssize_t size;
 	struct SvrResReload_t vRRt;
 	do {
 		if (config->Qos()->GetNodeAll(vRRt.mSvr, &vRRt.mNum, start, kMaxNum).Ok() && vRRt.mNum > 0) {
 			vRRt.mCode = 0;
-			AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
+			SyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt), &size);
 		}
 		start += vRRt.mNum;
 	} while (vRRt.mNum >= kMaxNum);
