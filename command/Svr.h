@@ -15,7 +15,7 @@ const char kSvrLog[] = "../log/svr.log";
 const int8_t	kMaxHost	= 16;
 
 // 每次请求svr最多个数
-const int32_t	kMaxNum		= 64;
+const int32_t	kMaxNum		= 32;
 
 const int32_t	kInitWeight = 100;
 const int32_t	kMaxWeight	= 1000;
