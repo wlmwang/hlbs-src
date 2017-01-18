@@ -94,7 +94,7 @@ int ConnectAgent() {
 	} else if (kAgentSocket == 1) {
 		SAFE_NEW(wTcpSocket(kStConnect), sock);
 	} else if (kAgentSocket == 2) {
-		//SAFE_NEW(wUdpSocket(kStConnect), sock);
+		SAFE_NEW(wUdpSocket(kStConnect), sock);
 	} else {
 		return kUnknown;
 	}

@@ -46,10 +46,12 @@ const wStatus& AgentConfig::ParseBaseConf() {
 		const char* host = pElement->Attribute("HOST");
 		const char* port = pElement->Attribute("PORT");
 		const char* worker = pElement->Attribute("WORKER");
+		const char* protocol = pElement->Attribute("PROTOCOL");
 		if (host != NULL && port != NULL) {
 			SetStrConf("host", host);
 			SetIntConf("port", atoi(port));
 			SetIntConf("worker", atoi(worker));
+			SetStrConf("protocol", protocol);
 		} else {
 			return mStatus = wStatus::InvalidArgument("AgentConfig::ParseBaseConf Get SERVER host or port from conf.xml failed", "");
 		}
