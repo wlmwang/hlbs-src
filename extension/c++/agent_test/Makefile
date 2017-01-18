@@ -21,20 +21,20 @@ LIBFLAGS	:= -L${DIR_LIB} -lpthread -lprotobuf -ltinyxml -lhnet
 
 # 主目录,message,command目录
 DIR_SRC		:= ./
-DIR_MSG		:= ../../message/
-DIR_CMD		:= ../../command/
+DIR_MSG		:= ../common/
+DIR_CMD		:= ../../../command/
 
 # 头文件
 INCFLAGS	:= -I${DIR_INC} -I${DIR_SRC} -I${DIR_MSG} -I${DIR_CMD}
 
 # 源文件
 CPP_SRC	:= $(wildcard ${DIR_SRC}*.cpp)
-CC_SRC	:= $(wildcard ${DIR_MSG}*.cc)
+CC_SRC	:= $(wildcard ${DIR_MSG}*.cpp)
 
 # 编译文件
-OBJ		:= $(patsubst %.cpp, ${DIR_SRC}%.o, $(notdir ${CPP_SRC})) $(patsubst %.cc, ${DIR_SRC}%.o, $(notdir ${CC_SRC}))
+OBJ		:= $(patsubst %.cpp, ${DIR_SRC}%.o, $(notdir ${CPP_SRC})) $(patsubst %.cpp, ${DIR_SRC}%.o, $(notdir ${CC_SRC}))
 
-TARGET	:= agent_test
+TARGET	:= test
 
 .PHONY:all clean install
 
@@ -44,6 +44,9 @@ $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBFLAGS) $(LDFLAGS)
 
 $(DIR_SRC)%.o:${DIR_SRC}%.cpp
+	$(CC) $(CFLAGS) $(INCFLAGS) -c $< -o $@
+
+$(DIR_SRC)%.o:${DIR_MSG}%.cpp
 	$(CC) $(CFLAGS) $(INCFLAGS) -c $< -o $@
 
 $(DIR_SRC)%.o:${DIR_MSG}%.cc

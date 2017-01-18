@@ -4,7 +4,7 @@
 extern zend_module_entry hlbs_module_entry;
 #define phpext_hlbs_ptr &hlbs_module_entry
 
-#define PHP_HLBS_VERSION "0.1.0" /* Replace with version number for your extension */
+#define PHP_HLBS_VERSION "2.3.0" /* Replace with version number for your extension */
 
 #ifdef PHP_WIN32
 #	define PHP_HLBS_API __declspec(dllexport)
@@ -31,7 +31,6 @@ PHP_MINFO_FUNCTION(hlbs);
 //modify
 PHP_FUNCTION(hlbs_query_svr);
 PHP_FUNCTION(hlbs_notify_res);
-PHP_FUNCTION(hlbs_notify_num);
 
 /* 
   	Declare any global variables you may need between the BEGIN

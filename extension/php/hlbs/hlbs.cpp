@@ -47,7 +47,6 @@ extern "C" {
 const zend_function_entry hlbs_functions[] = {
 	PHP_FE(hlbs_query_svr,	NULL)
 	PHP_FE(hlbs_notify_res,	NULL)
-	PHP_FE(hlbs_notify_num,	NULL)
 	PHP_FE_END
 };
 
@@ -78,20 +77,6 @@ ZEND_GET_MODULE(hlbs)
 END_EXTERN_C()
 #endif
 
-/*
-//modify
-PHP_MINIT_FUNCTION(hlbs)
-{
-	ConnectAgent();	//连接agent
-}
-
-//modify
-PHP_MSHUTDOWN_FUNCTION(hlbs)
-{
-	CloseAgent();	//连接agent
-}
-*/
-
 //modify
 PHP_MINFO_FUNCTION(hlbs)
 {
@@ -118,7 +103,6 @@ PHP_FUNCTION(hlbs_query_svr)
 	zval *pSvrParam;		//路由zval（参数）
     zval **zvalGid;			//gid zval
     zval **zvalXid;			//xid zval
-	//zval **zval_key;
 	
     HashTable	*pHTSvrReq;	//路由hash
 
@@ -182,7 +166,6 @@ PHP_FUNCTION(hlbs_notify_res)
     zval **zvalXid;			//xid zval
     zval **zvalHost;		//host zval
     zval **zvalPort;		//port zval
-	//zval **zval_key;		//key zval（xid、key都可索引 特定类别服务）
 		
     HashTable	*pHTSvrReq;	//路由hash
 
@@ -244,16 +227,3 @@ PHP_FUNCTION(hlbs_notify_res)
 		RETURN_LONG(iRet);
 	}
 }
-
-PHP_FUNCTION(hlbs_notify_num)
-{
-	int argc = ZEND_NUM_ARGS();
-	long gid;
-	long xid;
-
-	if (zend_parse_parameters(argc TSRMLS_CC, "ll", &gid, &xid) == FAILURE) 
-		return;
-
-	php_error(E_WARNING, "hlbs_notify_num: not yet implemented");
-}
-
