@@ -55,7 +55,7 @@ pid_t SpawnProcess(int i, int request) {
 int main(int argc, char *argv[]) {
 	int64_t start_usec = misc::GetTimeofday();
 
-	const int request = 10000;
+	const int request = 2000;
 	const int worker = 10;
 	pid_t process[worker];
 
