@@ -28,7 +28,7 @@ const uint8_t	kAgentSocket	= 0;
 const char		kAgentHost[]	= "/var/run/hlbs.sock";
 const uint16_t	kAgentPort		= 0;
 
-const uint64_t	kAgentTimeout	= 30;
+const uint64_t	kAgentTimeout	= 10;
 
 enum AgentRet_t {
 	kOk = 0,

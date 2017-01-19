@@ -15,8 +15,13 @@ int GetReportSvr() {
 	std::string s;
 	int ret = QueryNode(svr, 30, s);
 
+	std::cout << "ret:" << ret << std::endl;
+	std::cout << "host:" << svr.mHost << std::endl;
+	std::cout << "port:" << svr.mPort << std::endl;
+
 	if (ret == kOk)	{
 		ret = NotifyCallerRes(svr, 0, 2000, s);
+		std::cout << "ret:" << ret << std::endl;
 		return ret;
 	}
 	return ret;

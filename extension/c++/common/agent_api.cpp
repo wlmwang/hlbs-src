@@ -19,7 +19,7 @@ int QueryNode(struct SvrNet_t &svr, double timeout, std::string &err) {
 		if (g_handle.mTask->SyncSend(reinterpret_cast<char*>(&cmd), sizeof(struct SvrReqGXid_t), &size).Ok()) {
 			// 接受返回
 			char buff[kPackageSize];
-			if (g_handle.mTask->SyncRecv(buff, &size, timeout).Ok() && size == sizeof(struct SvrOneRes_t)) {
+			if (g_handle.mTask->SyncRecv(buff, &size, timeout>0? timeout: kAgentTimeout).Ok() && size == sizeof(struct SvrOneRes_t)) {
 				struct SvrOneRes_t *res = reinterpret_cast<struct SvrOneRes_t*>(buff);
 				if (res->mCode == 0 && res->mNum == 1 && res->mSvr.mPort > 0) {
 					svr.mPort = res->mSvr.mPort;
@@ -60,7 +60,7 @@ int NotifyCallerRes(const struct SvrNet_t &svr, int res, uint64_t usec, std::str
 		if (g_handle.mTask->SyncSend(reinterpret_cast<char*>(&cmd), sizeof(struct SvrReqReport_t), &size).Ok()) {
 			// 接受返回
 			char buff[kPackageSize];
-			if (g_handle.mTask->SyncRecv(buff, &size).Ok() && size == sizeof(struct SvrResReport_t)) {
+			if (g_handle.mTask->SyncRecv(buff, &size, kAgentTimeout).Ok() && size == sizeof(struct SvrResReport_t)) {
 				struct SvrResReport_t *res = reinterpret_cast<struct SvrResReport_t*>(buff);
 				if (res->mCode == 0) {
 					ret = kOk;
@@ -88,7 +88,7 @@ int ConnectAgent() {
 	}
 	CloseAgent();
 	
-	wSocket *sock;
+	wSocket *sock = NULL;
 	if (kAgentSocket == 0) {
 		SAFE_NEW(wUnixSocket(kStConnect), sock);
 	} else if (kAgentSocket == 1) {
@@ -99,16 +99,15 @@ int ConnectAgent() {
 		return kUnknown;
 	}
 	
-	if (sock->Open().Ok()) {
+	if (sock && sock->Open().Ok()) {
 		int64_t ret;
+		SAFE_NEW(wTask(sock), g_handle.mTask);
 		if (sock->Connect(&ret, kAgentHost, kAgentPort, kAgentTimeout).Ok()) {
 			g_handle.mConnecting = true;
-			SAFE_NEW(wTask(sock), g_handle.mTask);
 			return kOk;
 		}
 	}
 	CloseAgent();
-
 	return kConnError;
 }
 

@@ -13,7 +13,7 @@ int GetReportSvr() {
 	svr.mXid = 2;
 
 	std::string s;
-	int ret = QueryNode(svr, 30, s);
+	int ret = QueryNode(svr, 10, s);
 
 	std::cout << "ret:" << ret << std::endl;
 	std::cout << "host:" << svr.mHost << std::endl;
@@ -30,7 +30,7 @@ int GetReportSvr() {
 int main(int argc, char *argv[]) {
 	int64_t start_usec = misc::GetTimeofday();
 
-	int number = 5, errNum = 0;
+	int number = 1000, errNum = 0;
 	for (int i = 0; i < number; i++) {
 		if (GetReportSvr() != kOk) {
 			errNum++;
