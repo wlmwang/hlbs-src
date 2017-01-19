@@ -88,7 +88,7 @@ int ConnectAgent() {
 	}
 	CloseAgent();
 	
-	wSocket *sock = NULL;
+	wSocket *sock;
 	if (kAgentSocket == 0) {
 		SAFE_NEW(wUnixSocket(kStConnect), sock);
 	} else if (kAgentSocket == 1) {
@@ -96,7 +96,7 @@ int ConnectAgent() {
 	} else if (kAgentSocket == 2) {
 		SAFE_NEW(wUdpSocket(kStConnect), sock);
 	} else {
-		return kUnknown;
+		sock = NULL;
 	}
 	
 	if (sock && sock->Open().Ok()) {
@@ -114,9 +114,5 @@ int ConnectAgent() {
 int CloseAgent() {
 	SAFE_DELETE(g_handle.mTask);
 	g_handle.mConnecting = false;
-	return kOk;
-}
-
-int NotifyCallerNum(const struct SvrNet_t &svr, int reqCount) {
 	return kOk;
 }
