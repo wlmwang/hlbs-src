@@ -4,6 +4,8 @@
  * Copyright (C) Hupu, Inc.
  */
 
+#include <vector>
+#include <algorithm>
 #include "wMisc.h"
 #include "agent_api.h"
 
@@ -15,13 +17,8 @@ int GetReportSvr() {
 	std::string s;
 	int ret = QueryNode(svr, 30, s);
 
-	std::cout << "ret:" << ret << std::endl;
-	std::cout << "host:" << svr.mHost << std::endl;
-	std::cout << "port:" << svr.mPort << std::endl;
-
 	if (ret == kOk)	{
 		ret = NotifyCallerRes(svr, 0, 2000, s);
-		std::cout << "ret:" << ret << std::endl;
 		return ret;
 	}
 	return ret;
@@ -30,16 +27,18 @@ int GetReportSvr() {
 void Handle(int i, int request) {
 	int64_t start_usec = misc::GetTimeofday();
 
-	int errNum = 0;
+	int num = 0;
 	for (int i = 0; i < request; i++) {
 		if (GetReportSvr() != kOk) {
-			errNum++;
+			num++;
 		}
 	}
-	int64_t total_usec = (misc::GetTimeofday() - start_usec)/1000000;
-	std::cout << i << ":error:" << errNum << std::endl;
-	std::cout << i << ":second:" << total_usec << std::endl;
-	exit(errNum);
+
+	int64_t total_usec = misc::GetTimeofday() - start_usec;
+	std::cout << i << "[error]	: " << num << std::endl;
+	std::cout << i << "[second]	: " << total_usec << "us" << std::endl;
+
+	exit(num);
 }
 
 pid_t SpawnProcess(int i, int request) {
@@ -47,7 +46,7 @@ pid_t SpawnProcess(int i, int request) {
 
 	switch (pid) {
 	case -1:
-		assert("error child");
+		exit(-1);
 		break;
 
 	case 0:
@@ -58,33 +57,48 @@ pid_t SpawnProcess(int i, int request) {
 }
 
 int main(int argc, char *argv[]) {
+	// 开始微妙时间
 	int64_t start_usec = misc::GetTimeofday();
 
-	const int request = 2000;
 	const int worker = 10;
-	pid_t process[worker];
+	const int request = 10000;
 
 	// 创建进程
+	std::vector<pid_t> process(worker);
 	for (int i = 0; i < worker; i++) {
 		pid_t pid = SpawnProcess(i, request);
-		std::cout << "fork children:" << i << "|" << pid << std::endl;
 		if (pid > 0) {
+			std::cout << "fork children:" << i << "|" << pid << std::endl;
 			process[i] = pid;
 		}
 	}
 
+	int error = 0;
+
 	// 回收进程
-	int status, ret;
-	for (int i = 0; i < worker; i++) {
-		std::cout << "wait children:" << i << "|" << process[i] << std::endl;
-		if (process[i] > 0) {
-			ret = waitpid(process[i], &status, 0);
+	int status;
+	while (!process.empty()) {
+		pid_t pid = wait(&status);
+
+		// 是否有错误请求
+		if (WIFEXITED(status) != 0) {
+			if (WEXITSTATUS(status) > 0) {
+				error += WEXITSTATUS(status);
+			}
 		}
-		process[i] = -1;
+
+		std::vector<pid_t>::iterator it = std::find(process.begin(), process.end(), pid);
+		if (it != process.end()) {
+			std::cout << "recycle children:" << pid << std::endl;
+			process.erase(it);
+		}
 	}
 
 	int64_t total_usec = (misc::GetTimeofday() - start_usec)/1000000;
-	std::cout << "[second]:" << total_usec << std::endl;
-	std::cout << "[quest per second]:" << request*worker/total_usec << std::endl;
+
+	std::cout << "[error]	: " << error << std::endl;
+	std::cout << "[success]	: " << request*worker - error << std::endl;
+	std::cout << "[second]	: " << total_usec << "s" << std::endl;
+	std::cout << "[qps]		: " << request*worker/total_usec << "req/s" << std::endl;
 	return 0;
 }
