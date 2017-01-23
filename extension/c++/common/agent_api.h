@@ -18,18 +18,18 @@
 
 using namespace hnet;
 
+const uint64_t	kAgentTimeout	= 10;
+
 // 0:"UNIX"  1:"TCP" 2:"UDP"
-/*
 const uint8_t	kAgentSocket	= 0;
 const char		kAgentHost[]	= "/var/run/hlbs.sock";
 const uint16_t	kAgentPort		= 0;
-*/
 
+/**
 const uint8_t	kAgentSocket	= 1;
 const char		kAgentHost[]	= "127.0.0.1";
 const uint16_t	kAgentPort		= 10007;
-
-const uint64_t	kAgentTimeout	= 10;
+*/
 
 enum AgentRet_t {
 	kOk = 0,

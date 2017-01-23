@@ -30,15 +30,17 @@ int GetReportSvr() {
 int main(int argc, char *argv[]) {
 	int64_t start_usec = misc::GetTimeofday();
 
-	int number = 1000, errNum = 0;
-	for (int i = 0; i < number; i++) {
+	int request = 5000, err = 0;
+	for (int i = 0; i < request; i++) {
 		if (GetReportSvr() != kOk) {
-			errNum++;
+			err++;
 		}
 	}
-	int64_t total_usec = (misc::GetTimeofday() - start_usec);
+	int64_t total_usec = (misc::GetTimeofday() - start_usec)/1000000;
 
-	std::cout << "error:" << errNum << std::endl;
-	std::cout << "second:" << total_usec << std::endl;
+	std::cout << "[error]	:	" << err << std::endl;
+	std::cout << "[success]	:	" << request - err << std::endl;
+	std::cout << "[second]	:	" << total_usec << std::endl;
+	std::cout << "[qps]		:	" << request/total_usec << "req/s" << std::endl;
 	return 0;
 }

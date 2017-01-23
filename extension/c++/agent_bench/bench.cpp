@@ -35,8 +35,8 @@ void Handle(int i, int request) {
 	}
 
 	int64_t total_usec = misc::GetTimeofday() - start_usec;
-	std::cout << i << "[error]	: " << num << std::endl;
-	std::cout << i << "[second]	: " << total_usec << "us" << std::endl;
+	std::cout << getpid() << "|" << "[error]	: " << num << std::endl;
+	std::cout << getpid() << "|" << "[second]	: " << total_usec << "us" << std::endl;
 
 	exit(num);
 }
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 	int64_t start_usec = misc::GetTimeofday();
 
 	const int worker = 10;
-	const int request = 10000;
+	const int request = 5000;
 
 	// 创建进程
 	std::vector<pid_t> process(worker);
@@ -96,9 +96,9 @@ int main(int argc, char *argv[]) {
 
 	int64_t total_usec = (misc::GetTimeofday() - start_usec)/1000000;
 
-	std::cout << "[error]	: " << error << std::endl;
-	std::cout << "[success]	: " << request*worker - error << std::endl;
-	std::cout << "[second]	: " << total_usec << "s" << std::endl;
-	std::cout << "[qps]		: " << request*worker/total_usec << "req/s" << std::endl;
+	std::cout << "[error]	:	" << error << std::endl;
+	std::cout << "[success]	:	" << request*worker - error << std::endl;
+	std::cout << "[second]	:	" << total_usec << "s" << std::endl;
+	std::cout << "[qps]		:	" << request*worker/total_usec << "req/s" << std::endl;
 	return 0;
 }
