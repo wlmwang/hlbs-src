@@ -12,7 +12,7 @@
 int GetReportSvr() {
 	struct SvrNet_t svr;
 	svr.mGid = 1;
-	svr.mXid = 2;
+	svr.mXid = 1;
 
 	std::string s;
 	int ret = QueryNode(svr, 30, s);

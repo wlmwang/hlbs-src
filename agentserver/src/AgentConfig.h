@@ -13,7 +13,6 @@
 #include "wConfig.h"
 #include "tinyxml.h"
 #include "SvrQos.h"
-#include "DetectThread.h"
 
 using namespace hnet;
 
@@ -26,14 +25,11 @@ public:
 	const wStatus& ParseRouterConf();
 	const wStatus& ParseQosConf();
 
-	const wStatus& StartDetectThread();
-
 	SvrQos* Qos() { return mSvrQos;}
-	DetectThread* Detect() { return mDetectThread;}
 
 protected:
 	SvrQos* mSvrQos;
-	DetectThread* mDetectThread;
+
 	TiXmlDocument mDoc;
 	std::string mRouterFile;
 	std::string mQosFile;

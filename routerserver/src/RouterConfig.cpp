@@ -192,8 +192,8 @@ const wStatus& RouterConfig::ParseQosConf() {
 	//  路由重建时间
 	pElement = pRoot->FirstChildElement("CFG");
 	if (NULL != pElement) {
-		if (pElement->Attribute("REBUILD_TM") != NULL) {
-			mSvrQos->mRebuildTm = atoi(pElement->Attribute("REBUILD_TM"));
+		if (pElement->Attribute("REBUILD") != NULL) {
+			mSvrQos->mRebuildTm = atoi(pElement->Attribute("REBUILD"));
 		} else {
 			mSvrQos->mRebuildTm = 60;
 		}
@@ -237,34 +237,34 @@ const wStatus& RouterConfig::ParseQosConf() {
 	// 宕机配置
 	pElement = pRoot->FirstChildElement("DOWN");
 	if (NULL != pElement) {
-		if (pElement->Attribute("BEGIN") != NULL) {
-			mSvrQos->mDownCfg.mProbeBegin = atoi(pElement->Attribute("BEGIN"));
+		if (pElement->Attribute("PROBE_BEGIN") != NULL) {
+			mSvrQos->mDownCfg.mProbeBegin = atoi(pElement->Attribute("PROBE_BEGIN"));
 		} else {
 			mSvrQos->mDownCfg.mProbeBegin = 1;
 		}
 
-		if (pElement->Attribute("INTERVAL") != NULL) {
-			mSvrQos->mDownCfg.mProbeInterval = atoi(pElement->Attribute("INTERVAL"));
+		if (pElement->Attribute("PROBE_TRIGER_REQ") != NULL) {
+			mSvrQos->mDownCfg.mReqCountTrigerProbe = atoi(pElement->Attribute("PROBE_TRIGER_REQ"));
 		} else {
-			mSvrQos->mDownCfg.mProbeInterval = 10;
+			mSvrQos->mDownCfg.mReqCountTrigerProbe = 10000;
 		}
 
-		if (pElement->Attribute("EXPIRED") != NULL) {
-			mSvrQos->mDownCfg.mProbeNodeExpireTime = atoi(pElement->Attribute("EXPIRED"));
-		} else {
-			mSvrQos->mDownCfg.mProbeNodeExpireTime = 600;
-		}
-
-		if (pElement->Attribute("TIMES") != NULL) {
-			mSvrQos->mDownCfg.mProbeTimes = atoi(pElement->Attribute("TIMES"));
+		if (pElement->Attribute("PROBE_TIMES") != NULL) {
+			mSvrQos->mDownCfg.mProbeTimes = atoi(pElement->Attribute("PROBE_TIMES"));
 		} else {
 			mSvrQos->mDownCfg.mProbeTimes = 3;
 		}
 
-		if (pElement->Attribute("REQ_COUNT") != NULL) {
-			mSvrQos->mDownCfg.mReqCountTrigerProbe = atoi(pElement->Attribute("REQ_COUNT"));
+		if (pElement->Attribute("PROBE_INTERVAL") != NULL) {
+			mSvrQos->mDownCfg.mProbeInterval = atoi(pElement->Attribute("PROBE_INTERVAL"));
 		} else {
-			mSvrQos->mDownCfg.mReqCountTrigerProbe = 100000;
+			mSvrQos->mDownCfg.mProbeInterval = 10;
+		}
+
+		if (pElement->Attribute("PROBE_EXPIRED") != NULL) {
+			mSvrQos->mDownCfg.mProbeNodeExpireTime = atoi(pElement->Attribute("PROBE_EXPIRED"));
+		} else {
+			mSvrQos->mDownCfg.mProbeNodeExpireTime = 600;
 		}
 
 		if (pElement->Attribute("DOWN_TIME") != NULL) {

@@ -67,13 +67,6 @@ int main(int argc, const char *argv[]) {
 		return -1;
 	}
 
-	// 探测线程
-	s = config->StartDetectThread();
-	if (!s.Ok()) {
-		std::cout << s.ToString() << std::endl;
-		return -1;
-	}
-
 	// 创建master对象
 	AgentMaster* master;
 	SAFE_NEW(AgentMaster("HLBS(*agent*)", server), master);
