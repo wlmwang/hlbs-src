@@ -290,7 +290,6 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 
 	MapKindIt_t rtIt = mRouteTable.find(kind);
 	if (rtIt == mRouteTable.end()) {
-
 		LOG_ERROR(kSvrLog, "SvrQos::GetRouteNode get failed(the SvrNet_t not exists from mRouteTable), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		// TODO
@@ -304,6 +303,8 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 
 	MultiMapNode_t* table = rtIt->second;
 	if (table == NULL || table->empty()) {
+        SAFE_DELETE(table);
+        mRouteTable.erase(rtIt);
 		LOG_ERROR(kSvrLog, "SvrQos::GetRouteNode get failed(the SvrNet_t not exists(empty table)), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
@@ -451,9 +452,9 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
 		// 全部过载
 		mAllReqMin = true;
 
+		// 重建宕机路由
 		MultiMapNode_t* table;
 		SAFE_NEW(MultiMapNode_t, table);
-        // 重建宕机路由
         if (RebuildErrRoute(kind, table, 1, 1, 1).Ok() && !table->empty()) {
         	// 有ping测试通过路由
         	kind.mPindex = 0;
@@ -466,7 +467,10 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
 
 	MultiMapNode_t* table = rtIt->second;
 	if (table == NULL || table->empty()) {
+        SAFE_DELETE(table);
+        mRouteTable.erase(rtIt);
 		LOG_ERROR(kSvrLog, "SvrQos::RebuildRoute rebuild failed(the kind nothing table), GID(%d),XID(%d)", kind.mGid, kind.mXid);
+
         return mStatus;
 	}
 	struct SvrKind_t& stKind = const_cast<struct SvrKind_t&>(rtIt->first);
@@ -714,10 +718,10 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* m
 
     ListNode_t* errRoute = reIt->second;
     if (errRoute != NULL && errRoute->empty()) {
-    	LOG_DEBUG(kSvrLog, "SvrQos::RebuildErrRoute cannot find errRoute, GID(%d),XID(%d),", kind.mGid, kind.mXid);
-
         SAFE_DELETE(errRoute);
 		mErrTable.erase(reIt);
+
+    	LOG_DEBUG(kSvrLog, "SvrQos::RebuildErrRoute cannot find errRoute, GID(%d),XID(%d),", kind.mGid, kind.mXid);
 		return mStatus;
 	}
 
@@ -803,8 +807,7 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* m
 		if (!del_flag) {
 			detectNodedel.push_back(DetectNode_t(it->mNet.mHost, it->mNet.mPort, tm, tm + mDownCfg.mProbeNodeExpireTime));
 		}
-
-		LOG_DEBUG(kSvrLog, "SvrQos::RebuildErrRoute recover one route, GID(%d),XID(%d)", kind.mGid, kind.mXid);
+		LOG_DEBUG(kSvrLog, "SvrQos::RebuildErrRoute recover one route, GID(%d),XID(%d),HOST(%s),PORT(%d)", kind.mGid, kind.mXid, it->mNet.mHost, it->mNet.mPort);
 
 		multiNode->insert(std::make_pair(maxLoad, *it));
 		errRoute->erase(it++);
