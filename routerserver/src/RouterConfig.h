@@ -7,12 +7,12 @@
 #ifndef _ROUTER_CONFIG_H_
 #define _ROUTER_CONFIG_H_
 
+#include <tinyxml/tinyxml.h>
 #include "wCore.h"
 #include "wStatus.h"
 #include "wLogger.h"
 #include "wConfig.h"
 #include "SvrQos.h"
-#include "tinyxml.h"
 
 using namespace hnet;
 
