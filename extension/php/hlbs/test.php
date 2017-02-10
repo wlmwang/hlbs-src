@@ -4,7 +4,7 @@ $svr_req = array(
 	'gid' => 1,	
 	'xid' => 2
 );
-$time_out = 0.2;
+$time_out = 30;
 $ret = hlbs_query_svr($svr_req, $time_out);
 
 print_r($svr_req);
