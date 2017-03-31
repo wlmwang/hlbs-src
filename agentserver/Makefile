@@ -12,12 +12,13 @@
 
 CC		:= g++
 CFLAGS	:= -Wall -O3 -std=c++11 -D_USE_LOGGER_ #-D_DEBUG_
-LDFLAGS	:= #-static
+ARFLAGS	:= -Wl,-dn #-Wl,-Bstatic
+LDFLAGS	:= -Wl,-dy #-Wl,-Bdynamic
 
 # 第三方库
 DIR_INC		:= /usr/local/include/hnet
 DIR_LIB		:= /usr/local/lib
-LIBFLAGS	:= -L${DIR_LIB} -lhnet -lpthread -lprotobuf -ltinyxml
+LIBFLAGS	:= -L${DIR_LIB} $(ARFLAGS) -lhnet -lprotobuf -ltinyxml $(LDFLAGS) -lpthread
 
 # 主目录,message,command目录
 DIR_SRC		:= ./src/
@@ -41,7 +42,7 @@ TARGET	:= agentsvrd
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) $^ -o $@ $(LIBFLAGS) $(LDFLAGS)
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBFLAGS)
 
 $(DIR_SRC)%.o:${DIR_SRC}%.cpp
 	$(CC) $(CFLAGS) $(INCFLAGS) -c $< -o $@
