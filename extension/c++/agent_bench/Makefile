@@ -16,9 +16,9 @@ ARFLAGS	:= -Wl,-dn #-Wl,-Bstatic
 LDFLAGS	:= -Wl,-dy #-Wl,-Bdynamic
 
 # 第三方库
-DIR_INC		:= /usr/local/include/hnet
-DIR_LIB		:= /usr/local/lib
-LIBFLAGS	:= -L${DIR_LIB} $(ARFLAGS) -lhnet -lprotobuf -ltinyxml $(LDFLAGS) -lpthread
+DIR_INC		:= -I/usr/local/include -I/usr/local/include/hnet
+DIR_LIB		:= -L/usr/local/lib
+LIBFLAGS	:= ${DIR_LIB} $(ARFLAGS) -lhnet -lprotobuf -ltinyxml $(LDFLAGS) -lpthread
 
 # 主目录,message,command目录
 DIR_SRC		:= ./
