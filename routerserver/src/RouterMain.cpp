@@ -35,7 +35,7 @@ int main(int argc, const char *argv[]) {
 
 	// 设置相关相关配置
 	soft::SetSoftName("HLBS(*router*) -");
-	soft::SetSoftVer("2.3.3");
+	soft::SetSoftVer("2.3.4");
 	soft::SetLockPath("../log/hlbs.lock");
 	soft::SetPidPath("../log/hlbs.pid");
 	soft::SetLogPath("../log/hlbs.log");
