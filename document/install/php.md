@@ -5,7 +5,6 @@
 # ./ext_skel --extname=hlbs
 # cd hlbs
 # cp -rf /usr/local/webserver/hlbs/extension/php/5.4.#/* .
-# cp -rf /usr/local/lib/libtinyxml.a /usr/local/lib/libhnet.a /usr/local/lib/libprotobuf.a lib
 ***
 ./lib/目录下所有文件均来自其他目录，并应以其他目录为准。建议在编译扩展时实时覆盖该目录下的所有文件
 cp -rf /usr/local/webserver/hlbs/extension/c++/common/* lib

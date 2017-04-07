@@ -7,6 +7,7 @@
    * [routersvrd安装](install/routersvrd.md)
    * [agentsvrd安装](install/agentsvrd.md)
    * [php扩展安装](install/php.md)
+   * [目录结构](install/directory.md)
 * [服务命令](control/README.md)
 * [配置](config/README.md)
    * [router](config/router.md)

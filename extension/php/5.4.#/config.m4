@@ -64,10 +64,8 @@ if test "$PHP_HLBS" != "no"; then
   PHP_ADD_INCLUDE(./lib)
   PHP_ADD_INCLUDE(/usr/local/include/hnet)
   PHP_ADD_LIBRARY(stdc++, 1, HLBS_SHARED_LIBADD)
-  PHP_ADD_LIBRARY_WITH_PATH(hnet, ./lib, HLBS_SHARED_LIBADD)
-  PHP_ADD_LIBRARY_WITH_PATH(protobuf, ./lib, HLBS_SHARED_LIBADD)
-  PHP_ADD_LIBRARY_WITH_PATH(tinyxml, ./lib, HLBS_SHARED_LIBADD)
-  PHP_ADD_LIBRARY_WITH_PATH(pthread, /usr/local/lib, HLBS_SHARED_LIBADD)
+  PHP_ADD_LIBRARY_WITH_PATH(hnet, /usr/local/lib, HLBS_SHARED_LIBADD)
+  PHP_ADD_LIBRARY_WITH_PATH(tinyxml, /usr/local/lib, HLBS_SHARED_LIBADD)
   PHP_SUBST(HLBS_SHARED_LIBADD)
 
   PHP_NEW_EXTENSION(hlbs, hlbs.cpp ./lib/agent_api.cpp, $ext_shared)

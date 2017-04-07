@@ -18,7 +18,6 @@ hlbs.so扩展命令集合
 # ./ext_skel --extname=hlbs
 # cd hlbs
 # cp -rf /usr/local/webserver/hlbs/extension/php/5.4.#/* .
-# cp /usr/local/lib/libtinyxml.a /usr/local/lib/libhnet.a /usr/local/lib/libprotobuf.a .
 # /usr/local/php/bin/phpize
 # ./configure --with-php-config=/usr/local/php/bin/php-config
 # make && make test
