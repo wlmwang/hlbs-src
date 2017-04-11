@@ -7,6 +7,7 @@
 #include "wCore.h"
 #include "wStatus.h"
 #include "wMisc.h"
+#include "wEnv.h"
 #include "RouterConfig.h"
 #include "RouterServer.h"
 #include "RouterMaster.h"
@@ -14,7 +15,6 @@
 using namespace hnet;
 
 int main(int argc, const char *argv[]) {
-
 	// 创建配置对象
 	RouterConfig *config;
 	SAFE_NEW(RouterConfig, config);
@@ -29,10 +29,13 @@ int main(int argc, const char *argv[]) {
 		std::cout << s.ToString() << std::endl;
 		return -1;
 	}
+	if (misc::SetBinPath() == -1) {
+		std::cout << "set bin path failed" << std::endl;
+	}
 
 	// 设置相关相关配置
 	soft::SetSoftName("HLBS(*router*) -");
-	soft::SetSoftVer("2.3.0");
+	soft::SetSoftVer("3.0.0");
 	soft::SetLockPath("../log/hlbs.lock");
 	soft::SetPidPath("../log/hlbs.pid");
 	soft::SetLogPath("../log/hlbs.log");

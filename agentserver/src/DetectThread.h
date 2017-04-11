@@ -27,7 +27,7 @@ public:
 	typedef std::vector<struct DetectNode_t> VecNode_t;
 	typedef std::vector<struct DetectNode_t>::const_iterator VecNodeIt_t;
 
-	DetectThread();
+	DetectThread(int32_t detectNodeInterval = 10, int32_t detectLoopUsleep = 100000, int32_t detectMaxNode = 10000);
 	virtual ~DetectThread();
 
 	virtual const wStatus& PrepareThread();

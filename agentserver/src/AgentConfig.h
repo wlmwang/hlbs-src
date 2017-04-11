@@ -7,13 +7,12 @@
 #ifndef _AGENT_CONFIG_H_
 #define _AGENT_CONFIG_H_
 
+#include <tinyxml/tinyxml.h>
 #include "wCore.h"
 #include "wStatus.h"
 #include "wMisc.h"
 #include "wConfig.h"
-#include "tinyxml.h"
 #include "SvrQos.h"
-#include "DetectThread.h"
 
 using namespace hnet;
 
@@ -26,14 +25,11 @@ public:
 	const wStatus& ParseRouterConf();
 	const wStatus& ParseQosConf();
 
-	const wStatus& StartDetectThread();
-
 	SvrQos* Qos() { return mSvrQos;}
-	DetectThread* Detect() { return mDetectThread;}
 
 protected:
 	SvrQos* mSvrQos;
-	DetectThread* mDetectThread;
+
 	TiXmlDocument mDoc;
 	std::string mRouterFile;
 	std::string mQosFile;

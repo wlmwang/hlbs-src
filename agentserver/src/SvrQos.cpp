@@ -12,8 +12,21 @@
 #include "Detect.h"
 #include "DetectThread.h"
 
+SvrQos::SvrQos() : mRateWeight(7), mDelayWeight(1), mRebuildTm(60), mReqTimeout(500),mAllReqMin(false), mAvgErrRate(0.0) {
+	SAFE_NEW(DetectThread(mDownCfg.mProbeInterval), mDetectThread);
+}
+
 SvrQos::~SvrQos() {
+	SAFE_DELETE(mDetectThread);
 	CleanNode();
+}
+
+const wStatus& SvrQos::StartDetectThread() {
+	// 探测线程，宕机拉起
+	if (!(mStatus = mDetectThread->StartThread()).Ok()) {
+		return mStatus;
+	}
+	return mStatus.Clear();
 }
 
 bool SvrQos::IsExistNode(const struct SvrNet_t& svr) {
@@ -154,25 +167,14 @@ const wStatus& SvrQos::QueryNode(struct SvrNet_t& svr) {
 
 	LOG_DEBUG(kSvrLog, "SvrQos::QueryNode query SvrNet_t end, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
-	return mStatus;
-}
 
-const wStatus& SvrQos::CallerNode(const struct SvrCaller_t& caller) {
-	LOG_DEBUG(kSvrLog, "SvrQos::CallerNode report SvrCaller_t start, GID(%d),XID(%d),HOST(%s),PORT(%d),ReqRet(%d),ReqCount(%d),ReqUsetimeUsec(%lld)",
-			caller.mCalledGid, caller.mCalledXid, caller.mHost, caller.mPort, caller.mReqRet, caller.mReqCount, caller.mReqUsetimeUsec);
+#ifdef _DEBUG_
+	SvrKind_t kind(svr);
 
-	mMutex.Lock();
-	mStatus = ReportNode(caller);
-	mMutex.Unlock();
-
-	// 调试信息
-	SvrKind_t kind;
-	kind.mGid = caller.mCalledGid;
-	kind.mXid = caller.mCalledXid;
-
-	MapKindIt_t mapIt = mRouteTable.find(kind);
-	if (mapIt != mRouteTable.end()) {
-		MultiMapNode_t* mapNode = mapIt->second;
+	// 正常路由
+	MapKindIt_t reIt = mRouteTable.find(kind);
+	if (reIt != mRouteTable.end()) {
+		MultiMapNode_t* mapNode = reIt->second;
 		for (MultiMapNodeIt_t it = mapNode->begin(); it != mapNode->end(); it++) {
 			struct SvrNet_t svr = it->second.mNet;
 			struct SvrStat_t stat = *it->second.mStat;
@@ -186,6 +188,37 @@ const wStatus& SvrQos::CallerNode(const struct SvrCaller_t& caller) {
 					stat.mInfo.mLoadX, stat.mInfo.mOkLoad, stat.mInfo.mDelayLoad, stat.mInfo.mAvgTm, stat.mInfo.mAvgErrRate);
 		}
 	}
+
+	// 宕机路由
+	MapNodeIt_t errIt = mErrTable.find(kind);
+	if (errIt != mErrTable.end()) {
+		ListNode_t* listNode = errIt->second;
+		for (ListNodeIt_t it = listNode->begin(); it != listNode->end(); it++) {
+			struct SvrNet_t svr = it->mNet;
+			struct SvrStat_t stat = *it->mStat;
+
+			LOG_DEBUG(kSvrLog, "SvrQos::CallerNode errTable, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d),"
+					"ReqLimit(%d),ReqMax(%d),ReqMin(%d),ReqCount(%d),ReqErrMin(%f),ReqExtendRate(%f)"
+					"ReqAll(%d),ReqRej(%d),ReqSuc(%d),ReqErrRet(%d),ReqErrTm(%d),LoadX(%f),OkLoad(%f),DelayLoad(%f),AvgTm(%d),AvgErrRate(%f)",
+					svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight,
+					stat.mReqCfg.mReqLimit, stat.mReqCfg.mReqMax,stat.mReqCfg.mReqMin, stat.mReqCfg.mReqCount, stat.mReqCfg.mReqErrMin, stat.mReqCfg.mReqExtendRate,
+					stat.mInfo.mReqAll, stat.mInfo.mReqRej, stat.mInfo.mReqSuc, stat.mInfo.mReqErrRet, stat.mInfo.mReqErrTm,
+					stat.mInfo.mLoadX, stat.mInfo.mOkLoad, stat.mInfo.mDelayLoad, stat.mInfo.mAvgTm, stat.mInfo.mAvgErrRate);
+		}
+	}
+#endif
+
+	return mStatus;
+}
+
+const wStatus& SvrQos::CallerNode(const struct SvrCaller_t& caller) {
+	LOG_DEBUG(kSvrLog, "SvrQos::CallerNode report SvrCaller_t start, GID(%d),XID(%d),HOST(%s),PORT(%d),ReqRet(%d),ReqCount(%d),ReqUsetimeUsec(%lld)",
+			caller.mCalledGid, caller.mCalledXid, caller.mHost, caller.mPort, caller.mReqRet, caller.mReqCount, caller.mReqUsetimeUsec);
+
+	mMutex.Lock();
+	mStatus = ReportNode(caller);
+	mMutex.Unlock();
+
     return mStatus;
 }
 
@@ -247,7 +280,6 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 	if (svr.mGid <= 0 || svr.mXid <= 0) {
 		LOG_ERROR(kSvrLog, "SvrQos::GetRouteNode get failed(the SvrNet_t invalid), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
-
 		return mStatus = wStatus::IOError("SvrQos::GetRouteNode get failed, the SvrNet_t invalid", "");
 	}
 
@@ -258,7 +290,6 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 
 	MapKindIt_t rtIt = mRouteTable.find(kind);
 	if (rtIt == mRouteTable.end()) {
-
 		LOG_ERROR(kSvrLog, "SvrQos::GetRouteNode get failed(the SvrNet_t not exists from mRouteTable), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		// TODO
@@ -272,6 +303,8 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 
 	MultiMapNode_t* table = rtIt->second;
 	if (table == NULL || table->empty()) {
+        SAFE_DELETE(table);
+        mRouteTable.erase(rtIt);
 		LOG_ERROR(kSvrLog, "SvrQos::GetRouteNode get failed(the SvrNet_t not exists(empty table)), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
@@ -410,7 +443,6 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 
 	LOG_DEBUG(kSvrLog, "SvrQos::GetRouteNode get success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d),index(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight, stKind.mPindex);
-
 	return mStatus.Clear();
 }
 
@@ -420,9 +452,9 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
 		// 全部过载
 		mAllReqMin = true;
 
+		// 重建宕机路由
 		MultiMapNode_t* table;
 		SAFE_NEW(MultiMapNode_t, table);
-        // 重建宕机路由
         if (RebuildErrRoute(kind, table, 1, 1, 1).Ok() && !table->empty()) {
         	// 有ping测试通过路由
         	kind.mPindex = 0;
@@ -435,6 +467,8 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
 
 	MultiMapNode_t* table = rtIt->second;
 	if (table == NULL || table->empty()) {
+        SAFE_DELETE(table);
+        mRouteTable.erase(rtIt);
 		LOG_ERROR(kSvrLog, "SvrQos::RebuildRoute rebuild failed(the kind nothing table), GID(%d),XID(%d)", kind.mGid, kind.mXid);
 
         return mStatus;
@@ -499,9 +533,9 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
     		// 节点过载
             char alartInfo[512];
             ::snprintf(alartInfo, sizeof(alartInfo) -1 , "SvrQos::RebuildRoute one SvrNet_t ready to overload,GID(%d),XID(%d),HOST(%s),PORT(%d),"
-            		"ReqLimit(%d) ReqAll(%d) ReqSuc(%d) ReqRej(%d) reqErrRet(%d) reqErrTm(%d) server SvrNet_t errRate(%f)(%f)  > configure ERR_RATE(%f)",
+            		"ReqLimit(%d) ReqAll(%d) ReqSuc(%d) ReqRej(%d) reqErrRet(%d) reqErrTm(%d) server SvrNet_t errRate(%f)(%f) > configure ERR_RATE(%f)",
 					stKind.mGid, stKind.mXid, it->second.mNet.mHost, it->second.mNet.mPort,
-					it->second.mStat->mReqCfg.mReqLimit, reqAll, reqSuc, reqRej, reqErrRet, reqErrTm, nodeErrRate, info.mAvgErrRate, cfgErrRate);
+					it->second.mStat->mReqCfg.mReqLimit, reqAll, reqSuc, reqRej, reqErrRet, reqErrTm, nodeErrRate, info.mAvgErrRate, it->second.mStat->mReqCfg.mReqErrMin);
 
     		LOG_ERROR(kSvrLog, alartInfo);
     		// SendMobileMsg();
@@ -595,7 +629,6 @@ const wStatus& SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
         }
 
         // 恢复路由 || 宕机路由
-        // set mIsDetecting = false
         struct SvrNode_t node(it->second.mNet, pStat);
         int32_t reqLimit = pStat->mReqCfg.mReqLimit <= 0 ? (pStat->mReqCfg.mReqMin + 1) : pStat->mReqCfg.mReqLimit;
         if (reqLimit > pStat->mReqCfg.mReqMin) {
@@ -679,14 +712,17 @@ const wStatus& SvrQos::AddErrRoute(struct SvrKind_t& kind, struct SvrNode_t& nod
 const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* multiNode, float maxLoad, float lowOkRate, uint32_t bigDelay) {
 	MapNodeIt_t reIt = mErrTable.find(kind);
     if (reIt == mErrTable.end()) {
-        return mStatus.Clear();
+    	LOG_DEBUG(kSvrLog, "SvrQos::RebuildErrRoute cannot find errTable, GID(%d),XID(%d),", kind.mGid, kind.mXid);
+        return mStatus;
     }
 
-    ListNode_t* pErrRoute = reIt->second;
-    if (pErrRoute != NULL && pErrRoute->empty()) {
-        SAFE_DELETE(pErrRoute);
+    ListNode_t* errRoute = reIt->second;
+    if (errRoute != NULL && errRoute->empty()) {
+        SAFE_DELETE(errRoute);
 		mErrTable.erase(reIt);
-		return mStatus.Clear();
+
+    	LOG_DEBUG(kSvrLog, "SvrQos::RebuildErrRoute cannot find errRoute, GID(%d),XID(%d),", kind.mGid, kind.mXid);
+		return mStatus;
 	}
 
     // 全部过载，机器恢复后，负载设为最小
@@ -695,37 +731,33 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* m
 	}
 
     // 宕机检测、故障恢复
-    int32_t tm = static_cast<int32_t>(time(NULL)), ret, detectStat;
+    int32_t ret, detectStat, tm = static_cast<int32_t>(time(NULL));
 	bool del_flag;
 
     DetectThread::VecNode_t detectNodeadd, detectNodedel;
 
-	ListNodeIt_t it = pErrRoute->begin();
-	while (it != pErrRoute->end()) {
-		// -1:网络探测失败 0:网络探测成功
-		detectStat = -1;
+	ListNodeIt_t it = errRoute->begin();
+	while (it != errRoute->end()) {
 		del_flag = false;
+		// -1:网络探测失败 -2:没root权限探测  0:网络探测成功
+		detectStat = -1;
 
-		// 故障探测：（mProbeBegin > 0 才打开网络层探测）
-		//	1) 先进行网络层探测ping connect udp_icmp，网络探测成功后再用业务请求进行探测
-		//	2) 机器宕机后该kind已经收到超过一定量的请求
-		//	3) 机器宕机已经超过一定时间，需要进行一次探测
+		// 故障探测（mProbeBegin > 0 才打开网络层探测）：
+		//	1) 机器宕机后该kind已经收到超过一定量的请求
+		//	2) 机器宕机已经超过一定时间，需要进行一次探测
 		struct DetectResult_t res;
-		if (mDownCfg.mProbeBegin > 0 && tm > it->mStopTime + mDownCfg.mProbeBegin) {
+		if (mDownCfg.mProbeBegin > 0 && ((tm > it->mStopTime + mDownCfg.mProbeBegin) || (it->mReqAllAfterDown >= mDownCfg.mReqCountTrigerProbe))) {
 			struct DetectNode_t detectNode(it->mNet.mHost, it->mNet.mPort, tm, tm + mDownCfg.mProbeNodeExpireTime);
-
 			mDetectThread->GetDetectResult(detectNode, res, &ret);
 			if (ret < 0) {
-				// not found node
+				// 无探测节点
 				detectNodeadd.push_back(detectNode);
 			} else if (ret == 0) {
-				// has detected
-
+				// 已探测
 				if (res.mRc < 0) {
-					// detect fail
+					// 探测失败
 					detectStat = -1;
-				} else if (res.mDetectType == DETECT_TCP || res.mDetectType == DETECT_UDP) {
-					// TCP or UDP success
+				} else if (res.mRc == 0 && (res.mDetectType == DETECT_TCP || res.mDetectType == DETECT_UDP)) {
 					// 删除探测节点
 					detectNodedel.push_back(detectNode);
 					del_flag = true;
@@ -737,16 +769,7 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* m
 			}
 		}
 
-		// 在没达到恢复条件之前，如果网络探测成功，提前恢复
-		if (!mAllReqMin && (tm - it->mStopTime < mDownCfg.mDownTimeTrigerProbe) && (it->mReqAllAfterDown < mDownCfg.mReqCountTrigerProbe)) {
-			if (detectStat != 0) {
-				// 探测不成功
-				it++;
-				continue;
-			}
-		}
-
-		// 达到恢复条件，如果网络探测失败，推迟恢复
+		// 网络探测失败，推迟恢复
 		if (mDownCfg.mProbeBegin > 0 && detectStat == -1) {
 	        it++;
 	        continue;
@@ -755,7 +778,7 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* m
 		// 刚刚从故障机列表中放到正常机器列表，处在探测状态
 		it->mIsDetecting = true;
 		it->mKey = maxLoad;
-		it->mStat->mReqCfg.mReqLimit = mDownCfg.mProbeTimes;
+		it->mStat->mReqCfg.mReqLimit = 0; // = mDownCfg.mProbeTimes;
 
 		if (mAllReqMin) {
 			// 全部过载
@@ -784,19 +807,20 @@ const wStatus& SvrQos::RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* m
 		if (!del_flag) {
 			detectNodedel.push_back(DetectNode_t(it->mNet.mHost, it->mNet.mPort, tm, tm + mDownCfg.mProbeNodeExpireTime));
 		}
+		LOG_DEBUG(kSvrLog, "SvrQos::RebuildErrRoute recover one route, GID(%d),XID(%d),HOST(%s),PORT(%d)", kind.mGid, kind.mXid, it->mNet.mHost, it->mNet.mPort);
+
 		multiNode->insert(std::make_pair(maxLoad, *it));
-        pErrRoute->erase(it++);
+		errRoute->erase(it++);
 	}
 
-    if (pErrRoute->empty()) {
-        SAFE_DELETE(pErrRoute);
+    if (errRoute->empty()) {
+        SAFE_DELETE(errRoute);
 		mErrTable.erase(reIt);
 	}
 
     if (!detectNodeadd.empty()) {
     	mDetectThread->AddDetect(detectNodeadd);
     }
-
     if (!detectNodedel.empty()) {
     	mDetectThread->DelDetect(detectNodedel);
     }
@@ -1033,7 +1057,6 @@ int32_t SvrQos::RouteCheck(struct SvrStat_t* stat, struct SvrNet_t& svr, double 
 	}
 
 	// 计算预取数
-
     // 初始值为预测的本周期的成功请求数
     // 上个周期的成功请求数加上 上个周期相对于 上上个周期成功请求数的差值，在一个预取时间段（qos.xml中PRE_TIME的值，默认为4秒）内的部分
     int lastSuc = stat->mInfo.mLastReqSuc + 1;

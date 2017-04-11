@@ -1,3 +1,24 @@
+# 基础配置 conf.xml
+
+一般无需改动。
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<ROOT>
+	<!--服务器监听地址-->
+	<SERVER HOST="/var/run/hlbs.sock" PORT="0" PROTOCOL="UNIX" WORKER="0"/>
+	<!--
+	<SERVER HOST="0.0.0.0" PORT="10007" PROTOCOL="TCP" WORKER="0"/>
+	-->
+</ROOT>
+```
+
+
+# Qos配置 qos.xml
+
+一般无需改动。
+
+```
 <?xml version="1.0" encoding="UTF-8"?>
 <QOS>
 	<!-- @TYPE:访问量配置 -->
@@ -28,3 +49,17 @@
 	<!-- @DOWN_TIME:路由恢复时间间隔条件 -->
 	<DOWN PROBE_BEGIN="3" PROBE_TRIGER_REQ="500" PROBE_TIMES="3" PROBE_INTERVAL="3" PROBE_EXPIRED="600" DOWN_ERR_REQ="10" DOWN_ERR_RATE="0.5" DOWN_TIME="300"/>
 </QOS>
+```
+
+
+# routersvrd配置 router.xml
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<ROOT>
+	<ROUTERS>
+		<!--配置中心ROUTER地址-->
+		<ROUTER HOST="0.0.0.0" PORT="10006" PROTOCOL="TCP"/>
+	</ROUTERS>
+</ROOT>
+```

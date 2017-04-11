@@ -36,8 +36,8 @@ class SvrQos : private wNoncopyable {
     typedef std::list<struct SvrNode_t>::iterator ListNodeIt_t;
 
 public:
+    SvrQos();
 	~SvrQos();
-	SvrQos() : mRateWeight(7), mDelayWeight(1), mRebuildTm(60), mReqTimeout(500),mAllReqMin(false), mAvgErrRate(0.0) { }
 
 	// 指定节点是否存在
 	bool IsExistNode(const struct SvrNet_t& svr);
@@ -61,8 +61,7 @@ public:
 	// 清除 所有路由信息
 	const wStatus& CleanNode();
 
-	DetectThread*& Detect() { return mDetectThread;}
-
+	const wStatus& StartDetectThread();
 protected:
 	friend class AgentConfig;
 

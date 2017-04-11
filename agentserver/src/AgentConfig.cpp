@@ -14,21 +14,10 @@ const char kQosXml[]	= "../config/qos.xml";
 
 AgentConfig::AgentConfig() : mRouterFile(kRouterXml), mQosFile(kQosXml), mBaseFile(kConfXml) {
 	SAFE_NEW(SvrQos, mSvrQos);
-	SAFE_NEW(DetectThread, mDetectThread);
 }
 
 AgentConfig::~AgentConfig() {
 	SAFE_DELETE(mSvrQos);
-	SAFE_DELETE(mDetectThread);
-}
-
-const wStatus& AgentConfig::StartDetectThread() {
-	// 探测线程，宕机拉起
-	if (!(mStatus = mDetectThread->StartThread()).Ok()) {
-		return mStatus;
-	}
-	mSvrQos->Detect() = mDetectThread;
-	return mStatus.Clear();
 }
 
 const wStatus& AgentConfig::ParseBaseConf() {
@@ -118,8 +107,8 @@ const wStatus& AgentConfig::ParseQosConf() {
 	//  路由重建时间
 	pElement = pRoot->FirstChildElement("CFG");
 	if (NULL != pElement) {
-		if (pElement->Attribute("REBUILD_TM") != NULL) {
-			mSvrQos->mRebuildTm = atoi(pElement->Attribute("REBUILD_TM"));
+		if (pElement->Attribute("REBUILD") != NULL) {
+			mSvrQos->mRebuildTm = atoi(pElement->Attribute("REBUILD"));
 		} else {
 			mSvrQos->mRebuildTm = 60;
 		}
@@ -163,34 +152,34 @@ const wStatus& AgentConfig::ParseQosConf() {
 	// 宕机配置
 	pElement = pRoot->FirstChildElement("DOWN");
 	if (NULL != pElement) {
-		if (pElement->Attribute("BEGIN") != NULL) {
-			mSvrQos->mDownCfg.mProbeBegin = atoi(pElement->Attribute("BEGIN"));
+		if (pElement->Attribute("PROBE_BEGIN") != NULL) {
+			mSvrQos->mDownCfg.mProbeBegin = atoi(pElement->Attribute("PROBE_BEGIN"));
 		} else {
 			mSvrQos->mDownCfg.mProbeBegin = 1;
 		}
 
-		if (pElement->Attribute("INTERVAL") != NULL) {
-			mSvrQos->mDownCfg.mProbeInterval = atoi(pElement->Attribute("INTERVAL"));
+		if (pElement->Attribute("PROBE_TRIGER_REQ") != NULL) {
+			mSvrQos->mDownCfg.mReqCountTrigerProbe = atoi(pElement->Attribute("PROBE_TRIGER_REQ"));
 		} else {
-			mSvrQos->mDownCfg.mProbeInterval = 10;
+			mSvrQos->mDownCfg.mReqCountTrigerProbe = 10000;
 		}
 
-		if (pElement->Attribute("EXPIRED") != NULL) {
-			mSvrQos->mDownCfg.mProbeNodeExpireTime = atoi(pElement->Attribute("EXPIRED"));
-		} else {
-			mSvrQos->mDownCfg.mProbeNodeExpireTime = 600;
-		}
-
-		if (pElement->Attribute("TIMES") != NULL) {
-			mSvrQos->mDownCfg.mProbeTimes = atoi(pElement->Attribute("TIMES"));
+		if (pElement->Attribute("PROBE_TIMES") != NULL) {
+			mSvrQos->mDownCfg.mProbeTimes = atoi(pElement->Attribute("PROBE_TIMES"));
 		} else {
 			mSvrQos->mDownCfg.mProbeTimes = 3;
 		}
 
-		if (pElement->Attribute("REQ_COUNT") != NULL) {
-			mSvrQos->mDownCfg.mReqCountTrigerProbe = atoi(pElement->Attribute("REQ_COUNT"));
+		if (pElement->Attribute("PROBE_INTERVAL") != NULL) {
+			mSvrQos->mDownCfg.mProbeInterval = atoi(pElement->Attribute("PROBE_INTERVAL"));
 		} else {
-			mSvrQos->mDownCfg.mReqCountTrigerProbe = 100000;
+			mSvrQos->mDownCfg.mProbeInterval = 10;
+		}
+
+		if (pElement->Attribute("PROBE_EXPIRED") != NULL) {
+			mSvrQos->mDownCfg.mProbeNodeExpireTime = atoi(pElement->Attribute("PROBE_EXPIRED"));
+		} else {
+			mSvrQos->mDownCfg.mProbeNodeExpireTime = 600;
 		}
 
 		if (pElement->Attribute("DOWN_TIME") != NULL) {
@@ -238,5 +227,5 @@ const wStatus& AgentConfig::ParseQosConf() {
     if (mSvrQos->mReqCfg.mPreTime <= 0 || mSvrQos->mReqCfg.mPreTime > (mSvrQos->mRebuildTm / 2)) {
 		mSvrQos->mReqCfg.mPreTime = 2;
 	}
-	return mStatus.Clear();
+	return mStatus;
 }

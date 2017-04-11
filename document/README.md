@@ -17,5 +17,10 @@ HLBS全称为Hupu Load Balance System。顾名思义，它是一个负载均衡�
 HLBS服务方式极其类似于DNS。使用者拿着域名（GID、XID），请求DNS服务器（agentsvrd）获取实际主机地址（HOST、PORT），最后由使用者再去直连该主机地址获取服务。
 ```
 
-#详情
-   见目录：[用户手册](document/README.md)
+# 文档约定
+
+CGI：通过HLBS系统获取后端服务来使用的前端业务。相对Svr属于消费者。
+
+Svr：配置在HLBS系统中的后端SOA服务。相对Svr属于生产者（主机ip、port、weight等配置在svr.xml文件中）。
+
+Qos：服务质量。标识各Svr负载大小、服务能力。容错体系的关键。
