@@ -7,19 +7,19 @@ dnl without editing.
 
 dnl If your extension references something external, use with:
 
-dnl PHP_ARG_WITH(hlbs, for hlbs support,
-dnl Make sure that the comment is aligned:
-dnl [  --with-hlbs             Include hlbs support])
+PHP_ARG_WITH(hlbs, for hlbs support,
+Make sure that the comment is aligned:
+[  --with-hlbs             Include hlbs support])
 
 dnl Otherwise use enable:
 
-PHP_ARG_ENABLE(hlbs, whether to enable hlbs support,
-Make sure that the comment is aligned:
-[  --enable-hlbs           Enable hlbs support])
+dnl PHP_ARG_ENABLE(hlbs, whether to enable hlbs support,
+dnl Make sure that the comment is aligned:
+dnl [  --enable-hlbs           Enable hlbs support])
 
 if test "$PHP_HLBS" != "no"; then
   dnl Write more examples of tests here...
-  
+
   dnl # --with-hlbs -> check with-path
   dnl SEARCH_PATH="/usr/local /usr"     # you might want to change this
   dnl SEARCH_FOR="/include/hlbs.h"  # you most likely want to change this
@@ -49,12 +49,12 @@ if test "$PHP_HLBS" != "no"; then
 
   dnl PHP_CHECK_LIBRARY($LIBNAME,$LIBSYMBOL,
   dnl [
-  dnl   PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $HLBS_DIR/lib, HLBS_SHARED_LIBADD)
+  dnl   PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $HLBS_DIR/$PHP_LIBDIR, HLBS_SHARED_LIBADD)
   dnl   AC_DEFINE(HAVE_HLBSLIB,1,[ ])
   dnl ],[
   dnl   AC_MSG_ERROR([wrong hlbs lib version or lib not found])
   dnl ],[
-  dnl   -L$HLBS_DIR/lib -lm
+  dnl   -L$HLBS_DIR/$PHP_LIBDIR -lm
   dnl ])
   dnl
   dnl PHP_SUBST(HLBS_SHARED_LIBADD)
@@ -68,6 +68,5 @@ if test "$PHP_HLBS" != "no"; then
   PHP_ADD_LIBRARY_WITH_PATH(tinyxml, /usr/local/lib, HLBS_SHARED_LIBADD)
   PHP_SUBST(HLBS_SHARED_LIBADD)
 
-  PHP_NEW_EXTENSION(hlbs, hlbs.cpp ./lib/agent_api.cpp, $ext_shared)
-
+  PHP_NEW_EXTENSION(hlbs, hlbs.cpp ./lib/agent_api.cpp, $ext_shared,, -DZEND_ENABLE_STATIC_TSRMLS_CACHE=1)
 fi
