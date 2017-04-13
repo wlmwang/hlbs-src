@@ -7,7 +7,7 @@
 #ifndef _AGENT_CONFIG_H_
 #define _AGENT_CONFIG_H_
 
-#include <tinyxml/tinyxml.h>
+#include <tinyxml.h>
 #include "wCore.h"
 #include "wStatus.h"
 #include "wMisc.h"
