@@ -6,6 +6,8 @@
  */
 
 class Hlbs {
+	private static $_version = "3.0.1";
+
 	private static $_getSvrStatus = [
 		 0	=> "获取Svr成功",
 		-1	=> "系统错误",
@@ -15,6 +17,7 @@ class Hlbs {
 		-5	=> "返回数据格式错误",
 		-99	=> "hlbs.so扩展错误",
 	];
+	
 	private static $_notifySvrStatus = [
 		 0	=> "上报Svr成功",
 		-1	=> "系统错误",
@@ -31,6 +34,7 @@ class Hlbs {
 		'host'=> '',
 		'port'=> '',
 	];
+
 	private $beginSec = 0;
 	private $endSec = 0;
 	private $timeout = 30;
@@ -44,9 +48,6 @@ class Hlbs {
 	 * 获取一个Svr
 	 */
 	public function GetSvr() {
-		if (empty($this->svrInfo['gid']) || empty($this->svrInfo['xid'])) {
-			return ['ret' => -1, 'msg' => self::$_getSvrStatus[-1]];
-		}
 		if (extension_loaded('hlbs')) {
 			$ret = hlbs_query_svr($this->svrInfo, $this->timeout);
 		} else {
@@ -60,9 +61,6 @@ class Hlbs {
 	 * 上报svr访问结果
 	 */
 	public function NotifySvr($ret = 0) {
-		if (empty($this->svrInfo['gid']) || empty($this->svrInfo['xid']) || empty($this->svrInfo['host']) || empty($this->svrInfo['port'])) {
-			return ['ret' => -1, 'msg' => self::$_notifySvrStatus[-1]];
-		}
 		if (extension_loaded('hlbs')) {
 			$ret = hlbs_notify_res($this->svrInfo, $ret, ($this->End() - $this->beginSec) * 1000000);
 		} else {

@@ -237,10 +237,10 @@ PHP_FUNCTION(hlbs_query_svr) {
 		svr.mGid = Z_LVAL_P(zvalGid);
 		svr.mXid = Z_LVAL_P(zvalXid);
 		int ret = QueryNode(svr, timeout, err);
-		if (ret >= 0) {
+		//if (ret >= 0) {
 			add_assoc_stringl(svrParam, "host", svr.mHost, strlen(svr.mHost));
 			add_assoc_long(svrParam, "port", svr.mPort);
-		}
+		//}
 		RETURN_LONG(ret);
 	}
 }

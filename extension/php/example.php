@@ -1,10 +1,10 @@
 <?php
 include "Hlbs.class.php";
 
-$example = new Hlbs(1, 2, "127.0.0.1", 10001, 30);
+$example = new Hlbs(1, 1, "127.0.0.1", 8800, 30);
 
 // 获取
-$example->GetSvr();
+print_r($example->GetSvr());
 print_r($example->SvrInfo());
 
 usleep(1000);
