@@ -33,20 +33,22 @@ class Hlbs {
 	];
 	private $beginSec = 0;
 	private $endSec = 0;
+	private $timeout = 30;
 
-	public function __construct($gid, $xid, $def_host, $def_port) {
+	public function __construct($gid, $xid, $def_host, $def_port, $timeout = 30) {
+		$this->timeout = $timeout;
 		$this->svrInfo = ['gid'=> $gid, 'xid'=> $xid, 'host'=> $def_host, 'port'=> $def_port];
 	}
 
 	/**
 	 * 获取一个Svr
 	 */
-	public function GetSvr($timeout = 30) {
+	public function GetSvr() {
 		if (empty($this->svrInfo['gid']) || empty($this->svrInfo['xid'])) {
 			return ['ret' => -1, 'msg' => self::$_getSvrStatus[-1]];
 		}
 		if (extension_loaded('hlbs')) {
-			$ret = hlbs_query_svr($this->svrInfo, $timeout);
+			$ret = hlbs_query_svr($this->svrInfo, $this->timeout);
 		} else {
 			$ret = -99;
 		}

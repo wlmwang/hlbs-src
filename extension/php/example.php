@@ -1,7 +1,7 @@
 <?php
 include "Hlbs.class.php";
 
-$example = new Hlbs(1, 2, "127.0.0.1", 10001);
+$example = new Hlbs(1, 2, "127.0.0.1", 10001, 30);
 
 // 获取
 $example->GetSvr();
