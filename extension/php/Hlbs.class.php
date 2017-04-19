@@ -31,45 +31,42 @@ class Hlbs {
 		'host'=> '',
 		'port'=> '',
 	];
-	private $timeout = 30;
 	private $beginSec = 0;
 	private $endSec = 0;
-	private $ret = 0;
 
-	public function __construct($gid, $xid, $def_host, $def_port, $timeout = 30) {
-		$this->svrInfo = ['gid'=> $gid, 'xid'=> $xid, 'host'=> $svr_host, 'port'=> $svr_port];
-		$this->timeout = $timeout;
+	public function __construct($gid, $xid, $def_host, $def_port) {
+		$this->svrInfo = ['gid'=> $gid, 'xid'=> $xid, 'host'=> $def_host, 'port'=> $def_port];
 	}
 
 	/**
 	 * 获取一个Svr
 	 */
-	public function GetSvr() {
+	public function GetSvr($timeout = 30) {
 		if (empty($this->svrInfo['gid']) || empty($this->svrInfo['xid'])) {
-			return $this->ret = -1;
+			return ['ret' => -1, 'msg' => self::$_getSvrStatus[-1]];
 		}
 		if (extension_loaded('hlbs')) {
-			$this->ret = hlbs_query_svr($this->svrInfo, $this->timeout);
-			$this->Start();
+			$ret = hlbs_query_svr($this->svrInfo, $timeout);
 		} else {
-			$this->ret = -99;
+			$ret = -99;
 		}
-		return ['ret' => $this->ret, 'msg' => self::$_getSvrStatus[$this->ret]];
+		$this->Start();
+		return ['ret' => $ret, 'msg' => self::$_getSvrStatus[$ret]];
 	}
 
 	/**
-	 * 上报结果
+	 * 上报svr访问结果
 	 */
-	public function NotifySvr() {
+	public function NotifySvr($ret = 0) {
 		if (empty($this->svrInfo['gid']) || empty($this->svrInfo['xid']) || empty($this->svrInfo['host']) || empty($this->svrInfo['port'])) {
-			return $this->ret = -1;
+			return ['ret' => -1, 'msg' => self::$_notifySvrStatus[-1]];
 		}
 		if (extension_loaded('hlbs')) {
-			$this->ret = hlbs_notify_res($this->svrInfo, $this->ret, ($this->End() - $this->beginSec) * 1000000);
+			$ret = hlbs_notify_res($this->svrInfo, $ret, ($this->End() - $this->beginSec) * 1000000);
 		} else {
-			$this->ret = -99;
+			$ret = -99;
 		}
-		return ['ret' => $this->ret, 'msg' => self::$_notifySvrStatus[$this->ret]];
+		return ['ret' => $ret, 'msg' => self::$_notifySvrStatus[$ret]];
 	}
 
 	public function SvrInfo() {
