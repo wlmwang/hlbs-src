@@ -24,7 +24,7 @@
 extern zend_module_entry hlbs_module_entry;
 #define phpext_hlbs_ptr &hlbs_module_entry
 
-#define PHP_HLBS_VERSION "3.0.1" /* Replace with version number for your extension */
+#define PHP_HLBS_VERSION "3.0.0" /* Replace with version number for your extension */
 
 #ifdef PHP_WIN32
 #	define PHP_HLBS_API __declspec(dllexport)

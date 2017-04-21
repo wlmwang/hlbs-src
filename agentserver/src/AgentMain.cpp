@@ -34,7 +34,7 @@ int main(int argc, const char *argv[]) {
 	}
 	// 设置相关相关配置
 	soft::SetSoftName("HLBS(*agent*) -");
-	soft::SetSoftVer("3.0.1");
+	soft::SetSoftVer("3.0.2");
 	soft::SetLockPath("../log/hlbs.lock");
 	soft::SetPidPath("../log/hlbs.pid");
 	soft::SetLogPath("../log/hlbs.log");

@@ -6,7 +6,7 @@
  */
 
 class Hlbs {
-	private static $_version = "3.0.1";
+	private static $_version = "3.0.0";
 
 	private static $_getSvrStatus = [
 		 0	=> "获取Svr成功",
@@ -15,7 +15,7 @@ class Hlbs {
 		-3	=> "发送查询Svr请求失败",
 		-4	=> "接受查询Svr返回失败（过载）",
 		-5	=> "返回数据格式错误",
-		-99	=> "hlbs.so扩展错误",
+		99	=> "hlbs.so扩展错误",
 	];
 	
 	private static $_notifySvrStatus = [
@@ -25,7 +25,7 @@ class Hlbs {
 		-3	=> "发送上报Svr请求失败",
 		-4	=> "接受上报Svr返回失败",
 		-5	=> "返回数据格式错误",
-		-99	=> "hlbs.so扩展错误",
+		99	=> "hlbs.so扩展错误",
 	];
 
 	private $svrInfo = [
@@ -51,7 +51,7 @@ class Hlbs {
 		if (extension_loaded('hlbs')) {
 			$ret = hlbs_query_svr($this->svrInfo, $this->timeout);
 		} else {
-			$ret = -99;
+			$ret = 99;
 		}
 		$this->Start();
 		return ['ret' => $ret, 'msg' => self::$_getSvrStatus[$ret]];
@@ -64,7 +64,7 @@ class Hlbs {
 		if (extension_loaded('hlbs')) {
 			$ret = hlbs_notify_res($this->svrInfo, $ret, ($this->End() - $this->beginSec) * 1000000);
 		} else {
-			$ret = -99;
+			$ret = 99;
 		}
 		return ['ret' => $ret, 'msg' => self::$_notifySvrStatus[$ret]];
 	}
