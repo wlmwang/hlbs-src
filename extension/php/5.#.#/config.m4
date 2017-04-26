@@ -62,11 +62,9 @@ if test "$PHP_HLBS" != "no"; then
   CXXFLAGS="-std=c++0x"
   PHP_REQUIRE_CXX()
   PHP_ADD_INCLUDE(./lib)
-  PHP_ADD_INCLUDE(/usr/local/include/tinyxml)
   PHP_ADD_INCLUDE(/usr/local/include/hnet)
   PHP_ADD_LIBRARY(stdc++, 1, HLBS_SHARED_LIBADD)
   PHP_ADD_LIBRARY_WITH_PATH(hnet, /usr/local/lib, HLBS_SHARED_LIBADD)
-  PHP_ADD_LIBRARY_WITH_PATH(tinyxml, /usr/local/lib, HLBS_SHARED_LIBADD)
   PHP_SUBST(HLBS_SHARED_LIBADD)
 
   PHP_NEW_EXTENSION(hlbs, hlbs.cpp ./lib/agent_api.cpp, $ext_shared)

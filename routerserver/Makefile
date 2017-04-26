@@ -32,7 +32,6 @@ INCFLAGS	:= ${DIR_INC} -I${DIR_SRC} -I${DIR_MSG} -I${DIR_CMD}
 # 源文件
 CPP_SRC	:= $(wildcard ${DIR_SRC}*.cpp)
 #CC_SRC	:= $(wildcard ${DIR_MSG}*.cc)
-CC_SRC	:=
 
 # 编译文件
 OBJ		:= $(patsubst %.cpp, ${DIR_SRC}%.o, $(notdir ${CPP_SRC})) $(patsubst %.cc, ${DIR_SRC}%.o, $(notdir ${CC_SRC}))
