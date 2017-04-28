@@ -17,16 +17,17 @@ const int kType = 0;
 
 class AgentClient : public wMultiClient {
 public:
-	AgentClient(wConfig* config, wServer* server = NULL) : wMultiClient(config, server) { }
+	AgentClient(wConfig* config, wServer* server = NULL) : wMultiClient(config, server), mPort(0), mInitClient(false) { }
 
 	virtual const wStatus& PrepareRun();
+	virtual const wStatus& Run();
 	virtual const wStatus& NewTcpTask(wSocket* sock, wTask** ptr, int type = 0);
 
-	// 发送初始化svr配置请求
-	const wStatus& InitSvrReq();
+protected:
+	std::string mHost;
+	uint16_t mPort;
 
-	// 发送重载svr配置请求
-	const wStatus& ReloadSvrReq();
+	bool mInitClient;
 };
 
 #endif

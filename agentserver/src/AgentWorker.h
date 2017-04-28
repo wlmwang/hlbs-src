@@ -22,7 +22,6 @@ public:
 	virtual ~AgentWorker();
 
 	virtual const wStatus& PrepareRun();
-
 protected:
 	AgentClient* mAgentClient;
 };

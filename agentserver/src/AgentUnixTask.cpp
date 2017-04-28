@@ -29,7 +29,7 @@ int AgentUnixTask::GetSvrByGXid(struct Request_t *request) {
 		// 同步其他worker进程
 		memcpy(cmd->mHost, vRRt.mSvr.mHost, kMaxHost);
 		cmd->mPort = vRRt.mSvr.mPort;
-		SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrReqGXid_t));
+		//SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrReqGXid_t));
 	} else {
 		vRRt.mCode = -1;
 		vRRt.mNum = 0;
@@ -49,7 +49,7 @@ int AgentUnixTask::ReportSvr(struct Request_t *request) {
 		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
 
 		// 同步其他worker进程
-		SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrReqReport_t));
+		//SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrReqReport_t));
 	} else {
 		vRRt.mCode = -1;
 		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));

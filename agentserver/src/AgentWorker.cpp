@@ -22,10 +22,10 @@ const wStatus& AgentWorker::PrepareRun() {
 		return mStatus;
 	} else if (!(mStatus = mAgentClient->StartThread()).Ok()) {
 		return mStatus;
-	} else if (!(mStatus = Master()->Server()->Config<AgentConfig*>()->Qos()->StartDetectThread()).Ok()) {
-		return mStatus;
 	}
 
-	// 所有worker进程都初始化自身路由（AgentClientTask请求响应无需进程间同步操作）
-	return mStatus = mAgentClient->InitSvrReq();
+	if (!(mStatus = Master()->Server()->Config<AgentConfig*>()->Qos()->StartDetectThread()).Ok()) {
+		return mStatus;
+	}
+	return mStatus;
 }

@@ -8,7 +8,6 @@
 #include "AgentServer.h"
 #include "AgentConfig.h"
 #include "AgentClientTask.h"
-#include "SvrCmd.h"
 
 const wStatus& AgentClient::NewTcpTask(wSocket* sock, wTask** ptr, int type) {
 	SAFE_NEW(AgentClientTask(sock, type), *ptr);
@@ -19,23 +18,24 @@ const wStatus& AgentClient::NewTcpTask(wSocket* sock, wTask** ptr, int type) {
 }
 
 const wStatus& AgentClient::PrepareRun() {
-    std::string host;
-    int16_t port = 0;
-
     wConfig* config = Config<AgentConfig*>();
-    if (config == NULL || !config->GetConf("router_host", &host) || !config->GetConf("router_port", &port)) {
+    if (config == NULL || !config->GetConf("router_host", &mHost) || !config->GetConf("router_port", &mPort)) {
     	return mStatus = wStatus::IOError("AgentClient::PrepareRun failed", "Config() is null or host|port is illegal");
     }
-	// 连接服务器
-	return AddConnect(kType, host, port);
+
+	// 连接RouterSvr服务器(连接失败让其正常启动)
+	if (!(mStatus = AddConnect(kType, mHost, mPort)).Ok()) {
+		return mStatus.Clear();	
+	}
+	mInitClient = true;
+	return mStatus;
 }
 
-const wStatus& AgentClient::InitSvrReq() {
-	struct SvrReqInit_t svr;
-	return Broadcast(reinterpret_cast<char*>(&svr), sizeof(svr), kType);
-}
-
-const wStatus& AgentClient::ReloadSvrReq() {
-	struct SvrReqReload_t svr;
-	return Broadcast(reinterpret_cast<char*>(&svr), sizeof(svr), kType);
+const wStatus& AgentClient::Run() {
+	if (mInitClient == false) {
+		if ((mStatus = AddConnect(kType, mHost, mPort)).Ok()) {
+			mInitClient = true;
+		}
+	}
+	return mStatus;
 }

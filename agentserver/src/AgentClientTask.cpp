@@ -14,6 +14,24 @@ AgentClientTask::AgentClientTask(wSocket *socket, int32_t type) : wTcpTask(socke
 	On(CMD_SVR_RES, SVR_RES_SYNC, &AgentClientTask::SyncSvrRes, this);
 }
 
+const wStatus& AgentClientTask::Connect() {
+	return InitSvrReq();
+}
+
+const wStatus& AgentClientTask::ReConnect() {
+	return ReloadSvrReq();
+}
+
+const wStatus& AgentClientTask::InitSvrReq() {
+	struct SvrReqInit_t vRRt;
+	return AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
+}
+
+const wStatus& AgentClientTask::ReloadSvrReq() {
+	struct SvrReqReload_t vRRt;
+	return AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
+}
+
 // router发来init相响应
 int AgentClientTask::InitSvrRes(struct Request_t *request) {
 	struct SvrResInit_t* cmd = reinterpret_cast<struct SvrResInit_t*>(request->mBuf);
