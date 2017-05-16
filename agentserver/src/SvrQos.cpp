@@ -175,9 +175,9 @@ const wStatus& SvrQos::QueryNode(struct SvrNet_t& svr) {
 	MapKindIt_t reIt = mRouteTable.find(kind);
 	if (reIt != mRouteTable.end()) {
 		MultiMapNode_t* mapNode = reIt->second;
-		for (MultiMapNodeIt_t it = mapNode->begin(); it != mapNode->end(); it++) {
+		for (MultiMapNodeIt_t it = mapNode->begin(); it != mapNode->end() && it->second.mStat; it++) {
 			struct SvrNet_t svr = it->second.mNet;
-			struct SvrStat_t stat = *it->second.mStat;
+			struct SvrStat_t stat = *(it->second.mStat);
 
 			LOG_DEBUG(kSvrLog, "SvrQos::CallerNode RouteTable, LOADX(%f),GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d),"
 					"ReqLimit(%d),ReqMax(%d),ReqMin(%d),ReqCount(%d),ReqErrMin(%f),ReqExtendRate(%f)"
@@ -193,9 +193,9 @@ const wStatus& SvrQos::QueryNode(struct SvrNet_t& svr) {
 	MapNodeIt_t errIt = mErrTable.find(kind);
 	if (errIt != mErrTable.end()) {
 		ListNode_t* listNode = errIt->second;
-		for (ListNodeIt_t it = listNode->begin(); it != listNode->end(); it++) {
+		for (ListNodeIt_t it = listNode->begin(); it != listNode->end() && it->mStat; it++) {
 			struct SvrNet_t svr = it->mNet;
-			struct SvrStat_t stat = *it->mStat;
+			struct SvrStat_t stat = *(it->mStat);
 
 			LOG_DEBUG(kSvrLog, "SvrQos::CallerNode errTable, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d),"
 					"ReqLimit(%d),ReqMax(%d),ReqMin(%d),ReqCount(%d),ReqErrMin(%f),ReqExtendRate(%f)"
