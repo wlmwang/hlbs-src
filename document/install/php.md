@@ -23,6 +23,7 @@ cp -rf /usr/local/webserver/hlbs/extension/c++/common/* lib
 # make && make test
 # make install
 # echo extension=hlbs.so >> /usr/local/php/etc/php.ini
-# /usr/local/php/bin/php –m |grep hlbs  #查看是否安装成功
+# /usr/local/php/bin/php -m | grep hlbs  #查看是否安装成功
+hlbs
 # php /usr/local/webserver/hlbs/extension/php/example.php
 ```
