@@ -1,7 +1,7 @@
 # 目录结构
 
 ```
-v3.0.2之前版本目录结构（从v3.0.2起将不依赖任何第三方库）：
+v3.0.2之前版本目录结构（从v3.0.2 + hnet(v0.0.12+)起将不依赖任何第三方库）：
 
 PHP扩展库hlbs.so依赖第三方库： libhnet libtinyxml；若未用到PHP，则可不安装第三方运行库（routersvrd、agentsvrd静态链接了这些库）
 libhnet libtinyxml libprotobuf具体版本由实际安装版本确定。
