@@ -38,7 +38,7 @@ int RouterTcpTask::ReloadSvrReq(struct Request_t *request) {
 	// 重新加载配置
 	config->Qos()->CleanNode();
 	config->ParseSvrConf();
-
+	
 	int32_t start = 0;
 	struct SvrResReload_t vRRt;
 	do {

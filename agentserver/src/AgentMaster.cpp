@@ -10,7 +10,7 @@
 #include "AgentConfig.h"
 
 const wStatus& AgentMaster::PrepareRun() {
-	return mStatus.Clear();
+	return mStatus;
 }
 
 const wStatus& AgentMaster::NewWorker(uint32_t slot, wWorker** ptr) {
@@ -18,7 +18,7 @@ const wStatus& AgentMaster::NewWorker(uint32_t slot, wWorker** ptr) {
     if (*ptr == NULL) {
 		return mStatus = wStatus::IOError("AgentMaster::NewWorker", "new failed");
     }
-    return mStatus.Clear();
+    return mStatus;
 }
 
 const wStatus& AgentMaster::Reload() {
@@ -31,5 +31,5 @@ const wStatus& AgentMaster::Reload() {
 	} else if (!(mStatus = config->ParseQosConf()).Ok()) {
 		return mStatus;
 	}
-	return mStatus.Clear();
+	return mStatus;
 }

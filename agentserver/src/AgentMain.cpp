@@ -34,7 +34,7 @@ int main(int argc, const char *argv[]) {
 	}
 	// 设置相关相关配置
 	soft::SetSoftName("HLBS(*agent*) -");
-	soft::SetSoftVer("3.0.2");
+	soft::SetSoftVer("3.0.3");
 	soft::SetLockPath("../log/hlbs.lock");
 	soft::SetPidPath("../log/hlbs.pid");
 	soft::SetLogPath("../log/hlbs.log");
@@ -55,10 +55,6 @@ int main(int argc, const char *argv[]) {
 
 	// 解析xml配置文件
 	if (!config->ParseBaseConf().Ok()) {
-		return -1;
-	} else if (!config->ParseRouterConf().Ok()) {
-		return -1;
-	} else if (!config->ParseQosConf().Ok()) {
 		return -1;
 	}
 
@@ -82,6 +78,13 @@ int main(int argc, const char *argv[]) {
 	    		return -1;
 	    	}
 	    } else {
+	    	// 解析xml配置文件
+			if (!config->ParseRouterConf().Ok()) {
+				return -1;
+			} else if (!config->ParseQosConf().Ok()) {
+				return -1;
+			}
+
 	    	// 准备服务器
 			s = master->PrepareStart();
 			if (s.Ok()) {
