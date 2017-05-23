@@ -25,9 +25,10 @@ LIBFLAGS	:= ${DIR_LIB} $(ARFLAGS) -lhnet -ltinyxml $(LDFLAGS) -lpthread
 DIR_SRC		:= ./src/
 DIR_MSG		:= ../message/
 DIR_CMD		:= ../command/
+DIR_COM		:= ../common/
 
 # 头文件
-INCFLAGS	:= ${DIR_INC} -I${DIR_SRC} -I${DIR_MSG} -I${DIR_CMD}
+INCFLAGS	:= ${DIR_INC} -I${DIR_SRC} -I${DIR_MSG} -I${DIR_CMD} -I${DIR_COM}
 
 # 源文件
 CPP_SRC	:= $(wildcard ${DIR_SRC}*.cpp)

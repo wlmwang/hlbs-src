@@ -7,6 +7,7 @@
 #include "wCore.h"
 #include "wStatus.h"
 #include "wMisc.h"
+#include "Define.h"
 #include "AgentConfig.h"
 #include "AgentServer.h"
 #include "AgentMaster.h"
@@ -32,12 +33,14 @@ int main(int argc, const char *argv[]) {
 	if (misc::SetBinPath() == -1) {
 		std::cout << "set bin path failed" << std::endl;
 	}
+	
 	// 设置相关相关配置
-	soft::SetSoftName("HLBS(*agent*) -");
-	soft::SetSoftVer("3.0.3");
-	soft::SetLockPath("../log/hlbs.lock");
-	soft::SetPidPath("../log/hlbs.pid");
-	soft::SetLogPath("../log/hlbs.log");
+	std::string hlbsName = kHlbsSoftwareName + std::string("(*router*)");
+	soft::SetSoftName(hlbsName + " - ");
+	soft::SetSoftVer(kHlbsSoftwareVer);
+	soft::SetLockPath(kHlbsLockPath);
+	soft::SetPidPath(kHlbsPidPath);
+	soft::SetLogPath(kHlbsLogPath);
 
 	// 版本输出 && 守护进程创建
 	bool version, daemon;
@@ -67,7 +70,7 @@ int main(int argc, const char *argv[]) {
 
 	// 创建master对象
 	AgentMaster* master;
-	SAFE_NEW(AgentMaster("HLBS(*agent*)", server), master);
+	SAFE_NEW(AgentMaster(hlbsName, server), master);
 	if (master != NULL) {
 		// 接受命令信号
 	    std::string signal;
