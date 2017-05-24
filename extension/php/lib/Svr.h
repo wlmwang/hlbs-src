@@ -13,6 +13,7 @@
 const char kSvrLog[] = "../log/svr.log";
 
 const int8_t	kMaxHost	= 16;
+const int8_t	kMaxName	= 64;
 
 // 每次请求svr最多个数
 const int32_t	kMaxNum		= 16;
@@ -35,12 +36,15 @@ public:
 	int32_t		mVersion;		// 版本号
 	int32_t		mPort;			// 端口
 	char		mHost[kMaxHost];// 主机地址
+	char		mName[kMaxName];// 服务名
+	int8_t		mIdc;			// IDC
 
     int32_t 	mPre;			// 预取数
     int32_t 	mExpired;		// 过期时间
 
-    SvrNet_t() : mGid(0), mXid(0), mWeight(kInitWeight), mVersion(0), mPort(0), mPre(0), mExpired(0)  {
+    SvrNet_t() : mGid(0), mXid(0), mWeight(kInitWeight), mVersion(0), mPort(0), mIdc(0), mPre(0), mExpired(0) {
     	memset(mHost, 0, kMaxHost);
+    	memset(mName, 0, kMaxName);
     }
 
 	SvrNet_t(const SvrNet_t& other) {
@@ -49,9 +53,11 @@ public:
 		mWeight = other.mWeight;
 		mVersion = other.mVersion;
 		mPort = other.mPort;
+		mIdc = other.mIdc;
 		mPre = other.mPre;
 		mExpired = other.mExpired;
 		memcpy(mHost, other.mHost, kMaxHost);
+		memcpy(mName, other.mName, kMaxName);
 	}
 
 	SvrNet_t& operator=(const SvrNet_t &other) {
@@ -60,9 +66,11 @@ public:
 		mWeight = other.mWeight;
 		mVersion = other.mVersion;
 		mPort = other.mPort;
+		mIdc = other.mIdc;
 		mPre = other.mPre;
 		mExpired = other.mExpired;
 		memcpy(mHost, other.mHost, kMaxHost);
+		memcpy(mName, other.mName, kMaxName);
 		return *this;
 	}
 
