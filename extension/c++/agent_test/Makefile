@@ -18,41 +18,40 @@ LDFLAGS	:= -Wl,-dy #-Wl,-Bdynamic
 # 第三方库
 DIR_INC		:= -I/usr/local/include -I/usr/local/include/hnet
 DIR_LIB		:= -L/usr/local/lib
-#LIBFLAGS	:= ${DIR_LIB} $(ARFLAGS) -lhnet -lprotobuf $(LDFLAGS) -lpthread
-LIBFLAGS	:= ${DIR_LIB} $(ARFLAGS) -lhnet $(LDFLAGS) -lpthread
+LIBFLAGS	:= ${DIR_LIB} ${ARFLAGS} -lhnet ${LDFLAGS} -lpthread
 
 # 主目录,message,command目录
-DIR_SRC		:= ./
-DIR_MSG		:= ../common/
-DIR_CMD		:= ../../../command/
+DIR_SRC		:= .
+DIR_MSG		:= ../common
+DIR_CMD		:= ../../../command
 
 # 头文件
 INCFLAGS	:= ${DIR_INC} -I${DIR_SRC} -I${DIR_MSG} -I${DIR_CMD}
 
 # 源文件
-CPP_SRC	:= $(wildcard ${DIR_SRC}*.cpp)
-CC_SRC	:= $(wildcard ${DIR_MSG}*.cpp)
+CPP_SRC	:= $(wildcard ${DIR_SRC}/*.cpp)
+CC_SRC	:= $(wildcard ${DIR_MSG}/*.cpp)
 
 # 编译文件
-OBJ		:= $(patsubst %.cpp, ${DIR_SRC}%.o, $(notdir ${CPP_SRC})) $(patsubst %.cpp, ${DIR_SRC}%.o, $(notdir ${CC_SRC}))
+OBJ		:= $(patsubst %.cpp, ${DIR_SRC}/%.o, $(notdir ${CPP_SRC})) $(patsubst %.cpp, ${DIR_SRC}/%.o, $(notdir ${CC_SRC}))
 
 TARGET	:= test
 
 .PHONY:all clean install
 
-all: $(TARGET)
+all: ${TARGET}
 
-$(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) $^ -o $@ $(LIBFLAGS)
+${TARGET}: ${OBJ}
+	${CC} ${CFLAGS} $^ -o $@ ${LIBFLAGS}
 
-$(DIR_SRC)%.o:${DIR_SRC}%.cpp
-	$(CC) $(CFLAGS) $(INCFLAGS) -c $< -o $@
+${DIR_SRC}/%.o:${DIR_SRC}/%.cpp
+	${CC} ${CFLAGS} ${INCFLAGS} -c $< -o $@
 
-$(DIR_SRC)%.o:${DIR_MSG}%.cpp
-	$(CC) $(CFLAGS) $(INCFLAGS) -c $< -o $@
+${DIR_SRC}/%.o:${DIR_MSG}/%.cpp
+	${CC} ${CFLAGS} ${INCFLAGS} -c $< -o $@
 
-$(DIR_SRC)%.o:${DIR_MSG}%.cc
-	$(CC) $(CCFLAGS) $(INCFLAGS) -c $< -o $@
+$(DIR_SRC)/%.o:${DIR_MSG}/%.cc
+	${CC} ${CCFLAGS} ${INCFLAGS} -c $< -o $@
 
 clean:
-	-rm -f $(TARGET) $(DIR_SRC)*.o $(DIR_MSG)*.o
+	-rm -f ${TARGET} ${DIR_SRC}/*.o ${DIR_MSG}/*.o
