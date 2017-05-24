@@ -20,11 +20,55 @@ RouterConfig::~RouterConfig() {
 	SAFE_DELETE(mSvrQos);
 }
 
+const wStatus& RouterConfig::WriteSvrConfFile() {
+	TiXmlDocument document;
+
+	// xml文件头
+	TiXmlDeclaration* declaration;
+	SAFE_NEW(TiXmlDeclaration("1.0", "UTF-8", ""), declaration);
+	document.LinkEndChild(declaration);
+	
+	// 创建ROOT节点
+	TiXmlElement* root;
+	SAFE_NEW(TiXmlElement("ROOT"), root);
+	document.LinkEndChild(root);
+	
+	// 创建SVRS节点
+	TiXmlElement* svrs;
+	SAFE_NEW(TiXmlElement("SVRS"), svrs);
+	root->LinkEndChild(svrs);
+
+	// 创建SVR节点
+	int32_t start = 0, num = 0;
+	struct SvrNet_t svr[kMaxNum];
+	do {
+		if (mSvrQos->GetNodeAll(svr, &num, start, kMaxNum).Ok() && num > 0) {
+			for (int i = 0; i < num; i++) {		// 保存SVR节点
+				TiXmlElement* node;
+				SAFE_NEW(TiXmlElement("SVR"), node);
+				node->SetAttribute("GID", svr[i].mGid);
+				node->SetAttribute("XID", svr[i].mXid);
+				node->SetAttribute("HOST", svr[i].mHost);
+				node->SetAttribute("PORT", svr[i].mPort);
+				node->SetAttribute("WEIGHT", svr[i].mWeight);
+				node->SetAttribute("VERSION", svr[i].mVersion);
+				node->SetAttribute("NAME", svr[i].mName);
+				node->SetAttribute("IDC", svr[i].mIdc);
+				svrs->LinkEndChild(node);
+			}
+		}
+		start += num;
+	} while (num >= kMaxNum);
+	document.SaveFile(mSvrFile.c_str());
+	return mStatus;
+}
+
 const wStatus& RouterConfig::ParseBaseConf() {
-	if (!mDoc.LoadFile(mBaseFile.c_str())) {
+	TiXmlDocument document;
+	if (!document.LoadFile(mBaseFile.c_str())) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseBaseConf Load configure(conf.xml) file failed", "");
 	}
-	TiXmlElement *pRoot = mDoc.FirstChildElement();
+	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseBaseConf Read root from configure(conf.xml) failed", "");
 	}
@@ -47,14 +91,32 @@ const wStatus& RouterConfig::ParseBaseConf() {
 	} else {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseBaseConf Get SERVER node from conf.xml failed", "");
 	}
-	return mStatus.Clear();
+
+	// RestFul侦听地址
+	pElement = pRoot->FirstChildElement("CONTROL");
+	if (NULL != pElement) {
+		const char* host = pElement->Attribute("HOST");
+		const char* port = pElement->Attribute("PORT");
+		const char* protocol = pElement->Attribute("PROTOCOL");
+		if (host != NULL && port != NULL) {
+			SetStrConf("control_host", host);
+			SetIntConf("control_port", atoi(port));
+			SetStrConf("control_protocol", protocol);
+		} else {
+			return mStatus = wStatus::InvalidArgument("RouterConfig::ParseBaseConf Get CONTROL host or port from conf.xml failed", "");
+		}
+	} else {
+		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseBaseConf Get CONTROL node from conf.xml failed", "");
+	}
+	return mStatus;
 }
 
 const wStatus& RouterConfig::ParseSvrConf() {
-	if (!mDoc.LoadFile(mSvrFile.c_str())) {
+	TiXmlDocument document;
+	if (!document.LoadFile(mSvrFile.c_str())) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseSvrConf Load configure(svr.xml) file failed", "");
 	}
-	TiXmlElement *pRoot = mDoc.FirstChildElement();
+	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseSvrConf Read root from configure(svr.xml) failed", "");
 	}
@@ -70,17 +132,25 @@ const wStatus& RouterConfig::ParseSvrConf() {
 			const char* port = pChildElm->Attribute("PORT");
 			const char* weight = pChildElm->Attribute("WEIGHT");
 			const char* version = pChildElm->Attribute("VERSION");
+			const char* name = pChildElm->Attribute("NAME");
+			const char* idc = pChildElm->Attribute("IDC");
 			if (gid != NULL && xid != NULL && host != NULL && port != NULL) {
 				struct SvrNet_t svr;
 				svr.mGid = atoi(gid);
 				svr.mXid = atoi(xid);
 				svr.mPort = atoi(port);
 				memcpy(svr.mHost, host, kMaxHost);
+				if (idc != NULL) {
+					svr.mIdc = atoi(idc);
+				}
 				if (version != NULL) {
 					svr.mVersion = atoi(version);
 				}
 				if (weight != NULL) {
 					svr.mWeight = atoi(weight);
+				}
+				if (name != NULL) {
+					memcpy(svr.mName, name, kMaxName);
 				}
 
 				// 添加新配置
@@ -97,16 +167,15 @@ const wStatus& RouterConfig::ParseSvrConf() {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseSvrConf Get SVRS node from svr.xml failed", "");
 	}
 
-	// 记录svr.xml文件更新时间
-	SetMtime();
-	return mStatus.Clear();
+	return SetMtime();	// 记录svr.xml文件更新时间
 }
 
 const wStatus& RouterConfig::ParseModifySvr(struct SvrNet_t buf[], int32_t* num, int32_t start, int32_t size) {
-	if (!mDoc.LoadFile(mSvrFile.c_str())) {
+	TiXmlDocument document;
+	if (!document.LoadFile(mSvrFile.c_str())) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseModifySvr Load configure(svr.xml) file failed", "");
 	}
-	TiXmlElement *pRoot = mDoc.FirstChildElement();
+	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseModifySvr Read root from configure(svr.xml) failed", "");
 	}
@@ -125,17 +194,25 @@ const wStatus& RouterConfig::ParseModifySvr(struct SvrNet_t buf[], int32_t* num,
 			const char* port = pChildElm->Attribute("PORT");
 			const char* weight = pChildElm->Attribute("WEIGHT");
 			const char* version = pChildElm->Attribute("VERSION");
+			const char* name = pChildElm->Attribute("NAME");
+			const char* idc = pChildElm->Attribute("IDC");
 			if (gid != NULL && xid != NULL && host != NULL && port != NULL) {
 				struct SvrNet_t svr;
 				svr.mGid = atoi(gid);
 				svr.mXid = atoi(xid);
 				svr.mPort = atoi(port);
 				memcpy(svr.mHost, host, kMaxHost);
+				if (idc != NULL) {
+					svr.mIdc = atoi(idc);
+				}
 				if (version != NULL) {
 					svr.mVersion = atoi(version);
 				}
 				if (weight != NULL) {
 					svr.mWeight = atoi(weight);
+				}
+				if (name != NULL) {
+					memcpy(svr.mName, name, kMaxName);
 				}
 
 				if (svr.mWeight >= 0 && mSvrQos->IsExistNode(svr)) {
@@ -157,19 +234,18 @@ const wStatus& RouterConfig::ParseModifySvr(struct SvrNet_t buf[], int32_t* num,
 				LOG_ERROR(kSvrLog, "RouterConfig::ParseModifySvr Parse configure from svr.xml occur error, line : %d", i);
 			}
 		}
-		// 记录svr.xml文件更新时间
-		SetMtime();
+		return SetMtime();	// 记录svr.xml文件更新时间
 	} else {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseModifySvr Get SVRS node from svr.xml failed", "");
 	}
-	return mStatus.Clear();
 }
 
 const wStatus& RouterConfig::ParseQosConf() {
-	if (!mDoc.LoadFile(mQosFile.c_str())) {
+	TiXmlDocument document;
+	if (!document.LoadFile(mQosFile.c_str())) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseQosConf Load configure(qos.xml) file failed", "");
 	}
-	TiXmlElement *pRoot = mDoc.FirstChildElement();
+	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseQosConf Read root from configure(qos.xml) failed", "");
 	}
@@ -312,14 +388,14 @@ const wStatus& RouterConfig::ParseQosConf() {
     if (mSvrQos->mReqCfg.mPreTime <= 0 || mSvrQos->mReqCfg.mPreTime > (mSvrQos->mRebuildTm / 2)) {
 		mSvrQos->mReqCfg.mPreTime = 2;
 	}
-	return mStatus.Clear();
+	return mStatus;
 }
 
 const wStatus& RouterConfig::SetMtime() {
 	struct stat stBuf;
 	if (stat(mSvrFile.c_str(), &stBuf) == 0) {
 		mMtime = stBuf.st_mtime;
-		return mStatus.Clear();
+		return mStatus;
 	}
 	return mStatus = wStatus::IOError("RouterConfig::SetMtime svr.xml failed", strerror(errno));
 }

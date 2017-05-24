@@ -9,7 +9,6 @@
 #include "RouterConfig.h"
 
 const wStatus& RouterMaster::PrepareRun() {
-	mWorkerNum = 1;
 	return mStatus;
 }
 

@@ -4,9 +4,9 @@
  * Copyright (C) Hupu, Inc.
  */
 
+#include "wLogger.h"
 #include "RouterTcpTask.h"
 #include "RouterConfig.h"
-#include "wLogger.h"
 #include "SvrCmd.h"
 
 RouterTcpTask::RouterTcpTask(wSocket *socket, int32_t type) : wTcpTask(socket, type) {

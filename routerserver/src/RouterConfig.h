@@ -34,9 +34,10 @@ public:
 	const wStatus& SetMtime();
 	bool IsModifySvr();
 
+	const wStatus& WriteSvrConfFile();
+
 protected:
 	SvrQos *mSvrQos;
-	TiXmlDocument mDoc;
 	std::string mSvrFile;
 	std::string mQosFile;
 	std::string mBaseFile;
