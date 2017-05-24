@@ -16,11 +16,20 @@ using namespace hnet;
 
 const uint8_t CMD_SVR_HTTP = 70;
 
-// 添加&更新SVR记录
-const uint8_t SVR_HTTP_SAVE = 0;
+// 重载SVR记录
+const uint8_t SVR_HTTP_INIT = 0;
 
-// 重载所有SVR记录
-const uint8_t SVR_HTTP_INIT = 1;
+// 更新SVR记录
+const uint8_t SVR_HTTP_SAVE = 1;
+
+// 设置SVR记录
+const uint8_t SVR_HTTP_FSET = 2;
+
+// 查找所有SVR记录
+const uint8_t SVR_HTTP_GALL = 3;
+
+// 服务器统计信息
+const uint8_t SVR_HTTP_INFO = 4;
 
 class RouterHttpTask : public wHttpTask {
 public:
@@ -28,6 +37,12 @@ public:
 
 	int SaveSvrReq(struct Request_t *request);
 	int InitSvrReq(struct Request_t *request);
+	int FsetSvrReq(struct Request_t *request);
+	int GallSvrReq(struct Request_t *request);
+	int InfoReq(struct Request_t *request);
+	
+protected:
+	int SaveJsonSvr(const std::string& svrs);
 };
 
 #endif

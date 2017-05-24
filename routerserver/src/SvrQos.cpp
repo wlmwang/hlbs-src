@@ -90,6 +90,8 @@ const wStatus& SvrQos::ModifyNode(const struct SvrNet_t& svr) {
 		struct SvrNet_t& oldsvr = const_cast<struct SvrNet_t&>(mapReqIt->first);
 		oldsvr.mVersion = svr.mVersion;
 		oldsvr.mWeight = svr.mWeight < kMaxWeight? svr.mWeight: kMaxWeight;
+		oldsvr.mIdc = svr.mIdc;
+		memcpy(oldsvr.mName, svr.mName, kMaxName);
 		return ModifyRouteNode(svr);
 	}
 }
@@ -117,7 +119,7 @@ const wStatus& SvrQos::DeleteNode(const struct SvrNet_t& svr) {
 const wStatus& SvrQos::LoadStatCfg(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
 	stat->mInfo.InitInfo(svr);
 	stat->mReqCfg = mReqCfg;
-	return mStatus.Clear();
+	return mStatus;
 }
 
 const wStatus& SvrQos::GetNodeAll(struct SvrNet_t buf[], int32_t* num, int32_t start, int32_t size) {
@@ -128,7 +130,7 @@ const wStatus& SvrQos::GetNodeAll(struct SvrNet_t buf[], int32_t* num, int32_t s
 	for (std::advance(mapReqIt, start); mapReqIt != mMapReqSvr.end() && *num < size; mapReqIt++) {
 		buf[(*num)++] = mapReqIt->first;
 	}
-	return mStatus.Clear();
+	return mStatus;
 }
 
 const wStatus& SvrQos::AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
@@ -166,7 +168,7 @@ const wStatus& SvrQos::AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t
 			"ReqLimit(%d),ReqAll(%d),ReqSuc(%d),ReqErrRet(%d),ReqErrTm(%d),LoadX(%f),PreAll(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight,stat->mReqCfg.mReqLimit,
 			stat->mInfo.mReqAll,stat->mInfo.mReqSuc,stat->mInfo.mReqErrRet,stat->mInfo.mReqErrTm,stat->mInfo.mLoadX,stat->mInfo.mReqAll);
-    return mStatus.Clear();
+    return mStatus;
 }
 
 
@@ -227,7 +229,7 @@ const wStatus& SvrQos::DeleteRouteNode(const struct SvrNet_t& svr) {
     				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		}
 	}
-	return mStatus.Clear();
+	return mStatus;
 }
 
 const wStatus& SvrQos::ModifyRouteNode(const struct SvrNet_t& svr) {
@@ -252,6 +254,8 @@ const wStatus& SvrQos::ModifyRouteNode(const struct SvrNet_t& svr) {
                 	struct SvrNet_t& oldsvr = it->second.mNet;
                 	oldsvr.mWeight = svr.mWeight;
 					oldsvr.mVersion = svr.mVersion;
+					oldsvr.mIdc = svr.mIdc;
+					memcpy(oldsvr.mName, svr.mName, kMaxName);
                     break;
                 } else {
                     it++;
@@ -273,6 +277,8 @@ const wStatus& SvrQos::ModifyRouteNode(const struct SvrNet_t& svr) {
                 	struct SvrNet_t& oldsvr = it->mNet;
                 	oldsvr.mWeight = svr.mWeight;
 					oldsvr.mVersion = svr.mVersion;
+					oldsvr.mIdc = svr.mIdc;
+					memcpy(oldsvr.mName, svr.mName, kMaxName);
 					break;
 				} else {
 					it++;
@@ -283,7 +289,7 @@ const wStatus& SvrQos::ModifyRouteNode(const struct SvrNet_t& svr) {
     				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		}
 	}
-	return mStatus.Clear();
+	return mStatus;
 }
 
 const wStatus& SvrQos::CleanNode() {
@@ -298,5 +304,5 @@ const wStatus& SvrQos::CleanNode() {
     	}
     	mMapReqSvr.clear();
     }
-    return mStatus.Clear();
+    return mStatus;
 }
