@@ -22,9 +22,6 @@ public:
 	virtual const wStatus& Run();
 	virtual const wStatus& NewTcpTask(wSocket* sock, wTask** ptr);
 	virtual const wStatus& NewHttpTask(wSocket* sock, wTask** ptr);
-
-	// 检测配置文件是否修改(增量同步)
-    const wStatus& CheckSvr();
 };
 
 #endif

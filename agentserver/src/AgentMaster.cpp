@@ -23,7 +23,6 @@ const wStatus& AgentMaster::NewWorker(uint32_t slot, wWorker** ptr) {
 
 const wStatus& AgentMaster::Reload() {
 	AgentConfig* config = mServer->Config<AgentConfig*>();
-
 	if (!(mStatus = config->ParseBaseConf()).Ok()) {
 		return mStatus;
 	} else if (!(mStatus = config->ParseRouterConf()).Ok()) {

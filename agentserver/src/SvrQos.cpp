@@ -40,20 +40,6 @@ bool SvrQos::IsExistNode(const struct SvrNet_t& svr) {
 	return true;
 }
 
-bool SvrQos::IsVerChange(const struct SvrNet_t& svr) {
-	mMutex.Lock();
-	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
-	MapSvrIt_t mapEndIt = mMapReqSvr.end();
-	mMutex.Unlock();
-	if (mapReqIt != mapEndIt) {
-		const struct SvrNet_t& kind = mapReqIt->first;
-		if (kind.mVersion == svr.mVersion) {
-			return false;
-		}
-	}
-	return true;
-}
-
 const wStatus& SvrQos::SaveNode(const struct SvrNet_t& svr) {
 	LOG_DEBUG(kSvrLog, "SvrQos::SaveNode save SvrNet_t start, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
@@ -172,7 +158,6 @@ const wStatus& SvrQos::QueryNode(struct SvrNet_t& svr) {
 
 #ifdef _DEBUG_
 	SvrKind_t kind(svr);
-
 	// 正常路由
 	MapKindIt_t reIt = mRouteTable.find(kind);
 	if (reIt != mRouteTable.end()) {
@@ -209,7 +194,6 @@ const wStatus& SvrQos::QueryNode(struct SvrNet_t& svr) {
 		}
 	}
 #endif
-
 	return mStatus;
 }
 
@@ -284,7 +268,6 @@ const wStatus& SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		return mStatus = wStatus::IOError("SvrQos::GetRouteNode get failed, the SvrNet_t invalid", "");
 	}
-
 	struct SvrKind_t kind(svr);
 
 	// 重建该路由

@@ -21,6 +21,17 @@ bool SvrQos::IsExistNode(const struct SvrNet_t& svr) {
 	return true;
 }
 
+bool SvrQos::IsWNIChange(const struct SvrNet_t& svr) {
+	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
+	if (mapReqIt != mMapReqSvr.end()) {
+		const struct SvrNet_t& kind = mapReqIt->first;
+		if (kind.mWeight == svr.mWeight && kind.mIdc == svr.mIdc && !misc::Strcmp(kind.mName, svr.mName, kMaxName)) {
+			return false;
+		}
+	}
+	return true;
+}
+
 bool SvrQos::IsVerChange(const struct SvrNet_t& svr) {
 	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
 	if (mapReqIt != mMapReqSvr.end()) {

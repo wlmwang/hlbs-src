@@ -25,16 +25,16 @@ public:
 	const wStatus& ParseSvrConf();
 	const wStatus& ParseQosConf();
 
-	// 获取修改节点。不能删除节点（可修改WEIGHT=0属性，达到删除节点效果）
-	const wStatus& ParseModifySvr(struct SvrNet_t buf[], int32_t* num, int32_t start, int32_t size);
-
-	SvrQos* Qos() { return mSvrQos;}
+	// 更新变化节点
+	// 不能删除节点，可修改WEIGHT=0属性，达到删除节点效果
+	const wStatus& ParseModifySvr();
+	const wStatus& WriteFileSvr(const struct SvrNet_t* svr = NULL, int32_t n = 0, std::string filename = "");
 
 	// svr.xml文件最后一次被修改的时间
 	const wStatus& SetMtime();
 	bool IsModifySvr();
 
-	const wStatus& WriteSvrConfFile();
+	SvrQos* Qos() { return mSvrQos;}
 
 protected:
 	SvrQos *mSvrQos;

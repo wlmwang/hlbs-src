@@ -41,8 +41,6 @@ public:
 
 	// 指定节点是否存在
 	bool IsExistNode(const struct SvrNet_t& svr);
-	// 节点是否变化。节点不存在时，接口认为“版本变化”（新配置始终下发，旧配置检测到version变化才下发）
-	bool IsVerChange(const struct SvrNet_t& svr);
 
 	// 获取 最优节点
 	const wStatus& QueryNode(struct SvrNet_t& svr);

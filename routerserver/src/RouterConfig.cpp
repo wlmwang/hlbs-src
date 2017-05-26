@@ -20,7 +20,7 @@ RouterConfig::~RouterConfig() {
 	SAFE_DELETE(mSvrQos);
 }
 
-const wStatus& RouterConfig::WriteSvrConfFile() {
+const wStatus& RouterConfig::WriteFileSvr(const struct SvrNet_t* svr, int32_t n, std::string filename) {
 	TiXmlDocument document;
 
 	// xml文件头
@@ -38,12 +38,17 @@ const wStatus& RouterConfig::WriteSvrConfFile() {
 	SAFE_NEW(TiXmlElement("SVRS"), svrs);
 	root->LinkEndChild(svrs);
 
-	// 创建SVR节点
-	int32_t start = 0, num = 0;
-	struct SvrNet_t svr[kMaxNum];
-	do {
-		if (mSvrQos->GetNodeAll(svr, &num, start, kMaxNum).Ok() && num > 0) {
-			for (int i = 0; i < num; i++) {		// 保存SVR节点
+	if (svr == NULL) {
+		int32_t start = 0, num = 0;
+		struct SvrNet_t svr[kMaxNum];
+		do {
+			if (!mSvrQos->GetNodeAll(svr, &num, start, kMaxNum).Ok() || num <= 0) {
+				break;
+			}
+			for (int i = 0; i < num; i++) {
+				if (svr[i].mGid <= 0 || svr[i].mXid <= 0 || svr[i].mPort <= 0) {
+					continue;
+				}
 				TiXmlElement* node;
 				SAFE_NEW(TiXmlElement("SVR"), node);
 				node->SetAttribute("GID", svr[i].mGid);
@@ -56,10 +61,32 @@ const wStatus& RouterConfig::WriteSvrConfFile() {
 				node->SetAttribute("IDC", svr[i].mIdc);
 				svrs->LinkEndChild(node);
 			}
+			start += num;
+		} while (num >= kMaxNum);
+	} else if (svr && n > 0) {
+		for (int32_t i = 0; i < n; i++) {
+			if (svr[i].mGid <= 0 || svr[i].mXid <= 0 || svr[i].mPort <= 0) {
+				continue;
+			}
+			TiXmlElement* node;
+			SAFE_NEW(TiXmlElement("SVR"), node);
+			node->SetAttribute("GID", svr[i].mGid);
+			node->SetAttribute("XID", svr[i].mXid);
+			node->SetAttribute("HOST", svr[i].mHost);
+			node->SetAttribute("PORT", svr[i].mPort);
+			node->SetAttribute("WEIGHT", svr[i].mWeight);
+			node->SetAttribute("VERSION", svr[i].mVersion);
+			node->SetAttribute("NAME", svr[i].mName);
+			node->SetAttribute("IDC", svr[i].mIdc);
+			svrs->LinkEndChild(node);
 		}
-		start += num;
-	} while (num >= kMaxNum);
-	document.SaveFile(mSvrFile.c_str());
+	}
+
+	if (filename.size() == 0) {
+		document.SaveFile(mSvrFile.c_str());
+	} else {
+		document.SaveFile(filename.c_str());
+	}
 	return mStatus;
 }
 
@@ -170,7 +197,7 @@ const wStatus& RouterConfig::ParseSvrConf() {
 	return SetMtime();	// 记录svr.xml文件更新时间
 }
 
-const wStatus& RouterConfig::ParseModifySvr(struct SvrNet_t buf[], int32_t* num, int32_t start, int32_t size) {
+const wStatus& RouterConfig::ParseModifySvr() {
 	TiXmlDocument document;
 	if (!document.LoadFile(mSvrFile.c_str())) {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseModifySvr Load configure(svr.xml) file failed", "");
@@ -183,11 +210,7 @@ const wStatus& RouterConfig::ParseModifySvr(struct SvrNet_t buf[], int32_t* num,
 	TiXmlElement* pElement = pRoot->FirstChildElement("SVRS");
 	if (pElement != NULL) {
 		int i = 0;
-		*num = 0;
 		for (TiXmlElement* pChildElm = pElement->FirstChildElement(); pChildElm != NULL ; pChildElm = pChildElm->NextSiblingElement(), i++) {
-			if (i < start) {
-				continue;
-			}
 			const char* gid = pChildElm->Attribute("GID");
 			const char* xid = pChildElm->Attribute("XID");
 			const char* host = pChildElm->Attribute("HOST");
@@ -215,25 +238,18 @@ const wStatus& RouterConfig::ParseModifySvr(struct SvrNet_t buf[], int32_t* num,
 					memcpy(svr.mName, name, kMaxName);
 				}
 
-				if (svr.mWeight >= 0 && mSvrQos->IsExistNode(svr)) {
-					// 旧配置检测到version变化才下发
-					if (mSvrQos->IsVerChange(svr)) {
+				if (svr.mWeight >= 0 && mSvrQos->IsExistNode(svr)) {	// 旧配置检测到weight、name、idc变化才更新
+					if (mSvrQos->IsWNIChange(svr)) {
 						mSvrQos->SaveNode(svr);
-						buf[(*num)++] = svr;
 					}
-				} else if (svr.mWeight >= 0) {
-					// 添加新配置
+				} else if (svr.mWeight > 0) {	// 添加新配置 weight>0 添加配置
 					mSvrQos->SaveNode(svr);
-					buf[(*num)++] = svr;
-				}
-
-				if (*num >= size) {
-					break;
 				}
 			} else {
 				LOG_ERROR(kSvrLog, "RouterConfig::ParseModifySvr Parse configure from svr.xml occur error, line : %d", i);
 			}
 		}
+
 		return SetMtime();	// 记录svr.xml文件更新时间
 	} else {
 		return mStatus = wStatus::InvalidArgument("RouterConfig::ParseModifySvr Get SVRS node from svr.xml failed", "");

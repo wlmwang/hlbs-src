@@ -40,8 +40,10 @@ public:
 
 	// 指定节点是否存在
 	bool IsExistNode(const struct SvrNet_t& svr);
-	// 节点是否变化（新配置始终下发，旧配置检测到version变化才下发）
+	// 节点version是否变化
 	bool IsVerChange(const struct SvrNet_t& svr);
+	// 节点weight、name、idc是否变化
+	bool IsWNIChange(const struct SvrNet_t& svr);
 
 	// 获取所有节点
 	const wStatus& GetNodeAll(struct SvrNet_t buf[], int32_t* num, int32_t start, int32_t size);

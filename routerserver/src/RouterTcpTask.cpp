@@ -22,10 +22,11 @@ int RouterTcpTask::InitSvrReq(struct Request_t *request) {
 	int32_t start = 0;
 	struct SvrResInit_t vRRt;
 	do {
-		if (config->Qos()->GetNodeAll(vRRt.mSvr, &vRRt.mNum, start, kMaxNum).Ok() && vRRt.mNum > 0) {
-			vRRt.mCode = 0;
-			AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
+		if (!config->Qos()->GetNodeAll(vRRt.mSvr, &vRRt.mNum, start, kMaxNum).Ok() || vRRt.mNum <= 0) {
+			break;
 		}
+		vRRt.mCode = 0;
+		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
 		start += vRRt.mNum;
 	} while (vRRt.mNum >= kMaxNum);
 	return 0;
@@ -42,10 +43,11 @@ int RouterTcpTask::ReloadSvrReq(struct Request_t *request) {
 	int32_t start = 0;
 	struct SvrResReload_t vRRt;
 	do {
-		if (config->Qos()->GetNodeAll(vRRt.mSvr, &vRRt.mNum, start, kMaxNum).Ok() && vRRt.mNum > 0) {
-			vRRt.mCode = 0;
-			AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
+		if (!config->Qos()->GetNodeAll(vRRt.mSvr, &vRRt.mNum, start, kMaxNum).Ok() || vRRt.mNum <= 0) {
+			break;
 		}
+		vRRt.mCode = 0;
+		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
 		start += vRRt.mNum;
 	} while (vRRt.mNum >= kMaxNum);
 	return 0;
