@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ROOT>
+	<AGENTS>
+		<!--AGENT服务器配置-->
+		<AGENT HOST="192.168.9.28" PORT="10007"/>
+		<AGENT HOST="192.168.9.29" PORT="10007"/>
+		<AGENT HOST="192.168.9.30" PORT="10007"/>
+		<AGENT HOST="192.168.9.31" PORT="10007"/>
+	</AGENTS>
+</ROOT>
