@@ -17,7 +17,7 @@ RouterTcpTask::RouterTcpTask(wSocket *socket, int32_t type) : wTcpTask(socket, t
 // 向单个agent发送init回应
 int RouterTcpTask::InitSvrReq(struct Request_t *request) {
 	RouterConfig* config = Config<RouterConfig*>();
-
+	
 	// 获取所有节点
 	int32_t start = 0;
 	struct SvrResInit_t vRRt;
@@ -25,8 +25,8 @@ int RouterTcpTask::InitSvrReq(struct Request_t *request) {
 		if (!config->Qos()->GetNodeAll(vRRt.mSvr, &vRRt.mNum, start, kMaxNum).Ok() || vRRt.mNum <= 0) {
 			break;
 		}
-		vRRt.mCode = 0;
-		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
+		AsyncSend(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+		vRRt.mCode++;
 		start += vRRt.mNum;
 	} while (vRRt.mNum >= kMaxNum);
 	return 0;
@@ -36,7 +36,7 @@ int RouterTcpTask::InitSvrReq(struct Request_t *request) {
 int RouterTcpTask::ReloadSvrReq(struct Request_t *request) {
 	RouterConfig* config = Config<RouterConfig*>();
 
-	// 重新加载配置
+	// 重新加载配置文件
 	config->Qos()->CleanNode();
 	config->ParseSvrConf();
 	
@@ -46,8 +46,8 @@ int RouterTcpTask::ReloadSvrReq(struct Request_t *request) {
 		if (!config->Qos()->GetNodeAll(vRRt.mSvr, &vRRt.mNum, start, kMaxNum).Ok() || vRRt.mNum <= 0) {
 			break;
 		}
-		vRRt.mCode = 0;
-		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
+		AsyncSend(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+		vRRt.mCode++;
 		start += vRRt.mNum;
 	} while (vRRt.mNum >= kMaxNum);
 	return 0;

@@ -20,8 +20,7 @@ RouterHttpTask::RouterHttpTask(wSocket *socket, int32_t type) : wHttpTask(socket
 
 int RouterHttpTask::ReloadSvrReq(struct Request_t *request) {
 	RouterConfig* config = Config<RouterConfig*>();
-	RouterServer* server = Server<RouterServer*>();
-
+	// 重新加载配置文件
 	config->Qos()->CleanNode();
 	config->ParseSvrConf();
 	config->WriteFileSvr();
@@ -33,7 +32,9 @@ int RouterHttpTask::ReloadSvrReq(struct Request_t *request) {
 			break;
 		}
 		start += vRRt.mNum;
-		server->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+		Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+		SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+		vRRt.mCode++;
 	} while (vRRt.mNum >= kMaxNum);
 
 	Json::Value root;
@@ -69,11 +70,14 @@ int RouterHttpTask::SaveSvrReq(struct Request_t *request) {
 				// 广播agentsvrd
 				if (vRRt.mNum >= kMaxNum) {
 					Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+					SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+					vRRt.mCode++;
 					vRRt.mNum = 0;
 				}
 			}
 			if (vRRt.mNum > 0) {
 				Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+				SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 			}
 
 			config->WriteFileSvr();
@@ -100,8 +104,8 @@ int RouterHttpTask::CoverSvrReq(struct Request_t *request) {
 		struct SvrNet_t* svr = NULL;
 		int32_t num = ParseJsonSvr(svrs, &svr);
 		if (num > 0) {
-			config->Qos()->CleanNode();	// 清除原有SVR记录
-
+			// 清除原有SVR记录
+			config->Qos()->CleanNode();
 			struct SvrResReload_t vRRt;
 			for (int32_t i = 0; i < num; i++) {
 				if (svr[i].mGid > 0 && svr[i].mWeight >= 0 && config->Qos()->IsExistNode(svr[i])) {	// 旧配置检测到weight、name、idc变化才更新
@@ -119,11 +123,14 @@ int RouterHttpTask::CoverSvrReq(struct Request_t *request) {
 				// 广播agentsvrd
 				if (vRRt.mNum >= kMaxNum) {
 					Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+					SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+					vRRt.mCode++;
 					vRRt.mNum = 0;
 				}
 			}
 			if (vRRt.mNum > 0) {
 				Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+				SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 			}
 			
 			config->WriteFileSvr();

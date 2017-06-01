@@ -5,9 +5,11 @@
  */
 
 #include "RouterServer.h"
+#include "RouterMaster.h"
 #include "RouterConfig.h"
 #include "RouterTcpTask.h"
 #include "RouterHttpTask.h"
+#include "RouterChannelTask.h"
 
 const wStatus& RouterServer::NewTcpTask(wSocket* sock, wTask** ptr) {
 	SAFE_NEW(RouterTcpTask(sock, Shard(sock)), *ptr);
@@ -23,6 +25,14 @@ const wStatus& RouterServer::NewHttpTask(wSocket* sock, wTask** ptr) {
 		return mStatus = wStatus::IOError("RouterServer::NewHttpTask", "RouterHttpTask new failed");
 	}
 	return mStatus;
+}
+
+const wStatus& RouterServer::NewChannelTask(wSocket* sock, wTask** ptr) {
+	SAFE_NEW(RouterChannelTask(sock, Master<RouterMaster*>(), Shard(sock)), *ptr);
+    if (*ptr == NULL) {
+		return mStatus = wStatus::IOError("RouterServer::RouterChannelTask", "new failed");
+    }
+    return mStatus;
 }
 
 const wStatus& RouterServer::PrepareRun() {

@@ -5,6 +5,7 @@
  */
 
 #include "AgentServer.h"
+#include "AgentMaster.h"
 #include "AgentTcpTask.h"
 #include "AgentUnixTask.h"
 #include "AgentChannelTask.h"
@@ -26,7 +27,7 @@ const wStatus& AgentServer::NewUnixTask(wSocket* sock, wTask** ptr) {
 }
 
 const wStatus& AgentServer::NewChannelTask(wSocket* sock, wTask** ptr) {
-	SAFE_NEW(AgentChannelTask(sock, mMaster, Shard(sock)), *ptr);
+	SAFE_NEW(AgentChannelTask(sock, Master<AgentMaster*>(), Shard(sock)), *ptr);
     if (*ptr == NULL) {
 		return mStatus = wStatus::IOError("AgentServer::AgentChannelTask", "new failed");
     }
