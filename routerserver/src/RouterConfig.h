@@ -35,15 +35,13 @@ public:
 	bool IsModifySvr();
 
 	SvrQos* Qos() { return mSvrQos;}
-
+	
 protected:
+	time_t mMtime;	// svr.xml文件最后一次被修改的时间
 	SvrQos *mSvrQos;
 	std::string mSvrFile;
 	std::string mQosFile;
 	std::string mBaseFile;
-
-	// svr.xml文件最后一次被修改的时间
-	time_t mMtime;
 };
 
 #endif

@@ -93,6 +93,7 @@ protected:
 	struct SvrReqCfg_t	mReqCfg;	// 访问量控制
 	struct SvrDownCfg_t mDownCfg;	// 宕机控制
 
+	int mIdc;
 	int mRateWeight;	// 成功率因子 1~100000
 	int mDelayWeight;	// 时延因子 1~100000
 	int mRebuildTm;		// 重建时间间隔 默认为60s

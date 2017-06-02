@@ -10,9 +10,10 @@
 
 const char kConfXml[]	= "../config/conf.xml";
 const char kSvrXml[]	= "../config/svr.xml";
+const char kAgntXml[]	= "../config/agent.xml"
 const char kQosXml[]	= "../config/qos.xml";
 
-RouterConfig::RouterConfig() : mSvrFile(kSvrXml), mQosFile(kQosXml), mBaseFile(kConfXml), mMtime(0) {
+RouterConfig::RouterConfig() : mMtime(0), mSvrFile(kSvrXml), mQosFile(kQosXml), mBaseFile(kConfXml) {
 	SAFE_NEW(SvrQos, mSvrQos);
 }
 

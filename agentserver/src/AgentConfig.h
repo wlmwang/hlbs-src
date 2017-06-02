@@ -26,11 +26,9 @@ public:
 	const wStatus& ParseQosConf();
 
 	SvrQos* Qos() { return mSvrQos;}
-
+	
 protected:
 	SvrQos* mSvrQos;
-
-	TiXmlDocument mDoc;
 	std::string mRouterFile;
 	std::string mQosFile;
 	std::string mBaseFile;

@@ -16,6 +16,27 @@ RouterHttpTask::RouterHttpTask(wSocket *socket, int32_t type) : wHttpTask(socket
 	On(CMD_SVR_HTTP, SVR_HTTP_SAVE, &RouterHttpTask::SaveSvrReq, this);
 	On(CMD_SVR_HTTP, SVR_HTTP_COVER, &RouterHttpTask::CoverSvrReq, this);
 	On(CMD_SVR_HTTP, SVR_HTTP_LIST, &RouterHttpTask::ListSvrReq, this);
+
+	On(CMD_AGT_HTTP, AGT_HTTP_RELOAD, &RouterHttpTask::ReloadAgtReq, this);
+	On(CMD_AGT_HTTP, AGT_HTTP_SAVE, &RouterHttpTask::SaveAgtReq, this);
+	On(CMD_AGT_HTTP, AGT_HTTP_COVER, &RouterHttpTask::CoverAgtReq, this);
+	On(CMD_AGT_HTTP, AGT_HTTP_LIST, &RouterHttpTask::ListAgtReq, this);
+}
+
+int RouterHttpTask::ReloadAgtReq(struct Request_t *request) {
+	//
+}
+
+int RouterHttpTask::SaveAgtReq(struct Request_t *request) {
+	//
+}
+
+int RouterHttpTask::CoverAgtReq(struct Request_t *request) {
+	//
+}
+
+int RouterHttpTask::ListAgtReq(struct Request_t *request) {
+	//
 }
 
 int RouterHttpTask::ReloadSvrReq(struct Request_t *request) {

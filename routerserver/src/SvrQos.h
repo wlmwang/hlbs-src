@@ -84,7 +84,6 @@ protected:
 	MapSvr_t mMapReqSvr;	// 节点信息。1:1，节点-统计
 	MapKind_t mRouteTable;	// 路由信息。1:n，种类-节点
 	MapNode_t mErrTable;	// 宕机路由表，1:n，种类-节点
-
 	wStatus mStatus;
 };
 

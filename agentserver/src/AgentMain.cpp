@@ -15,7 +15,6 @@
 using namespace hnet;
 
 int main(int argc, const char *argv[]) {
-
 	// 创建配置对象
 	AgentConfig *config;
 	SAFE_NEW(AgentConfig, config);

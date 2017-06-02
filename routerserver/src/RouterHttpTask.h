@@ -31,6 +31,20 @@ const uint8_t SVR_HTTP_LIST = 3;
 // 服务器统计信息
 const uint8_t SVR_HTTP_INFO = 4;
 
+const uint8_t CMD_AGT_HTTP = 71;
+
+// agent重载
+const uint8_t AGT_HTTP_RELOAD = 0;
+
+// agent更新
+const uint8_t AGT_HTTP_SAVE = 1;
+
+// agent重写
+const uint8_t AGT_HTTP_COVER = 2;
+
+// agent列表
+const uint8_t AGT_HTTP_LIST = 3;
+
 class RouterHttpTask : public wHttpTask {
 public:
 	RouterHttpTask(wSocket *socket, int32_t type);
@@ -40,6 +54,11 @@ public:
 	int CoverSvrReq(struct Request_t *request);
 	int ListSvrReq(struct Request_t *request);
 	int HardInfoReq(struct Request_t *request);
+	
+	int ReloadAgtReq(struct Request_t *request);
+	int SaveAgtReq(struct Request_t *request);
+	int CoverAgtReq(struct Request_t *request);
+	int ListAgtReq(struct Request_t *request);
 	
 protected:
 	int32_t ParseJsonSvr(const std::string& svrs, struct SvrNet_t** svr);

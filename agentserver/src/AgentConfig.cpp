@@ -12,7 +12,7 @@ const char kConfXml[]	= "../config/conf.xml";
 const char kRouterXml[]	= "../config/router.xml";
 const char kQosXml[]	= "../config/qos.xml";
 
-AgentConfig::AgentConfig() : mRouterFile(kRouterXml), mQosFile(kQosXml), mBaseFile(kConfXml) {
+AgentConfig::AgentConfig(): mRouterFile(kRouterXml), mQosFile(kQosXml), mBaseFile(kConfXml) {
 	SAFE_NEW(SvrQos, mSvrQos);
 }
 
@@ -21,10 +21,11 @@ AgentConfig::~AgentConfig() {
 }
 
 const wStatus& AgentConfig::ParseBaseConf() {
-	if (!mDoc.LoadFile(mBaseFile.c_str())) {
+	TiXmlDocument document;
+	if (!document.LoadFile(mBaseFile.c_str())) {
 		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseBaseConf Load configure(conf.xml) file failed", "");
 	}
-	TiXmlElement *pRoot = mDoc.FirstChildElement();
+	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
 		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseBaseConf Read root from configure(conf.xml) failed", "");
 	}
@@ -36,26 +37,35 @@ const wStatus& AgentConfig::ParseBaseConf() {
 		const char* port = pElement->Attribute("PORT");
 		const char* worker = pElement->Attribute("WORKER");
 		const char* protocol = pElement->Attribute("PROTOCOL");
+		const char* idc = pElement->Attribute("IDC");
 		if (host != NULL && port != NULL) {
 			SetStrConf("host", host);
 			SetIntConf("port", atoi(port));
-			SetIntConf("worker", atoi(worker));
-			SetStrConf("protocol", protocol);
+			
+			if (worker != NULL) {
+				SetIntConf("worker", atoi(worker));
+			}
+			if (protocol != NULL) {
+				SetStrConf("protocol", protocol);
+			}
+			if (idc != NULL) {
+				mSvrQos.mIdc = atoi(idc);
+			}
 		} else {
 			return mStatus = wStatus::InvalidArgument("AgentConfig::ParseBaseConf Get SERVER host or port from conf.xml failed", "");
 		}
 	} else {
 		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseBaseConf Get SERVER node from conf.xml failed", "");
 	}
-
-	return mStatus.Clear();
+	return mStatus;
 }
 
 const wStatus& AgentConfig::ParseRouterConf() {
-	if (!mDoc.LoadFile(mRouterFile.c_str())) {
+	TiXmlDocument document;
+	if (!document.LoadFile(mRouterFile.c_str())) {
 		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseRouterConf Load configure(router.xml) file failed", "");
 	}
-	TiXmlElement *pRoot = mDoc.FirstChildElement();
+	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
 		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseRouterConf Read root from configure(router.xml) failed", "");
 	}
@@ -77,14 +87,15 @@ const wStatus& AgentConfig::ParseRouterConf() {
 	} else {
 		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseRouterConf Get ROUTERS node from router.xml failed", "");
 	}
-	return mStatus.Clear();
+	return mStatus;
 }
 
 const wStatus& AgentConfig::ParseQosConf() {
-	if (!mDoc.LoadFile(mQosFile.c_str())) {
+	TiXmlDocument document;
+	if (!document.LoadFile(mQosFile.c_str())) {
 		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseQosConf Load configure(qos.xml) file failed", "");
 	}
-	TiXmlElement *pRoot = mDoc.FirstChildElement();
+	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
 		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseQosConf Read root from configure(qos.xml) failed", "");
 	}

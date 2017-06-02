@@ -12,7 +12,7 @@
 #include "Detect.h"
 #include "DetectThread.h"
 
-SvrQos::SvrQos() : mRateWeight(7), mDelayWeight(1), mRebuildTm(60), mReqTimeout(500),mAllReqMin(false), mAvgErrRate(0.0) {
+SvrQos::SvrQos(): mIdc(0), mRateWeight(7), mDelayWeight(1), mRebuildTm(60), mReqTimeout(500),mAllReqMin(false), mAvgErrRate(0.0) {
 	SAFE_NEW(DetectThread(mDownCfg.mProbeInterval), mDetectThread);
 }
 

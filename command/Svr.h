@@ -42,7 +42,7 @@ public:
     int32_t 	mPre;			// 预取数
     int32_t 	mExpired;		// 过期时间
 
-    SvrNet_t() : mGid(0), mXid(0), mWeight(kInitWeight), mVersion(0), mPort(0), mIdc(0), mPre(0), mExpired(0) {
+    SvrNet_t():mGid(0), mXid(0), mWeight(kInitWeight), mVersion(0), mPort(0), mIdc(0), mPre(0), mExpired(0) {
     	memset(mHost, 0, kMaxHost);
     	memset(mName, 0, kMaxName);
     }
@@ -210,7 +210,7 @@ public:
 	int32_t 		mLastAlarmSucReq;	// 参考值。成功请求数扩张门限
 	int32_t 		mPreAll;			// 路由被分配次数 + 预取数
 
-	int32_t 		mCityId;			// 被调所属城市id
+	int32_t 		mCityId;			// 被调所属城市id = idc
 	int32_t 		mOffSide;			// 被调节点与主调异地标志，默认为0， 1标为异地
 
 	int32_t 		mContErrCount;		// 连续失败次数累积
