@@ -11,6 +11,8 @@
 #include "wStatus.h"
 #include "wMisc.h"
 #include "wHttpTask.h"
+#include "SvrCmd.h"
+#include "AgntCmd.h"
 
 using namespace hnet;
 
@@ -31,19 +33,20 @@ const uint8_t SVR_HTTP_LIST = 3;
 // 服务器统计信息
 const uint8_t SVR_HTTP_INFO = 4;
 
-const uint8_t CMD_AGT_HTTP = 71;
+
+const uint8_t CMD_AGNT_HTTP = 71;
 
 // agent重载
-const uint8_t AGT_HTTP_RELOAD = 0;
+const uint8_t AGNT_HTTP_RELOAD = 0;
 
 // agent更新
-const uint8_t AGT_HTTP_SAVE = 1;
+const uint8_t AGNT_HTTP_SAVE = 1;
 
 // agent重写
-const uint8_t AGT_HTTP_COVER = 2;
+const uint8_t AGNT_HTTP_COVER = 2;
 
 // agent列表
-const uint8_t AGT_HTTP_LIST = 3;
+const uint8_t AGNT_HTTP_LIST = 3;
 
 class RouterHttpTask : public wHttpTask {
 public:
@@ -55,13 +58,14 @@ public:
 	int ListSvrReq(struct Request_t *request);
 	int HardInfoReq(struct Request_t *request);
 	
-	int ReloadAgtReq(struct Request_t *request);
-	int SaveAgtReq(struct Request_t *request);
-	int CoverAgtReq(struct Request_t *request);
-	int ListAgtReq(struct Request_t *request);
+	int ReloadAgntReq(struct Request_t *request);
+	int SaveAgntReq(struct Request_t *request);
+	int CoverAgntReq(struct Request_t *request);
+	int ListAgntReq(struct Request_t *request);
 	
 protected:
 	int32_t ParseJsonSvr(const std::string& svrs, struct SvrNet_t** svr);
+	int32_t ParseJsonAgnt(const std::string& agnts, struct Agnt_t** agnt);
 };
 
 #endif

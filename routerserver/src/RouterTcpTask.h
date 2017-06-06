@@ -20,6 +20,9 @@ public:
 
 	int InitSvrReq(struct Request_t *request);
 	int ReloadSvrReq(struct Request_t *request);
+
+	int InitAgntReq(struct Request_t *request);
+	int ReloadAgntReq(struct Request_t *request);
 };
 
 #endif

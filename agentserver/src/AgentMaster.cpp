@@ -23,12 +23,12 @@ const wStatus& AgentMaster::NewWorker(uint32_t slot, wWorker** ptr) {
 
 const wStatus& AgentMaster::Reload() {
 	AgentConfig* config = mServer->Config<AgentConfig*>();
-	if (!(mStatus = config->ParseBaseConf()).Ok()) {
-		return mStatus;
-	} else if (!(mStatus = config->ParseRouterConf()).Ok()) {
-		return mStatus;
-	} else if (!(mStatus = config->ParseQosConf()).Ok()) {
-		return mStatus;
+	if (config->ParseBaseConf() == -1) {
+		return mStatus = wStatus::IOError("AgentMaster::Reload ParseBaseConf() failed", "");
+	} else if (config->ParseRouterConf() == -1) {
+		return mStatus = wStatus::IOError("AgentMaster::Reload ParseRouterConf() failed", "");
+	} else if (config->ParseQosConf() == -1) {
+		return mStatus = wStatus::IOError("AgentMaster::Reload ParseQosConf() failed", "");
 	}
 	return mStatus;
 }

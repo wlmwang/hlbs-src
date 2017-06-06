@@ -26,7 +26,7 @@ DetectThread::~DetectThread() {
 
 const wStatus& DetectThread::PrepareThread() {
 	mLocalIp = misc::GetIpByIF("eth1")? misc::GetIpByIF("eth1"): (misc::GetIpByIF("eth0")? misc::GetIpByIF("eth0"): 0);
-    return mStatus.Clear();
+    return mStatus;
 }
 
 const wStatus& DetectThread::RunThread() {
@@ -139,7 +139,7 @@ const wStatus& DetectThread::RunThread() {
         }
         ::usleep(mDetectLoopUsleep);
 	}
-	return mStatus.Clear();
+	return mStatus;
 }
 
 const wStatus& DetectThread::DoDetectNode(const struct DetectNode_t& node, struct DetectResult_t& res) {

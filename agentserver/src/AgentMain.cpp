@@ -15,31 +15,38 @@
 using namespace hnet;
 
 int main(int argc, const char *argv[]) {
+	// 设置运行目录
+	if (misc::SetBinPath() == -1) {
+		std::cout << "set bin path failed" << std::endl;
+		return -1;
+	}
+
+	// 设置相关相关配置
+	std::string hlbsName = kHlbsSoftwareName + std::string("(*agent*)");
+	soft::SetSoftName(hlbsName + " - ");
+	soft::SetSoftVer(kHlbsSoftwareVer);
+	soft::SetLockPath(kHlbsLockPath);
+	soft::SetPidPath(kHlbsPidPath);
+	soft::SetLogPath(kHlbsLogPath);
+
 	// 创建配置对象
 	AgentConfig *config;
 	SAFE_NEW(AgentConfig, config);
 	if (config == NULL) {
 		return -1;
 	}
-	wStatus s;
-
-	// 解析命令行
-	s = config->GetOption(argc, argv);
-	if (!s.Ok()) {
-		std::cout << s.ToString() << std::endl;
+	
+	// 解析xml配置文件
+	if (config->ParseBaseConf() == -1) {
+		std::cout << "parse config failed" << std::endl;
 		return -1;
 	}
-	if (misc::SetBinPath() == -1) {
-		std::cout << "set bin path failed" << std::endl;
+
+	// 解析命令行
+	if (config->GetOption(argc, argv) == -1) {
+		std::cout << "get configure failed" << std::endl;
+		return -1;
 	}
-	
-	// 设置相关相关配置
-	std::string hlbsName = kHlbsSoftwareName + std::string("(*router*)");
-	soft::SetSoftName(hlbsName + " - ");
-	soft::SetSoftVer(kHlbsSoftwareVer);
-	soft::SetLockPath(kHlbsLockPath);
-	soft::SetPidPath(kHlbsPidPath);
-	soft::SetLogPath(kHlbsLogPath);
 
 	// 版本输出 && 守护进程创建
 	bool version, daemon;
@@ -53,11 +60,6 @@ int main(int argc, const char *argv[]) {
 			std::cout << "create daemon failed" << std::endl;
 			return -1;
 		}
-	}
-
-	// 解析xml配置文件
-	if (!config->ParseBaseConf().Ok()) {
-		return -1;
 	}
 
 	// 创建服务器对象
@@ -81,15 +83,14 @@ int main(int argc, const char *argv[]) {
 	    	}
 	    } else {
 	    	// 解析xml配置文件
-			if (!config->ParseRouterConf().Ok()) {
+			if (config->ParseRouterConf() == -1) {
 				return -1;
-			} else if (!config->ParseQosConf().Ok()) {
+			} else if (config->ParseQosConf() == -1) {
 				return -1;
 			}
 
 	    	// 准备服务器
-			s = master->PrepareStart();
-			if (s.Ok()) {
+			if (master->PrepareStart().Ok()) {
 				// Master-Worker方式开启服务器
 				master->MasterStart();
 			} else {

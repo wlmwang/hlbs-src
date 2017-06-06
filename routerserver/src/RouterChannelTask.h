@@ -21,6 +21,9 @@ public:
 
 	int ReloadSvrRes(struct Request_t *request);
 	int SyncSvrRes(struct Request_t *request);
+
+	int ReloadAgntRes(struct Request_t *request);
+	int SyncAgntRes(struct Request_t *request);
 };
 
 #endif

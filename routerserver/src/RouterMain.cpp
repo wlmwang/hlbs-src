@@ -5,7 +5,6 @@
  */
 
 #include "wCore.h"
-#include "wStatus.h"
 #include "wMisc.h"
 #include "wEnv.h"
 #include "Define.h"
@@ -16,22 +15,10 @@
 using namespace hnet;
 
 int main(int argc, const char *argv[]) {
-	// 创建配置对象
-	RouterConfig *config;
-	SAFE_NEW(RouterConfig, config);
-	if (config == NULL) {
-		return -1;
-	}
-	wStatus s;
-
-	// 解析命令行
-	s = config->GetOption(argc, argv);
-	if (!s.Ok()) {
-		std::cout << s.ToString() << std::endl;
-		return -1;
-	}
+	// 设置运行目录
 	if (misc::SetBinPath() == -1) {
 		std::cout << "set bin path failed" << std::endl;
+		return -1;
 	}
 
 	// 设置相关相关配置
@@ -41,6 +28,24 @@ int main(int argc, const char *argv[]) {
 	soft::SetLockPath(kHlbsLockPath);
 	soft::SetPidPath(kHlbsPidPath);
 	soft::SetLogPath(kHlbsLogPath);
+
+	RouterConfig *config;
+	SAFE_NEW(RouterConfig, config);
+	if (config == NULL) {
+		return -1;
+	}
+	
+	// 解析xml配置文件
+	if (config->ParseBaseConf() == -1) {
+		std::cout << "parse config failed" << std::endl;
+		return -1;
+	}
+
+	// 解析命令行
+	if (config->GetOption(argc, argv) == -1) {
+		std::cout << "get configure failed" << std::endl;
+		return -1;
+	}
 
 	// 版本输出 && 守护进程创建
 	bool version, daemon;
@@ -54,11 +59,6 @@ int main(int argc, const char *argv[]) {
 			std::cout << "create daemon failed" << std::endl;
 			return -1;
 		}
-	}
-
-	// 解析xml配置文件
-	if (!config->ParseBaseConf().Ok()) {
-		return -1;
 	}
 
 	// 创建服务器对象
@@ -82,15 +82,16 @@ int main(int argc, const char *argv[]) {
 	    	}
 	    } else {
 	    	// 解析xml配置文件
-			if (!config->ParseSvrConf().Ok()) {
+			if (config->ParseSvrConf() == -1) {
 				return -1;
-			} else if (!config->ParseQosConf().Ok()) {
+			} else if (config->ParseQosConf() == -1) {
+				return -1;
+			} else if (config->ParseAgntConf() == -1) {
 				return -1;
 			}
 			
 	    	// 准备服务器
-			s = master->PrepareStart();
-			if (s.Ok()) {
+			if (master->PrepareStart().Ok()) {
 				// Master-Worker方式开启服务器
 				// 考虑到router服务压力很小因素，故让其单进程运行。RouterMaster::mWorkerNum=1
 				// 单进程模式RouterMaster::SingleStart()，目前版本（HNET0.0.2）并不完善

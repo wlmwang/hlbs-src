@@ -55,9 +55,5 @@ const wStatus& RouterServer::PrepareRun() {
 }
 
 const wStatus& RouterServer::Run() {
-	if (Config<RouterConfig*>()->IsModifySvr()) {
-		Config<RouterConfig*>()->Qos()->CleanNode();
-		Config<RouterConfig*>()->ParseSvrConf();
-	}
 	return mStatus;
 }

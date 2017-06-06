@@ -20,14 +20,16 @@ AgentConfig::~AgentConfig() {
 	SAFE_DELETE(mSvrQos);
 }
 
-const wStatus& AgentConfig::ParseBaseConf() {
+int AgentConfig::ParseBaseConf() {
 	TiXmlDocument document;
 	if (!document.LoadFile(mBaseFile.c_str())) {
-		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseBaseConf Load configure(conf.xml) file failed", "");
+		LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseBaseConf Load configure(conf.xml) file failed", "");
+		return -1;
 	}
 	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
-		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseBaseConf Read root from configure(conf.xml) failed", "");
+		LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseBaseConf Read root from configure(conf.xml) failed", "");
+		return -1;
 	}
 
 	// 服务器侦听地址
@@ -41,7 +43,6 @@ const wStatus& AgentConfig::ParseBaseConf() {
 		if (host != NULL && port != NULL) {
 			SetStrConf("host", host);
 			SetIntConf("port", atoi(port));
-			
 			if (worker != NULL) {
 				SetIntConf("worker", atoi(worker));
 			}
@@ -49,25 +50,29 @@ const wStatus& AgentConfig::ParseBaseConf() {
 				SetStrConf("protocol", protocol);
 			}
 			if (idc != NULL) {
-				mSvrQos.mIdc = atoi(idc);
+				mSvrQos->mIdc = atoi(idc);
 			}
 		} else {
-			return mStatus = wStatus::InvalidArgument("AgentConfig::ParseBaseConf Get SERVER host or port from conf.xml failed", "");
+			LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseBaseConf Get SERVER host or port from conf.xml failed", "");
+			return -1;
 		}
 	} else {
-		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseBaseConf Get SERVER node from conf.xml failed", "");
+		LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseBaseConf Get SERVER node from conf.xml failed", "");
+		return -1;
 	}
-	return mStatus;
+	return 0;
 }
 
-const wStatus& AgentConfig::ParseRouterConf() {
+int AgentConfig::ParseRouterConf() {
 	TiXmlDocument document;
 	if (!document.LoadFile(mRouterFile.c_str())) {
-		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseRouterConf Load configure(router.xml) file failed", "");
+		LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseRouterConf Load configure(router.xml) file failed", "");
+		return -1;
 	}
 	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
-		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseRouterConf Read root from configure(router.xml) failed", "");
+		LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseRouterConf Read root from configure(router.xml) failed", "");
+		return -1;
 	}
 
 	// ROUTERS配置
@@ -81,23 +86,26 @@ const wStatus& AgentConfig::ParseRouterConf() {
 				SetStrConf("router_host", host);
 				SetIntConf("router_port", atoi(port));
 			} else {
-				wStatus::InvalidArgument("AgentConfig::ParseRouterConf Parse configure from router.xml occur error", logging::NumberToString(i));
+				LOG_ERROR(soft::GetLogPath(), "AgentConfig::ParseRouterConf Parse configure from router.xml occur error(%d)", i);
 			}
 		}
 	} else {
-		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseRouterConf Get ROUTERS node from router.xml failed", "");
+		LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseRouterConf Get ROUTERS node from router.xml failed", "");
+		return -1;
 	}
-	return mStatus;
+	return 0;
 }
 
-const wStatus& AgentConfig::ParseQosConf() {
+int AgentConfig::ParseQosConf() {
 	TiXmlDocument document;
 	if (!document.LoadFile(mQosFile.c_str())) {
-		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseQosConf Load configure(qos.xml) file failed", "");
+		LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseQosConf Load configure(qos.xml) file failed", "");
+		return -1;
 	}
 	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
-		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseQosConf Read root from configure(qos.xml) failed", "");
+		LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseQosConf Read root from configure(qos.xml) failed", "");
+		return -1;
 	}
 	
 	// 成功率、时延比例配置
@@ -224,19 +232,24 @@ const wStatus& AgentConfig::ParseQosConf() {
     }
 
 	if (!(mSvrQos->mReqCfg.mReqExtendRate > 0.001 && mSvrQos->mReqCfg.mReqExtendRate < 101)) {
-		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseQosConf invalid !((REQ_EXTEND_RATE[%f] > 0.001) && (REQ_EXTEND_RATE[%f] < 101))", "");
+		LOG_ERROR(soft::GetLogPath(), "AgentConfig::ParseQosConf invalid !((REQ_EXTEND_RATE[%f] > 0.001) && (REQ_EXTEND_RATE[%f] < 101))", mSvrQos->mReqCfg.mReqExtendRate, mSvrQos->mReqCfg.mReqExtendRate);
+		return -1;
 	} else if (mSvrQos->mReqCfg.mReqErrMin >= 1) {
-		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseQosConf invalid REQ_ERR_MIN[%f] > 1", "");
+		LOG_ERROR(soft::GetLogPath(), "AgentConfig::ParseQosConf invalid REQ_ERR_MIN[%f] > 1", mSvrQos->mReqCfg.mReqErrMin);
+		return -1;
 	} else if (mSvrQos->mDownCfg.mPossbileDownErrRate > 1 || mSvrQos->mDownCfg.mPossbileDownErrRate < 0.01) {
-		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseQosConf invalid DOWN_ERR_RATE[%f] > 1 || DOWN_ERR_RATE[%f] < 0.01", "");
+		LOG_ERROR(soft::GetLogPath(), "AgentConfig::ParseQosConf invalid DOWN_ERR_RATE[%f] > 1 || DOWN_ERR_RATE[%f] < 0.01", mSvrQos->mDownCfg.mPossbileDownErrRate, mSvrQos->mDownCfg.mPossbileDownErrRate);
+		return -1;
 	} else if (mSvrQos->mDownCfg.mProbeTimes < 3) {
-		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseQosConf invalid TIMES[%d] < 3", "");
+		LOG_ERROR(soft::GetLogPath(), "AgentConfig::ParseQosConf invalid TIMES[%d] < 3", mSvrQos->mDownCfg.mProbeTimes);
+		return -1;
 	} else if (mSvrQos->mReqCfg.mRebuildTm < 3) {
-		return mStatus = wStatus::InvalidArgument("AgentConfig::ParseQosConf invalid REBUILD_TM[%d] < 3", "");
+		LOG_ERROR(soft::GetLogPath(), "AgentConfig::ParseQosConf invalid REBUILD_TM[%d] < 3", mSvrQos->mReqCfg.mRebuildTm);
+		return -1;
 	}
 
     if (mSvrQos->mReqCfg.mPreTime <= 0 || mSvrQos->mReqCfg.mPreTime > (mSvrQos->mRebuildTm / 2)) {
 		mSvrQos->mReqCfg.mPreTime = 2;
 	}
-	return mStatus;
+	return 0;
 }

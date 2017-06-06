@@ -9,7 +9,6 @@
 
 #include <tinyxml.h>
 #include "wCore.h"
-#include "wStatus.h"
 #include "wMisc.h"
 #include "wConfig.h"
 #include "SvrQos.h"
@@ -21,12 +20,11 @@ public:
 	AgentConfig();
 	virtual ~AgentConfig();
 
-	const wStatus& ParseBaseConf();
-	const wStatus& ParseRouterConf();
-	const wStatus& ParseQosConf();
+	int ParseBaseConf();
+	int ParseRouterConf();
+	int ParseQosConf();
 
 	SvrQos* Qos() { return mSvrQos;}
-	
 protected:
 	SvrQos* mSvrQos;
 	std::string mRouterFile;

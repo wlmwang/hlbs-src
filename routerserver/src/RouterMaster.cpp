@@ -14,5 +14,8 @@ const wStatus& RouterMaster::PrepareRun() {
 
 const wStatus& RouterMaster::Reload() {
 	RouterConfig* config = mServer->Config<RouterConfig*>();
-	return mStatus = config->ParseBaseConf();
+	if (config->ParseBaseConf() == -1) {
+		mStatus = wStatus::IOError("RouterMaster::Reload ParseBaseConf() failed", "");
+	}
+	return mStatus;
 }
