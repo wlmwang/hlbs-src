@@ -15,7 +15,6 @@ AgentChannelTask::AgentChannelTask(wSocket *socket, wMaster *master, int32_t typ
 
 int AgentChannelTask::GetSvrByGXid(struct Request_t *request) {
 	struct SvrReqGXid_t* cmd = reinterpret_cast<struct SvrReqGXid_t*>(request->mBuf);
-	AgentConfig* config = Config<AgentConfig*>();
 	struct SvrOneRes_t vRRt;
 
 	vRRt.mSvr.mGid = cmd->mGid;
@@ -24,15 +23,13 @@ int AgentChannelTask::GetSvrByGXid(struct Request_t *request) {
 		memcpy(vRRt.mSvr.mHost, cmd->mHost, kMaxHost);
 		vRRt.mSvr.mPort = cmd->mPort;
 	}
-	config->Qos()->QueryNode(vRRt.mSvr);
+	Config<AgentConfig*>()->Qos()->QueryNode(vRRt.mSvr);
 	return 0;
 }
 
 int AgentChannelTask::ReportSvr(struct Request_t *request) {
 	struct SvrReqReport_t* cmd = reinterpret_cast<struct SvrReqReport_t*>(request->mBuf);
-	AgentConfig* config = Config<AgentConfig*>();
-
 	struct SvrResReport_t vRRt;
-	config->Qos()->CallerNode(cmd->mCaller);
+	Config<AgentConfig*>()->Qos()->CallerNode(cmd->mCaller);
 	return 0;
 }

@@ -58,6 +58,7 @@ public:
 	const wStatus& DeleteNode(const struct SvrNet_t& svr);
 	// 清除 所有路由信息
 	const wStatus& CleanNode();
+
 	const wStatus& StartDetectThread();
 
 	inline void SetIdc(int idc) { mIdc = idc;}

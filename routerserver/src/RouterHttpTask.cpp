@@ -51,8 +51,12 @@ int RouterHttpTask::ReloadSvrReq(struct Request_t *request) {
 }
 
 int RouterHttpTask::SaveSvrReq(struct Request_t *request) {
+	if (Method() != "POST") {
+		Error("", "405");
+		return -1;
+	}
 	RouterConfig* config = Config<RouterConfig*>();
-	std::string svrs = http::UrlDecode(QueryGet("svrs"));
+	std::string svrs = http::UrlDecode(FormGet("svrs"));
 	if (!svrs.empty()) {
 		Json::Value root;
 		struct SvrNet_t* svr = NULL;
@@ -102,8 +106,12 @@ int RouterHttpTask::SaveSvrReq(struct Request_t *request) {
 }
 
 int RouterHttpTask::CoverSvrReq(struct Request_t *request) {
+	if (Method() != "POST") {
+		Error("", "405");
+		return -1;
+	}
 	RouterConfig* config = Config<RouterConfig*>();
-	std::string svrs = http::UrlDecode(QueryGet("svrs"));
+	std::string svrs = http::UrlDecode(FormGet("svrs"));
 	if (!svrs.empty()) {	// json格式svr
 		Json::Value root;
 		struct SvrNet_t* svr = NULL;
@@ -189,7 +197,6 @@ int RouterHttpTask::ListSvrReq(struct Request_t *request) {
 
 int RouterHttpTask::ReloadAgntReq(struct Request_t *request) {
 	RouterConfig* config = Config<RouterConfig*>();
-	
 	// 重新加载配置文件
 	config->CleanAgnt();
 	config->ParseAgntConf();
@@ -217,8 +224,12 @@ int RouterHttpTask::ReloadAgntReq(struct Request_t *request) {
 }
 
 int RouterHttpTask::SaveAgntReq(struct Request_t *request) {
+	if (Method() != "POST") {
+		Error("", "405");
+		return -1;
+	}
 	RouterConfig* config = Config<RouterConfig*>();
-	std::string agnts = http::UrlDecode(QueryGet("agnts"));
+	std::string agnts = http::UrlDecode(FormGet("agnts"));
 	if (!agnts.empty()) {
 		Json::Value root;
 		struct Agnt_t* agnt = NULL;
@@ -268,8 +279,12 @@ int RouterHttpTask::SaveAgntReq(struct Request_t *request) {
 }
 
 int RouterHttpTask::CoverAgntReq(struct Request_t *request) {
+	if (Method() != "POST") {
+		Error("", "405");
+		return -1;
+	}
 	RouterConfig* config = Config<RouterConfig*>();
-	std::string agnts = http::UrlDecode(QueryGet("agnts"));
+	std::string agnts = http::UrlDecode(FormGet("agnts"));
 	if (!agnts.empty()) {	// json格式svr
 		Json::Value root;
 		struct Agnt_t* agnt = NULL;

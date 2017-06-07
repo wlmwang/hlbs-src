@@ -24,16 +24,16 @@ int AgentUnixTask::GetSvrByGXid(struct Request_t *request) {
 	if (config->Qos()->QueryNode(vRRt.mSvr).Ok()) {
 		vRRt.mCode = 0;
 		vRRt.mNum = 1;
-		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
+		AsyncSend(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 
 		// 同步其他worker进程
 		memcpy(cmd->mHost, vRRt.mSvr.mHost, kMaxHost);
 		cmd->mPort = vRRt.mSvr.mPort;
-		//SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrReqGXid_t));
+		SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrReqGXid_t));
 	} else {
 		vRRt.mCode = -1;
 		vRRt.mNum = 0;
-		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
+		AsyncSend(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 	}
 	return 0;
 }
@@ -46,13 +46,13 @@ int AgentUnixTask::ReportSvr(struct Request_t *request) {
 	struct SvrResReport_t vRRt;
 	if (config->Qos()->CallerNode(cmd->mCaller).Ok()) {
 		vRRt.mCode = 0;
-		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
+		AsyncSend(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 
 		// 同步其他worker进程
-		//SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrReqReport_t));
+		SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrReqReport_t));
 	} else {
 		vRRt.mCode = -1;
-		AsyncSend(reinterpret_cast<char *>(&vRRt), sizeof(vRRt));
+		AsyncSend(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 	}
 	return 0;
 }
