@@ -24,27 +24,6 @@ const wStatus& AgentClientTask::Connect() {
 	struct SvrReqInit_t vRRt0;
 	AsyncSend(reinterpret_cast<char*>(&vRRt0), sizeof(vRRt0));
 
-	/*
-	// 上报agent本身信息
-	AgentConfig* config = Config<AgentConfig*>();
-	std::vector<unsigned int> ips;
-	if (misc::GetIpList(ips) == 0) {
-		std::sort(ips.begin(), ips.end());
-		AgntResSync_t vRRt1;
-		for (size_t i = 0; i < ips.size(); i++) {
-			if (ips[i] != misc::Text2IP("127.0.0.1")) {
-				memcpy(vRRt1.mAgnt[vRRt1.mNum].mHost, misc::IP2Text(ips[i]), kMaxHost);
-				vRRt1.mAgnt[vRRt1.mNum].mPort = Socket()->Port();
-				vRRt1.mAgnt[vRRt1.mNum].mIdc = config->Qos()->Idc();
-				vRRt1.mAgnt[vRRt1.mNum].mStatus = kAgntUreg;
-				vRRt1.mNum++;
-				break;	// 只上报一个IP
-			}
-		}
-		AsyncSend(reinterpret_cast<char*>(&vRRt1), sizeof(vRRt1));
-	}
-	*/
-
 	// 发送初始化agent配置请求
 	struct AgntReqInit_t vRRt2;
 	AsyncSend(reinterpret_cast<char*>(&vRRt2), sizeof(vRRt2));
