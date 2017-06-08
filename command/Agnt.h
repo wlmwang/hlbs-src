@@ -11,6 +11,11 @@
 
 const char kAgntLog[] = "../log/agent.log";
 
+const int8_t	kAgntOk	  = 0;		// 有效agent客户端
+const int8_t 	kAgntInit = -1;		// 初始化
+const int8_t 	kAgntUreg = -2;		// agent已连接，router无此配置
+const int8_t 	kAgntDisc = -3;		// agent与router断开
+
 using namespace hnet;
 
 #pragma pack(1)
@@ -23,12 +28,13 @@ public:
 	int32_t	mVersion;
 	int8_t	mIdc;
 	int8_t 	mStatus;
+	int8_t 	mConfig;		// 是否是配置文件中记录
 
-	Agnt_t(): mPort(0), mVersion(0), mIdc(0), mStatus(0) {
+	Agnt_t(): mPort(0), mVersion(0), mIdc(0), mStatus(kAgntInit), mConfig(-1) {
 		memset(mHost, 0, kMaxHost);
 	}
 	
-	Agnt_t(const Agnt_t& other): mPort(other.mPort), mVersion(other.mVersion), mIdc(other.mIdc), mStatus(other.mStatus) {
+	Agnt_t(const Agnt_t& other): mPort(other.mPort), mVersion(other.mVersion), mIdc(other.mIdc), mStatus(other.mStatus), mConfig(other.mConfig) {
 		memcpy(mHost, other.mHost, kMaxHost);
 	}
 
@@ -38,6 +44,7 @@ public:
 		mVersion = other.mVersion;
 		mIdc = other.mIdc;
 		mStatus = other.mStatus;
+		mConfig = other.mConfig;
 		return *this;
 	}
 

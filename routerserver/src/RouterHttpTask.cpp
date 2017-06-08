@@ -353,6 +353,7 @@ int RouterHttpTask::ListAgntReq(struct Request_t *request) {
 			item["VERSION"] = Json::Value(agnt[i].mVersion);
 			item["IDC"] = Json::Value(agnt[i].mIdc);
 			item["STATUS"] = Json::Value(agnt[i].mStatus);
+			item["CONFIG"] = Json::Value(agnt[i].mConfig);
 			agnts.append(Json::Value(item));
 		}
 		start += num;

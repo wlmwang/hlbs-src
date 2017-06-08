@@ -61,8 +61,7 @@ public:
 
 	const wStatus& StartDetectThread();
 
-	inline void SetIdc(int idc) { mIdc = idc;}
-	inline int& GetIdc() { return mIdc;}
+	inline int& Idc() { return mIdc;}
 
 protected:
 	friend class AgentConfig;

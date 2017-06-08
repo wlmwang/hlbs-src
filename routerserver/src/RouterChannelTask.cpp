@@ -51,6 +51,7 @@ int RouterChannelTask::ReloadAgntRes(struct Request_t *request) {
 	if (cmd->mCode >= 0 && cmd->mNum > 0) {
 		if (cmd->mCode == 0) {	// 清除原始agnt
 			config->CleanAgnt();
+			config->ParseAgntConf();
 		}
 		for (int32_t i = 0; i < cmd->mNum; i++) {
 			config->SaveAgnt(cmd->mAgnt[i]);

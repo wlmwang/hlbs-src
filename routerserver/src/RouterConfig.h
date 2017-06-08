@@ -44,7 +44,7 @@ public:
 	int SetAgntMtime();
 	bool IsModifyAgnt();
 	bool CleanAgnt();
-	bool IsExistAgnt(const struct Agnt_t& agnt);
+	bool IsExistAgnt(const struct Agnt_t& agnt, struct Agnt_t* old = NULL);
 	bool IsAgntChange(const struct Agnt_t& agnt);
 	bool SaveAgnt(const struct Agnt_t& agnt);
 	bool AddAgnt(const struct Agnt_t& agnt);

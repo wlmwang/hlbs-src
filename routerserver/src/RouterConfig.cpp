@@ -298,6 +298,8 @@ int RouterConfig::ParseAgntConf() {
 				if (version != NULL) {
 					agnt.mVersion = atoi(version);
 				}
+				agnt.mConfig = 0;
+				agnt.mVersion = misc::GetTimeofday()/1000000;
 
 				// 添加新配置
 				if (!IsExistAgnt(agnt)) {
@@ -567,9 +569,13 @@ bool RouterConfig::IsModifyAgnt() {
 	return false;
 }
 
-bool RouterConfig::IsExistAgnt(const struct Agnt_t& agnt) {
-	if (std::find(mAgnts.begin(), mAgnts.end(), agnt) == mAgnts.end()) {
+bool RouterConfig::IsExistAgnt(const struct Agnt_t& agnt, struct Agnt_t* old) {
+	std::vector<struct Agnt_t>::iterator it = std::find(mAgnts.begin(), mAgnts.end(), agnt);
+	if (it == mAgnts.end()) {
 		return false;
+	}
+	if (old) {
+		*old = *it;
 	}
 	return true;
 }
