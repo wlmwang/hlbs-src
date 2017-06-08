@@ -52,14 +52,7 @@ const wStatus& AgentClientTask::Connect() {
 }
 
 const wStatus& AgentClientTask::ReConnect() {
-	// 发送重载svr配置请求
-	struct SvrReqReload_t vRRt0;
-	AsyncSend(reinterpret_cast<char*>(&vRRt0), sizeof(vRRt0));
-
-	// 发送重载agent配置请求
-	struct AgntReqReload_t vRRt1;
-	AsyncSend(reinterpret_cast<char*>(&vRRt1), sizeof(vRRt1));
-	return mStatus;
+	return Connect();
 }
 
 // router发来init相响应
