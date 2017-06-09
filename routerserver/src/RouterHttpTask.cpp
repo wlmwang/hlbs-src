@@ -66,14 +66,14 @@ int RouterHttpTask::SaveSvrReq(struct Request_t *request) {
 			for (int32_t i = 0; i < num; i++) {
 				if (svr[i].mGid > 0 && svr[i].mWeight >= 0 && config->Qos()->IsExistNode(svr[i])) {	// 旧配置检测到weight、name、idc变化才更新
 					if (config->Qos()->IsWNIChange(svr[i])) {
+						config->Qos()->SaveNode(svr[i]);
 						vRRt.mSvr[vRRt.mNum] = svr[i];
 						vRRt.mNum++;
-						config->Qos()->SaveNode(svr[i]);
 					}
 				} else if (svr[i].mGid > 0 && svr[i].mWeight > 0) {	// 添加新配置 weight>0 添加配置
+					config->Qos()->SaveNode(svr[i]);
 					vRRt.mSvr[vRRt.mNum] = svr[i];
 					vRRt.mNum++;
-					config->Qos()->SaveNode(svr[i]);
 				}
 
 				// 广播agentsvrd
@@ -87,6 +87,8 @@ int RouterHttpTask::SaveSvrReq(struct Request_t *request) {
 			if (vRRt.mNum > 0) {
 				Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 				SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+				vRRt.mCode++;
+				vRRt.mNum = 0;
 			}
 
 			config->WriteFileSvr();
@@ -123,14 +125,14 @@ int RouterHttpTask::CoverSvrReq(struct Request_t *request) {
 			for (int32_t i = 0; i < num; i++) {
 				if (svr[i].mGid > 0 && svr[i].mWeight >= 0 && config->Qos()->IsExistNode(svr[i])) {	// 旧配置检测到weight、name、idc变化才更新
 					if (config->Qos()->IsWNIChange(svr[i])) {
+						config->Qos()->SaveNode(svr[i]);
 						vRRt.mSvr[vRRt.mNum] = svr[i];
 						vRRt.mNum++;
-						config->Qos()->SaveNode(svr[i]);
 					}
 				} else if (svr[i].mGid > 0 && svr[i].mWeight > 0) {	// 添加新配置 weight>0 添加配置
+					config->Qos()->SaveNode(svr[i]);
 					vRRt.mSvr[vRRt.mNum] = svr[i];
 					vRRt.mNum++;
-					config->Qos()->SaveNode(svr[i]);
 				}
 
 				// 广播agentsvrd
@@ -144,6 +146,8 @@ int RouterHttpTask::CoverSvrReq(struct Request_t *request) {
 			if (vRRt.mNum > 0) {
 				Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 				SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+				vRRt.mCode++;
+				vRRt.mNum = 0;
 			}
 			
 			config->WriteFileSvr();
@@ -314,8 +318,8 @@ int RouterHttpTask::CoverAgntReq(struct Request_t *request) {
 						config->SaveAgnt(agnt[i]);
 						vRRt.mAgnt[vRRt.mNum] = agnt[i];
 						vRRt.mNum++;
+						oldagnts.erase(it);
 					}
-					oldagnts.erase(it);
 				} else if (agnt[i].mHost[0] > 0) {
 					config->SaveAgnt(agnt[i]);
 					vRRt.mAgnt[vRRt.mNum] = agnt[i];
@@ -337,9 +341,6 @@ int RouterHttpTask::CoverAgntReq(struct Request_t *request) {
 				vRRt.mNum = 0;
 			}
 			
-			config->WriteFileAgnt();
-			SAFE_DELETE_VEC(agnt);
-
 			// 已连接agent列表信息，原样加入列表
 			if (!oldagnts.empty()) {
 				for (std::vector<struct Agnt_t>::iterator it = oldagnts.begin(); it != oldagnts.end(); it++) {
@@ -374,6 +375,9 @@ int RouterHttpTask::CoverAgntReq(struct Request_t *request) {
 					vRRt.mNum = 0;
 				}
 			}
+
+			config->WriteFileAgnt();
+			SAFE_DELETE_VEC(agnt);
 
 			root["status"] = Json::Value("200");
 			root["msg"] = Json::Value("ok");

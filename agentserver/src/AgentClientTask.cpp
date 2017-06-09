@@ -128,10 +128,9 @@ int AgentClientTask::ReloadAgntRes(struct Request_t *request) {
 				if (std::find(ips.begin(), ips.end(), ip) != ips.end()) {
 					config->Qos()->Idc() = cmd->mAgnt[i].mIdc;
 
-					// 发送初始化svr配置请求
 					if (cmd->mAgnt[i].mStatus == kAgntUreg) {
 						config->Qos()->CleanNode();	// 清除原始svr
-					} else if (cmd->mAgnt[i].mStatus == kAgntOk) {
+					} else if (cmd->mAgnt[i].mStatus == kAgntOk) {	// 发送初始化svr配置请求
 						struct SvrReqInit_t vRRt0;
 						AsyncSend(reinterpret_cast<char*>(&vRRt0), sizeof(vRRt0));
 					}
