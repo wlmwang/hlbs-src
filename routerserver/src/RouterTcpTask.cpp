@@ -43,7 +43,6 @@ const wStatus& RouterTcpTask::Connect() {
 	memcpy(agnt.mHost, ip.c_str(), kMaxHost);
 	agnt.mPort = port;
 	agnt.mStatus = kAgntUreg;
-	agnt.mVersion = misc::GetTimeofday()/1000000;
 
 	// 更新本进程
 	if (config->IsExistAgnt(agnt, &old) && old.mConfig == 0) {
@@ -84,7 +83,6 @@ const wStatus& RouterTcpTask::DisConnect() {
 	memcpy(agnt.mHost, ip.c_str(), kMaxHost);
 	agnt.mPort = port;
 	agnt.mStatus = kAgntDisc;
-	agnt.mVersion = misc::GetTimeofday()/1000000;
 
 	// 更新本进程
 	if (config->IsExistAgnt(agnt, &old)) {
@@ -186,7 +184,6 @@ int RouterTcpTask::SyncAgntRes(struct Request_t *request) {
 			if (cmd->mAgnt[i].mStatus == kAgntUreg && config->IsExistAgnt(cmd->mAgnt[i], &old) && old.mConfig == 0) {
 				cmd->mAgnt[i].mStatus = kAgntOk;
 				cmd->mAgnt[i].mConfig = old.mConfig;
-				cmd->mAgnt[i].mVersion = misc::GetTimeofday()/1000000;
 			}
 			config->SaveAgnt(cmd->mAgnt[i]);
 		}

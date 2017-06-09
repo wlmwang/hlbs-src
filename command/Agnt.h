@@ -30,7 +30,7 @@ public:
 	int8_t 	mStatus;
 	int8_t 	mConfig;		// 是否是配置文件中记录
 
-	Agnt_t(): mPort(0), mVersion(0), mIdc(0), mStatus(kAgntInit), mConfig(-1) {
+	Agnt_t(): mPort(0), mVersion(misc::GetTimeofday()/1000000), mIdc(0), mStatus(kAgntInit), mConfig(-1) {
 		memset(mHost, 0, kMaxHost);
 	}
 	

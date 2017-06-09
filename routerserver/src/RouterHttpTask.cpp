@@ -179,9 +179,9 @@ int RouterHttpTask::ListSvrReq(struct Request_t *request) {
 			item["HOST"] = Json::Value(svr[i].mHost);
 			item["PORT"] = Json::Value(svr[i].mPort);
 			item["WEIGHT"] = Json::Value(svr[i].mWeight);
-			item["VERSION"] = Json::Value(svr[i].mVersion);
 			item["NAME"] = Json::Value(svr[i].mName);
 			item["IDC"] = Json::Value(svr[i].mIdc);
+			item["VERSION"] = Json::Value(svr[i].mVersion);
 			svrs.append(Json::Value(item));
 		}
 		start += num;
@@ -237,13 +237,18 @@ int RouterHttpTask::SaveAgntReq(struct Request_t *request) {
 		if (num > 0) {
 			struct AgntResSync_t vRRt;
 			for (int32_t i = 0; i < num; i++) {
-				if (agnt[i].mHost[0] > 0 && agnt[i].mPort > 0 && config->IsExistAgnt(agnt[i])) {	// 旧配置检测到status、idc变化才更新
-					if (config->IsAgntChange(agnt[i])) {
+				agnt[i].mConfig = 0;
+				struct Agnt_t old;
+				if (agnt[i].mHost[0] > 0 && config->IsExistAgnt(agnt[i], &old)) {	// 旧配置检测到status、idc变化才更新
+					if (agnt[i].mIdc != old.mIdc) {
+						if (old.mStatus == kAgntUreg || old.mStatus == kAgntOk) {		// 状态转换
+							agnt[i].mStatus = kAgntOk;
+						}
 						vRRt.mAgnt[vRRt.mNum] = agnt[i];
 						vRRt.mNum++;
 						config->SaveAgnt(agnt[i]);
 					}
-				} else if (agnt[i].mHost[0] > 0 && agnt[i].mPort > 0) {	// 添加新配置 host>0 添加配置
+				} else if (agnt[i].mHost[0] > 0) {	// 添加新配置 host>0 添加配置
 					vRRt.mAgnt[vRRt.mNum] = agnt[i];
 					vRRt.mNum++;
 					config->SaveAgnt(agnt[i]);
@@ -260,6 +265,8 @@ int RouterHttpTask::SaveAgntReq(struct Request_t *request) {
 			if (vRRt.mNum > 0) {
 				Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 				SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+				vRRt.mCode++;
+				vRRt.mNum = 0;
 			}
 
 			config->WriteFileAgnt();
@@ -290,20 +297,27 @@ int RouterHttpTask::CoverAgntReq(struct Request_t *request) {
 		struct Agnt_t* agnt = NULL;
 		int32_t num = ParseJsonAgnt(agnts, &agnt);
 		if (num > 0) {
-			// 清除原有SVR记录
-			config->CleanAgnt();
+			std::vector<struct Agnt_t> oldagnts(config->Agnts());	// 备份原始AGENT记录
+			config->CleanAgnt();	// 清除原始AGENT记录
+
 			struct AgntResReload_t vRRt;
 			for (int32_t i = 0; i < num; i++) {
-				if (agnt[i].mHost[0] > 0 && agnt[i].mPort > 0 && config->IsExistAgnt(agnt[i])) {	// 旧配置检测到status、idc变化才更新
-					if (config->IsAgntChange(agnt[i])) {
+				agnt[i].mConfig = 0;
+				std::vector<struct Agnt_t>::iterator it = std::find(oldagnts.begin(), oldagnts.end(), agnt[i]);
+				if (agnt[i].mHost[0] > 0 && it != oldagnts.end()) {
+					if (agnt[i].mIdc != it->mIdc) {
+						if (it->mStatus == kAgntUreg || it->mStatus == kAgntOk) {
+							agnt[i].mStatus = kAgntOk;
+						}
+						config->SaveAgnt(agnt[i]);
 						vRRt.mAgnt[vRRt.mNum] = agnt[i];
 						vRRt.mNum++;
-						config->SaveAgnt(agnt[i]);
 					}
-				} else if (agnt[i].mHost[0] > 0 && agnt[i].mPort > 0) {	// 添加新配置 weight>0 添加配置
+					oldagnts.erase(it);
+				} else if (agnt[i].mHost[0] > 0) {
+					config->SaveAgnt(agnt[i]);
 					vRRt.mAgnt[vRRt.mNum] = agnt[i];
 					vRRt.mNum++;
-					config->SaveAgnt(agnt[i]);
 				}
 
 				// 广播agentsvrd
@@ -317,10 +331,47 @@ int RouterHttpTask::CoverAgntReq(struct Request_t *request) {
 			if (vRRt.mNum > 0) {
 				Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 				SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+				vRRt.mCode++;
+				vRRt.mNum = 0;
 			}
 			
 			config->WriteFileAgnt();
 			SAFE_DELETE_VEC(agnt);
+
+			// 已连接agent列表信息，原样加入列表
+			if (!oldagnts.empty()) {
+				for (std::vector<struct Agnt_t>::iterator it = oldagnts.begin(); it != oldagnts.end(); it++) {
+					if (it->mConfig == 0) {
+						if (it->mStatus == kAgntOk) {
+							it->mConfig = -1;
+							it->mStatus = kAgntUreg;
+							config->SaveAgnt(*it);
+							vRRt.mAgnt[vRRt.mNum] = *it;
+							vRRt.mNum++;
+						}
+					} else if (it->mConfig == -1) {
+						if (it->mStatus == kAgntUreg) {
+							config->SaveAgnt(*it);
+							vRRt.mAgnt[vRRt.mNum] = *it;
+							vRRt.mNum++;
+						}
+					}
+
+					// 广播agentsvrd
+					if (vRRt.mNum >= kMaxNum) {
+						Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+						SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+						vRRt.mCode++;
+						vRRt.mNum = 0;
+					}
+				}
+				if (vRRt.mNum > 0) {
+					Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+					SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+					vRRt.mCode++;
+					vRRt.mNum = 0;
+				}
+			}
 
 			root["status"] = Json::Value("200");
 			root["msg"] = Json::Value("ok");
@@ -348,12 +399,12 @@ int RouterHttpTask::ListAgntReq(struct Request_t *request) {
 		}
 		for (int i = 0; i < num; i++) {
 			Json::Value item;
+			item["CONFIG"] = Json::Value(agnt[i].mConfig);
 			item["HOST"] = Json::Value(agnt[i].mHost);
 			item["PORT"] = Json::Value(agnt[i].mPort);
-			item["VERSION"] = Json::Value(agnt[i].mVersion);
-			item["IDC"] = Json::Value(agnt[i].mIdc);
 			item["STATUS"] = Json::Value(agnt[i].mStatus);
-			item["CONFIG"] = Json::Value(agnt[i].mConfig);
+			item["IDC"] = Json::Value(agnt[i].mIdc);
+			item["VERSION"] = Json::Value(agnt[i].mVersion);
 			agnts.append(Json::Value(item));
 		}
 		start += num;
@@ -389,9 +440,6 @@ int32_t RouterHttpTask::ParseJsonSvr(const std::string& svrs, struct SvrNet_t** 
 				if (value[i].isMember("weight")) {
 					(*svr)[i].mWeight = value[i]["weight"].asInt();
 				}
-				if (value[i].isMember("version")) {
-					(*svr)[i].mVersion = value[i]["version"].asInt();
-				}
 				if (value[i].isMember("idc")) {
 					(*svr)[i].mIdc = value[i]["idc"].asInt();
 				}
@@ -408,11 +456,10 @@ int32_t RouterHttpTask::ParseJsonAgnt(const std::string& agnts, struct Agnt_t** 
 	if (reader.parse(agnts, value) && value.size() > 0) {
 		SAFE_NEW_VEC(value.size(), struct Agnt_t, *agnt);
 		for (unsigned int i = 0; i < value.size(); i++) {
-			if (value[i].isMember("host") && value[i].isMember("port")) {
-				(*agnt)[i].mPort = value[i]["port"].asInt();
+			if (value[i].isMember("host")) {
 				memcpy((*agnt)[i].mHost, value[i]["host"].asCString(), kMaxHost);
-				if (value[i].isMember("version")) {
-					(*agnt)[i].mVersion = value[i]["version"].asInt();
+				if (value[i].isMember("port")) {
+					(*agnt)[i].mPort = value[i]["port"].asInt();
 				}
 				if (value[i].isMember("idc")) {
 					(*agnt)[i].mIdc = value[i]["idc"].asInt();

@@ -46,30 +46,30 @@ int RouterConfig::WriteFileAgnt(const struct Agnt_t* agnt, int32_t n, const std:
 				break;
 			}
 			for (int i = 0; i < num; i++) {
-				if (agnt[i].mHost <= 0 || agnt[i].mPort <= 0) {
+				if (agnt[i].mHost <= 0) {
 					continue;
 				}
 				TiXmlElement* node;
 				SAFE_NEW(TiXmlElement("AGENT"), node);
 				node->SetAttribute("HOST", agnt[i].mHost);
 				node->SetAttribute("PORT", agnt[i].mPort);
-				node->SetAttribute("VERSION", agnt[i].mVersion);
 				node->SetAttribute("IDC", agnt[i].mIdc);
+				//node->SetAttribute("VERSION", agnt[i].mVersion);
 				agnts->LinkEndChild(node);
 			}
 			start += num;
 		} while (num >= kMaxNum);
 	} else if (agnt && n > 0) {
 		for (int32_t i = 0; i < n; i++) {
-			if (agnt[i].mHost <= 0 || agnt[i].mPort <= 0) {
+			if (agnt[i].mHost <= 0) {
 				continue;
 			}
 			TiXmlElement* node;
 			SAFE_NEW(TiXmlElement("AGENT"), node);
 			node->SetAttribute("HOST", agnt[i].mHost);
 			node->SetAttribute("PORT", agnt[i].mPort);
-			node->SetAttribute("VERSION", agnt[i].mVersion);
 			node->SetAttribute("IDC", agnt[i].mIdc);
+			//node->SetAttribute("VERSION", agnt[i].mVersion);
 			agnts->LinkEndChild(node);
 		}
 	}
@@ -118,9 +118,9 @@ int RouterConfig::WriteFileSvr(const struct SvrNet_t* svr, int32_t n, const std:
 				node->SetAttribute("HOST", svr[i].mHost);
 				node->SetAttribute("PORT", svr[i].mPort);
 				node->SetAttribute("WEIGHT", svr[i].mWeight);
-				node->SetAttribute("VERSION", svr[i].mVersion);
 				node->SetAttribute("NAME", svr[i].mName);
 				node->SetAttribute("IDC", svr[i].mIdc);
+				//node->SetAttribute("VERSION", svr[i].mVersion);
 				svrs->LinkEndChild(node);
 			}
 			start += num;
@@ -137,9 +137,9 @@ int RouterConfig::WriteFileSvr(const struct SvrNet_t* svr, int32_t n, const std:
 			node->SetAttribute("HOST", svr[i].mHost);
 			node->SetAttribute("PORT", svr[i].mPort);
 			node->SetAttribute("WEIGHT", svr[i].mWeight);
-			node->SetAttribute("VERSION", svr[i].mVersion);
 			node->SetAttribute("NAME", svr[i].mName);
 			node->SetAttribute("IDC", svr[i].mIdc);
+			//node->SetAttribute("VERSION", svr[i].mVersion);
 			svrs->LinkEndChild(node);
 		}
 	}
@@ -228,9 +228,9 @@ int RouterConfig::ParseSvrConf() {
 			const char* host = pChildElm->Attribute("HOST");
 			const char* port = pChildElm->Attribute("PORT");
 			const char* weight = pChildElm->Attribute("WEIGHT");
-			const char* version = pChildElm->Attribute("VERSION");
 			const char* name = pChildElm->Attribute("NAME");
 			const char* idc = pChildElm->Attribute("IDC");
+			const char* version = pChildElm->Attribute("VERSION");
 			if (gid != NULL && xid != NULL && host != NULL && port != NULL) {
 				struct SvrNet_t svr;
 				svr.mGid = atoi(gid);
@@ -288,10 +288,12 @@ int RouterConfig::ParseAgntConf() {
 			const char* port = pChildElm->Attribute("PORT");
 			const char* version = pChildElm->Attribute("VERSION");
 			const char* idc = pChildElm->Attribute("IDC");
-			if (host != NULL && port != NULL) {
+			if (host != NULL) {
 				struct Agnt_t agnt;
-				agnt.mPort = atoi(port);
 				memcpy(agnt.mHost, host, kMaxHost);
+				if (port != NULL) {
+					agnt.mPort = atoi(port);
+				}
 				if (idc != NULL) {
 					agnt.mIdc = atoi(idc);
 				}
@@ -299,7 +301,6 @@ int RouterConfig::ParseAgntConf() {
 					agnt.mVersion = atoi(version);
 				}
 				agnt.mConfig = 0;
-				agnt.mVersion = misc::GetTimeofday()/1000000;
 
 				// 添加新配置
 				if (!IsExistAgnt(agnt)) {

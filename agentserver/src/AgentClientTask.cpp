@@ -20,10 +20,6 @@ AgentClientTask::AgentClientTask(wSocket *socket, int32_t type) : wTcpTask(socke
 }
 
 const wStatus& AgentClientTask::Connect() {
-	// 发送初始化svr配置请求
-	struct SvrReqInit_t vRRt0;
-	AsyncSend(reinterpret_cast<char*>(&vRRt0), sizeof(vRRt0));
-
 	// 发送初始化agent配置请求
 	struct AgntReqInit_t vRRt2;
 	AsyncSend(reinterpret_cast<char*>(&vRRt2), sizeof(vRRt2));
@@ -39,9 +35,18 @@ int AgentClientTask::InitSvrRes(struct Request_t *request) {
 	struct SvrResInit_t* cmd = reinterpret_cast<struct SvrResInit_t*>(request->mBuf);
 	AgentConfig* config = Config<AgentConfig*>();
 	if (cmd->mCode >= 0 && cmd->mNum > 0) {
-		if (cmd->mCode == 0) {	// 清除原始svr
-			config->Qos()->CleanNode();
+		for (int32_t i = 0; i < cmd->mNum; i++) {
+			config->Qos()->SaveNode(cmd->mSvr[i]);
 		}
+	}
+	return 0;
+}
+
+// router发来sync相响应（增量同步）
+int AgentClientTask::SyncSvrRes(struct Request_t *request) {
+	struct SvrResSync_t* cmd = reinterpret_cast<struct SvrResSync_t*>(request->mBuf);
+	AgentConfig* config = Config<AgentConfig*>();
+	if (cmd->mCode >= 0 && cmd->mNum > 0) {
 		for (int32_t i = 0; i < cmd->mNum; i++) {
 			config->Qos()->SaveNode(cmd->mSvr[i]);
 		}
@@ -64,18 +69,6 @@ int AgentClientTask::ReloadSvrRes(struct Request_t *request) {
 	return 0;
 }
 
-// router发来sync相响应（增量同步）
-int AgentClientTask::SyncSvrRes(struct Request_t *request) {
-	struct SvrResSync_t* cmd = reinterpret_cast<struct SvrResSync_t*>(request->mBuf);
-	AgentConfig* config = Config<AgentConfig*>();
-	if (cmd->mCode >= 0 && cmd->mNum > 0) {
-		for (int32_t i = 0; i < cmd->mNum; i++) {
-			config->Qos()->SaveNode(cmd->mSvr[i]);
-		}
-	}
-	return 0;
-}
-
 int AgentClientTask::InitAgntRes(struct Request_t *request) {
 	struct AgntResInit_t* cmd = reinterpret_cast<struct AgntResInit_t*>(request->mBuf);
 	AgentConfig* config = Config<AgentConfig*>();
@@ -84,26 +77,14 @@ int AgentClientTask::InitAgntRes(struct Request_t *request) {
 		if (misc::GetIpList(ips) == 0) {
 			for (int32_t i = 0; i < cmd->mNum; i++) {
 				uint32_t ip = inet_addr(cmd->mAgnt[i].mHost);
-				if (cmd->mAgnt[i].mIdc != 0 && std::find(ips.begin(), ips.end(), ip) != ips.end()) {
+				if (std::find(ips.begin(), ips.end(), ip) != ips.end()) {
 					config->Qos()->Idc() = cmd->mAgnt[i].mIdc;
-					break;
-				}
-			}
-		}
-	}
-	return 0;
-}
 
-int AgentClientTask::ReloadAgntRes(struct Request_t *request) {
-	struct AgntResReload_t* cmd = reinterpret_cast<struct AgntResReload_t*>(request->mBuf);
-	AgentConfig* config = Config<AgentConfig*>();
-	if (cmd->mCode >= 0 && cmd->mNum > 0) {
-		std::vector<uint32_t> ips;
-		if (misc::GetIpList(ips) == 0) {
-			for (int32_t i = 0; i < cmd->mNum; i++) {
-				uint32_t ip = inet_addr(cmd->mAgnt[i].mHost);
-				if (cmd->mAgnt[i].mIdc != 0 && std::find(ips.begin(), ips.end(), ip) != ips.end()) {
-					config->Qos()->Idc() = cmd->mAgnt[i].mIdc;
+					// 发送初始化svr配置请求
+					if (cmd->mAgnt[i].mStatus == kAgntOk) {
+						struct SvrReqInit_t vRRt0;
+						AsyncSend(reinterpret_cast<char*>(&vRRt0), sizeof(vRRt0));
+					}
 					break;
 				}
 			}
@@ -120,8 +101,40 @@ int AgentClientTask::SyncAgntRes(struct Request_t *request) {
 		if (misc::GetIpList(ips) == 0) {
 			for (int32_t i = 0; i < cmd->mNum; i++) {
 				uint32_t ip = inet_addr(cmd->mAgnt[i].mHost);
-				if (cmd->mAgnt[i].mIdc != 0 && std::find(ips.begin(), ips.end(), ip) != ips.end()) {
+				if (std::find(ips.begin(), ips.end(), ip) != ips.end()) {
 					config->Qos()->Idc() = cmd->mAgnt[i].mIdc;
+					
+					// 发送初始化svr配置请求
+					if (cmd->mAgnt[i].mStatus == kAgntOk) {
+						struct SvrReqInit_t vRRt0;
+						AsyncSend(reinterpret_cast<char*>(&vRRt0), sizeof(vRRt0));
+					}
+					break;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+int AgentClientTask::ReloadAgntRes(struct Request_t *request) {
+	struct AgntResReload_t* cmd = reinterpret_cast<struct AgntResReload_t*>(request->mBuf);
+	AgentConfig* config = Config<AgentConfig*>();
+	if (cmd->mCode >= 0 && cmd->mNum > 0) {
+		std::vector<uint32_t> ips;
+		if (misc::GetIpList(ips) == 0) {
+			for (int32_t i = 0; i < cmd->mNum; i++) {
+				uint32_t ip = inet_addr(cmd->mAgnt[i].mHost);
+				if (std::find(ips.begin(), ips.end(), ip) != ips.end()) {
+					config->Qos()->Idc() = cmd->mAgnt[i].mIdc;
+
+					// 发送初始化svr配置请求
+					if (cmd->mAgnt[i].mStatus == kAgntUreg) {
+						config->Qos()->CleanNode();	// 清除原始svr
+					} else if (cmd->mAgnt[i].mStatus == kAgntOk) {
+						struct SvrReqInit_t vRRt0;
+						AsyncSend(reinterpret_cast<char*>(&vRRt0), sizeof(vRRt0));
+					}
 					break;
 				}
 			}

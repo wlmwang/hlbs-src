@@ -52,6 +52,7 @@ public:
 	bool ModifyAgnt(const struct Agnt_t& agnt);
 	int GetAgntAll(struct Agnt_t buf[], int32_t start, int32_t size);
 	int WriteFileAgnt(const struct Agnt_t* agnt = NULL, int32_t n = 0, const std::string& filename = "");
+	const std::vector<struct Agnt_t>& Agnts() { return mAgnts;}
 
 protected:
 	time_t mSvrMtime;	// svr.xml文件最后一次被修改的时间

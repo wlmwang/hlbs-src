@@ -12,11 +12,11 @@
 
 const char kSvrLog[] = "../log/svr.log";
 
+// 每次请求svr、agnt最多个数
+const int32_t	kMaxNum		= 64;
+
 const int8_t	kMaxHost	= 16;
 const int8_t	kMaxName	= 64;
-
-// 每次请求svr最多个数
-const int32_t	kMaxNum		= 16;
 
 const int32_t	kInitWeight = 100;
 const int32_t	kMaxWeight	= 1000;
@@ -42,7 +42,7 @@ public:
     int32_t 	mPre;			// 预取数
     int32_t 	mExpired;		// 过期时间
 
-    SvrNet_t(): mGid(0), mXid(0), mWeight(kInitWeight), mVersion(0), mPort(0), mIdc(0), mPre(0), mExpired(0) {
+    SvrNet_t(): mGid(0), mXid(0), mWeight(kInitWeight), mVersion(misc::GetTimeofday()/1000000), mPort(0), mIdc(0), mPre(0), mExpired(0) {
     	memset(mHost, 0, kMaxHost);
     	memset(mName, 0, kMaxName);
     }
