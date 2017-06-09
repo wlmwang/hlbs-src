@@ -42,12 +42,16 @@ const wStatus& RouterTcpTask::Connect() {
 
 	memcpy(agnt.mHost, ip.c_str(), kMaxHost);
 	agnt.mPort = port;
-	agnt.mStatus = kAgntUreg;
 
 	// 更新本进程
-	if (config->IsExistAgnt(agnt, &old) && old.mConfig == 0) {
+	if (config->IsExistAgnt(agnt, &old)) {
 		agnt.mConfig = old.mConfig;
-		agnt.mStatus = kAgntOk;
+		agnt.mStatus = old.mStatus;
+		if (old.mConfig == 0) {
+			agnt.mStatus = kAgntOk;
+		}
+	} else {
+		agnt.mStatus = kAgntUreg;
 	}
 	config->SaveAgnt(agnt);
 
@@ -87,7 +91,7 @@ const wStatus& RouterTcpTask::DisConnect() {
 	// 更新本进程
 	if (config->IsExistAgnt(agnt, &old)) {
 		agnt.mConfig = old.mConfig;
-		if (agnt.mVersion < old.mVersion + 1) {	// 1秒之内认定agent抖动（重启也是抖动）
+		if (agnt.mVersion < old.mVersion + 3) {	// 3秒之内认定agent抖动（重启也是抖动）
 			return mStatus;
 		}
 	}

@@ -240,7 +240,7 @@ int RouterHttpTask::SaveAgntReq(struct Request_t *request) {
 				agnt[i].mConfig = 0;
 				struct Agnt_t old;
 				if (agnt[i].mHost[0] > 0 && config->IsExistAgnt(agnt[i], &old)) {	// 旧配置检测到status、idc变化才更新
-					if (agnt[i].mIdc != old.mIdc) {
+					if (agnt[i].mIdc != old.mIdc || (agnt[i].mIdc == old.mIdc && old.mStatus == kAgntUreg)) {
 						if (old.mStatus == kAgntUreg || old.mStatus == kAgntOk) {		// 状态转换
 							agnt[i].mStatus = kAgntOk;
 						}
@@ -305,9 +305,11 @@ int RouterHttpTask::CoverAgntReq(struct Request_t *request) {
 				agnt[i].mConfig = 0;
 				std::vector<struct Agnt_t>::iterator it = std::find(oldagnts.begin(), oldagnts.end(), agnt[i]);
 				if (agnt[i].mHost[0] > 0 && it != oldagnts.end()) {
-					if (agnt[i].mIdc != it->mIdc) {
+					if (agnt[i].mIdc != it->mIdc || (agnt[i].mIdc == it->mIdc && it->mStatus != kAgntOk)) {
 						if (it->mStatus == kAgntUreg || it->mStatus == kAgntOk) {
 							agnt[i].mStatus = kAgntOk;
+						} else {
+							agnt[i].mStatus = it->mStatus;
 						}
 						config->SaveAgnt(agnt[i]);
 						vRRt.mAgnt[vRRt.mNum] = agnt[i];
