@@ -108,7 +108,7 @@ int RouterConfig::WriteFileSvr(const struct SvrNet_t* svr, int32_t n, const std:
 				break;
 			}
 			for (int i = 0; i < num; i++) {
-				if (svr[i].mGid <= 0 || svr[i].mXid <= 0 || svr[i].mPort <= 0) {
+				if (svr[i].mGid <= 0 || svr[i].mXid <= 0 || svr[i].mPort <= 0 || svr[i].mWeight <= 0) {
 					continue;
 				}
 				TiXmlElement* node;
@@ -126,7 +126,7 @@ int RouterConfig::WriteFileSvr(const struct SvrNet_t* svr, int32_t n, const std:
 		} while (num >= kMaxNum);
 	} else if (svr && n > 0) {
 		for (int32_t i = 0; i < n; i++) {
-			if (svr[i].mGid <= 0 || svr[i].mXid <= 0 || svr[i].mPort <= 0) {
+			if (svr[i].mGid <= 0 || svr[i].mXid <= 0 || svr[i].mPort <= 0 || svr[i].mWeight <= 0) {
 				continue;
 			}
 			TiXmlElement* node;
