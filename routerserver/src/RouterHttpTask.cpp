@@ -482,6 +482,7 @@ int32_t RouterHttpTask::ParseJsonSvr(const std::string& svrs, struct SvrNet_t** 
 	return -1;
 }
 
+// [{"host":"192.168.8.13", "weight":1, "idc":0}]
 int32_t RouterHttpTask::ParseJsonAgnt(const std::string& agnts, struct Agnt_t** agnt) {
 	Json::Reader reader;
 	Json::Value value;
