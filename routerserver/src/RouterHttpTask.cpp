@@ -243,16 +243,26 @@ int RouterHttpTask::SaveAgntReq(struct Request_t *request) {
 			for (int32_t i = 0; i < num; i++) {
 				agnt[i].mConfig = 0;
 				struct Agnt_t old;
-				if (agnt[i].mHost[0] > 0 && config->IsExistAgnt(agnt[i], &old)) {	// 旧配置检测到status、idc变化才更新
-					if (agnt[i].mIdc != old.mIdc || (agnt[i].mIdc == old.mIdc && old.mStatus == kAgntUreg)) {
-						if (old.mStatus == kAgntUreg || old.mStatus == kAgntOk) {		// 状态转换
+				if (agnt[i].mHost[0] > 0 && agnt[i].mWeight >= 0 && config->IsExistAgnt(agnt[i], &old)) {	// 旧配置检测到status、idc变化才更新
+					if (agnt[i].mIdc != old.mIdc || agnt[i].mWeight != old.mWeight || 
+						(agnt[i].mIdc == old.mIdc && agnt[i].mWeight == old.mWeight && old.mStatus == kAgntUreg)) {
+						if (agnt[i].mWeight == 0) {
+							agnt[i].mConfig = -1;
+							if (old.mStatus == kAgntOk) {
+								agnt[i].mStatus = kAgntUreg;
+							} else {
+								agnt[i].mStatus = old.mStatus;
+							}
+						} else if (old.mStatus == kAgntUreg || old.mStatus == kAgntOk) {		// 状态转换
 							agnt[i].mStatus = kAgntOk;
+						} else {
+							agnt[i].mStatus = old.mStatus;
 						}
 						vRRt.mAgnt[vRRt.mNum] = agnt[i];
 						vRRt.mNum++;
 						config->SaveAgnt(agnt[i]);
 					}
-				} else if (agnt[i].mHost[0] > 0) {	// 添加新配置 host>0 添加配置
+				} else if (agnt[i].mHost[0] > 0 && agnt[i].mWeight > 0) {	// 添加新配置 host>0 添加配置
 					vRRt.mAgnt[vRRt.mNum] = agnt[i];
 					vRRt.mNum++;
 					config->SaveAgnt(agnt[i]);
@@ -308,19 +318,31 @@ int RouterHttpTask::CoverAgntReq(struct Request_t *request) {
 			for (int32_t i = 0; i < num; i++) {
 				agnt[i].mConfig = 0;
 				std::vector<struct Agnt_t>::iterator it = std::find(oldagnts.begin(), oldagnts.end(), agnt[i]);
-				if (agnt[i].mHost[0] > 0 && it != oldagnts.end()) {
-					if (agnt[i].mIdc != it->mIdc || (agnt[i].mIdc == it->mIdc && it->mStatus != kAgntOk)) {
-						if (it->mStatus == kAgntUreg || it->mStatus == kAgntOk) {
+				if (agnt[i].mHost[0] > 0 && agnt[i].mWeight >= 0 && it != oldagnts.end()) {
+					if (agnt[i].mIdc != it->mIdc || agnt[i].mWeight != it->mWeight || 
+						(agnt[i].mIdc == it->mIdc && agnt[i].mWeight == it->mWeight && it->mStatus != kAgntOk)) {
+						if (agnt[i].mWeight == 0) {
+							agnt[i].mConfig = -1;
+							if (it->mStatus == kAgntOk) {
+								agnt[i].mStatus = kAgntUreg;
+							} else {
+								agnt[i].mStatus = it->mStatus;
+							}
+						} else if (it->mStatus == kAgntUreg || it->mStatus == kAgntOk) {
 							agnt[i].mStatus = kAgntOk;
 						} else {
 							agnt[i].mStatus = it->mStatus;
 						}
-						config->SaveAgnt(agnt[i]);
-						vRRt.mAgnt[vRRt.mNum] = agnt[i];
-						vRRt.mNum++;
-						oldagnts.erase(it);
+					} else if (it->mStatus == kAgntUreg || it->mStatus == kAgntOk) {
+						agnt[i].mStatus = kAgntOk;
+					} else {
+						agnt[i].mStatus = it->mStatus;
 					}
-				} else if (agnt[i].mHost[0] > 0) {
+					vRRt.mAgnt[vRRt.mNum] = agnt[i];
+					vRRt.mNum++;
+					config->SaveAgnt(agnt[i]);
+					oldagnts.erase(it);
+				} else if (agnt[i].mHost[0] > 0 && agnt[i].mWeight > 0) {
 					config->SaveAgnt(agnt[i]);
 					vRRt.mAgnt[vRRt.mNum] = agnt[i];
 					vRRt.mNum++;
@@ -408,6 +430,7 @@ int RouterHttpTask::ListAgntReq(struct Request_t *request) {
 			item["CONFIG"] = Json::Value(agnt[i].mConfig);
 			item["HOST"] = Json::Value(agnt[i].mHost);
 			item["PORT"] = Json::Value(agnt[i].mPort);
+			item["WEIGHT"] = Json::Value(agnt[i].mWeight);
 			item["STATUS"] = Json::Value(agnt[i].mStatus);
 			item["IDC"] = Json::Value(agnt[i].mIdc);
 			item["VERSION"] = Json::Value(agnt[i].mVersion);
@@ -444,7 +467,10 @@ int32_t RouterHttpTask::ParseJsonSvr(const std::string& svrs, struct SvrNet_t** 
 					memcpy((*svr)[i].mName, value[i]["name"].asCString(), kMaxName);
 				}
 				if (value[i].isMember("weight")) {
-					(*svr)[i].mWeight = value[i]["weight"].asInt();
+					int wt = value[i]["weight"].asInt();
+					if (wt >= 0 && wt <= kMaxWeight) {
+						(*svr)[i].mWeight = wt;
+					}
 				}
 				if (value[i].isMember("idc")) {
 					(*svr)[i].mIdc = value[i]["idc"].asInt();
@@ -466,6 +492,12 @@ int32_t RouterHttpTask::ParseJsonAgnt(const std::string& agnts, struct Agnt_t** 
 				memcpy((*agnt)[i].mHost, value[i]["host"].asCString(), kMaxHost);
 				if (value[i].isMember("port")) {
 					(*agnt)[i].mPort = value[i]["port"].asInt();
+				}
+				if (value[i].isMember("weight")) {
+					int wt = value[i]["weight"].asInt();
+					if (wt >= 0) {
+						(*agnt)[i].mWeight = wt;
+					}
 				}
 				if (value[i].isMember("idc")) {
 					(*agnt)[i].mIdc = value[i]["idc"].asInt();

@@ -25,22 +25,24 @@ struct Agnt_t {
 public:
 	char	mHost[kMaxHost];
 	int32_t	mPort;		// 使用过程中，参考意义不大
+	int32_t mWeight;	// 是否删除（沿用SvrNet_t中的字段名）
 	int32_t	mVersion;
 	int8_t	mIdc;
 	int8_t 	mStatus;
 	int8_t 	mConfig;		// 是否是配置文件中记录
 
-	Agnt_t(): mPort(0), mVersion(misc::GetTimeofday()/1000000), mIdc(0), mStatus(kAgntInit), mConfig(-1) {
+	Agnt_t(): mPort(0), mWeight(1), mVersion(misc::GetTimeofday()/1000000), mIdc(0), mStatus(kAgntInit), mConfig(-1) {
 		memset(mHost, 0, kMaxHost);
 	}
 	
-	Agnt_t(const Agnt_t& other): mPort(other.mPort), mVersion(other.mVersion), mIdc(other.mIdc), mStatus(other.mStatus), mConfig(other.mConfig) {
+	Agnt_t(const Agnt_t& other): mPort(other.mPort), mWeight(other.mWeight), mVersion(other.mVersion), mIdc(other.mIdc), mStatus(other.mStatus), mConfig(other.mConfig) {
 		memcpy(mHost, other.mHost, kMaxHost);
 	}
 
 	Agnt_t& operator=(const Agnt_t &other) {
 		memcpy(mHost, other.mHost, kMaxHost);
 		mPort = other.mPort;
+		mWeight = other.mWeight;
 		mVersion = other.mVersion;
 		mIdc = other.mIdc;
 		mStatus = other.mStatus;

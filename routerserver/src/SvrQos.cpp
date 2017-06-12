@@ -99,10 +99,7 @@ const wStatus& SvrQos::ModifyNode(const struct SvrNet_t& svr) {
 		// 修改weight
 		MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
 		struct SvrNet_t& oldsvr = const_cast<struct SvrNet_t&>(mapReqIt->first);
-		oldsvr.mVersion = svr.mVersion;
-		oldsvr.mWeight = svr.mWeight < kMaxWeight? svr.mWeight: kMaxWeight;
-		oldsvr.mIdc = svr.mIdc;
-		memcpy(oldsvr.mName, svr.mName, kMaxName);
+		oldsvr =  svr;
 		return ModifyRouteNode(svr);
 	}
 }

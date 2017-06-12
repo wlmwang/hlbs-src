@@ -44,14 +44,13 @@ const wStatus& RouterTcpTask::Connect() {
 	agnt.mPort = port;
 
 	// 更新本进程
+	agnt.mStatus = kAgntUreg;
 	if (config->IsExistAgnt(agnt, &old)) {
 		agnt.mConfig = old.mConfig;
-		agnt.mStatus = old.mStatus;
+		agnt.mWeight = old.mWeight;
 		if (old.mConfig == 0) {
 			agnt.mStatus = kAgntOk;
 		}
-	} else {
-		agnt.mStatus = kAgntUreg;
 	}
 	config->SaveAgnt(agnt);
 
@@ -86,11 +85,12 @@ const wStatus& RouterTcpTask::DisConnect() {
 
 	memcpy(agnt.mHost, ip.c_str(), kMaxHost);
 	agnt.mPort = port;
-	agnt.mStatus = kAgntDisc;
 
 	// 更新本进程
+	agnt.mStatus = kAgntDisc;
 	if (config->IsExistAgnt(agnt, &old)) {
 		agnt.mConfig = old.mConfig;
+		agnt.mWeight = old.mWeight;
 		if (agnt.mVersion < old.mVersion + 3) {	// 3秒之内认定agent抖动（重启也是抖动）
 			return mStatus;
 		}

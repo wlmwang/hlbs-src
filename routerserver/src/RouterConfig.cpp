@@ -46,13 +46,14 @@ int RouterConfig::WriteFileAgnt(const struct Agnt_t* agnt, int32_t n, const std:
 				break;
 			}
 			for (int i = 0; i < num; i++) {
-				if (agnt[i].mHost <= 0 || agnt[i].mConfig == -1) {
+				if (agnt[i].mHost <= 0 || agnt[i].mConfig == -1 || agnt[i].mWeight <= 0) {
 					continue;
 				}
 				TiXmlElement* node;
 				SAFE_NEW(TiXmlElement("AGENT"), node);
 				node->SetAttribute("HOST", agnt[i].mHost);
 				node->SetAttribute("PORT", agnt[i].mPort);
+				node->SetAttribute("WEIGHT", agnt[i].mWeight);
 				node->SetAttribute("IDC", agnt[i].mIdc);
 				agnts->LinkEndChild(node);
 			}
@@ -60,13 +61,14 @@ int RouterConfig::WriteFileAgnt(const struct Agnt_t* agnt, int32_t n, const std:
 		} while (num >= kMaxNum);
 	} else if (agnt && n > 0) {
 		for (int32_t i = 0; i < n; i++) {
-			if (agnt[i].mHost <= 0 || agnt[i].mConfig == -1) {
+			if (agnt[i].mHost <= 0 || agnt[i].mConfig == -1 || agnt[i].mWeight <= 0) {
 				continue;
 			}
 			TiXmlElement* node;
 			SAFE_NEW(TiXmlElement("AGENT"), node);
 			node->SetAttribute("HOST", agnt[i].mHost);
 			node->SetAttribute("PORT", agnt[i].mPort);
+			node->SetAttribute("WEIGHT", agnt[i].mWeight);
 			node->SetAttribute("IDC", agnt[i].mIdc);
 			agnts->LinkEndChild(node);
 		}
@@ -226,7 +228,6 @@ int RouterConfig::ParseSvrConf() {
 			const char* weight = pChildElm->Attribute("WEIGHT");
 			const char* name = pChildElm->Attribute("NAME");
 			const char* idc = pChildElm->Attribute("IDC");
-			const char* version = pChildElm->Attribute("VERSION");
 			if (gid != NULL && xid != NULL && host != NULL && port != NULL) {
 				struct SvrNet_t svr;
 				svr.mGid = atoi(gid);
@@ -236,11 +237,11 @@ int RouterConfig::ParseSvrConf() {
 				if (idc != NULL) {
 					svr.mIdc = atoi(idc);
 				}
-				if (version != NULL) {
-					svr.mVersion = atoi(version);
-				}
 				if (weight != NULL) {
-					svr.mWeight = atoi(weight);
+					int wt = atoi(weight);
+					if (wt >= 0 && wt <= kMaxWeight) {
+						svr.mWeight = wt;
+					}
 				}
 				if (name != NULL) {
 					memcpy(svr.mName, name, kMaxName);
@@ -282,7 +283,7 @@ int RouterConfig::ParseAgntConf() {
 		for (TiXmlElement* pChildElm = pElement->FirstChildElement(); pChildElm != NULL ; pChildElm = pChildElm->NextSiblingElement(), i++) {
 			const char* host = pChildElm->Attribute("HOST");
 			const char* port = pChildElm->Attribute("PORT");
-			const char* version = pChildElm->Attribute("VERSION");
+			const char* weight = pChildElm->Attribute("WEIGHT");
 			const char* idc = pChildElm->Attribute("IDC");
 			if (host != NULL) {
 				struct Agnt_t agnt;
@@ -290,16 +291,19 @@ int RouterConfig::ParseAgntConf() {
 				if (port != NULL) {
 					agnt.mPort = atoi(port);
 				}
+				if (weight != NULL) {
+					int wt = atoi(weight);
+					if (wt >= 0) {
+						agnt.mWeight = wt;
+					}
+				}
 				if (idc != NULL) {
 					agnt.mIdc = atoi(idc);
-				}
-				if (version != NULL) {
-					agnt.mVersion = atoi(version);
 				}
 				agnt.mConfig = 0;
 
 				// 添加新配置
-				if (!IsExistAgnt(agnt)) {
+				if (agnt.mWeight >= 0 && !IsExistAgnt(agnt)) {
 					SaveAgnt(agnt);
 				} else {
 					LOG_ERROR(kSvrLog, "RouterConfig::ParseAgntConf Parse configure from agent.xml occur error(exists this Agnt_t), line : %d", i);
@@ -336,7 +340,6 @@ int RouterConfig::ParseModifySvr() {
 			const char* host = pChildElm->Attribute("HOST");
 			const char* port = pChildElm->Attribute("PORT");
 			const char* weight = pChildElm->Attribute("WEIGHT");
-			const char* version = pChildElm->Attribute("VERSION");
 			const char* name = pChildElm->Attribute("NAME");
 			const char* idc = pChildElm->Attribute("IDC");
 			if (gid != NULL && xid != NULL && host != NULL && port != NULL) {
@@ -348,11 +351,11 @@ int RouterConfig::ParseModifySvr() {
 				if (idc != NULL) {
 					svr.mIdc = atoi(idc);
 				}
-				if (version != NULL) {
-					svr.mVersion = atoi(version);
-				}
 				if (weight != NULL) {
-					svr.mWeight = atoi(weight);
+					int wt = atoi(weight);
+					if (wt >= 0 && wt <= kMaxWeight) {
+						svr.mWeight = wt;
+					}
 				}
 				if (name != NULL) {
 					memcpy(svr.mName, name, kMaxName);
@@ -580,8 +583,8 @@ bool RouterConfig::IsExistAgnt(const struct Agnt_t& agnt, struct Agnt_t* old) {
 bool RouterConfig::IsAgntChange(const struct Agnt_t& agnt) {
 	std::vector<struct Agnt_t>::iterator it = std::find(mAgnts.begin(), mAgnts.end(), agnt);
 	if (it != mAgnts.end()) {
-		const struct Agnt_t& k = *it;
-		if (k.mStatus == agnt.mStatus && k.mIdc == agnt.mIdc) {
+		const struct Agnt_t& old = *it;
+		if (old.mStatus == agnt.mStatus && old.mIdc == agnt.mIdc && old.mWeight == agnt.mWeight) {
 			return false;
 		}
 	}
@@ -606,15 +609,18 @@ bool RouterConfig::SaveAgnt(const struct Agnt_t& agnt) {
 }
 
 bool RouterConfig::ModifyAgnt(const struct Agnt_t& agnt) {
-	std::vector<struct Agnt_t>::iterator it = std::find(mAgnts.begin(), mAgnts.end(), agnt);
-	if (it == mAgnts.end()) {
-		LOG_ERROR(kAgntLog, "RouterConfig::ModifyAgnt delete Agnt_t failed(cannot find the Agnt_t), HOST(%s),PORT(%d)", agnt.mHost, agnt.mPort);
-		return false;
-	}
+	LOG_DEBUG(kAgntLog, "RouterConfig::ModifyAgnt modify Agnt_t, HOST(%s),PORT(%d), WEIGHT(%d)", agnt.mHost, agnt.mPort, agnt.mWeight);
 
-	LOG_DEBUG(kAgntLog, "RouterConfig::ModifyAgnt modify Agnt_t success, HOST(%s),PORT(%d)", agnt.mHost, agnt.mPort);
-	struct Agnt_t& oldagnt = const_cast<struct Agnt_t&>(*it);
-	oldagnt = agnt;
+	if (agnt.mWeight < 0) {
+		LOG_ERROR(kAgntLog, "RouterConfig::ModifyAgnt modify Agnt_t failed, HOST(%s),PORT(%d), WEIGHT(%d)", agnt.mHost, agnt.mPort, agnt.mWeight);
+		return false;
+	} else if (agnt.mWeight == 0 && agnt.mStatus == kAgntInit) {
+		return DelAgnt(agnt);
+	} else {
+		std::vector<struct Agnt_t>::iterator it = std::find(mAgnts.begin(), mAgnts.end(), agnt);
+		struct Agnt_t& oldagnt = const_cast<struct Agnt_t&>(*it);
+		oldagnt = agnt;
+	}
 	return true;
 }
 
