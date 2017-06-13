@@ -10,6 +10,7 @@
 const char 	kHlbsSoftwareName[]   = "HLBS";
 const char 	kHlbsSoftwareVer[]    = "3.0.4";
 
+const char 	kHlbsAcceptmtxPath[] = "../log/hlbs.mtx";
 const char 	kHlbsLockPath[] = "../log/hlbs.lock";
 const char 	kHlbsPidPath[] = "../log/hlbs.pid";
 const char 	kHlbsLogPath[] = "../log/hlbs.log";

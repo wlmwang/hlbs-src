@@ -15,12 +15,6 @@
 using namespace hnet;
 
 int main(int argc, const char *argv[]) {
-	// 设置运行目录
-	if (misc::SetBinPath() == -1) {
-		std::cout << "set bin path failed" << std::endl;
-		return -1;
-	}
-
 	// 设置相关相关配置
 	std::string hlbsName = kHlbsSoftwareName + std::string("(*agent*)");
 	soft::SetSoftName(hlbsName + " - ");
@@ -28,6 +22,13 @@ int main(int argc, const char *argv[]) {
 	soft::SetLockPath(kHlbsLockPath);
 	soft::SetPidPath(kHlbsPidPath);
 	soft::SetLogPath(kHlbsLogPath);
+	soft::SetAcceptmtxPath(kHlbsAcceptmtxPath);
+	
+	// 设置运行目录
+	if (misc::SetBinPath() == -1) {
+		std::cout << "set bin path failed" << std::endl;
+		return -1;
+	}
 
 	// 创建配置对象
 	AgentConfig *config;
