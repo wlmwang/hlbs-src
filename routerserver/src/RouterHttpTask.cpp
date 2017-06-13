@@ -9,6 +9,8 @@
 #include "RouterHttpTask.h"
 #include "RouterConfig.h"
 #include "RouterServer.h"
+#include "RouterMaster.h"
+#include "wWorker.h"
 
 RouterHttpTask::RouterHttpTask(wSocket *socket, int32_t type) : wHttpTask(socket, type) {
 	On(CMD_SVR_HTTP, SVR_HTTP_RELOAD, &RouterHttpTask::ReloadSvrReq, this);
@@ -20,6 +22,11 @@ RouterHttpTask::RouterHttpTask(wSocket *socket, int32_t type) : wHttpTask(socket
 	On(CMD_AGNT_HTTP, AGNT_HTTP_SAVE, &RouterHttpTask::SaveAgntReq, this);
 	On(CMD_AGNT_HTTP, AGNT_HTTP_COVER, &RouterHttpTask::CoverAgntReq, this);
 	On(CMD_AGNT_HTTP, AGNT_HTTP_LIST, &RouterHttpTask::ListAgntReq, this);
+
+	On(CMD_MASTER_HTTP, MASTER_HTTP_RESTART, &RouterHttpTask::MasterRestartReq, this);
+	On(CMD_MASTER_HTTP, MASTER_HTTP_RELOAD, &RouterHttpTask::MasterReloadReq, this);
+	On(CMD_MASTER_HTTP, MASTER_HTTP_STOP, &RouterHttpTask::MasterStopReq, this);
+	On(CMD_MASTER_HTTP, MASTER_HTTP_INFO, &RouterHttpTask::MasterInfoReq, this);	
 }
 
 int RouterHttpTask::ReloadSvrReq(struct Request_t *request) {
@@ -178,14 +185,14 @@ int RouterHttpTask::ListSvrReq(struct Request_t *request) {
 		}
 		for (int i = 0; i < num; i++) {
 			Json::Value item;
-			item["GID"] = Json::Value(svr[i].mGid);
-			item["XID"] = Json::Value(svr[i].mXid);
-			item["HOST"] = Json::Value(svr[i].mHost);
-			item["PORT"] = Json::Value(svr[i].mPort);
-			item["WEIGHT"] = Json::Value(svr[i].mWeight);
-			item["NAME"] = Json::Value(svr[i].mName);
-			item["IDC"] = Json::Value(svr[i].mIdc);
-			item["VERSION"] = Json::Value(svr[i].mVersion);
+			item["gid"] = Json::Value(svr[i].mGid);
+			item["xid"] = Json::Value(svr[i].mXid);
+			item["host"] = Json::Value(svr[i].mHost);
+			item["port"] = Json::Value(svr[i].mPort);
+			item["weight"] = Json::Value(svr[i].mWeight);
+			item["name"] = Json::Value(svr[i].mName);
+			item["idc"] = Json::Value(svr[i].mIdc);
+			item["version"] = Json::Value(svr[i].mVersion);
 			svrs.append(Json::Value(item));
 		}
 		start += num;
@@ -427,13 +434,13 @@ int RouterHttpTask::ListAgntReq(struct Request_t *request) {
 		}
 		for (int i = 0; i < num; i++) {
 			Json::Value item;
-			item["CONFIG"] = Json::Value(agnt[i].mConfig);
-			item["HOST"] = Json::Value(agnt[i].mHost);
-			item["PORT"] = Json::Value(agnt[i].mPort);
-			item["WEIGHT"] = Json::Value(agnt[i].mWeight);
-			item["STATUS"] = Json::Value(agnt[i].mStatus);
-			item["IDC"] = Json::Value(agnt[i].mIdc);
-			item["VERSION"] = Json::Value(agnt[i].mVersion);
+			item["config"] = Json::Value(agnt[i].mConfig);
+			item["host"] = Json::Value(agnt[i].mHost);
+			item["port"] = Json::Value(agnt[i].mPort);
+			item["weight"] = Json::Value(agnt[i].mWeight);
+			item["status"] = Json::Value(agnt[i].mStatus);
+			item["idc"] = Json::Value(agnt[i].mIdc);
+			item["version"] = Json::Value(agnt[i].mVersion);
 			agnts.append(Json::Value(item));
 		}
 		start += num;
@@ -447,7 +454,59 @@ int RouterHttpTask::ListAgntReq(struct Request_t *request) {
 	return 0;
 }
 
-int RouterHttpTask::HardInfoReq(struct Request_t *request) {
+int RouterHttpTask::MasterRestartReq(struct Request_t *request) {
+	if (!Server()->Master()->SignalProcess("restart").Ok()) {
+		Error("", "500");
+		return -1;
+	}
+	Error("", "200");
+	return 0;
+}
+
+// 不会返回，服务器直接退出！
+int RouterHttpTask::MasterStopReq(struct Request_t *request) {
+	if (!Server()->Master()->SignalProcess("stop").Ok()) {
+		Error("", "500");
+		return -1;
+	}
+	Error("", "200");
+	return 0;
+}
+
+int RouterHttpTask::MasterReloadReq(struct Request_t *request) {
+	Error("", "400");
+	return -1;
+}
+
+int RouterHttpTask::MasterInfoReq(struct Request_t *request) {
+	if (Server()->Master()->WorkerNum() <= 0) {
+		Error("", "400");
+		return -1;
+	}
+	Json::Value root;
+	Json::Value workers;
+	for (uint32_t i = 0; i < kMaxProcess; i++) {
+		wWorker* worker = Server()->Master()->Worker(i);
+		if (worker->Pid() > 0) {
+			Json::Value item;
+			item["pid"] = Json::Value(worker->Pid());
+			item["name"] = Json::Value(worker->Title() + " - worker");
+			item["timeline"] = Json::Value(worker->Timeline());
+			item["respawn"] = Json::Value(worker->Respawn());
+			item["exited"] = Json::Value(worker->Exited());
+			item["exiting"] = Json::Value(worker->Exiting());
+			workers.append(Json::Value(item));
+		}
+	}
+	root["version"] = Json::Value(soft::GetSoftVer());
+	root["pid"] = Json::Value(Server()->Master()->Pid());
+	root["name"] = Json::Value(Server()->Master()->Title() + " - master");
+	root["num"] = Json::Value(Server()->Master()->WorkerNum());
+	root["workers"] = Json::Value(workers);
+	root["status"] = Json::Value("200");
+	root["msg"] = Json::Value("ok");
+	ResponseSet("Content-Type", "application/json; charset=UTF-8");
+	Write(root.toStyledString());
 	return 0;
 }
 
