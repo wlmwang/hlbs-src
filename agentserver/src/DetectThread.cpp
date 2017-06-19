@@ -9,9 +9,14 @@
 #include "wLogger.h"
 #include "Svr.h"
 
-DetectThread::DetectThread(int32_t detectNodeInterval, int32_t detectLoopUsleep, int32_t detectMaxNode) : mPollFD(kFDUnknown), mNowTm(0), mLocalIp(0), mDetectLoopUsleep(detectLoopUsleep),
-mDetectMaxNode(detectMaxNode), mDetectNodeInterval(detectNodeInterval), mPingTimeout(0.1), mTcpTimeout(0.8) {
-	mPing = new wPing();
+DetectThread::DetectThread(int32_t detectNodeInterval, int32_t detectLoopUsleep, int32_t detectMaxNode): 
+mPollFD(kFDUnknown), mNowTm(0), mLocalIp(0), mDetectLoopUsleep(detectLoopUsleep), mDetectMaxNode(detectMaxNode), 
+mDetectNodeInterval(detectNodeInterval), mPingTimeout(0.1), mTcpTimeout(0.8) {
+    mLocalIp = misc::GetIpByIF("eth1")? misc::GetIpByIF("eth1"): (misc::GetIpByIF("eth0")? misc::GetIpByIF("eth0"): 0);
+    char ip[32] = {0};
+    inet_ntop(AF_INET, &mLocalIp, ip, sizeof(ip));
+	
+    mPing = new wPing(ip);
 	mSocket = new wTcpSocket();
 	mDetectMutex = new wMutex();
 	mResultMutex = new wMutex();
@@ -24,28 +29,20 @@ DetectThread::~DetectThread() {
 	SAFE_DELETE(mResultMutex);
 }
 
-const wStatus& DetectThread::PrepareThread() {
-	mLocalIp = misc::GetIpByIF("eth1")? misc::GetIpByIF("eth1"): (misc::GetIpByIF("eth0")? misc::GetIpByIF("eth0"): 0);
-    return mStatus;
-}
-
 const wStatus& DetectThread::RunThread() {
-	// 本机字符串IP地址
-	char ip[32] = {0};
-	::inet_ntop(AF_INET, &mLocalIp, ip, sizeof(ip));
-
-    time_t nextReadtm = time(NULL);
+    time_t nextReadtm = soft::TimeUnix();
     time_t readIntervaltm = 60;
 
-	LOG_DEBUG(kSvrLog, "DetectThread::RunThread detect start, UID(%d),GID(%d),EUID(%d),EGID(%d)", ::getuid(), ::getgid(), ::geteuid(), ::getegid());
+	LOG_DEBUG(kSvrLog, "DetectThread::RunThread detect start, UID(%d), GID(%d), EUID(%d), EGID(%d)", ::getuid(), ::getgid(), ::geteuid(), ::getegid());
 
 	while (true) {
+        soft::TimeUpdate();
+
 		mDetectMutex->Lock();
 		if (mDetectMapNewadd.empty() && mDetectMapAll.empty()) {
             mDetectMapNewdel.clear();
             mDetectMutex->Unlock();
-            // 100ms
-            ::usleep(mDetectLoopUsleep);
+            usleep(mDetectLoopUsleep);    // 100ms
             continue;
 		}
 
@@ -57,7 +54,8 @@ const wStatus& DetectThread::RunThread() {
         if (!stlNewadd.empty() || !stlNewdel.empty()) {
         	LOG_DEBUG(kSvrLog, "DetectThread::RunThread newAdd size(%d), newDel size(%d)", stlNewadd.size(), stlNewdel.size());
         }
-        mNowTm = time(NULL);
+
+        mNowTm = soft::TimeUnix();
 
         // 删除探测节点; 仅需在删除时, 最小粒度加锁，最小粒度不阻塞查询
         if (!stlNewdel.empty()) {
@@ -137,37 +135,36 @@ const wStatus& DetectThread::RunThread() {
                 LOG_DEBUG(kSvrLog, "DetectThread::RunThread detect node count(%d), expire node count(%d)", detectCount, expireNodeSize);
             }
         }
-        ::usleep(mDetectLoopUsleep);
+        usleep(mDetectLoopUsleep);
 	}
 	return mStatus;
 }
 
-const wStatus& DetectThread::DoDetectNode(const struct DetectNode_t& node, struct DetectResult_t& res) {
+int DetectThread::DoDetectNode(const struct DetectNode_t& node, struct DetectResult_t& res) {
     struct timeval stOrgtv, stStarttv, stEndtv;
+    
+    misc::GetTimeofday(&stEndtv);
     misc::GetTimeofday(&stStarttv);
     stOrgtv.tv_sec = stStarttv.tv_sec;
     stOrgtv.tv_usec = stStarttv.tv_usec;
 
-    mNowTm = time(NULL);
-
-    if (!(mStatus = mPing->Open()).Ok()) {
-    	return mStatus;
-    } else if (!(mStatus = mPing->SetTimeout(mPingTimeout)).Ok()) {
-    	return mStatus;
-    }
-
-    // ping 探测开始
-    mStatus = mPing->Ping(node.mIp.c_str());
-    misc::GetTimeofday(&stEndtv);
+    mNowTm = soft::TimeUnix();
 
     int64_t pingElapse = -1, connElapse = -1, allElapse = -1, elapse = -1;
     int32_t ret = 0, rc = 0, detectType = DETECT_UNKNOWN;
 
-    if (!mStatus.Ok()) {
-    	// ping 探测失败
-    	rc = ret = -1;
-    } else {
-    	// ping 探测成功
+    ret = mPing->Open();
+    if (ret < 0) {
+        return ret;
+    }
+    mPing->SetTimeout(mPingTimeout);    // 超时时间
+    
+    ret = mPing->Ping(node.mIp.c_str());    // ping 探测开始
+    mPing->Close();
+
+    if (ret < 0) {  // ping 探测失败
+    	rc = ret;
+    } else {    // ping 探测成功
     	detectType = DETECT_PING;
 
 		// ping 探测花费微妙延时
@@ -175,24 +172,21 @@ const wStatus& DetectThread::DoDetectNode(const struct DetectNode_t& node, struc
     	
 		// TCP 探测开始
 		misc::GetTimeofday(&stStarttv);
-    	if ((mStatus = mSocket->Open()).Ok()) {
+
+        wStatus s = mSocket->Open();
+    	if (s.Ok()) {
     		int64_t ret;
-    		mStatus = mSocket->Connect(&ret, node.mIp.c_str(), node.mPort, mTcpTimeout);
+    		s = mSocket->Connect(&ret, node.mIp.c_str(), node.mPort, mTcpTimeout);
+            mSocket->Close(); // 快速关闭TCP socket
     	}
 
-    	if (!mStatus.Ok()) {
-    		// TCP 探测失败
+    	if (!s.Ok()) { // TCP 探测失败
     		rc = ret = -1;
-    	} else {
-    		// TCP 探测成功
+    	} else {   // TCP 探测成功
     		rc = ret = 0;
-    		// 快速关闭TCP socket
-    		mSocket->Close();
-
     		detectType = DETECT_TCP;
     		misc::GetTimeofday(&stEndtv);
-    		// connect花费微妙延时
-    		connElapse = static_cast<int64_t>((stEndtv.tv_sec - stStarttv.tv_sec)*1000000 + (stEndtv.tv_usec - stStarttv.tv_usec));
+    		connElapse = static_cast<int64_t>((stEndtv.tv_sec - stStarttv.tv_sec)*1000000 + (stEndtv.tv_usec - stStarttv.tv_usec));   // connect花费微妙延时
     	}
     }
 
@@ -202,9 +196,11 @@ const wStatus& DetectThread::DoDetectNode(const struct DetectNode_t& node, struc
     
     if (rc == 0) {
     	elapse = connElapse == -1 ? pingElapse : connElapse;
+
 		LOG_DEBUG(kSvrLog, "DetectThread::DoDetectNode detect Success, HOST(%s),PORT(%d),allElapse(%d),RC(%d),pingElapse(%d),connElapse(%d),elapse(%d),RET(%d)",
 				node.mIp.c_str(), node.mPort, allElapse, rc, pingElapse, connElapse, elapse, ret);
     } else {
+
 		LOG_ERROR(kSvrLog, "DetectThread::DoDetectNode detect failed, HOST(%s),PORT(%d),allElapse(%d),RC(%d),pingElapse(%d),connElapse(%d),elapse(%d),RET(%d)",
 				node.mIp.c_str(), node.mPort, allElapse, rc, pingElapse, connElapse, elapse, ret);
     }
@@ -217,64 +213,61 @@ const wStatus& DetectThread::DoDetectNode(const struct DetectNode_t& node, struc
 
     // 设置下次探测时间
     res.HasDetect(mNowTm, mDetectNodeInterval);
-    return mStatus.Clear();
+    return 0;
 }
 
-const wStatus& DetectThread::GetDetectResult(const struct DetectNode_t& node, struct DetectResult_t& res, int32_t* ret) {
-	mResultMutex->Lock();
-    *ret = -1;	// 无探测节点
+int DetectThread::GetDetectResult(const struct DetectNode_t& node, struct DetectResult_t& res) {
+	int ret = -1;
+
+    mResultMutex->Lock();
     MapDetectIt_t it = mDetectMapAll.find(node);
-    if (it != mDetectMapAll.end()) {
-    	// 有探测路由
-    	*ret = 0;
+    if (it != mDetectMapAll.end()) {    // 有探测路由
+    	ret = 0;
         res = it->second;
-        if (res.mLastDetectTime == 0) {
-        	// 刚初始化，还未探测
-        	*ret = 1;
+        if (res.mLastDetectTime == 0) { // 刚初始化，还未探测
+        	ret = 1;
         }
     }
     mResultMutex->Unlock();
-    return mStatus.Clear();
+    return ret;
 }
 
-const wStatus& DetectThread::AddDetect(const VecNode_t& node) {
+int DetectThread::AddDetect(const VecNode_t& node) {
     mDetectMutex->Lock();
     MapDetectIt_t itdel;
     for (VecNodeIt_t it = node.begin(); it != node.end(); ++it) {
         const struct DetectNode_t& stNode = *it;
+
         itdel = mDetectMapNewdel.find(stNode);
-        if (itdel != mDetectMapNewdel.end()) {
-        	// 删除新加入待删除节点
+        if (itdel != mDetectMapNewdel.end()) {  // 删除新加入待删除节点
             mDetectMapNewdel.erase(itdel);
         }
 
         itdel = mDetectMapNewadd.find(stNode);
-        if (itdel != mDetectMapNewadd.end()) {
-        	// 更新探测创建时间、过期时间
+        if (itdel != mDetectMapNewadd.end()) {  // 更新已加入探测节点的 创建时间、过期时间
             struct DetectNode_t &d = const_cast<struct DetectNode_t&>(itdel->first);
             d.Touch(stNode.mCreateTime, stNode.mExpireTime);
-        } else {
-            // 添加新加入待检测节点
+        } else {    // 添加新加入待检测节点
             mDetectMapNewadd.insert(std::make_pair(stNode, DetectResult_t()));
         }
     }
     mDetectMutex->Unlock();
-	return mStatus.Clear();
+	return 0;
 }
 
-const wStatus& DetectThread::DelDetect(const VecNode_t& node) {
+int DetectThread::DelDetect(const VecNode_t& node) {
     mDetectMutex->Lock();
     MapDetectIt_t itdel;
     for (VecNodeIt_t it = node.begin(); it != node.end(); ++it) {
         const struct DetectNode_t& stNode = *it;
+
         itdel = mDetectMapNewadd.find(stNode);
-        if (itdel != mDetectMapNewadd.end()) {
-        	// 删除新加入待检测节点
+        if (itdel != mDetectMapNewadd.end()) {  // 删除新加入待检测节点
             mDetectMapNewadd.erase(itdel);
         }
         // 添加新加入待删除节点
         mDetectMapNewdel.insert(std::make_pair(stNode, DetectResult_t()));
     }
 	mDetectMutex->Unlock();
-	return mStatus.Clear();
+	return 0;
 }

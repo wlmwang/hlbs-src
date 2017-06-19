@@ -30,13 +30,12 @@ public:
 	DetectThread(int32_t detectNodeInterval = 10, int32_t detectLoopUsleep = 100000, int32_t detectMaxNode = 10000);
 	virtual ~DetectThread();
 
-	virtual const wStatus& PrepareThread();
     virtual const wStatus& RunThread();
 
-    const wStatus& DelDetect(const VecNode_t& node);
-	const wStatus& AddDetect(const VecNode_t& node);
-	const wStatus& GetDetectResult(const struct DetectNode_t& node, struct DetectResult_t& res, int32_t* ret);
-	const wStatus& DoDetectNode(const struct DetectNode_t& stNode, struct DetectResult_t& stRes);
+    int GetDetectResult(const struct DetectNode_t& node, struct DetectResult_t& res);
+    int DelDetect(const VecNode_t& node);
+	int AddDetect(const VecNode_t& node);
+	int DoDetectNode(const struct DetectNode_t& stNode, struct DetectResult_t& stRes);
 
 protected:
 	wPing *mPing;
@@ -57,8 +56,6 @@ protected:
 	MapDetect_t mDetectMapAll;		// 检测队列
 	MapDetect_t mDetectMapNewadd;	// 新加入待检测节点，优先探测
 	MapDetect_t mDetectMapNewdel;	// 新加入待删除节点，优先探测
-
-	wStatus mStatus;
 };
 
 #endif

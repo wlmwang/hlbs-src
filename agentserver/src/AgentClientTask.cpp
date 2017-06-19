@@ -76,7 +76,12 @@ int AgentClientTask::InitAgntRes(struct Request_t *request) {
 		std::vector<uint32_t> ips;
 		if (misc::GetIpList(ips) == 0) {
 			for (int32_t i = 0; i < cmd->mNum; i++) {
-				uint32_t ip = inet_addr(cmd->mAgnt[i].mHost);
+				/*
+				if (misc::Text2IP(cmd->mAgnt[i].mHost) != INADDR_NONE) {
+					//...
+				}
+				*/
+				uint32_t ip = misc::Text2IP(cmd->mAgnt[i].mHost);
 				if (std::find(ips.begin(), ips.end(), ip) != ips.end()) {
 					config->Qos()->Idc() = cmd->mAgnt[i].mIdc;
 
@@ -101,7 +106,7 @@ int AgentClientTask::SyncAgntRes(struct Request_t *request) {
 		std::vector<uint32_t> ips;
 		if (misc::GetIpList(ips) == 0) {
 			for (int32_t i = 0; i < cmd->mNum; i++) {
-				uint32_t ip = inet_addr(cmd->mAgnt[i].mHost);
+				uint32_t ip = misc::Text2IP(cmd->mAgnt[i].mHost);
 				if (std::find(ips.begin(), ips.end(), ip) != ips.end()) {
 					config->Qos()->Idc() = cmd->mAgnt[i].mIdc;
 					
@@ -126,7 +131,7 @@ int AgentClientTask::ReloadAgntRes(struct Request_t *request) {
 		std::vector<uint32_t> ips;
 		if (misc::GetIpList(ips) == 0) {
 			for (int32_t i = 0; i < cmd->mNum; i++) {
-				uint32_t ip = inet_addr(cmd->mAgnt[i].mHost);
+				uint32_t ip = misc::Text2IP(cmd->mAgnt[i].mHost);
 				if (std::find(ips.begin(), ips.end(), ip) != ips.end()) {
 					config->Qos()->Idc() = cmd->mAgnt[i].mIdc;
 

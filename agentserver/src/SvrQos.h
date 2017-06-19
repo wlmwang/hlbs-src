@@ -39,9 +39,6 @@ public:
     SvrQos();
 	~SvrQos();
 
-	// 指定节点是否存在
-	bool IsExistNode(const struct SvrNet_t& svr);
-
 	// 获取 最优节点
 	const wStatus& QueryNode(struct SvrNet_t& svr);
 	// 上报 调用结果
@@ -61,37 +58,52 @@ public:
 
 	const wStatus& StartDetectThread();
 
+	// 指定节点是否存在
+	bool IsExistNode(const struct SvrNet_t& svr);
+
 	inline int& Idc() { return mIdc;}
 
 protected:
 	friend class AgentConfig;
 
 	// 上报 调用结果
-	const wStatus& ReportNode(const struct SvrCaller_t& caller);
+	int ReportNode(const struct SvrCaller_t& caller);
+
 	// 门限扩张值
 	int32_t GetAddCount(const struct SvrStat_t* stat, int32_t reqCount);
+
 	// 单次分配路由检查，如果有路由分配产生，则更新相关统计计数
-	int32_t RouteCheck(struct SvrStat_t* stat, struct SvrNet_t& svr, double firstLoad, bool firstSvr);
+	int RouteCheck(struct SvrStat_t* stat, struct SvrNet_t& svr, double firstLoad, bool firstSvr, pid_t pid = 0);
+
 	// 重建该类路由，并清理相关统计
-	const wStatus& RebuildRoute(struct SvrKind_t& kind, bool force = false);
-	// 路由节点重建
-	const wStatus& RouteNodeRebuild(const struct SvrNet_t &svr, struct SvrStat_t* stat);
-	// 节点访问量控制重建
-	const wStatus& ReqRebuild(const struct SvrNet_t &svr, struct SvrStat_t* stat);
+	void RebuildRoute(struct SvrKind_t& kind, bool force = false);
+
+	// 使用已有统计数据计算节点负载均衡各项数据：门限控制、计算成功率、平均延时值
+	void RouteNodeRebuild(const struct SvrNet_t &svr, struct SvrStat_t* stat);
+
+	// 重建节点访问量控制
+	void ReqRebuild(const struct SvrNet_t &svr, struct SvrStat_t* stat);
+
 	//  重建宕机路由（故障恢复，恢复后放入multiNode指针中）
-	const wStatus& RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* multiNode, float maxLoad = 1.0, float lowOkRate = 1.0, uint32_t bigDelay = 1);
+	void RebuildErrRoute(struct SvrKind_t& kind, MultiMapNode_t* multiNode, float maxLoad = 1.0, float lowOkRate = 1.0, uint32_t bigDelay = 1);
+
 	// 单次获取路由
-	const wStatus& GetRouteNode(struct SvrNet_t& svr);
+	int GetRouteNode(struct SvrNet_t& svr);
+
 	// 添加宕机路由
-	const wStatus& AddErrRoute(struct SvrKind_t& kind, struct SvrNode_t& node);
+	int AddErrRoute(struct SvrKind_t& kind, struct SvrNode_t& node);
+
 	// 添加新路由
-	const wStatus& AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t* stat);
+	int AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t* stat);
+
 	// 删除路由节点
-	const wStatus& DeleteRouteNode(const struct SvrNet_t& svr);
+	int DeleteRouteNode(const struct SvrNet_t& svr);
+
 	// 修改路由节点
-	const wStatus& ModifyRouteNode(const struct SvrNet_t& svr);
+	int ModifyRouteNode(const struct SvrNet_t& svr);
+
 	// 加载阈值配置
-	const wStatus& LoadStatCfg(const struct SvrNet_t& svr, struct SvrStat_t* stat);
+	void LoadStatCfg(const struct SvrNet_t& svr, struct SvrStat_t* stat);
 
 	struct SvrReqCfg_t	mReqCfg;	// 访问量控制
 	struct SvrDownCfg_t mDownCfg;	// 宕机控制
@@ -110,6 +122,7 @@ protected:
 
 	wMutex mMutex;	// TcpTask|ClientTask更新路由锁
     DetectThread* mDetectThread;
+
 	wStatus mStatus;
 };
 
