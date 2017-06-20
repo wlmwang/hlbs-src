@@ -552,7 +552,7 @@ void SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
     	lowDelay = 1;
     }
 
-    if (errRateBig) {	// 全部节点都过载（非压力故障）
+    if (errRateBig) {	// 全部节点都过载
     	// 计算所有节点平均连续过载错误率、连续过载次数
     	float avgErrRate = totalErrRate / table->size();
     	stKind.mPtotalErrRate += avgErrRate;
@@ -591,6 +591,7 @@ void SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
 
 	// 计算负载
 	for (MultiMapNodeIt_t it = table->begin(); it != table->end(); it++) {
+		const struct SvrNet_t& svr = it->second.mNet;
 		struct SvrStat_t* pStat = it->second.mStat;
 		struct SvrInfo_t& info = pStat->mInfo;
 
@@ -604,7 +605,7 @@ void SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
         	info.mOkLoad = kOkLoadMax;
         }
         info.mOkLoad = info.mOkLoad >= 1 ? info.mOkLoad : 1;	// 成功率负载
-        float weightLoad = static_cast<float>(highWeight)/static_cast<float>(it->second.mNet.mWeight);	// 静态权重负载
+        float weightLoad = static_cast<float>(highWeight)/static_cast<float>(svr.mWeight);	// 静态权重负载
         
         // 系统配置的负载 比例因子
         if (mRateWeight == mDelayWeight) {
@@ -615,7 +616,7 @@ void SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
 
         // 判断是否就近接入 mOffSide=0 就近 mOffSide=1 非就近
         // sid需要就近接入，并且主被调同城，即就近
-        if (/*stKind.mNearestAccessFlag &&*/ mIdc > 0 && mIdc != info.mCityId) {
+        if (mIdc > 0 && mIdc != svr.mIdc) {
         	info.mOffSide = 1;
         } else {
         	info.mOffSide = 0;
@@ -630,7 +631,7 @@ void SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
         }
 
         // 恢复路由 || 宕机路由
-        struct SvrNode_t node(it->second.mNet, pStat);	// set IsDetecting = false
+        struct SvrNode_t node(svr, pStat);	// set IsDetecting = false
         int32_t reqLimit = pStat->mReqCfg.mReqLimit <= 0 ? (pStat->mReqCfg.mReqMin + 1) : pStat->mReqCfg.mReqLimit;
 
         if (reqLimit > pStat->mReqCfg.mReqMin) {	// 门限大于最低阈值，加入节点路由
@@ -642,7 +643,7 @@ void SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
         	}
         	newTable->insert(std::make_pair(node.mKey, node));
         	mAllReqMin = false;
-        } else {	// 门限小于最低阈值，加入宕机列表
+        } else {	// 门限小于最低阈值，加入宕机列表 （非压力故障）
             AddErrRoute(kind, node);
         }
 	}
@@ -652,7 +653,8 @@ void SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
         if (stKind.mPsubCycCount <= 0) {
         	stKind.mPsubCycCount = 1;
         }
-        // 该sid下所有节点过载平均错误率
+
+        // 该(gid,xid)下所有节点过载平均错误率
         mAvgErrRate = stKind.mPtotalErrRate / stKind.mPsubCycCount;
 
         if (mAvgErrRate > 0.99999) {
@@ -660,8 +662,9 @@ void SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
         }
 
         // 过载平均错误率
-        if (mAvgErrRate > static_cast<float>(1 - cfgErrRate)) {
-            mAvgErrRate = 1 - cfgErrRate - 0.1;
+        // 非压力故障	某一(gid,xid)所对应的所有节点其门限都已降低到mReqMin，而其错误率仍然高于配置文件中所定义的最低错误率
+        if (mAvgErrRate > static_cast<float>(1 - cfgErrRate)) {	// 平均错误率超过阈值
+            mAvgErrRate = 1 - cfgErrRate - 0.1;	// 默认0.7
             if (mAvgErrRate < 0) {
             	mAvgErrRate = 0;
             }
@@ -1280,10 +1283,6 @@ int SvrQos::ModifyRouteNode(const struct SvrNet_t& svr) {
                 if (it->second.mNet == svr) {
                 	struct SvrNet_t& oldsvr = it->second.mNet;
                 	oldsvr = svr;
-                	//oldsvr.mWeight = svr.mWeight;
-					//oldsvr.mVersion = svr.mVersion;
-					//oldsvr.mIdc = svr.mIdc;
-					//memcpy(oldsvr.mName, svr.mName, kMaxName);
                     break;
                 } else {
                     it++;
@@ -1303,10 +1302,6 @@ int SvrQos::ModifyRouteNode(const struct SvrNet_t& svr) {
 				if (it->mNet == svr) {
                 	struct SvrNet_t& oldsvr = it->mNet;
                 	oldsvr = svr;
-                	//oldsvr.mWeight = svr.mWeight;
-					//oldsvr.mVersion = svr.mVersion;
-					//oldsvr.mIdc = svr.mIdc;
-					//memcpy(oldsvr.mName, svr.mName, kMaxName);
 					break;
 				} else {
 					it++;
