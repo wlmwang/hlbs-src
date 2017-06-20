@@ -41,6 +41,8 @@ public:
 
 	// 获取 最优节点
 	const wStatus& QueryNode(struct SvrNet_t& svr);
+	// 调用数上报
+	const wStatus& NtyNodeSvr(const struct SvrNet_t& svr);
 	// 上报 调用结果
 	const wStatus& CallerNode(const struct SvrCaller_t& caller);
 	// 获取 所有节点

@@ -12,11 +12,10 @@ int QueryNode(struct SvrNet_t &svr, double timeout, std::string &err) {
 	int ret = ConnectAgent();
 	if (ret == kOk && g_handle.mConnecting == true && g_handle.mTask != NULL) {
 		struct SvrReqGXid_t cmd;
-		cmd.mGid = svr.mGid;
-		cmd.mXid = svr.mXid;
+		cmd.mSvr = svr;
 		ssize_t size;
 		// 查询请求
-		if (g_handle.mTask->SyncSend(reinterpret_cast<char*>(&cmd), sizeof(struct SvrReqGXid_t), &size).Ok()) {
+		if (g_handle.mTask->SyncSend(reinterpret_cast<char*>(&cmd), sizeof(cmd), &size).Ok()) {
 			// 接受返回
 			char buff[kPackageSize];
 			if (g_handle.mTask->SyncRecv(buff, &size, timeout>0? timeout: kAgentTimeout).Ok() && size == sizeof(struct SvrOneRes_t)) {
@@ -47,17 +46,13 @@ int NotifyCallerRes(const struct SvrNet_t &svr, int res, uint64_t usec, std::str
 	if (ret == kOk && g_handle.mConnecting == true && g_handle.mTask != NULL) {
 		// 上报数据
 		struct SvrReqReport_t cmd;
-		memcpy(cmd.mCaller.mHost, svr.mHost, kMaxHost);
-		cmd.mCaller.mCalledGid = svr.mGid;
-		cmd.mCaller.mCalledXid = svr.mXid;
-		cmd.mCaller.mPort = svr.mPort;
+		cmd.mCaller = svr;
 		cmd.mCaller.mReqRet = res;
 		cmd.mCaller.mReqUsetimeUsec = usec;
-		cmd.mCaller.mReqCount = 1;
 
 		ssize_t size;
 		// 上报请求
-		if (g_handle.mTask->SyncSend(reinterpret_cast<char*>(&cmd), sizeof(struct SvrReqReport_t), &size).Ok()) {
+		if (g_handle.mTask->SyncSend(reinterpret_cast<char*>(&cmd), sizeof(cmd), &size).Ok()) {
 			// 接受返回
 			char buff[kPackageSize];
 			if (g_handle.mTask->SyncRecv(buff, &size, kAgentTimeout).Ok() && size == sizeof(struct SvrResReport_t)) {

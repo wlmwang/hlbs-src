@@ -19,17 +19,16 @@ int AgentTcpTask::GetSvrByGXid(struct Request_t *request) {
 	AgentConfig* config = Config<AgentConfig*>();
 	
 	struct SvrOneRes_t vRRt;
-	vRRt.mSvr.mGid = cmd->mGid;
-	vRRt.mSvr.mXid = cmd->mXid;
+	vRRt.mSvr = cmd->mSvr;
 	if (config->Qos()->QueryNode(vRRt.mSvr).Ok()) {
 		vRRt.mCode = 0;
 		vRRt.mNum = 1;
 		AsyncSend(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 
-		// 同步其他worker进程
-		//memcpy(cmd->mHost, vRRt.mSvr.mHost, kMaxHost);
-		//cmd->mPort = vRRt.mSvr.mPort;
-		//SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrReqGXid_t));
+		// 同步其他worker进程调用数
+		struct SvrReqNty_t vRRt1;
+		vRRt1.mSvr = vRRt.mSvr;
+		SyncWorker(reinterpret_cast<char*>(&vRRt1), sizeof(vRRt1));
 	} else {
 		vRRt.mCode = -1;
 		vRRt.mNum = 0;
@@ -49,7 +48,7 @@ int AgentTcpTask::ReportSvr(struct Request_t *request) {
 		AsyncSend(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 
 		// 同步其他worker进程
-		//SyncWorker(reinterpret_cast<char*>(cmd), sizeof(struct SvrReqReport_t));
+		SyncWorker(reinterpret_cast<char*>(cmd), request->mLen);
 	} else {
 		vRRt.mCode = -1;
 		AsyncSend(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));

@@ -50,16 +50,15 @@ public:
 	char		mName[kMaxName];// 服务名
 	int8_t		mIdc;			// IDC
 
-    int32_t 	mPre;			// 预取数
-    int32_t 	mExpired;		// 过期时间
-
-    SvrNet_t(): mGid(0), mXid(0), mPort(0), mWeight(kInitWeight), mVersion(soft::TimeUnix()), mIdc(0), mPre(1), mExpired(0) {
+    //int32_t 	mPre;			// 预取数
+    //int32_t 	mExpired;		// 过期时间
+    SvrNet_t(): mGid(0), mXid(0), mPort(0), mWeight(kInitWeight), mVersion(soft::TimeUnix()), mIdc(0) /*,mPre(1), mExpired(0)*/ {
     	memset(mHost, 0, kMaxHost);
     	memset(mName, 0, kMaxName);
     }
 
 	SvrNet_t(const SvrNet_t& other): mGid(other.mGid), mXid(other.mXid), mPort(other.mPort), mWeight(other.mWeight), 
-	mVersion(other.mVersion), mIdc(other.mIdc), mPre(other.mPre), mExpired(other.mExpired) {
+	mVersion(other.mVersion), mIdc(other.mIdc) /*,mPre(other.mPre), mExpired(other.mExpired)*/ {
 		memcpy(mHost, other.mHost, kMaxHost);
 		memcpy(mName, other.mName, kMaxName);
 	}
@@ -71,8 +70,8 @@ public:
 		mWeight = other.mWeight;
 		mVersion = other.mVersion;
 		mIdc = other.mIdc;
-		mPre = other.mPre;
-		mExpired = other.mExpired;
+		//mPre = other.mPre;
+		//mExpired = other.mExpired;
 		memcpy(mHost, other.mHost, kMaxHost);
 		memcpy(mName, other.mName, kMaxName);
 		return *this;
@@ -128,6 +127,21 @@ public:
 	SvrCaller_t(): mCallerGid(0), mCallerXid(0), mCalledGid(0), mCalledXid(0), mPort(0),
 			mReqRet(0), mReqCount(0), mReqUsetimeUsec(0), mTid(0) {
 		memset(mHost, 0, kMaxHost);
+	}
+	
+	SvrCaller_t& operator=(const SvrNet_t& svr) {
+		mCalledGid = svr.mGid;
+		mCalledXid = svr.mXid;
+		mPort = svr.mPort;
+		memcpy(mHost, svr.mHost, kMaxHost);
+		mReqCount = 1;
+		
+		mCallerGid = 0;
+		mCallerXid = 0;
+		mReqRet = 0;
+		mReqUsetimeUsec = 0;
+		mTid = 0;
+		return *this;
 	}
 
 	bool operator==(const SvrCaller_t &other) const {
@@ -285,7 +299,7 @@ public:
 	int32_t 		mLastAlarmSucReq;	// 参考值。成功请求数扩张门限
 	int32_t 		mPreAll;			// 路由被分配次数 + 预取数
 
-	int32_t 		mCityId;			// 被调所属cityId = idc
+	int32_t 		mCityId;			// 被调所属cityId = svrNet.idc
 	int32_t 		mOffSide;			// 被调节点与主调异地标志，默认为0， 1标为异地
 
 	int32_t 		mContErrCount;		// 连续失败次数累积
@@ -302,7 +316,7 @@ public:
     
     std::map<int, struct PidInfo_t> mClientInfo;
 
-    SvrInfo_t(): mReqAll(0), mReqRej(0), mReqSuc(0),mReqErrRet(0), mReqErrTm(0),mLoadX(1.0),mOkLoad(1.0),mDelayLoad(1.0),mDelayLoadAmplify(0.0),mOkRate(1.0),
+    SvrInfo_t(): mReqAll(0), mReqRej(0), mReqSuc(0),mReqErrRet(0), mReqErrTm(0),mLoadX(1.0),mOkLoad(1.0),mDelayLoad(1.0),mDelayLoadAmplify(0.0),mOkRate(1.0f),
     		mAvgTm(1),mTotalUsec(1), mAvgErrRate(0.0),mLastReqAll(0),mLastReqRej(0),mLastReqErrRet(0),mLastReqErrTm(0),mLastReqSuc(0),mLastErr(false),mLastAlarmReq(0),
 			mLastAlarmSucReq(0), mPreAll(0), mCityId(0), mOffSide(0),mContErrCount(0), mSReqAll(0),mSReqRej(0),mSReqSuc(0),mSReqErrRet(0),mSReqErrTm(0),mSPreAll(0),
 			mAddSuc(0),mIdle(0) {
