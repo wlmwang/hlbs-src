@@ -121,13 +121,13 @@ const wStatus& SvrQos::DeleteNode(const struct SvrNet_t& svr) {
 	LOG_DEBUG(kSvrLog, "SvrQos::DeleteNode delete SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
-    return mStatus;
+    return mStatus.Clear();
 }
 
 const wStatus& SvrQos::LoadStatCfg(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
 	stat->mInfo.InitInfo(svr);
 	stat->mReqCfg = mReqCfg;
-	return mStatus;
+	return mStatus.Clear();
 }
 
 const wStatus& SvrQos::GetNodeAll(struct SvrNet_t buf[], int32_t* num, int32_t start, int32_t size) {
@@ -138,7 +138,7 @@ const wStatus& SvrQos::GetNodeAll(struct SvrNet_t buf[], int32_t* num, int32_t s
 	for (std::advance(mapReqIt, start); mapReqIt != mMapReqSvr.end() && *num < size; mapReqIt++) {
 		buf[(*num)++] = mapReqIt->first;
 	}
-	return mStatus;
+	return mStatus.Clear();
 }
 
 const wStatus& SvrQos::AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
@@ -176,7 +176,7 @@ const wStatus& SvrQos::AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t
 			"ReqLimit(%d),ReqAll(%d),ReqSuc(%d),ReqErrRet(%d),ReqErrTm(%d),LoadX(%f),PreAll(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight,stat->mReqCfg.mReqLimit,
 			stat->mInfo.mReqAll,stat->mInfo.mReqSuc,stat->mInfo.mReqErrRet,stat->mInfo.mReqErrTm,stat->mInfo.mLoadX,stat->mInfo.mReqAll);
-    return mStatus;
+    return mStatus.Clear();
 }
 
 
@@ -237,7 +237,7 @@ const wStatus& SvrQos::DeleteRouteNode(const struct SvrNet_t& svr) {
     				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		}
 	}
-	return mStatus;
+	return mStatus.Clear();
 }
 
 const wStatus& SvrQos::ModifyRouteNode(const struct SvrNet_t& svr) {
@@ -297,7 +297,7 @@ const wStatus& SvrQos::ModifyRouteNode(const struct SvrNet_t& svr) {
     				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		}
 	}
-	return mStatus;
+	return mStatus.Clear();
 }
 
 const wStatus& SvrQos::CleanNode() {
@@ -312,5 +312,5 @@ const wStatus& SvrQos::CleanNode() {
     	}
     	mMapReqSvr.clear();
     }
-    return mStatus;
+    return mStatus.Clear();
 }

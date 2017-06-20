@@ -12,14 +12,15 @@
 DetectThread::DetectThread(int32_t detectNodeInterval, int32_t detectLoopUsleep, int32_t detectMaxNode): 
 mPollFD(kFDUnknown), mNowTm(0), mLocalIp(0), mDetectLoopUsleep(detectLoopUsleep), mDetectMaxNode(detectMaxNode), 
 mDetectNodeInterval(detectNodeInterval), mPingTimeout(0.1), mTcpTimeout(0.8) {
+    char ip[32];
     mLocalIp = misc::GetIpByIF("eth1")? misc::GetIpByIF("eth1"): (misc::GetIpByIF("eth0")? misc::GetIpByIF("eth0"): 0);
-    char ip[32] = {0};
-    inet_ntop(AF_INET, &mLocalIp, ip, sizeof(ip));
-	
-    mPing = new wPing(ip);
-	mSocket = new wTcpSocket();
-	mDetectMutex = new wMutex();
-	mResultMutex = new wMutex();
+    if (!inet_ntop(AF_INET, &mLocalIp, ip, sizeof(ip))) {
+        memset(ip, 0, sizeof(ip));
+    }
+    SAFE_NEW(wPing(ip), mPing);
+    SAFE_NEW(wTcpSocket(), mSocket);
+    SAFE_NEW(wMutex(), mDetectMutex);
+    SAFE_NEW(wMutex(), mResultMutex);
 }
 
 DetectThread::~DetectThread() {

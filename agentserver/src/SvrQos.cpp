@@ -32,12 +32,9 @@ bool SvrQos::IsExistNode(const struct SvrNet_t& svr) {
 	return true;
 }
 
+// 探测线程，宕机拉起
 const wStatus& SvrQos::StartDetectThread() {
-	// 探测线程，宕机拉起
-	if (!(mStatus = mDetectThread->StartThread()).Ok()) {
-		return mStatus;
-	}
-	return mStatus;
+	return mStatus = mDetectThread->StartThread();
 }
 
 const wStatus& SvrQos::SaveNode(const struct SvrNet_t& svr) {
@@ -71,11 +68,11 @@ const wStatus& SvrQos::AddNode(const struct SvrNet_t& svr) {
 	misc::GetTimeofday(&stat->mInfo.mBuildTm);
 	mMapReqSvr.insert(std::make_pair(svr, stat));
 	if (AddRouteNode(svr, stat) == -1) {
-		mStatus = wStatus::IOError("SvrQos::AddNode add SvrNet_t failed", "");
+		mMutex.Unlock();
+		return mStatus = wStatus::IOError("SvrQos::AddNode add SvrNet_t failed", "");
 	}
 	mMutex.Unlock();
-
-	return mStatus;
+	return mStatus.Clear();
 }
 
 const wStatus& SvrQos::ModifyNode(const struct SvrNet_t& svr) {
@@ -86,22 +83,22 @@ const wStatus& SvrQos::ModifyNode(const struct SvrNet_t& svr) {
 		LOG_ERROR(kSvrLog, "SvrQos::ModifyNode modify SvrNet_t failed(weight < 0), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
-		mStatus = wStatus::IOError("SvrQos::ModifyNode failed, the SvrNet_t(weight < 0) will be ignore", "");
+		return mStatus = wStatus::IOError("SvrQos::ModifyNode failed, the SvrNet_t(weight < 0) will be ignore", "");
 	} else if (svr.mWeight == 0) {
 		// 权重为0删除节点
-		mStatus = DeleteNode(svr);
+		return mStatus = DeleteNode(svr);
 	} else {	// 修改weight
 		mMutex.Lock();
 		MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
 		struct SvrNet_t& oldsvr = const_cast<struct SvrNet_t&>(mapReqIt->first);
 		oldsvr = svr;
 		if (ModifyRouteNode(svr) == -1) {
-			mStatus = wStatus::IOError("SvrQos::ModifyNode ModifyRouteNode() failed, the SvrNet_t(weight > 0) update failed", "");
+			mMutex.Unlock();
+			return mStatus = wStatus::IOError("SvrQos::ModifyNode ModifyRouteNode() failed, the SvrNet_t(weight > 0) update failed", "");
 		}
 		mMutex.Unlock();
 	}
-
-	return mStatus;
+	return mStatus.Clear();
 }
 
 const wStatus& SvrQos::DeleteNode(const struct SvrNet_t& svr) {
@@ -128,7 +125,7 @@ const wStatus& SvrQos::DeleteNode(const struct SvrNet_t& svr) {
     }
     SAFE_DELETE(stat);
 	mMutex.Unlock();
-    return mStatus;
+    return mStatus.Clear();
 }
 
 const wStatus& SvrQos::GetNodeAll(struct SvrNet_t buf[], int32_t* num, int32_t start, int32_t size) {
@@ -141,7 +138,7 @@ const wStatus& SvrQos::GetNodeAll(struct SvrNet_t buf[], int32_t* num, int32_t s
 		buf[(*num)++] = mapReqIt->first;
 	}
 	mMutex.Unlock();
-	return mStatus;
+	return mStatus.Clear();
 }
 
 const wStatus& SvrQos::NtyNodeSvr(const struct SvrNet_t& svr) {
@@ -150,27 +147,17 @@ const wStatus& SvrQos::NtyNodeSvr(const struct SvrNet_t& svr) {
 	mMutex.Lock();
 	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
 	if (mapReqIt == mMapReqSvr.end()) {
-		mStatus = wStatus::IOError("SvrQos::NtyNodeSvr NtyRouteNode() failed, cannot find the SvrNet_t", "");
+		mMutex.Unlock();
+		return mStatus = wStatus::IOError("SvrQos::NtyNodeSvr NtyRouteNode() failed, cannot find the SvrNet_t", "");
 	}
 	struct SvrStat_t* stat = mapReqIt->second;
 	stat->mInfo.mReqAll++;
 	stat->mInfo.mSReqAll++;
 	mMutex.Unlock();
-	return mStatus;
+	return mStatus.Clear();
 }
 
 const wStatus& SvrQos::QueryNode(struct SvrNet_t& svr) {
-	LOG_DEBUG(kSvrLog, "SvrQos::QueryNode query SvrNet_t start, GID(%d),XID(%d)", svr.mGid, svr.mXid);
-
-	mMutex.Lock();
-	if (GetRouteNode(svr) < 0) {
-		mStatus = wStatus::IOError("SvrQos::QueryNode GetRouteNode() failed, cannot find the SvrNet_t", "");
-	}
-	mMutex.Unlock();
-
-	LOG_DEBUG(kSvrLog, "SvrQos::QueryNode query SvrNet_t end, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
-			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
-
 #ifdef _DEBUG_
 	SvrKind_t kind(svr);
 	// 正常路由
@@ -212,7 +199,17 @@ const wStatus& SvrQos::QueryNode(struct SvrNet_t& svr) {
 	}
 #endif
 
-	return mStatus;
+	LOG_DEBUG(kSvrLog, "SvrQos::QueryNode query SvrNet_t start, GID(%d),XID(%d)", svr.mGid, svr.mXid);
+	mMutex.Lock();
+	if (GetRouteNode(svr) < 0) {
+		mMutex.Unlock();
+		return mStatus = wStatus::IOError("SvrQos::QueryNode GetRouteNode() failed, cannot find the SvrNet_t", "");
+	}
+	mMutex.Unlock();
+
+	LOG_DEBUG(kSvrLog, "SvrQos::QueryNode query SvrNet_t end, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
+	return mStatus.Clear();
 }
 
 const wStatus& SvrQos::CallerNode(const struct SvrCaller_t& caller) {
@@ -221,11 +218,11 @@ const wStatus& SvrQos::CallerNode(const struct SvrCaller_t& caller) {
 
 	mMutex.Lock();
 	if (ReportNode(caller) == -1) {
-		mStatus = wStatus::IOError("SvrQos::CallerNode ReportNode() failed, cannot report the SvrNet_t", "");
+		mMutex.Unlock();
+		return mStatus = wStatus::IOError("SvrQos::CallerNode ReportNode() failed, cannot report the SvrNet_t", "");
 	}
 	mMutex.Unlock();
-
-    return mStatus;
+    return mStatus.Clear();
 }
 
 int SvrQos::ReportNode(const struct SvrCaller_t& caller) {
@@ -273,7 +270,6 @@ int SvrQos::ReportNode(const struct SvrCaller_t& caller) {
     // 重建route
     struct SvrKind_t kind(svr);
     RebuildRoute(kind);
-    
     return 0;
 }
 
@@ -399,14 +395,13 @@ int SvrQos::GetRouteNode(struct SvrNet_t& svr) {
 		svr.mPort = it->second.mNet.mPort;
 		svr.mWeight = it->second.mNet.mWeight;
 	}
-
 	// 节点分配过期时间
 	//time_t tm = soft::TimeUnix();
 	//svr.mExpired = tm + stKind.mRebuildTm - (tm - stKind.mPtm);
 	
-	
-	/** 滚动路由，激活分配节点WRR算法（由下一次分配使用） */
 
+	/** 滚动路由，激活分配节点WRR算法（由下一次分配使用） */
+	
 	// 如果是第一个路由, 尝试探测分配第二个路由（始终会滚动到该路由）
 	if (it == table->begin()) {
 		it++;
@@ -693,7 +688,7 @@ void SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
 }
 
 int SvrQos::AddErrRoute(struct SvrKind_t& kind, struct SvrNode_t& node) {
-	LOG_DEBUG(kSvrLog, "SvrQos::AddErrRoute add SvtNet_t into ErrTable start, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d),reqLimit(%d),avgTm(%d),okRate(%f),loadX(%f)",
+	LOG_ERROR(kSvrLog, "SvrQos::AddErrRoute add SvtNet_t into ErrTable start, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d),ReqLimit(%d),AvgTm(%d),OkRate(%f),LoadX(%f)",
 			kind.mGid, kind.mXid, node.mNet.mHost, node.mNet.mPort, node.mNet.mWeight, node.mStat->mReqCfg.mReqLimit, node.mStat->mInfo.mAvgTm, node.mStat->mInfo.mOkRate, node.mStat->mInfo.mLoadX);
 
 	ListNode_t* ListRoute = NULL;
