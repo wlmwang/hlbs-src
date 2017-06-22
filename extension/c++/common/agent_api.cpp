@@ -17,12 +17,11 @@ int QueryNode(struct SvrNet_t &svr, double timeout, std::string &err) {
 		// 查询请求
 		if (g_handle.mTask->SyncSend(reinterpret_cast<char*>(&cmd), sizeof(cmd), &size).Ok()) {
 			// 接受返回
-			char buff[kPackageSize];
-			if (g_handle.mTask->SyncRecv(buff, &size, timeout>0? timeout: kAgentTimeout).Ok() && size == sizeof(struct SvrOneRes_t)) {
-				struct SvrOneRes_t *res = reinterpret_cast<struct SvrOneRes_t*>(buff);
-				if (res->mCode == 0 && res->mNum == 1 && res->mSvr.mPort > 0) {
-					svr.mPort = res->mSvr.mPort;
-					memcpy(svr.mHost, res->mSvr.mHost, kMaxHost);
+			struct SvrOneRes_t res;
+			if (g_handle.mTask->SyncRecv(reinterpret_cast<char*>(&res), &size, sizeof(res), timeout>0? timeout: kAgentTimeout).Ok()) {
+				if (res.mCode == 0 && res.mNum == 1 && res.mSvr.mPort > 0) {
+					svr.mPort = res.mSvr.mPort;
+					memcpy(svr.mHost, res.mSvr.mHost, kMaxHost);
 					ret = kOk;
 				} else {
 					ret = kDataError;
@@ -41,23 +40,22 @@ int QueryNode(struct SvrNet_t &svr, double timeout, std::string &err) {
 	return ret;
 }
 
-int NotifyCallerRes(const struct SvrNet_t &svr, int res, uint64_t usec, std::string &err) {
+int NotifyCallerRes(const struct SvrNet_t &svr, int stat, uint64_t usec, std::string &err) {
 	int ret = ConnectAgent();
 	if (ret == kOk && g_handle.mConnecting == true && g_handle.mTask != NULL) {
 		// 上报数据
 		struct SvrReqReport_t cmd;
 		cmd.mCaller = svr;
-		cmd.mCaller.mReqRet = res;
+		cmd.mCaller.mReqRet = stat;
 		cmd.mCaller.mReqUsetimeUsec = usec;
 
 		ssize_t size;
 		// 上报请求
 		if (g_handle.mTask->SyncSend(reinterpret_cast<char*>(&cmd), sizeof(cmd), &size).Ok()) {
 			// 接受返回
-			char buff[kPackageSize];
-			if (g_handle.mTask->SyncRecv(buff, &size, kAgentTimeout).Ok() && size == sizeof(struct SvrResReport_t)) {
-				struct SvrResReport_t *res = reinterpret_cast<struct SvrResReport_t*>(buff);
-				if (res->mCode == 0) {
+			struct SvrResReport_t res;
+			if (g_handle.mTask->SyncRecv(reinterpret_cast<char*>(&res), &size, sizeof(res), kAgentTimeout).Ok()) {
+				if (res.mCode == 0) {
 					ret = kOk;
 				} else {
 					ret = kDataError;

@@ -51,7 +51,7 @@ extern struct postHandle_t g_handle;
 int QueryNode(struct SvrNet_t &svr, double timeout, std::string &err);
 
 // 调用结果上报
-int NotifyCallerRes(const struct SvrNet_t &svr, int res, uint64_t usec, std::string &err);
+int NotifyCallerRes(const struct SvrNet_t &svr, int stat, uint64_t usec, std::string &err);
 
 int ConnectAgent();
 

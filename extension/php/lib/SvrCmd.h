@@ -55,22 +55,27 @@ public:
 const uint8_t SVR_REQ_GXID = 4;
 struct SvrReqGXid_t : public SvrReqCmd_s {
 public:
-	SvrReqGXid_t() : SvrReqCmd_s(SVR_REQ_GXID), mGid(0), mXid(0), mPort(0) {
-		memset(mHost, 0, kMaxHost);
-	}
+	SvrReqGXid_t() : SvrReqCmd_s(SVR_REQ_GXID) { }
 
-	int32_t mGid;
-	int32_t mXid;
-	int32_t mPort;
-	char	mHost[kMaxHost];
+	struct SvrNet_t mSvr;
 };
 
-/** 上报数据结构 */
+// 上报数据结构
 const uint8_t SVR_REQ_REPORT = 5;
 struct SvrReqReport_t : public SvrReqCmd_s {
 public:
 	SvrReqReport_t() : SvrReqCmd_s(SVR_REQ_REPORT) { }
+
 	struct SvrCaller_t mCaller;
+};
+
+// 调用数上报
+const uint8_t SVR_REQ_NTY = 6;
+struct SvrReqNty_t : public SvrReqCmd_s {
+public:
+	SvrReqNty_t() : SvrReqCmd_s(SVR_REQ_NTY) { }
+
+	struct SvrNet_t mSvr;
 };
 
 // ++++++++++++返回数据结构
