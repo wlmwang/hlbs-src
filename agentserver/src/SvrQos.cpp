@@ -611,7 +611,7 @@ void SvrQos::RebuildRoute(struct SvrKind_t& kind, bool force) {
 
         // 判断是否就近接入 mOffSide=0 就近 mOffSide=1 非就近
         // sid需要就近接入，并且主被调同城，即就近
-        if (mIdc > 0 && mIdc != svr.mIdc) {
+        if (mIdc > 0 && svr.mIdc > 0 && mIdc != svr.mIdc) {
         	info.mOffSide = 1;
         } else {
         	info.mOffSide = 0;

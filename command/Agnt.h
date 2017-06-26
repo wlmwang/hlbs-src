@@ -24,7 +24,7 @@ using namespace hnet;
 struct Agnt_t {
 public:
 	char	mHost[kMaxHost];
-	int32_t	mPort;		// 使用过程中，参考意义不大
+	uint16_t mPort;		// 使用过程中，参考意义不大
 	int32_t mWeight;	// 是否删除（沿用SvrNet_t中的字段名）
 	int32_t	mVersion;
 	int8_t	mIdc;

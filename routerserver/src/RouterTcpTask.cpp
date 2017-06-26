@@ -59,7 +59,7 @@ const wStatus& RouterTcpTask::Connect() {
 	vRRt.mCode = 0;
 	vRRt.mNum = 1;
 	vRRt.mAgnt[0] = agnt;
-	SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+	AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 	return mStatus;
 }
 
@@ -102,7 +102,7 @@ const wStatus& RouterTcpTask::DisConnect() {
 	vRRt.mCode = 0;
 	vRRt.mNum = 1;
 	vRRt.mAgnt[0] = agnt;
-	SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+	AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 	return mStatus;
 }
 
@@ -191,7 +191,7 @@ int RouterTcpTask::SyncAgntRes(struct Request_t *request) {
 			}
 			config->SaveAgnt(cmd->mAgnt[i]);
 		}
-		SyncWorker(request->mBuf, request->mLen);
+		AsyncWorker(request->mBuf, request->mLen);
 	}
 	return 0;
 }

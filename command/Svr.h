@@ -116,7 +116,7 @@ public:
 
 	int32_t	mCalledGid;		// 被调一级id
 	int32_t	mCalledXid;		// 被调二级id
-	int32_t mPort;			// 被调主机PORT
+	uint16_t mPort;			// 被调主机PORT
 	char	mHost[kMaxHost];// 被调主机IP
 
 	int32_t	mReqRet;		// 请求结果。 >=0 成功

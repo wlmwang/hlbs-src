@@ -44,7 +44,7 @@ int RouterHttpTask::ReloadSvrReq(struct Request_t *request) {
 			break;
 		}
 		Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
-		SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+		AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 		vRRt.mCode++;
 		start += vRRt.mNum;
 	} while (vRRt.mNum >= kMaxNum);
@@ -86,14 +86,14 @@ int RouterHttpTask::SaveSvrReq(struct Request_t *request) {
 				// 广播agentsvrd
 				if (vRRt.mNum >= kMaxNum) {
 					Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
-					SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+					AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 					vRRt.mCode++;
 					vRRt.mNum = 0;
 				}
 			}
 			if (vRRt.mNum > 0) {
 				Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
-				SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+				AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 				vRRt.mCode++;
 				vRRt.mNum = 0;
 			}
@@ -145,14 +145,14 @@ int RouterHttpTask::CoverSvrReq(struct Request_t *request) {
 				// 广播agentsvrd
 				if (vRRt.mNum >= kMaxNum) {
 					Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
-					SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+					AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 					vRRt.mCode++;
 					vRRt.mNum = 0;
 				}
 			}
 			if (vRRt.mNum > 0) {
 				Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
-				SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+				AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 				vRRt.mCode++;
 				vRRt.mNum = 0;
 			}
@@ -221,7 +221,7 @@ int RouterHttpTask::ReloadAgntReq(struct Request_t *request) {
 			break;
 		}
 		Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
-		SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+		AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 		vRRt.mCode++;
 		start += vRRt.mNum;
 	} while (vRRt.mNum >= kMaxNum);
@@ -278,14 +278,14 @@ int RouterHttpTask::SaveAgntReq(struct Request_t *request) {
 				// 广播agentsvrd
 				if (vRRt.mNum >= kMaxNum) {
 					Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
-					SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+					AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 					vRRt.mCode++;
 					vRRt.mNum = 0;
 				}
 			}
 			if (vRRt.mNum > 0) {
 				Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
-				SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+				AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 				vRRt.mCode++;
 				vRRt.mNum = 0;
 			}
@@ -358,14 +358,14 @@ int RouterHttpTask::CoverAgntReq(struct Request_t *request) {
 				// 广播agentsvrd
 				if (vRRt.mNum >= kMaxNum) {
 					Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
-					SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+					AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 					vRRt.mCode++;
 					vRRt.mNum = 0;
 				}
 			}
 			if (vRRt.mNum > 0) {
 				Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
-				SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+				AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 				vRRt.mCode++;
 				vRRt.mNum = 0;
 			}
@@ -392,14 +392,14 @@ int RouterHttpTask::CoverAgntReq(struct Request_t *request) {
 					// 广播agentsvrd
 					if (vRRt.mNum >= kMaxNum) {
 						Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
-						SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+						AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 						vRRt.mCode++;
 						vRRt.mNum = 0;
 					}
 				}
 				if (vRRt.mNum > 0) {
 					Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
-					SyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+					AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 					vRRt.mCode++;
 					vRRt.mNum = 0;
 				}
