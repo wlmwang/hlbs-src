@@ -8,7 +8,7 @@
 #define _COMMON_DEFINE_H_
 
 const char 	kHlbsSoftwareName[]   = "HLBS";
-const char 	kHlbsSoftwareVer[]    = "3.0.4";
+const char 	kHlbsSoftwareVer[]    = "3.0.5";
 
 const char 	kHlbsAcceptmtxPath[] = "../log/hlbs.mtx";
 const char 	kHlbsLockPath[] = "../log/hlbs.lock";
