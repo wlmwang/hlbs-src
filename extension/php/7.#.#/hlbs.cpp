@@ -151,9 +151,8 @@ PHP_RSHUTDOWN_FUNCTION(hlbs)
 PHP_MINFO_FUNCTION(hlbs) {
 	php_info_print_table_start();
 	php_info_print_table_header(2, "hlbs support", "enabled");
-	php_info_print_table_row(2, "version",     PHP_HLBS_VERSION);
-	php_info_print_table_row(2, "anthor",      "Anny Wang, Hupu Inc.");
-	php_info_print_table_row(2, "copyright",   "Copyright (c) 2016 Hupu Inc. All Rights Reserved.");
+	php_info_print_table_row(2, "hlbs version",     PHP_HLBS_VERSION);
+	php_info_print_table_row(2, "hlbs copyright",   "Copyright (c) 2017 Hupu Inc. All Rights Reserved.");
 	php_info_print_table_end();
 
 	/* Remove comments if you have entries in php.ini
