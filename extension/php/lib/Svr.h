@@ -57,26 +57,6 @@ public:
     	memset(mName, 0, kMaxName);
     }
 
-	SvrNet_t(const SvrNet_t& other): mGid(other.mGid), mXid(other.mXid), mPort(other.mPort), mWeight(other.mWeight), 
-	mVersion(other.mVersion), mIdc(other.mIdc) /*,mPre(other.mPre), mExpired(other.mExpired)*/ {
-		memcpy(mHost, other.mHost, kMaxHost);
-		memcpy(mName, other.mName, kMaxName);
-	}
-
-	SvrNet_t& operator=(const SvrNet_t& other) {
-		mGid = other.mGid;
-		mXid = other.mXid;
-		mPort = other.mPort;
-		mWeight = other.mWeight;
-		mVersion = other.mVersion;
-		mIdc = other.mIdc;
-		//mPre = other.mPre;
-		//mExpired = other.mExpired;
-		memcpy(mHost, other.mHost, kMaxHost);
-		memcpy(mName, other.mName, kMaxName);
-		return *this;
-	}
-
 	// 忽略weight version排序、find
 	bool operator<(const SvrNet_t &other) const {
         if (mGid < other.mGid ) {
@@ -399,22 +379,6 @@ public:
 
 	SvrKind_t(const SvrNet_t& svr): mGid(svr.mGid), mXid(svr.mXid), mInnerChange(1), mOverload(0), mPindex(0), mPtotalErrRate(0.0f), mPsubCycCount(0),
 	mPtm(soft::TimeUnix()), mAccess64tm(soft::TimeUsec()), mRebuildTm(3), mNearestAccessFlag(0), mWeightSum(0.0f) { }
-
-	SvrKind_t& operator=(const SvrKind_t& other) {
-		mGid = other.mGid;
-		mXid = other.mXid;
-		mInnerChange = other.mInnerChange;
-		mOverload = other.mOverload;
-		mPindex = other.mPindex;
-        mPtotalErrRate = other.mPtotalErrRate;
-        mPsubCycCount = other.mPsubCycCount;
-        mPtm = other.mPtm;
-        mAccess64tm = other.mAccess64tm;
-        mRebuildTm = other.mRebuildTm;
-        mNearestAccessFlag = other.mNearestAccessFlag;
-        mWeightSum = other.mWeightSum;
-        return *this;
-	}
 
     bool operator<(const SvrKind_t &other) const {
         if (mGid < other.mGid) {

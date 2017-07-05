@@ -34,21 +34,6 @@ public:
 	Agnt_t(): mPort(0), mWeight(1), mVersion(misc::GetTimeofday()/1000000), mIdc(0), mStatus(kAgntInit), mConfig(-1) {
 		memset(mHost, 0, kMaxHost);
 	}
-	
-	Agnt_t(const Agnt_t& other): mPort(other.mPort), mWeight(other.mWeight), mVersion(other.mVersion), mIdc(other.mIdc), mStatus(other.mStatus), mConfig(other.mConfig) {
-		memcpy(mHost, other.mHost, kMaxHost);
-	}
-
-	Agnt_t& operator=(const Agnt_t &other) {
-		memcpy(mHost, other.mHost, kMaxHost);
-		mPort = other.mPort;
-		mWeight = other.mWeight;
-		mVersion = other.mVersion;
-		mIdc = other.mIdc;
-		mStatus = other.mStatus;
-		mConfig = other.mConfig;
-		return *this;
-	}
 
 	// 忽略port
 	bool operator<(const Agnt_t &other) const {

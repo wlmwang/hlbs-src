@@ -8,7 +8,6 @@
 #define _AGENT_SERVER_H_
 
 #include "wCore.h"
-#include "wStatus.h"
 #include "wMisc.h"
 #include "wServer.h"
 
@@ -18,9 +17,9 @@ class AgentServer : public wServer {
 public:
 	AgentServer(wConfig* config) : wServer(config) { }
 
-	virtual const wStatus& NewTcpTask(wSocket* sock, wTask** ptr);
-	virtual const wStatus& NewUnixTask(wSocket* sock, wTask** ptr);
-	virtual const wStatus& NewChannelTask(wSocket* sock, wTask** ptr);
+	virtual int NewTcpTask(wSocket* sock, wTask** ptr);
+	virtual int NewUnixTask(wSocket* sock, wTask** ptr);
+	virtual int NewChannelTask(wSocket* sock, wTask** ptr);
 };
 
 #endif

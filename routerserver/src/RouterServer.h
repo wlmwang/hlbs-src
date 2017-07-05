@@ -8,7 +8,6 @@
 #define _ROUTER_SERVER_H_
 
 #include "wCore.h"
-#include "wStatus.h"
 #include "wMisc.h"
 #include "wServer.h"
 
@@ -18,11 +17,11 @@ class RouterServer: public wServer {
 public:
 	RouterServer(wConfig* config) : wServer(config) { }
 
-	virtual const wStatus& PrepareRun();
-	virtual const wStatus& Run();
-	virtual const wStatus& NewTcpTask(wSocket* sock, wTask** ptr);
-	virtual const wStatus& NewHttpTask(wSocket* sock, wTask** ptr);
-	virtual const wStatus& NewChannelTask(wSocket* sock, wTask** ptr);
+	virtual int PrepareRun();
+	virtual int Run();
+	virtual int NewTcpTask(wSocket* sock, wTask** ptr);
+	virtual int NewHttpTask(wSocket* sock, wTask** ptr);
+	virtual int NewChannelTask(wSocket* sock, wTask** ptr);
 };
 
 #endif

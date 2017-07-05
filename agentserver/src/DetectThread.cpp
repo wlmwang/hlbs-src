@@ -9,7 +9,7 @@
 #include "wLogger.h"
 #include "Svr.h"
 
-DetectThread::DetectThread(int32_t detectNodeInterval, int32_t detectLoopUsleep, int32_t detectMaxNode): 
+DetectThread::DetectThread(int32_t detectNodeInterval, int32_t detectLoopUsleep, int32_t detectMaxNode): wThread(false),
 mPollFD(kFDUnknown), mNowTm(0), mLocalIp(0), mDetectLoopUsleep(detectLoopUsleep), mDetectMaxNode(detectMaxNode), 
 mDetectNodeInterval(detectNodeInterval), mPingTimeout(0.1), mTcpTimeout(0.8) {
     char ip[32];
@@ -30,7 +30,7 @@ DetectThread::~DetectThread() {
 	SAFE_DELETE(mResultMutex);
 }
 
-const wStatus& DetectThread::RunThread() {
+int DetectThread::RunThread() {
     time_t nextReadtm = soft::TimeUnix();
     time_t readIntervaltm = 60;
 
@@ -138,7 +138,8 @@ const wStatus& DetectThread::RunThread() {
         }
         usleep(mDetectLoopUsleep);
 	}
-	return mStatus;
+    
+	return 0;
 }
 
 int DetectThread::DoDetectNode(const struct DetectNode_t& node, struct DetectResult_t& res) {
@@ -174,14 +175,13 @@ int DetectThread::DoDetectNode(const struct DetectNode_t& node, struct DetectRes
 		// TCP 探测开始
 		misc::GetTimeofday(&stStarttv);
 
-        wStatus s = mSocket->Open();
-    	if (s.Ok()) {
-    		int64_t ret;
-    		s = mSocket->Connect(&ret, node.mIp.c_str(), node.mPort, mTcpTimeout);
+        ret = mSocket->Open();
+    	if (ret == 0) {
+    		ret = mSocket->Connect(node.mIp.c_str(), node.mPort, mTcpTimeout);
             mSocket->Close(); // 快速关闭TCP socket
     	}
 
-    	if (!s.Ok()) { // TCP 探测失败
+    	if (ret == -1) { // TCP 探测失败
     		rc = ret = -1;
     	} else {   // TCP 探测成功
     		rc = ret = 0;

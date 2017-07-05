@@ -8,7 +8,6 @@
 #define _AGENT_WORKER_H_
 
 #include "wCore.h"
-#include "wStatus.h"
 #include "wMisc.h"
 #include "wWorker.h"
 
@@ -21,7 +20,7 @@ public:
 	AgentWorker(std::string title, uint32_t slot, wMaster* master);
 	virtual ~AgentWorker();
 
-	virtual const wStatus& PrepareRun();
+	virtual int PrepareRun();
 protected:
 	AgentClient* mAgentClient;
 };

@@ -33,8 +33,8 @@ bool SvrQos::IsExistNode(const struct SvrNet_t& svr) {
 }
 
 // 探测线程，宕机拉起
-const wStatus& SvrQos::StartDetectThread() {
-	return mStatus = mDetectThread->StartThread();
+int SvrQos::StartDetectThread() {
+	return mDetectThread->StartThread();
 }
 
 const wStatus& SvrQos::SaveNode(const struct SvrNet_t& svr) {

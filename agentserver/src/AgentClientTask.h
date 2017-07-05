@@ -8,7 +8,6 @@
 #define _AGENT_CLIENT_TASK_H_
 
 #include "wCore.h"
-#include "wStatus.h"
 #include "wMisc.h"
 #include "wTcpTask.h"
 
@@ -18,8 +17,8 @@ class AgentClientTask : public wTcpTask {
 public:
 	AgentClientTask(wSocket *socket, int32_t type);
 
-    virtual const wStatus& Connect();
-    virtual const wStatus& ReConnect();
+    virtual int Connect();
+    virtual int ReConnect();
 
 	int InitSvrRes(struct Request_t *request);
 	int ReloadSvrRes(struct Request_t *request);

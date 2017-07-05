@@ -8,7 +8,6 @@
 #define _AGENT_TCP_TASK_H_
 
 #include "wCore.h"
-#include "wStatus.h"
 #include "wMisc.h"
 #include "wTcpTask.h"
 

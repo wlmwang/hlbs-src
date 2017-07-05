@@ -58,7 +58,7 @@ public:
 	// 清除 所有路由信息
 	const wStatus& CleanNode();
 
-	const wStatus& StartDetectThread();
+	int StartDetectThread();
 
 	// 指定节点是否存在
 	bool IsExistNode(const struct SvrNet_t& svr);

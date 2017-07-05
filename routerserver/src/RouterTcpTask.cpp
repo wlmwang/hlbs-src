@@ -19,7 +19,7 @@ RouterTcpTask::RouterTcpTask(wSocket *socket, int32_t type) : wTcpTask(socket, t
 	On(CMD_AGNT_RES, AGNT_RES_SYNC, &RouterTcpTask::SyncAgntRes, this);
 }
 
-const wStatus& RouterTcpTask::Connect() {
+int RouterTcpTask::Connect() {
 	// 以agent上报为准
 	RouterConfig* config = Config<RouterConfig*>();
 	std::string ip = Socket()->Host();
@@ -60,10 +60,10 @@ const wStatus& RouterTcpTask::Connect() {
 	vRRt.mNum = 1;
 	vRRt.mAgnt[0] = agnt;
 	AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
-	return mStatus;
+	return 0;
 }
 
-const wStatus& RouterTcpTask::DisConnect() {
+int RouterTcpTask::DisConnect() {
 	RouterConfig* config = Config<RouterConfig*>();
 	std::string ip = Socket()->Host();
 	uint16_t port = Socket()->Port();
@@ -92,7 +92,7 @@ const wStatus& RouterTcpTask::DisConnect() {
 		agnt.mConfig = old.mConfig;
 		agnt.mWeight = old.mWeight;
 		if (agnt.mVersion < old.mVersion + 3) {	// 3秒之内认定agent抖动（重启也是抖动）
-			return mStatus;
+			return 0;
 		}
 	}
 	config->SaveAgnt(agnt);
@@ -103,7 +103,7 @@ const wStatus& RouterTcpTask::DisConnect() {
 	vRRt.mNum = 1;
 	vRRt.mAgnt[0] = agnt;
 	AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
-	return mStatus;
+	return 0;
 }
 
 // 向单个agent发送init回应

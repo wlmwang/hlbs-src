@@ -8,7 +8,6 @@
 #define _ROUTER_HTTP_TASK_H_
 
 #include "wCore.h"
-#include "wStatus.h"
 #include "wMisc.h"
 #include "wHttpTask.h"
 #include "SvrCmd.h"

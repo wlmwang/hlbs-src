@@ -10,26 +10,29 @@
 #include "AgentUnixTask.h"
 #include "AgentChannelTask.h"
 
-const wStatus& AgentServer::NewTcpTask(wSocket* sock, wTask** ptr) {
+int AgentServer::NewTcpTask(wSocket* sock, wTask** ptr) {
 	SAFE_NEW(AgentTcpTask(sock, Shard(sock)), *ptr);
-	if (*ptr == NULL) {
-		return mStatus = wStatus::IOError("AgentServer::NewTcpTask", "AgentTcpTask new failed");
-	}
-	return mStatus;
-}
-
-const wStatus& AgentServer::NewUnixTask(wSocket* sock, wTask** ptr) {
-	SAFE_NEW(AgentUnixTask(sock, Shard(sock)), *ptr);
-	if (*ptr == NULL) {
-		return mStatus = wStatus::IOError("AgentServer::NewUnixTask", "NewUnixTask new failed");
-	}
-	return mStatus;
-}
-
-const wStatus& AgentServer::NewChannelTask(wSocket* sock, wTask** ptr) {
-	SAFE_NEW(AgentChannelTask(sock, Master<AgentMaster*>(), Shard(sock)), *ptr);
-    if (*ptr == NULL) {
-		return mStatus = wStatus::IOError("AgentServer::AgentChannelTask", "new failed");
+    if (!*ptr) {
+        LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::NewTcpTask new() failed", "");
+        return -1;
     }
-    return mStatus;
+	return 0;
+}
+
+int AgentServer::NewUnixTask(wSocket* sock, wTask** ptr) {
+	SAFE_NEW(AgentUnixTask(sock, Shard(sock)), *ptr);
+    if (!*ptr) {
+        LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::NewUnixTask new() failed", "");
+        return -1;
+    }
+	return 0;
+}
+
+int AgentServer::NewChannelTask(wSocket* sock, wTask** ptr) {
+	SAFE_NEW(AgentChannelTask(sock, Master<AgentMaster*>(), Shard(sock)), *ptr);
+    if (!*ptr) {
+        LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::NewChannelTask new() failed", "");
+        return -1;
+    }
+    return 0;
 }

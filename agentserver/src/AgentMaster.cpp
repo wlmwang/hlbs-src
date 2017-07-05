@@ -9,26 +9,39 @@
 #include "AgentServer.h"
 #include "AgentConfig.h"
 
-const wStatus& AgentMaster::PrepareRun() {
-	return mStatus;
+int AgentMaster::PrepareRun() {
+	return 0;
 }
 
-const wStatus& AgentMaster::NewWorker(uint32_t slot, wWorker** ptr) {
+int AgentMaster::NewWorker(uint32_t slot, wWorker** ptr) {
     SAFE_NEW(AgentWorker(mTitle, slot, this), *ptr);
-    if (*ptr == NULL) {
-		return mStatus = wStatus::IOError("AgentMaster::NewWorker", "new failed");
+    if (!*ptr) {
+        LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentMaster::NewWorker new() failed", "");
+        return -1;
     }
-    return mStatus;
+    return 0;
 }
 
-const wStatus& AgentMaster::Reload() {
+int AgentMaster::Reload() {
 	AgentConfig* config = mServer->Config<AgentConfig*>();
-	if (config->ParseBaseConf() == -1) {
-		return mStatus = wStatus::IOError("AgentMaster::Reload ParseBaseConf() failed", "");
-	} else if (config->ParseRouterConf() == -1) {
-		return mStatus = wStatus::IOError("AgentMaster::Reload ParseRouterConf() failed", "");
-	} else if (config->ParseQosConf() == -1) {
-		return mStatus = wStatus::IOError("AgentMaster::Reload ParseQosConf() failed", "");
+
+	int ret = config->ParseBaseConf();
+	if (ret == -1) {
+		LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentMaster::Reload ParseBaseConf() failed", "");
+		return ret;
 	}
-	return mStatus;
+
+	ret = config->ParseRouterConf();
+	if (ret == -1) {
+		LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentMaster::Reload ParseRouterConf() failed", "");
+		return ret;
+	}
+
+	ret = config->ParseQosConf();
+	if (ret == -1) {
+		LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentMaster::Reload ParseQosConf() failed", "");
+		return ret;
+	}
+	
+	return 0;
 }

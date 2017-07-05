@@ -8,7 +8,6 @@
 #define _ROUTER_TCP_TASK_H_
 
 #include "wCore.h"
-#include "wStatus.h"
 #include "wMisc.h"
 #include "wTcpTask.h"
 
@@ -18,8 +17,8 @@ class RouterTcpTask : public wTcpTask {
 public:
 	RouterTcpTask(wSocket *socket, int32_t type);
 	
-    virtual const wStatus& Connect();
-    virtual const wStatus& DisConnect();
+    virtual int Connect();
+    virtual int DisConnect();
 
 	int InitSvrReq(struct Request_t *request);
 	int ReloadSvrReq(struct Request_t *request);

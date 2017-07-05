@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ROOT>
 	<!--服务器监听地址-->
-	<SERVER HOST="/var/run/hlbs.sock" PORT="0" PROTOCOL="UNIX" WORKER="1" IDC="0"/>
 	<!--
-	<SERVER HOST="0.0.0.0" PORT="10007" PROTOCOL="TCP" WORKER="1" IDC="0"/>
+	<SERVER HOST="/var/run/hlbs.sock" PORT="0" PROTOCOL="UNIX" WORKER="1" IDC="0"/>
 	-->
+	<SERVER HOST="0.0.0.0" PORT="10007" PROTOCOL="TCP" WORKER="1" IDC="0"/>
 </ROOT>

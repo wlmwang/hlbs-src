@@ -6,6 +6,7 @@
 
 #include "wCore.h"
 #include "wMisc.h"
+#include "wDaemon.h"
 #include "wEnv.h"
 #include "Define.h"
 #include "RouterConfig.h"
@@ -14,7 +15,7 @@
 
 using namespace hnet;
 
-int main(int argc, const char *argv[]) {
+int main(int argc, char *argv[]) {
 	// 设置相关相关配置
 	std::string hlbsName = kHlbsSoftwareName + std::string("(*router*)");
 	soft::SetSoftName(hlbsName + " - ");
@@ -32,7 +33,8 @@ int main(int argc, const char *argv[]) {
 
 	RouterConfig *config;
 	SAFE_NEW(RouterConfig, config);
-	if (config == NULL) {
+	if (!config) {
+		std::cout << "config new failed" << std::endl;
 		return -1;
 	}
 	
@@ -51,15 +53,16 @@ int main(int argc, const char *argv[]) {
 	}
 
 	// 版本输出 && 守护进程创建
-	bool version, daemon;
-	if (config->GetConf("version", &version) && version == true) {
+	bool vn, dn;
+	if (config->GetConf("version", &vn) && vn) {
 		std::cout << soft::GetSoftName() << soft::GetSoftVer() << std::endl;
 		SAFE_DELETE(config);
 		return -1;
-	} else if (config->GetConf("daemon", &daemon) && daemon == true) {
+	} else if (config->GetConf("daemon", &dn) && dn) {
 		std::string lock_path;
 		config->GetConf("lock_path", &lock_path);
-		if (misc::InitDaemon(lock_path) == -1) {
+		wDaemon daemon;
+		if (daemon.Start(lock_path) == -1) {
 			std::cout << "create daemon failed" << std::endl;
 			SAFE_DELETE(config);
 			return -1;
@@ -69,9 +72,9 @@ int main(int argc, const char *argv[]) {
 	// 创建服务器对象
 	RouterServer* server;
 	SAFE_NEW(RouterServer(config), server);
-	if (server == NULL) {
+	if (!server) {
+		std::cout << "server new failed" << std::endl;
 		SAFE_DELETE(config);
-		SAFE_DELETE(server);
 		return -1;
 	}
 
@@ -79,13 +82,10 @@ int main(int argc, const char *argv[]) {
 	int ret = 0;
 	RouterMaster* master;
 	SAFE_NEW(RouterMaster(hlbsName, server), master);
-	if (master != NULL) {
-		// 接受命令信号
+	if (master) {
 	    std::string signal;
-	    if (config->GetConf("signal", &signal) && signal.size() > 0) {
-	    	if (!master->SignalProcess(signal).Ok()) {
-	    		ret = -1;
-	    	}
+	    if (config->GetConf("signal", &signal) && signal.size() > 0) {	// 接受命令信号
+	    	ret = master->SignalProcess(signal);
 	    } else {
 	    	// 解析xml配置文件
 			if (config->ParseSvrConf() == -1) {
@@ -97,17 +97,22 @@ int main(int argc, const char *argv[]) {
 			}
 			
 	    	// 准备服务器
-			if (ret == 0 && master->PrepareStart().Ok()) {
-				// Master-Worker方式开启服务器
-				// 考虑到router服务压力很小因素，故让其单进程运行。RouterMaster::mWorkerNum=1
-				// 单进程模式RouterMaster::SingleStart()，目前版本（HNET0.0.2）并不完善
-				master->MasterStart();
+			if (ret == 0) {
+				ret = master->PrepareStart();
+				if (ret == 0) {
+					ret = master->MasterStart();	// Master-Worker方式开启服务器
+					if (ret == -1) {
+						std::cout << "MasterStart failed" << std::endl;
+					}
+				} else {
+					std::cout << "PrepareStart failed" << std::endl;
+				}
 			}
 	    }
 	}
+
 	SAFE_DELETE(config);
 	SAFE_DELETE(server);
 	SAFE_DELETE(master);
-
 	return ret;
 }

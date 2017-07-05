@@ -8,7 +8,6 @@
 #define _AGENT_UNIX_TASK_H_
 
 #include "wCore.h"
-#include "wStatus.h"
 #include "wMisc.h"
 #include "wUnixTask.h"
 

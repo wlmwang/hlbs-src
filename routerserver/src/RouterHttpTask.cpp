@@ -455,7 +455,8 @@ int RouterHttpTask::ListAgntReq(struct Request_t *request) {
 }
 
 int RouterHttpTask::MasterRestartReq(struct Request_t *request) {
-	if (!Server()->Master()->SignalProcess("restart").Ok()) {
+	int ret = Server()->Master()->SignalProcess("restart");
+	if (ret == -1) {
 		Error("", "500");
 		return -1;
 	}
@@ -465,7 +466,8 @@ int RouterHttpTask::MasterRestartReq(struct Request_t *request) {
 
 // 不会返回，服务器直接退出！
 int RouterHttpTask::MasterStopReq(struct Request_t *request) {
-	if (!Server()->Master()->SignalProcess("stop").Ok()) {
+	int ret = Server()->Master()->SignalProcess("stop");
+	if (ret == -1) {
 		Error("", "500");
 		return -1;
 	}

@@ -9,33 +9,37 @@
 #include "AgentConfig.h"
 #include "AgentClientTask.h"
 
-const wStatus& AgentClient::NewTcpTask(wSocket* sock, wTask** ptr, int type) {
+int AgentClient::NewTcpTask(wSocket* sock, wTask** ptr, int type) {
 	SAFE_NEW(AgentClientTask(sock, type), *ptr);
-	if (*ptr == NULL) {
-		return mStatus = wStatus::IOError("AgentClient::NewTcpTask", "new AgentClientTask failed");
-	}
-	return mStatus;
+    if (!*ptr) {
+        LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentClient::NewTcpTask new() failed", "");
+        return -1;
+    }
+	return 0;
 }
 
-const wStatus& AgentClient::PrepareRun() {
+int AgentClient::PrepareRun() {
     wConfig* config = Config<AgentConfig*>();
-    if (config == NULL || !config->GetConf("router_host", &mHost) || !config->GetConf("router_port", &mPort)) {
-    	return mStatus = wStatus::IOError("AgentClient::PrepareRun failed", "Config() is null or host|port is illegal");
+    if (!config || !config->GetConf("router_host", &mHost) || !config->GetConf("router_port", &mPort)) {
+    	LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentClient::PrepareRun GetConf() failed", "");
+    	return -1;
     }
 
 	// 连接RouterSvr服务器(连接失败让其正常启动)
-	if (!(mStatus = AddConnect(kType, mHost, mPort)).Ok()) {
-		return mStatus.Clear();	
+	int ret = AddConnect(kType, mHost, mPort);
+	if (ret == 0) {
+		mInitClient = true;
 	}
-	mInitClient = true;
-	return mStatus;
+	return 0;
 }
 
-const wStatus& AgentClient::Run() {
+int AgentClient::Run() {
+	int ret = 0;
 	if (mInitClient == false) {
-		if ((mStatus = AddConnect(kType, mHost, mPort)).Ok()) {
+		ret = AddConnect(kType, mHost, mPort);
+		if (ret == -1) {
 			mInitClient = true;
 		}
 	}
-	return mStatus;
+	return ret;
 }

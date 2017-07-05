@@ -11,7 +11,6 @@
 #include <list>
 #include <vector>
 #include "wCore.h"
-#include "wStatus.h"
 #include "wNoncopyable.h"
 #include "wMutex.h"
 #include "wMisc.h"
@@ -30,7 +29,7 @@ public:
 	DetectThread(int32_t detectNodeInterval = 10, int32_t detectLoopUsleep = 100000, int32_t detectMaxNode = 10000);
 	virtual ~DetectThread();
 
-    virtual const wStatus& RunThread();
+    virtual int RunThread();
 
     int GetDetectResult(const struct DetectNode_t& node, struct DetectResult_t& res);
     int DelDetect(const VecNode_t& node);

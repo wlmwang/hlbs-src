@@ -11,49 +11,54 @@
 #include "RouterHttpTask.h"
 #include "RouterChannelTask.h"
 
-const wStatus& RouterServer::NewTcpTask(wSocket* sock, wTask** ptr) {
+int RouterServer::NewTcpTask(wSocket* sock, wTask** ptr) {
 	SAFE_NEW(RouterTcpTask(sock, Shard(sock)), *ptr);
-	if (*ptr == NULL) {
-		return mStatus = wStatus::IOError("RouterServer::NewTcpTask", "RouterTcpTask new failed");
+	if (!*ptr) {
+        LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::NewTcpTask new() failed", "");
+        return -1;
 	}
-	return mStatus;
+	return 0;
 }
 
-const wStatus& RouterServer::NewHttpTask(wSocket* sock, wTask** ptr) {
+int RouterServer::NewHttpTask(wSocket* sock, wTask** ptr) {
 	SAFE_NEW(RouterHttpTask(sock, Shard(sock)), *ptr);
-	if (*ptr == NULL) {
-		return mStatus = wStatus::IOError("RouterServer::NewHttpTask", "RouterHttpTask new failed");
-	}
-	return mStatus;
-}
-
-const wStatus& RouterServer::NewChannelTask(wSocket* sock, wTask** ptr) {
-	SAFE_NEW(RouterChannelTask(sock, Master<RouterMaster*>(), Shard(sock)), *ptr);
-    if (*ptr == NULL) {
-		return mStatus = wStatus::IOError("RouterServer::RouterChannelTask", "new failed");
+    if (!*ptr) {
+        LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::NewHttpTask new() failed", "");
+        return -1;
     }
-    return mStatus;
+	return 0;
 }
 
-const wStatus& RouterServer::PrepareRun() {
+int RouterServer::NewChannelTask(wSocket* sock, wTask** ptr) {
+	SAFE_NEW(RouterChannelTask(sock, Master<RouterMaster*>(), Shard(sock)), *ptr);
+    if (!*ptr) {
+        LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::RouterChannelTask new() failed", "");
+        return -1;
+    }
+    return 0;
+}
+
+int RouterServer::PrepareRun() {
 	// 开启control监听
     RouterConfig* config = Config<RouterConfig*>();
 
     std::string host;
     int16_t port = 0;
     if (!config->GetConf("control_host", &host) || !config->GetConf("control_port", &port)) {
-    	return mStatus = wStatus::Corruption("RouterServer::PrepareRun failed", "host or port is illegal");
+        LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::PrepareRun () failed", "host or port invalid");
+        return -1;
     }
 
+    int ret = 0;
     std::string protocol;
     if (!config->GetConf("control_protocol", &protocol)) {
-    	mStatus = AddListener(host, port, "TCP");
+    	ret = AddListener(host, port, "TCP");
     } else {
-    	mStatus = AddListener(host, port, protocol);
+    	ret = AddListener(host, port, protocol);
     }
-    return mStatus;
+    return ret;
 }
 
-const wStatus& RouterServer::Run() {
-	return mStatus;
+int RouterServer::Run() {
+	return 0;
 }

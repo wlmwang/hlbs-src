@@ -19,14 +19,13 @@ AgentClientTask::AgentClientTask(wSocket *socket, int32_t type) : wTcpTask(socke
 	On(CMD_AGNT_RES, AGNT_RES_SYNC, &AgentClientTask::SyncAgntRes, this);
 }
 
-const wStatus& AgentClientTask::Connect() {
+int AgentClientTask::Connect() {
 	// 发送初始化agent配置请求
 	struct AgntReqInit_t vRRt2;
-	AsyncSend(reinterpret_cast<char*>(&vRRt2), sizeof(vRRt2));
-	return mStatus;
+	return AsyncSend(reinterpret_cast<char*>(&vRRt2), sizeof(vRRt2));
 }
 
-const wStatus& AgentClientTask::ReConnect() {
+int AgentClientTask::ReConnect() {
 	return Connect();
 }
 

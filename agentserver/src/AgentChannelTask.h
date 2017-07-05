@@ -8,7 +8,6 @@
 #define _AGENT_CHANNEL_TASK_H_
 
 #include "wCore.h"
-#include "wStatus.h"
 #include "wMisc.h"
 #include "wMaster.h"
 #include "wChannelTask.h"

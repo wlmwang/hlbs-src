@@ -8,18 +8,28 @@
 #include "RouterServer.h"
 #include "RouterConfig.h"
 
-const wStatus& RouterMaster::PrepareRun() {
-	return mStatus;
+int RouterMaster::PrepareRun() {
+	return 0;
 }
 
-const wStatus& RouterMaster::Reload() {
+int RouterMaster::Reload() {
 	RouterConfig* config = mServer->Config<RouterConfig*>();
-	if (config->ParseBaseConf() == -1) {
-		mStatus = wStatus::IOError("RouterMaster::Reload ParseBaseConf() failed", "");
-	} else if (!config->CleanAgnt() || config->ParseAgntConf() == -1) {
-		mStatus = wStatus::IOError("RouterMaster::Reload ParseAgntConf() failed", "");
-	} else if (!config->Qos()->CleanNode().Ok() || config->ParseSvrConf() == -1) {
-		mStatus = wStatus::IOError("RouterMaster::Reload ParseSvrConf() failed", "");
+	
+	int ret = 0;
+	ret = config->ParseBaseConf();
+	if (ret == -1) {
+		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterMaster::Reload ParseBaseConf() failed", "");
+		return -1;
 	}
-	return mStatus;
+
+	if (!config->CleanAgnt() || config->ParseAgntConf() == -1) {
+		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterMaster::Reload ParseAgntConf() failed", "");
+		return ret;
+	}
+
+	if (!config->Qos()->CleanNode().Ok() || config->ParseSvrConf() == -1) {
+		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterMaster::Reload ParseSvrConf() failed", "");
+		return ret;
+	}
+	return ret;
 }
