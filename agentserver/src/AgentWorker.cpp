@@ -20,19 +20,19 @@ AgentWorker::~AgentWorker() {
 int AgentWorker::PrepareRun() {
 	int ret = mAgentClient->PrepareStart();
 	if (ret == -1) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentWorker::PrepareRun PrepareStart() failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentWorker::PrepareRun PrepareStart() failed", "");
 		return ret;
 	}
 
 	ret = mAgentClient->StartThread();
 	if (ret == -1) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentWorker::PrepareRun StartThread() failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentWorker::PrepareRun StartThread() failed", "");
 		return ret;
 	}
 
 	ret = Master()->Server()->Config<AgentConfig*>()->Qos()->StartDetectThread();
 	if (ret == -1) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentWorker::PrepareRun StartDetectThread() failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentWorker::PrepareRun StartDetectThread() failed", "");
 		return ret;
 	}
 	return ret;

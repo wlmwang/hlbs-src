@@ -153,12 +153,12 @@ int RouterConfig::WriteFileSvr(const struct SvrNet_t* svr, int32_t n, const std:
 int RouterConfig::ParseBaseConf() {
 	TiXmlDocument document;
 	if (!document.LoadFile(mBaseFile.c_str())) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseBaseConf Load configure(conf.xml) file failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseBaseConf Load configure(conf.xml) file failed", "");
 		return -1;
 	}
 	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseBaseConf Read root from configure(conf.xml) failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseBaseConf Read root from configure(conf.xml) failed", "");
 		return -1;
 	}
 	
@@ -175,11 +175,11 @@ int RouterConfig::ParseBaseConf() {
 			SetIntConf("worker", atoi(worker));
 			SetStrConf("protocol", protocol);
 		} else {
-			LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseBaseConf Get SERVER host or port from conf.xml failed", "");
+			H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseBaseConf Get SERVER host or port from conf.xml failed", "");
 			return -1;
 		}
 	} else {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseBaseConf Get SERVER node from conf.xml failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseBaseConf Get SERVER node from conf.xml failed", "");
 		return -1;
 	}
 
@@ -194,11 +194,11 @@ int RouterConfig::ParseBaseConf() {
 			SetIntConf("control_port", atoi(port));
 			SetStrConf("control_protocol", protocol);
 		} else {
-			LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseBaseConf Get CONTROL host or port from conf.xml failed", "");
+			H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseBaseConf Get CONTROL host or port from conf.xml failed", "");
 			return -1;
 		}
 	} else {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseBaseConf Get CONTROL node from conf.xml failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseBaseConf Get CONTROL node from conf.xml failed", "");
 		return -1;
 	}
 	return 0;
@@ -207,12 +207,12 @@ int RouterConfig::ParseBaseConf() {
 int RouterConfig::ParseSvrConf() {
 	TiXmlDocument document;
 	if (!document.LoadFile(mSvrFile.c_str())) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseSvrConf Load configure(svr.xml) file failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseSvrConf Load configure(svr.xml) file failed", "");
 		return -1;
 	}
 	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseSvrConf Read root from configure(svr.xml) failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseSvrConf Read root from configure(svr.xml) failed", "");
 		return -1;
 	}
 	
@@ -251,14 +251,14 @@ int RouterConfig::ParseSvrConf() {
 				if (svr.mWeight > 0 && !mSvrQos->IsExistNode(svr)) {
 					mSvrQos->SaveNode(svr);
 				} else {
-					LOG_ERROR(kSvrLog, "RouterConfig::ParseSvrConf Parse configure from svr.xml occur error(weight<=0 or exists this SvrNet_t), line : %d", i);
+					H_LOG_ERROR(kSvrLog, "RouterConfig::ParseSvrConf Parse configure from svr.xml occur error(weight<=0 or exists this SvrNet_t), line : %d", i);
 				}
 			} else {
-				LOG_ERROR(kSvrLog, "RouterConfig::ParseSvrConf Parse configure from svr.xml occur error, line : %d", i);
+				H_LOG_ERROR(kSvrLog, "RouterConfig::ParseSvrConf Parse configure from svr.xml occur error, line : %d", i);
 			}
 		}
 	} else {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseSvrConf Get SVRS node from svr.xml failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseSvrConf Get SVRS node from svr.xml failed", "");
 		return -1;
 	}
 	return SetSvrMtime();
@@ -267,12 +267,12 @@ int RouterConfig::ParseSvrConf() {
 int RouterConfig::ParseAgntConf() {
 	TiXmlDocument document;
 	if (!document.LoadFile(mAgntFile.c_str())) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseAgntConf Load configure(agent.xml) file failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseAgntConf Load configure(agent.xml) file failed", "");
 		return -1;
 	}
 	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseAgntConf Read root from configure(agent.xml) failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseAgntConf Read root from configure(agent.xml) failed", "");
 		return -1;
 	}
 	
@@ -306,14 +306,14 @@ int RouterConfig::ParseAgntConf() {
 				if (agnt.mWeight >= 0 && !IsExistAgnt(agnt)) {
 					SaveAgnt(agnt);
 				} else {
-					LOG_ERROR(kSvrLog, "RouterConfig::ParseAgntConf Parse configure from agent.xml occur error(exists this Agnt_t), line : %d", i);
+					H_LOG_ERROR(kSvrLog, "RouterConfig::ParseAgntConf Parse configure from agent.xml occur error(exists this Agnt_t), line : %d", i);
 				}
 			} else {
-				LOG_ERROR(kSvrLog, "RouterConfig::ParseAgntConf Parse configure from agent.xml occur error, line : %d", i);
+				H_LOG_ERROR(kSvrLog, "RouterConfig::ParseAgntConf Parse configure from agent.xml occur error, line : %d", i);
 			}
 		}
 	} else {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseAgntConf Get AGENTS node from agent.xml failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseAgntConf Get AGENTS node from agent.xml failed", "");
 		return -1;
 	}
 	return SetAgntMtime();
@@ -322,12 +322,12 @@ int RouterConfig::ParseAgntConf() {
 int RouterConfig::ParseModifySvr() {
 	TiXmlDocument document;
 	if (!document.LoadFile(mSvrFile.c_str())) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseModifySvr Load configure(svr.xml) file failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseModifySvr Load configure(svr.xml) file failed", "");
 		return -1;
 	}
 	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseModifySvr Read root from configure(svr.xml) failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseModifySvr Read root from configure(svr.xml) failed", "");
 		return -1;
 	}
 
@@ -369,7 +369,7 @@ int RouterConfig::ParseModifySvr() {
 					mSvrQos->SaveNode(svr);
 				}
 			} else {
-				LOG_ERROR(kSvrLog, "RouterConfig::ParseModifySvr Parse configure from svr.xml occur error, line : %d", i);
+				H_LOG_ERROR(kSvrLog, "RouterConfig::ParseModifySvr Parse configure from svr.xml occur error, line : %d", i);
 			}
 		}
 		return SetSvrMtime();
@@ -380,12 +380,12 @@ int RouterConfig::ParseModifySvr() {
 int RouterConfig::ParseQosConf() {
 	TiXmlDocument document;
 	if (!document.LoadFile(mQosFile.c_str())) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseQosConf Load configure(qos.xml) file failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseQosConf Load configure(qos.xml) file failed", "");
 		return -1;
 	}
 	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseQosConf Read root from configure(qos.xml) failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterConfig::ParseQosConf Read root from configure(qos.xml) failed", "");
 		return -1;
 	}
 	
@@ -513,19 +513,19 @@ int RouterConfig::ParseQosConf() {
     }
 
 	if (!(mSvrQos->mReqCfg.mReqExtendRate > 0.001 && mSvrQos->mReqCfg.mReqExtendRate < 101)) {
-		LOG_ERROR(soft::GetLogPath(), "RouterConfig::ParseQosConf invalid !((REQ_EXTEND_RATE[%f] > 0.001) && (REQ_EXTEND_RATE[%f] < 101))", mSvrQos->mReqCfg.mReqExtendRate, mSvrQos->mReqCfg.mReqExtendRate);
+		H_LOG_ERROR(soft::GetLogPath(), "RouterConfig::ParseQosConf invalid !((REQ_EXTEND_RATE[%f] > 0.001) && (REQ_EXTEND_RATE[%f] < 101))", mSvrQos->mReqCfg.mReqExtendRate, mSvrQos->mReqCfg.mReqExtendRate);
 		return -1;
 	} else if (mSvrQos->mReqCfg.mReqErrMin >= 1) {
-		LOG_ERROR(soft::GetLogPath(), "RouterConfig::ParseQosConf invalid REQ_ERR_MIN[%f] > 1", mSvrQos->mReqCfg.mReqErrMin);
+		H_LOG_ERROR(soft::GetLogPath(), "RouterConfig::ParseQosConf invalid REQ_ERR_MIN[%f] > 1", mSvrQos->mReqCfg.mReqErrMin);
 		return -1;
 	} else if (mSvrQos->mDownCfg.mPossbileDownErrRate > 1 || mSvrQos->mDownCfg.mPossbileDownErrRate < 0.01) {
-		LOG_ERROR(soft::GetLogPath(), "RouterConfig::ParseQosConf invalid DOWN_ERR_RATE[%f] > 1 || DOWN_ERR_RATE[%f] < 0.01", mSvrQos->mDownCfg.mPossbileDownErrRate, mSvrQos->mDownCfg.mPossbileDownErrRate);
+		H_LOG_ERROR(soft::GetLogPath(), "RouterConfig::ParseQosConf invalid DOWN_ERR_RATE[%f] > 1 || DOWN_ERR_RATE[%f] < 0.01", mSvrQos->mDownCfg.mPossbileDownErrRate, mSvrQos->mDownCfg.mPossbileDownErrRate);
 		return -1;
 	} else if (mSvrQos->mDownCfg.mProbeTimes < 3) {
-		LOG_ERROR(soft::GetLogPath(), "RouterConfig::ParseQosConf invalid TIMES[%d] < 3", mSvrQos->mDownCfg.mProbeTimes);
+		H_LOG_ERROR(soft::GetLogPath(), "RouterConfig::ParseQosConf invalid TIMES[%d] < 3", mSvrQos->mDownCfg.mProbeTimes);
 		return -1;
 	} else if (mSvrQos->mReqCfg.mRebuildTm < 3) {
-		LOG_ERROR(soft::GetLogPath(), "RouterConfig::ParseQosConf invalid REBUILD_TM[%d] < 3", mSvrQos->mReqCfg.mRebuildTm);
+		H_LOG_ERROR(soft::GetLogPath(), "RouterConfig::ParseQosConf invalid REBUILD_TM[%d] < 3", mSvrQos->mReqCfg.mRebuildTm);
 		return -1;
 	}
 
@@ -594,7 +594,7 @@ bool RouterConfig::IsAgntChange(const struct Agnt_t& agnt) {
 bool RouterConfig::DelAgnt(const struct Agnt_t& agnt) {
 	std::vector<struct Agnt_t>::iterator it = std::find(mAgnts.begin(), mAgnts.end(), agnt);
 	if (it == mAgnts.end()) {
-		LOG_ERROR(kAgntLog, "RouterConfig::DelAgnt delete Agnt_t failed(cannot find the Agnt_t), HOST(%s),PORT(%d)", agnt.mHost, agnt.mPort);
+		H_LOG_ERROR(kAgntLog, "RouterConfig::DelAgnt delete Agnt_t failed(cannot find the Agnt_t), HOST(%s),PORT(%d)", agnt.mHost, agnt.mPort);
 		return false;
 	}
 	mAgnts.erase(it);
@@ -609,10 +609,10 @@ bool RouterConfig::SaveAgnt(const struct Agnt_t& agnt) {
 }
 
 bool RouterConfig::ModifyAgnt(const struct Agnt_t& agnt) {
-	LOG_DEBUG(kAgntLog, "RouterConfig::ModifyAgnt modify Agnt_t, HOST(%s),PORT(%d), WEIGHT(%d)", agnt.mHost, agnt.mPort, agnt.mWeight);
+	H_LOG_DEBUG(kAgntLog, "RouterConfig::ModifyAgnt modify Agnt_t, HOST(%s),PORT(%d), WEIGHT(%d)", agnt.mHost, agnt.mPort, agnt.mWeight);
 
 	if (agnt.mWeight < 0) {
-		LOG_ERROR(kAgntLog, "RouterConfig::ModifyAgnt modify Agnt_t failed, HOST(%s),PORT(%d), WEIGHT(%d)", agnt.mHost, agnt.mPort, agnt.mWeight);
+		H_LOG_ERROR(kAgntLog, "RouterConfig::ModifyAgnt modify Agnt_t failed, HOST(%s),PORT(%d), WEIGHT(%d)", agnt.mHost, agnt.mPort, agnt.mWeight);
 		return false;
 	} else if (agnt.mWeight == 0 && agnt.mStatus == kAgntInit) {
 		return DelAgnt(agnt);
@@ -625,19 +625,19 @@ bool RouterConfig::ModifyAgnt(const struct Agnt_t& agnt) {
 }
 
 bool RouterConfig::AddAgnt(const struct Agnt_t& agnt) {
-	LOG_DEBUG(kAgntLog, "RouterConfig::AddAgnt add Agnt_t success, HOST(%s),PORT(%d)", agnt.mHost, agnt.mPort);
+	H_LOG_DEBUG(kAgntLog, "RouterConfig::AddAgnt add Agnt_t success, HOST(%s),PORT(%d)", agnt.mHost, agnt.mPort);
 	mAgnts.push_back(agnt);
 	return true;
 }
 
 bool RouterConfig::CleanAgnt() {
-	LOG_DEBUG(kAgntLog, "RouterConfig::CleanAgnt clean Agnt_t success");
+	H_LOG_DEBUG(kAgntLog, "RouterConfig::CleanAgnt clean Agnt_t success");
 	mAgnts.clear();
 	return true;
 }
 
 int RouterConfig::GetAgntAll(struct Agnt_t buf[], int32_t start, int32_t size) {
-	LOG_DEBUG(kAgntLog, "RouterConfig::GetAgntAll get all Agnt_t start, [%d, %d]", start, size);
+	H_LOG_DEBUG(kAgntLog, "RouterConfig::GetAgntAll get all Agnt_t start, [%d, %d]", start, size);
 
 	int num = 0;
 	std::vector<struct Agnt_t>::iterator it = mAgnts.begin();

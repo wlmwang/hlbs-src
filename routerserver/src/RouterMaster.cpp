@@ -18,17 +18,17 @@ int RouterMaster::Reload() {
 	int ret = 0;
 	ret = config->ParseBaseConf();
 	if (ret == -1) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterMaster::Reload ParseBaseConf() failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterMaster::Reload ParseBaseConf() failed", "");
 		return -1;
 	}
 
 	if (!config->CleanAgnt() || config->ParseAgntConf() == -1) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterMaster::Reload ParseAgntConf() failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterMaster::Reload ParseAgntConf() failed", "");
 		return ret;
 	}
 
 	if (!config->Qos()->CleanNode().Ok() || config->ParseSvrConf() == -1) {
-		LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterMaster::Reload ParseSvrConf() failed", "");
+		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterMaster::Reload ParseSvrConf() failed", "");
 		return ret;
 	}
 	return ret;
