@@ -10,13 +10,11 @@
 #include "wCore.h"
 #include "wMisc.h"
 
-const char kSvrLog[] = "../log/svr.log";
-
 // 每次请求svr、agnt最多个数
 const int32_t	kMaxNum		= 64;
 
-const int8_t	kMaxHost	= 16;
-const int8_t	kMaxName	= 64;
+const uint8_t	kMaxHost	= 16;
+const uint8_t	kMaxName	= 128;
 
 const int32_t	kInitWeight = 100;
 const int32_t	kMaxWeight	= 1000;
@@ -31,12 +29,41 @@ enum SVR_RTN {
 	SVR_RTN_SYSERR      = -9998,    // 系统错误
 	SVR_RTN_GET_ROUTE   = -9997,
 	SVR_RTN_GET_SNAME   = -9996,
-	SVR_RTN_OFFSIDE   = -9995    
+	SVR_RTN_OFFSIDE   	= -9995    
 };
 
 using namespace hnet;
 
 #pragma pack(1)
+
+// 路由对应关系（SvrNet_t和Agnt_t多对多关系）
+struct Rlt_t {
+public:
+	int32_t mGid;
+	int32_t mXid;
+	char	mHost[kMaxHost];
+	int32_t mWeight;
+
+	Rlt_t(int32_t gid = 0, int32_t xid = 0, int32_t weight = kInitWeight): mGid(gid), mXid(xid), mWeight(weight) {
+		memset(mHost, 0, kMaxHost);
+	}
+
+	bool operator<(const Rlt_t &other) const {
+        if (mGid < other.mGid ) {
+            return true;
+        } else if (mGid > other.mGid) {
+        	return false;
+        } else if (mXid < other.mXid) {
+            return true;
+        } else {
+            return false;
+        }
+	}
+
+    bool operator==(const Rlt_t &other) const {
+        return mGid == other.mGid && mXid == other.mXid;
+    }
+};
 
 // 节点信息（基础信息）
 struct SvrNet_t {
