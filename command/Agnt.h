@@ -9,8 +9,6 @@
 
 #include "Svr.h"
 
-const char kAgntLog[] = "../log/agent.log";
-
 const int8_t	kAgntOk	  = 0;		// 有效agent客户端
 const int8_t 	kAgntInit = -1;		// 初始化
 const int8_t 	kAgntUreg = -2;		// agent已连接，router无此配置
@@ -23,16 +21,18 @@ using namespace hnet;
 // agent节点信息
 struct Agnt_t {
 public:
-	char	mHost[kMaxHost];
-	uint16_t mPort;		// 使用过程中，参考意义不大
-	int32_t mWeight;	// 是否删除（沿用SvrNet_t中的字段名）
-	int32_t	mVersion;
-	int8_t	mIdc;
-	int8_t 	mStatus;
-	int8_t 	mConfig;		// 是否是配置文件中记录
+	char 		mHost[kMaxHost];
+	uint16_t 	mPort;		// 使用过程中，参考意义不大
+	int32_t 	mWeight;	// 是否删除（沿用SvrNet_t中的字段名）
+	int32_t		mVersion;
+	int8_t		mIdc;
+	int8_t 		mStatus;
+	int8_t 		mConfig;		// 是否是配置文件中记录
+	char		mName[kMaxName];// 服务名
 
-	Agnt_t(): mPort(0), mWeight(1), mVersion(misc::GetTimeofday()/1000000), mIdc(0), mStatus(kAgntInit), mConfig(-1) {
+	Agnt_t(): mPort(0), mWeight(1), mVersion(misc::GetTimeofday()/1000000), mIdc(0), mStatus(kAgntInit), mConfig(0) {
 		memset(mHost, 0, kMaxHost);
+		memset(mName, 0, kMaxName);
 	}
 
 	// 忽略port

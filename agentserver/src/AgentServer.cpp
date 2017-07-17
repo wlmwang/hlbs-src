@@ -11,27 +11,27 @@
 #include "AgentChannelTask.h"
 
 int AgentServer::NewTcpTask(wSocket* sock, wTask** ptr) {
-	SAFE_NEW(AgentTcpTask(sock, Shard(sock)), *ptr);
+	HNET_NEW(AgentTcpTask(sock), *ptr);
     if (!*ptr) {
-        H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::NewTcpTask new() failed", "");
+        HNET_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::NewTcpTask new() failed", "");
         return -1;
     }
 	return 0;
 }
 
 int AgentServer::NewUnixTask(wSocket* sock, wTask** ptr) {
-	SAFE_NEW(AgentUnixTask(sock, Shard(sock)), *ptr);
+	HNET_NEW(AgentUnixTask(sock), *ptr);
     if (!*ptr) {
-        H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::NewUnixTask new() failed", "");
+        HNET_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::NewUnixTask new() failed", "");
         return -1;
     }
 	return 0;
 }
 
 int AgentServer::NewChannelTask(wSocket* sock, wTask** ptr) {
-	SAFE_NEW(AgentChannelTask(sock, Master<AgentMaster*>(), Shard(sock)), *ptr);
+	HNET_NEW(AgentChannelTask(sock, Master<AgentMaster*>()), *ptr);
     if (!*ptr) {
-        H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::NewChannelTask new() failed", "");
+        HNET_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::NewChannelTask new() failed", "");
         return -1;
     }
     return 0;

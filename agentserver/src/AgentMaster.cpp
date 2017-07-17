@@ -14,9 +14,9 @@ int AgentMaster::PrepareRun() {
 }
 
 int AgentMaster::NewWorker(uint32_t slot, wWorker** ptr) {
-    SAFE_NEW(AgentWorker(mTitle, slot, this), *ptr);
+    HNET_NEW(AgentWorker(mTitle, slot, this), *ptr);
     if (!*ptr) {
-        H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentMaster::NewWorker new() failed", "");
+        HNET_ERROR(soft::GetLogPath(), "%s : %s", "AgentMaster::NewWorker new() failed", "");
         return -1;
     }
     return 0;
@@ -27,19 +27,19 @@ int AgentMaster::Reload() {
 
 	int ret = config->ParseBaseConf();
 	if (ret == -1) {
-		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentMaster::Reload ParseBaseConf() failed", "");
+		HNET_ERROR(soft::GetLogPath(), "%s : %s", "AgentMaster::Reload ParseBaseConf() failed", "");
 		return ret;
 	}
 
 	ret = config->ParseRouterConf();
 	if (ret == -1) {
-		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentMaster::Reload ParseRouterConf() failed", "");
+		HNET_ERROR(soft::GetLogPath(), "%s : %s", "AgentMaster::Reload ParseRouterConf() failed", "");
 		return ret;
 	}
 
 	ret = config->ParseQosConf();
 	if (ret == -1) {
-		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentMaster::Reload ParseQosConf() failed", "");
+		HNET_ERROR(soft::GetLogPath(), "%s : %s", "AgentMaster::Reload ParseQosConf() failed", "");
 		return ret;
 	}
 	

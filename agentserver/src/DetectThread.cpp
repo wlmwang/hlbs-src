@@ -4,9 +4,10 @@
  * Copyright (C) Hupu, Inc.
  */
 
-#include "Detect.h"
-#include "DetectThread.h"
 #include "wLogger.h"
+#include "DetectThread.h"
+#include "Detect.h"
+#include "Define.h"
 #include "Svr.h"
 
 DetectThread::DetectThread(int32_t detectNodeInterval, int32_t detectLoopUsleep, int32_t detectMaxNode): wThread(false),
@@ -17,24 +18,24 @@ mDetectNodeInterval(detectNodeInterval), mPingTimeout(0.1), mTcpTimeout(0.8) {
     if (!inet_ntop(AF_INET, &mLocalIp, ip, sizeof(ip))) {
         memset(ip, 0, sizeof(ip));
     }
-    SAFE_NEW(wPing(ip), mPing);
-    SAFE_NEW(wTcpSocket(), mSocket);
-    SAFE_NEW(wMutex(), mDetectMutex);
-    SAFE_NEW(wMutex(), mResultMutex);
+    HNET_NEW(wPing(ip), mPing);
+    HNET_NEW(wTcpSocket(), mSocket);
+    HNET_NEW(wMutex(), mDetectMutex);
+    HNET_NEW(wMutex(), mResultMutex);
 }
 
 DetectThread::~DetectThread() {
-	SAFE_DELETE(mPing);
-	SAFE_DELETE(mSocket);
-	SAFE_DELETE(mDetectMutex);
-	SAFE_DELETE(mResultMutex);
+	HNET_DELETE(mPing);
+	HNET_DELETE(mSocket);
+	HNET_DELETE(mDetectMutex);
+	HNET_DELETE(mResultMutex);
 }
 
 int DetectThread::RunThread() {
     time_t nextReadtm = soft::TimeUnix();
     time_t readIntervaltm = 60;
 
-	H_LOG_DEBUG(kSvrLog, "DetectThread::RunThread detect start, UID(%d), GID(%d), EUID(%d), EGID(%d)", ::getuid(), ::getgid(), ::geteuid(), ::getegid());
+	HNET_DEBUG(kSvrLog, "DetectThread::RunThread detect start, UID(%d), GID(%d), EUID(%d), EGID(%d)", ::getuid(), ::getgid(), ::geteuid(), ::getegid());
 
 	while (true) {
         soft::TimeUpdate();
@@ -53,7 +54,7 @@ int DetectThread::RunThread() {
         mDetectMutex->Unlock();
 
         if (!stlNewadd.empty() || !stlNewdel.empty()) {
-        	H_LOG_DEBUG(kSvrLog, "DetectThread::RunThread newAdd size(%d), newDel size(%d)", stlNewadd.size(), stlNewdel.size());
+        	HNET_DEBUG(kSvrLog, "DetectThread::RunThread newAdd size(%d), newDel size(%d)", stlNewadd.size(), stlNewdel.size());
         }
 
         mNowTm = soft::TimeUnix();
@@ -67,7 +68,7 @@ int DetectThread::RunThread() {
                 if (itFind != mDetectMapAll.end()) {
                     mDetectMapAll.erase(itFind);
 
-                    H_LOG_DEBUG(kSvrLog, "DetectThread::RunThread success to delete detect node %s:%u", node.mIp.c_str(), node.mPort);
+                    HNET_DEBUG(kSvrLog, "DetectThread::RunThread success to delete detect node %s:%u", node.mIp.c_str(), node.mPort);
                 }
             }
             mResultMutex->Unlock();
@@ -114,7 +115,7 @@ int DetectThread::RunThread() {
                 if (itFind != mDetectMapAll.end()) {
                     mDetectMapAll.erase(itFind);
 
-                	H_LOG_ERROR(kSvrLog, "DetectThread::RunThread success to delete expire node %s:%u", stNode.mIp.c_str(), stNode.mPort);
+                	HNET_ERROR(kSvrLog, "DetectThread::RunThread success to delete expire node %s:%u", stNode.mIp.c_str(), stNode.mPort);
                 }
             }
             mResultMutex->Unlock();
@@ -124,7 +125,7 @@ int DetectThread::RunThread() {
         if (detectCount > 0 || expireNodeSize > 0) {
             if (detectCount >= mDetectMaxNode) {
             	// 清除
-            	H_LOG_ERROR(kSvrLog, "DetectThread::RunThread detect node count(%d) >= detect max node(%d), clean all!", detectCount, mDetectMaxNode);
+            	HNET_ERROR(kSvrLog, "DetectThread::RunThread detect node count(%d) >= detect max node(%d), clean all!", detectCount, mDetectMaxNode);
 
                 mResultMutex->Lock();
             	mDetectMapAll.clear();
@@ -133,7 +134,7 @@ int DetectThread::RunThread() {
             if (nextReadtm + readIntervaltm < mNowTm) {
                 nextReadtm = mNowTm;
 
-                H_LOG_DEBUG(kSvrLog, "DetectThread::RunThread detect node count(%d), expire node count(%d)", detectCount, expireNodeSize);
+                HNET_DEBUG(kSvrLog, "DetectThread::RunThread detect node count(%d), expire node count(%d)", detectCount, expireNodeSize);
             }
         }
         usleep(mDetectLoopUsleep);
@@ -198,11 +199,11 @@ int DetectThread::DoDetectNode(const struct DetectNode_t& node, struct DetectRes
     if (rc == 0) {
     	elapse = connElapse == -1 ? pingElapse : connElapse;
 
-		H_LOG_DEBUG(kSvrLog, "DetectThread::DoDetectNode detect Success, HOST(%s),PORT(%d),allElapse(%d),RC(%d),pingElapse(%d),connElapse(%d),elapse(%d),RET(%d)",
+		HNET_DEBUG(kSvrLog, "DetectThread::DoDetectNode detect Success, HOST(%s),PORT(%d),allElapse(%d),RC(%d),pingElapse(%d),connElapse(%d),elapse(%d),RET(%d)",
 				node.mIp.c_str(), node.mPort, allElapse, rc, pingElapse, connElapse, elapse, ret);
     } else {
 
-		H_LOG_ERROR(kSvrLog, "DetectThread::DoDetectNode detect failed, HOST(%s),PORT(%d),allElapse(%d),RC(%d),pingElapse(%d),connElapse(%d),elapse(%d),RET(%d)",
+		HNET_ERROR(kSvrLog, "DetectThread::DoDetectNode detect failed, HOST(%s),PORT(%d),allElapse(%d),RC(%d),pingElapse(%d),connElapse(%d),elapse(%d),RET(%d)",
 				node.mIp.c_str(), node.mPort, allElapse, rc, pingElapse, connElapse, elapse, ret);
     }
     

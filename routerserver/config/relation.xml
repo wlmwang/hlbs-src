@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ROOT>
+	<RELATIONS>
+		<!--调用关系-->
+		<RELATION GID="1" XID="1" HOST="192.168.8.49" WEIGHT="1"/>
+		<RELATION GID="1" XID="1" HOST="192.168.8.50" WEIGHT="1"/>
+		<RELATION GID="1" XID="2" HOST="192.168.8.49" WEIGHT="1"/>
+	</RELATIONS>
+</ROOT>

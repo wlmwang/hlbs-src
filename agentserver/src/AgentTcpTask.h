@@ -15,7 +15,7 @@ using namespace hnet;
 
 class AgentTcpTask : public wTcpTask {
 public:
-	AgentTcpTask(wSocket *socket, int32_t type);
+	AgentTcpTask(wSocket *socket, int32_t type = 0);
 
 	int GetSvrByGXid(struct Request_t *request);
 	int ReportSvr(struct Request_t *request);

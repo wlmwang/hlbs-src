@@ -15,7 +15,7 @@ using namespace hnet;
 
 class RouterTcpTask : public wTcpTask {
 public:
-	RouterTcpTask(wSocket *socket, int32_t type);
+	RouterTcpTask(wSocket *socket, int32_t type = 0);
 	
     virtual int Connect();
     virtual int DisConnect();

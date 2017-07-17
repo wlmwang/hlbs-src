@@ -13,22 +13,22 @@ const char kRouterXml[]	= "../config/router.xml";
 const char kQosXml[]	= "../config/qos.xml";
 
 AgentConfig::AgentConfig(): mRouterFile(kRouterXml), mQosFile(kQosXml), mBaseFile(kConfXml) {
-	SAFE_NEW(SvrQos, mSvrQos);
+	HNET_NEW(SvrQos, mSvrQos);
 }
 
 AgentConfig::~AgentConfig() {
-	SAFE_DELETE(mSvrQos);
+	HNET_DELETE(mSvrQos);
 }
 
 int AgentConfig::ParseBaseConf() {
 	TiXmlDocument document;
 	if (!document.LoadFile(mBaseFile.c_str())) {
-		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseBaseConf Load configure(conf.xml) file failed", "");
+		HNET_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseBaseConf Load configure(conf.xml) file failed", "");
 		return -1;
 	}
 	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
-		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseBaseConf Read root from configure(conf.xml) failed", "");
+		HNET_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseBaseConf Read root from configure(conf.xml) failed", "");
 		return -1;
 	}
 
@@ -53,11 +53,11 @@ int AgentConfig::ParseBaseConf() {
 				mSvrQos->mIdc = atoi(idc);
 			}
 		} else {
-			H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseBaseConf Get SERVER host or port from conf.xml failed", "");
+			HNET_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseBaseConf Get SERVER host or port from conf.xml failed", "");
 			return -1;
 		}
 	} else {
-		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseBaseConf Get SERVER node from conf.xml failed", "");
+		HNET_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseBaseConf Get SERVER node from conf.xml failed", "");
 		return -1;
 	}
 	return 0;
@@ -66,12 +66,12 @@ int AgentConfig::ParseBaseConf() {
 int AgentConfig::ParseRouterConf() {
 	TiXmlDocument document;
 	if (!document.LoadFile(mRouterFile.c_str())) {
-		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseRouterConf Load configure(router.xml) file failed", "");
+		HNET_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseRouterConf Load configure(router.xml) file failed", "");
 		return -1;
 	}
 	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
-		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseRouterConf Read root from configure(router.xml) failed", "");
+		HNET_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseRouterConf Read root from configure(router.xml) failed", "");
 		return -1;
 	}
 
@@ -86,11 +86,11 @@ int AgentConfig::ParseRouterConf() {
 				SetStrConf("router_host", host);
 				SetIntConf("router_port", atoi(port));
 			} else {
-				H_LOG_ERROR(soft::GetLogPath(), "AgentConfig::ParseRouterConf Parse configure from router.xml occur error(%d)", i);
+				HNET_ERROR(soft::GetLogPath(), "AgentConfig::ParseRouterConf Parse configure from router.xml occur error(%d)", i);
 			}
 		}
 	} else {
-		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseRouterConf Get ROUTERS node from router.xml failed", "");
+		HNET_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseRouterConf Get ROUTERS node from router.xml failed", "");
 		return -1;
 	}
 	return 0;
@@ -99,12 +99,12 @@ int AgentConfig::ParseRouterConf() {
 int AgentConfig::ParseQosConf() {
 	TiXmlDocument document;
 	if (!document.LoadFile(mQosFile.c_str())) {
-		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseQosConf Load configure(qos.xml) file failed", "");
+		HNET_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseQosConf Load configure(qos.xml) file failed", "");
 		return -1;
 	}
 	TiXmlElement *pRoot = document.FirstChildElement();
 	if (NULL == pRoot) {
-		H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseQosConf Read root from configure(qos.xml) failed", "");
+		HNET_ERROR(soft::GetLogPath(), "%s : %s", "AgentConfig::ParseQosConf Read root from configure(qos.xml) failed", "");
 		return -1;
 	}
 	
@@ -232,19 +232,19 @@ int AgentConfig::ParseQosConf() {
     }
 
 	if (!(mSvrQos->mReqCfg.mReqExtendRate > 0.001 && mSvrQos->mReqCfg.mReqExtendRate < 101)) {
-		H_LOG_ERROR(soft::GetLogPath(), "AgentConfig::ParseQosConf invalid !((REQ_EXTEND_RATE[%f] > 0.001) && (REQ_EXTEND_RATE[%f] < 101))", mSvrQos->mReqCfg.mReqExtendRate, mSvrQos->mReqCfg.mReqExtendRate);
+		HNET_ERROR(soft::GetLogPath(), "AgentConfig::ParseQosConf invalid !((REQ_EXTEND_RATE[%f] > 0.001) && (REQ_EXTEND_RATE[%f] < 101))", mSvrQos->mReqCfg.mReqExtendRate, mSvrQos->mReqCfg.mReqExtendRate);
 		return -1;
 	} else if (mSvrQos->mReqCfg.mReqErrMin >= 1) {
-		H_LOG_ERROR(soft::GetLogPath(), "AgentConfig::ParseQosConf invalid REQ_ERR_MIN[%f] > 1", mSvrQos->mReqCfg.mReqErrMin);
+		HNET_ERROR(soft::GetLogPath(), "AgentConfig::ParseQosConf invalid REQ_ERR_MIN[%f] > 1", mSvrQos->mReqCfg.mReqErrMin);
 		return -1;
 	} else if (mSvrQos->mDownCfg.mPossbileDownErrRate > 1 || mSvrQos->mDownCfg.mPossbileDownErrRate < 0.01) {
-		H_LOG_ERROR(soft::GetLogPath(), "AgentConfig::ParseQosConf invalid DOWN_ERR_RATE[%f] > 1 || DOWN_ERR_RATE[%f] < 0.01", mSvrQos->mDownCfg.mPossbileDownErrRate, mSvrQos->mDownCfg.mPossbileDownErrRate);
+		HNET_ERROR(soft::GetLogPath(), "AgentConfig::ParseQosConf invalid DOWN_ERR_RATE[%f] > 1 || DOWN_ERR_RATE[%f] < 0.01", mSvrQos->mDownCfg.mPossbileDownErrRate, mSvrQos->mDownCfg.mPossbileDownErrRate);
 		return -1;
 	} else if (mSvrQos->mDownCfg.mProbeTimes < 3) {
-		H_LOG_ERROR(soft::GetLogPath(), "AgentConfig::ParseQosConf invalid TIMES[%d] < 3", mSvrQos->mDownCfg.mProbeTimes);
+		HNET_ERROR(soft::GetLogPath(), "AgentConfig::ParseQosConf invalid TIMES[%d] < 3", mSvrQos->mDownCfg.mProbeTimes);
 		return -1;
 	} else if (mSvrQos->mReqCfg.mRebuildTm < 3) {
-		H_LOG_ERROR(soft::GetLogPath(), "AgentConfig::ParseQosConf invalid REBUILD_TM[%d] < 3", mSvrQos->mReqCfg.mRebuildTm);
+		HNET_ERROR(soft::GetLogPath(), "AgentConfig::ParseQosConf invalid REBUILD_TM[%d] < 3", mSvrQos->mReqCfg.mRebuildTm);
 		return -1;
 	}
 

@@ -28,7 +28,7 @@ int RouterChannelTask::ReloadSvrRes(struct Request_t *request) {
 		for (int32_t i = 0; i < cmd->mNum; i++) {
 			config->Qos()->SaveNode(cmd->mSvr[i]);
 		}
-		Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(cmd), sizeof(struct SvrResReload_t));
+		Server<RouterServer*>()->BroadcastSvr<struct SvrResReload_t>(reinterpret_cast<char*>(cmd), sizeof(struct SvrResReload_t));
 	}
 	return 0;
 }
@@ -40,7 +40,7 @@ int RouterChannelTask::SyncSvrRes(struct Request_t *request) {
 		for (int32_t i = 0; i < cmd->mNum; i++) {
 			config->Qos()->SaveNode(cmd->mSvr[i]);
 		}
-		Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(cmd), sizeof(struct SvrResSync_t));
+		Server<RouterServer*>()->BroadcastSvr<struct SvrResSync_t>(reinterpret_cast<char*>(cmd), sizeof(struct SvrResSync_t));
 	}
 	return 0;
 }

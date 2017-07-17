@@ -6,33 +6,32 @@
 
 #include "RouterServer.h"
 #include "RouterMaster.h"
-#include "RouterConfig.h"
 #include "RouterTcpTask.h"
 #include "RouterHttpTask.h"
 #include "RouterChannelTask.h"
 
 int RouterServer::NewTcpTask(wSocket* sock, wTask** ptr) {
-	SAFE_NEW(RouterTcpTask(sock, Shard(sock)), *ptr);
+	HNET_NEW(RouterTcpTask(sock), *ptr);
 	if (!*ptr) {
-        H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::NewTcpTask new() failed", "");
+        HNET_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::NewTcpTask new() failed", "");
         return -1;
 	}
 	return 0;
 }
 
 int RouterServer::NewHttpTask(wSocket* sock, wTask** ptr) {
-	SAFE_NEW(RouterHttpTask(sock, Shard(sock)), *ptr);
+	HNET_NEW(RouterHttpTask(sock), *ptr);
     if (!*ptr) {
-        H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::NewHttpTask new() failed", "");
+        HNET_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::NewHttpTask new() failed", "");
         return -1;
     }
 	return 0;
 }
 
 int RouterServer::NewChannelTask(wSocket* sock, wTask** ptr) {
-	SAFE_NEW(RouterChannelTask(sock, Master<RouterMaster*>(), Shard(sock)), *ptr);
+	HNET_NEW(RouterChannelTask(sock, Master<RouterMaster*>()), *ptr);
     if (!*ptr) {
-        H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::RouterChannelTask new() failed", "");
+        HNET_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::RouterChannelTask new() failed", "");
         return -1;
     }
     return 0;
@@ -45,7 +44,7 @@ int RouterServer::PrepareRun() {
     std::string host;
     int16_t port = 0;
     if (!config->GetConf("control_host", &host) || !config->GetConf("control_port", &port)) {
-        H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::PrepareRun () failed", "host or port invalid");
+        HNET_ERROR(soft::GetLogPath(), "%s : %s", "RouterServer::PrepareRun () failed", "host or port invalid");
         return -1;
     }
 

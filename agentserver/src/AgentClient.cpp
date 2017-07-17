@@ -10,9 +10,9 @@
 #include "AgentClientTask.h"
 
 int AgentClient::NewTcpTask(wSocket* sock, wTask** ptr, int type) {
-	SAFE_NEW(AgentClientTask(sock, type), *ptr);
+	HNET_NEW(AgentClientTask(sock, type), *ptr);
     if (!*ptr) {
-        H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentClient::NewTcpTask new() failed", "");
+        HNET_ERROR(soft::GetLogPath(), "%s : %s", "AgentClient::NewTcpTask new() failed", "");
         return -1;
     }
 	return 0;
@@ -21,7 +21,7 @@ int AgentClient::NewTcpTask(wSocket* sock, wTask** ptr, int type) {
 int AgentClient::PrepareRun() {
     wConfig* config = Config<AgentConfig*>();
     if (!config || !config->GetConf("router_host", &mHost) || !config->GetConf("router_port", &mPort)) {
-    	H_LOG_ERROR(soft::GetLogPath(), "%s : %s", "AgentClient::PrepareRun GetConf() failed", "");
+    	HNET_ERROR(soft::GetLogPath(), "%s : %s", "AgentClient::PrepareRun GetConf() failed", "");
     	return -1;
     }
 

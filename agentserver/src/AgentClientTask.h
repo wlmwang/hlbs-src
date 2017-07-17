@@ -15,11 +15,13 @@ using namespace hnet;
 
 class AgentClientTask : public wTcpTask {
 public:
-	AgentClientTask(wSocket *socket, int32_t type);
+	AgentClientTask(wSocket *socket, int32_t type = 0);
 
     virtual int Connect();
     virtual int ReConnect();
 
+    int InitSvrReq(struct Request_t *request);
+    
 	int InitSvrRes(struct Request_t *request);
 	int ReloadSvrRes(struct Request_t *request);
 	int SyncSvrRes(struct Request_t *request);

@@ -9,6 +9,7 @@
 #include <cmath>
 #include "wLogger.h"
 #include "SvrQos.h"
+#include "Define.h"
 
 SvrQos::~SvrQos() {
 	CleanNode();
@@ -43,33 +44,33 @@ bool SvrQos::IsVerChange(const struct SvrNet_t& svr) {
 	return true;
 }
 
-const wStatus& SvrQos::SaveNode(const struct SvrNet_t& svr) {
-	H_LOG_DEBUG(kSvrLog, "SvrQos::SaveNode save SvrNet_t start, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
-			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
-
+int SvrQos::SaveNode(const struct SvrNet_t& svr) {
 	if (IsExistNode(svr)) {
 		return ModifyNode(svr);
 	}
 	return AddNode(svr);
 }
 
-const wStatus& SvrQos::AddNode(const struct SvrNet_t& svr) {
+int SvrQos::AddNode(const struct SvrNet_t& svr) {
 	if (svr.mWeight <= 0) {
-		H_LOG_ERROR(kSvrLog, "SvrQos::AddNode add SvrNet_t failed(weight<=0), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		HNET_ERROR(kSvrLog, "SvrQos::AddNode add SvrNet_t failed(weight<=0), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
-
-		return mStatus = wStatus::IOError("SvrQos::AddNode failed, the SvrNet_t(weight<=0) will be ignore", "");
+		
+		return -1;
 	}
 
-	struct SvrStat_t* stat;
-	SAFE_NEW(SvrStat_t, stat);
+	struct SvrStat_t* stat = NULL;
+	HNET_NEW(SvrStat_t, stat);
+	if (!stat) {
+		return -1;
+	}
 
-	if (!LoadStatCfg(svr, stat).Ok()) {
-		H_LOG_ERROR(kSvrLog, "SvrQos::AddNode add SvrNet_t failed(LoadStatCfg failed), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+	if (LoadStatCfg(svr, stat) == -1) {
+		HNET_ERROR(kSvrLog, "SvrQos::AddNode add SvrNet_t failed(LoadStatCfg failed), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
-		SAFE_DELETE(stat);
-		return mStatus;
+		HNET_DELETE(stat);
+		return -1;
 	}
 
 	// 重建绝对时间
@@ -77,21 +78,21 @@ const wStatus& SvrQos::AddNode(const struct SvrNet_t& svr) {
 	misc::GetTimeofday(&stat->mInfo.mBuildTm);
 	mMapReqSvr.insert(std::make_pair(svr, stat));
 
-	H_LOG_DEBUG(kSvrLog, "SvrQos::AddNode add SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+	HNET_DEBUG(kSvrLog, "SvrQos::AddNode add SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
 	return AddRouteNode(svr, stat);
 }
 
-const wStatus& SvrQos::ModifyNode(const struct SvrNet_t& svr) {
-	H_LOG_DEBUG(kSvrLog, "SvrQos::ModifyNode modify SvrNet_t start, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+int SvrQos::ModifyNode(const struct SvrNet_t& svr) {
+	HNET_DEBUG(kSvrLog, "SvrQos::ModifyNode modify SvrNet_t start, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
 	if (svr.mWeight < 0) {
-		H_LOG_ERROR(kSvrLog, "SvrQos::ModifyNode modify SvrNet_t failed(weight < 0), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		HNET_ERROR(kSvrLog, "SvrQos::ModifyNode modify SvrNet_t failed(weight < 0), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
-		return mStatus = wStatus::IOError("SvrQos::ModifyNode failed, the SvrNet_t(weight < 0) will be ignore", "");
+		return -1;
 	} else if (svr.mWeight == 0) {
 		// 权重为0删除节点
 		return DeleteNode(svr);
@@ -104,50 +105,70 @@ const wStatus& SvrQos::ModifyNode(const struct SvrNet_t& svr) {
 	}
 }
 
-const wStatus& SvrQos::DeleteNode(const struct SvrNet_t& svr) {
+int SvrQos::DeleteNode(const struct SvrNet_t& svr) {
 	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
     if (mapReqIt == mMapReqSvr.end()) {
-		H_LOG_ERROR(kSvrLog, "SvrQos::DeleteNode delete SvrNet_t failed(cannot find the SvrNet_t), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		HNET_ERROR(kSvrLog, "SvrQos::DeleteNode delete SvrNet_t failed(cannot find the SvrNet_t), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
-        return mStatus = wStatus::IOError("SvrQos::DeleteNode failed, cannot find the SvrNet_t", "");
+        return -1;
     }
 
     struct SvrStat_t* stat = mapReqIt->second;
     mMapReqSvr.erase(mapReqIt);
     DeleteRouteNode(svr);
-    SAFE_DELETE(stat);
+    HNET_DELETE(stat);
 
-	H_LOG_DEBUG(kSvrLog, "SvrQos::DeleteNode delete SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+	HNET_DEBUG(kSvrLog, "SvrQos::DeleteNode delete SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
-    return mStatus.Clear();
+    return 0;
 }
 
-const wStatus& SvrQos::LoadStatCfg(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
+int SvrQos::LoadStatCfg(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
 	stat->mInfo.InitInfo(svr);
 	stat->mReqCfg = mReqCfg;
-	return mStatus.Clear();
+	return 0;
 }
 
-const wStatus& SvrQos::GetNodeAll(struct SvrNet_t buf[], int32_t* num, int32_t start, int32_t size) {
-	H_LOG_DEBUG(kSvrLog, "SvrQos::GetNodeAll get all SvrNet_t start, [%d, %d]", start, size);
+int SvrQos::GetNodeAll(struct SvrNet_t buf[], int32_t num, int32_t start, int32_t size) {
+	HNET_DEBUG(kSvrLog, "SvrQos::GetNodeAll getall SvrNet_t start, [%d, %d, %d]", num, start, size);
 
-	*num = 0;
-	MapSvrIt_t mapReqIt = mMapReqSvr.begin();
-	for (std::advance(mapReqIt, start); mapReqIt != mMapReqSvr.end() && *num < size; mapReqIt++) {
-		buf[(*num)++] = mapReqIt->first;
+	int i = 0;
+	if (static_cast<size_t>(start) >= mMapReqSvr.size()) {
+		return i;
 	}
-	return mStatus.Clear();
+	MapSvrIt_t mapReqIt = mMapReqSvr.begin();
+	for (std::advance(mapReqIt, start); num < size && mapReqIt != mMapReqSvr.end(); mapReqIt++) {
+		buf[num++] = mapReqIt->first;
+		i++;
+	}
+	return i;
 }
 
-const wStatus& SvrQos::AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
+int SvrQos::FilterSvrBySid(struct SvrNet_t buf[], int32_t size, const std::vector<struct Rlt_t>& rlts) {
+	int num = 0;
+	for (int32_t i = 0; i < size; i++) {
+		struct Rlt_t rlt(buf[i].mGid, buf[i].mXid);
+		if (std::find(rlts.begin(), rlts.end(), rlt) != rlts.end()) {
+			buf[num++] = buf[i];
+		}
+	}
+
+	HNET_DEBUG(kSvrLog, "SvrQos::FilterSvrBySid filter all SvrNet_t start, [%d, %d, %d]", size, rlts.size(), num);
+	return num;
+}
+
+int SvrQos::AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
     struct SvrKind_t kind(svr);
     kind.mRebuildTm = stat->mReqCfg.mRebuildTm;
 
     MultiMapNode_t*& table = mRouteTable[kind];
-    if (table == NULL) {
-    	SAFE_NEW(MultiMapNode_t, table);
+    if (!table) {
+    	HNET_NEW(MultiMapNode_t, table);
+    	if (!table) {
+    		return -1;
+    	}
     }
 
     // 路由表中已有相关kind（类型）节点，取优先级最低的那个作为新节点统计信息的默认值
@@ -172,24 +193,24 @@ const wStatus& SvrQos::AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t
     struct SvrNode_t node(svr, stat);
     table->insert(std::make_pair(node.mKey, node));
 
-	H_LOG_DEBUG(kSvrLog, "SvrQos::AddRouteNode add SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d),"
+	HNET_DEBUG(kSvrLog, "SvrQos::AddRouteNode add SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d),"
 			"ReqLimit(%d),ReqAll(%d),ReqSuc(%d),ReqErrRet(%d),ReqErrTm(%d),LoadX(%f),PreAll(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight,stat->mReqCfg.mReqLimit,
 			stat->mInfo.mReqAll,stat->mInfo.mReqSuc,stat->mInfo.mReqErrRet,stat->mInfo.mReqErrTm,stat->mInfo.mLoadX,stat->mInfo.mReqAll);
-    return mStatus.Clear();
+    
+    return 0;
 }
 
-
-const wStatus& SvrQos::DeleteRouteNode(const struct SvrNet_t& svr) {
+int SvrQos::DeleteRouteNode(const struct SvrNet_t& svr) {
     struct SvrKind_t kind(svr);
     MapKindIt_t rtIt = mRouteTable.find(kind);
     MapNodeIt_t etIt = mErrTable.find(kind);
 
 	if (rtIt == mRouteTable.end() && etIt == mErrTable.end()) {
-		H_LOG_ERROR(kSvrLog, "SvrQos::DeleteRouteNode delete SvrNet_t failed(cannot find node from mRouteTable or mErrTable), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		HNET_ERROR(kSvrLog, "SvrQos::DeleteRouteNode delete SvrNet_t failed(cannot find node from mRouteTable or mErrTable), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
-        return mStatus = wStatus::IOError("SvrQos::DeleteRouteNode failed, cannot find the SvrNet from mRouteTable or mErrTable", "");
+        return -1;
     }
 
 	// 节点路由
@@ -202,7 +223,7 @@ const wStatus& SvrQos::DeleteRouteNode(const struct SvrNet_t& svr) {
                 	table->erase(it++);
                     if (table->empty()) {
                         mRouteTable.erase(rtIt);
-                        SAFE_DELETE(table);
+                        HNET_DELETE(table);
                     }
                     break;
                 } else {
@@ -210,7 +231,7 @@ const wStatus& SvrQos::DeleteRouteNode(const struct SvrNet_t& svr) {
                 }
             }
         } else {
-    		H_LOG_DEBUG(kSvrLog, "SvrQos::DeleteRouteNode mRouteTable second(table) is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+    		HNET_DEBUG(kSvrLog, "SvrQos::DeleteRouteNode mRouteTable second(table) is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
     				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
         }
 	}
@@ -225,7 +246,7 @@ const wStatus& SvrQos::DeleteRouteNode(const struct SvrNet_t& svr) {
 					node->erase(it++);
 					if (node->empty()) {
                         mErrTable.erase(etIt);
-                        SAFE_DELETE(node);
+                        HNET_DELETE(node);
 					}
 					break;
 				} else {
@@ -233,23 +254,23 @@ const wStatus& SvrQos::DeleteRouteNode(const struct SvrNet_t& svr) {
 				}
 			}
 		} else {
-    		H_LOG_DEBUG(kSvrLog, "SvrQos::DeleteRouteNode mErrTable is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+    		HNET_DEBUG(kSvrLog, "SvrQos::DeleteRouteNode mErrTable is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
     				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		}
 	}
-	return mStatus.Clear();
+	return 0;
 }
 
-const wStatus& SvrQos::ModifyRouteNode(const struct SvrNet_t& svr) {
+int SvrQos::ModifyRouteNode(const struct SvrNet_t& svr) {
     struct SvrKind_t kind(svr);
     MapKindIt_t rtIt = mRouteTable.find(kind);
     MapNodeIt_t etIt = mErrTable.find(kind);
 
 	if (rtIt == mRouteTable.end() && etIt == mErrTable.end()) {
-		H_LOG_ERROR(kSvrLog, "SvrQos::ModifyRouteNode modify SvrNet_t failed(cannot find node from mRouteTable or mErrTable), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		HNET_ERROR(kSvrLog, "SvrQos::ModifyRouteNode modify SvrNet_t failed(cannot find node from mRouteTable or mErrTable), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
-        return mStatus = wStatus::IOError("SvrQos::ModifyRouteNode failed, cannot find the SvrNet from mRouteTable or mErrTable", "");
+        return -1;
     }
 
 	// 节点路由
@@ -270,7 +291,7 @@ const wStatus& SvrQos::ModifyRouteNode(const struct SvrNet_t& svr) {
                 }
             }
         } else {
-    		H_LOG_DEBUG(kSvrLog, "SvrQos::ModifyRouteNode mRouteTable second(table) is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+    		HNET_DEBUG(kSvrLog, "SvrQos::ModifyRouteNode mRouteTable second(table) is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
     				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
         }
 	}
@@ -293,14 +314,14 @@ const wStatus& SvrQos::ModifyRouteNode(const struct SvrNet_t& svr) {
 				}
 			}
 		} else {
-    		H_LOG_DEBUG(kSvrLog, "SvrQos::ModifyRouteNode mRouteTable second(table) is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+    		HNET_DEBUG(kSvrLog, "SvrQos::ModifyRouteNode mRouteTable second(table) is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
     				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		}
 	}
-	return mStatus.Clear();
+	return 0;
 }
 
-const wStatus& SvrQos::CleanNode() {
+int SvrQos::CleanNode() {
     if (mMapReqSvr.size() > 0) {
     	struct SvrNet_t svr;
     	struct SvrStat_t* stat;
@@ -308,9 +329,9 @@ const wStatus& SvrQos::CleanNode() {
     		svr = mapReqIt->first;
     		stat = mapReqIt->second;
     		DeleteRouteNode(svr);
-    		SAFE_DELETE(stat);
+    		HNET_DELETE(stat);
     	}
     	mMapReqSvr.clear();
     }
-    return mStatus.Clear();
+    return 0;
 }

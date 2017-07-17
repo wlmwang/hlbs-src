@@ -18,35 +18,46 @@ RouterHttpTask::RouterHttpTask(wSocket *socket, int32_t type) : wHttpTask(socket
 	On(CMD_SVR_HTTP, SVR_HTTP_COVER, &RouterHttpTask::CoverSvrReq, this);
 	On(CMD_SVR_HTTP, SVR_HTTP_LIST, &RouterHttpTask::ListSvrReq, this);
 
-	On(CMD_AGNT_HTTP, AGNT_HTTP_RELOAD, &RouterHttpTask::ReloadAgntReq, this);
-	On(CMD_AGNT_HTTP, AGNT_HTTP_SAVE, &RouterHttpTask::SaveAgntReq, this);
-	On(CMD_AGNT_HTTP, AGNT_HTTP_COVER, &RouterHttpTask::CoverAgntReq, this);
+	// v3.0.8起，agent将自动注册到router上
+	//On(CMD_AGNT_HTTP, AGNT_HTTP_RELOAD, &RouterHttpTask::ReloadAgntReq, this);
+	//On(CMD_AGNT_HTTP, AGNT_HTTP_SAVE, &RouterHttpTask::SaveAgntReq, this);
+	//On(CMD_AGNT_HTTP, AGNT_HTTP_COVER, &RouterHttpTask::CoverAgntReq, this);
 	On(CMD_AGNT_HTTP, AGNT_HTTP_LIST, &RouterHttpTask::ListAgntReq, this);
 
 	On(CMD_MASTER_HTTP, MASTER_HTTP_RESTART, &RouterHttpTask::MasterRestartReq, this);
 	On(CMD_MASTER_HTTP, MASTER_HTTP_RELOAD, &RouterHttpTask::MasterReloadReq, this);
 	On(CMD_MASTER_HTTP, MASTER_HTTP_STOP, &RouterHttpTask::MasterStopReq, this);
-	On(CMD_MASTER_HTTP, MASTER_HTTP_INFO, &RouterHttpTask::MasterInfoReq, this);	
+	On(CMD_MASTER_HTTP, MASTER_HTTP_INFO, &RouterHttpTask::MasterInfoReq, this);
+
+	On(CMD_RLT_HTTP, RLT_HTTP_RELOAD, &RouterHttpTask::ReloadRltReq, this);
+	On(CMD_RLT_HTTP, RLT_HTTP_SAVE, &RouterHttpTask::SaveRltReq, this);
+	On(CMD_RLT_HTTP, RLT_HTTP_COVER, &RouterHttpTask::CoverRltReq, this);
+	On(CMD_RLT_HTTP, RLT_HTTP_LIST, &RouterHttpTask::ListRltReq, this);
 }
 
 int RouterHttpTask::ReloadSvrReq(struct Request_t *request) {
 	RouterConfig* config = Config<RouterConfig*>();
+	RouterServer* server = Server<RouterServer*>();
 
 	// 重新加载配置文件
 	config->Qos()->CleanNode();
 	config->ParseSvrConf();
 	config->WriteFileSvr();
 
-	int32_t start = 0;
+	int32_t start = 0, i = 0;
 	struct SvrResReload_t vRRt;
 	do {
-		if (!config->Qos()->GetNodeAll(vRRt.mSvr, &vRRt.mNum, start, kMaxNum).Ok() || vRRt.mNum <= 0) {
+		vRRt.mNum = config->Qos()->GetNodeAll(vRRt.mSvr, i, start, kMaxNum);
+		if (vRRt.mNum <= 0) {
 			break;
 		}
-		Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+
+		server->BroadcastSvr<struct SvrResReload_t>(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 		AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
+		
 		vRRt.mCode++;
 		start += vRRt.mNum;
+		i = 0;
 	} while (vRRt.mNum >= kMaxNum);
 
 	Json::Value root;
@@ -63,6 +74,8 @@ int RouterHttpTask::SaveSvrReq(struct Request_t *request) {
 		return -1;
 	}
 	RouterConfig* config = Config<RouterConfig*>();
+	RouterServer* server = Server<RouterServer*>();
+
 	std::string svrs = http::UrlDecode(FormGet("svrs"));
 	if (!svrs.empty()) {
 		Json::Value root;
@@ -85,21 +98,20 @@ int RouterHttpTask::SaveSvrReq(struct Request_t *request) {
 
 				// 广播agentsvrd
 				if (vRRt.mNum >= kMaxNum) {
-					Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+					server->BroadcastSvr<struct SvrResSync_t>(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 					AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 					vRRt.mCode++;
 					vRRt.mNum = 0;
 				}
 			}
 			if (vRRt.mNum > 0) {
-				Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+				server->BroadcastSvr<struct SvrResSync_t>(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 				AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 				vRRt.mCode++;
 				vRRt.mNum = 0;
 			}
 
 			config->WriteFileSvr();
-			SAFE_DELETE_VEC(svr);
 
 			root["status"] = Json::Value("200");
 			root["msg"] = Json::Value("ok");
@@ -108,6 +120,8 @@ int RouterHttpTask::SaveSvrReq(struct Request_t *request) {
 		} else {
 			Error("", "400");
 		}
+
+		HNET_DELETE_VEC(svr);
 	} else {
 		Error("", "400");
 	}
@@ -120,6 +134,8 @@ int RouterHttpTask::CoverSvrReq(struct Request_t *request) {
 		return -1;
 	}
 	RouterConfig* config = Config<RouterConfig*>();
+	RouterServer* server = Server<RouterServer*>();
+
 	std::string svrs = http::UrlDecode(FormGet("svrs"));
 	if (!svrs.empty()) {	// json格式svr
 		Json::Value root;
@@ -144,21 +160,20 @@ int RouterHttpTask::CoverSvrReq(struct Request_t *request) {
 
 				// 广播agentsvrd
 				if (vRRt.mNum >= kMaxNum) {
-					Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+					server->BroadcastSvr<struct SvrResReload_t>(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 					AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 					vRRt.mCode++;
 					vRRt.mNum = 0;
 				}
 			}
 			if (vRRt.mNum > 0) {
-				Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+				server->BroadcastSvr<struct SvrResReload_t>(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 				AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));	// 同步其他worker
 				vRRt.mCode++;
 				vRRt.mNum = 0;
 			}
 			
 			config->WriteFileSvr();
-			SAFE_DELETE_VEC(svr);
 
 			root["status"] = Json::Value("200");
 			root["msg"] = Json::Value("ok");
@@ -167,6 +182,8 @@ int RouterHttpTask::CoverSvrReq(struct Request_t *request) {
 		} else {
 			Error("", "400");
 		}
+
+		HNET_DELETE_VEC(svr);
 	} else {
 		Error("", "400");
 	}
@@ -175,14 +192,17 @@ int RouterHttpTask::CoverSvrReq(struct Request_t *request) {
 
 int RouterHttpTask::ListSvrReq(struct Request_t *request) {
 	RouterConfig* config = Config<RouterConfig*>();
+
 	Json::Value root;
 	Json::Value svrs;
-	int32_t start = 0, num = 0;
+	int32_t start = 0, num = 0, j = 0;
 	struct SvrNet_t svr[kMaxNum];
 	do {
-		if (!config->Qos()->GetNodeAll(svr, &num, start, kMaxNum).Ok() || num <= 0) {
+		num = config->Qos()->GetNodeAll(svr, j, start, kMaxNum);
+		if (num <= 0) {
 			break;
 		}
+
 		for (int i = 0; i < num; i++) {
 			Json::Value item;
 			item["gid"] = Json::Value(svr[i].mGid);
@@ -196,6 +216,7 @@ int RouterHttpTask::ListSvrReq(struct Request_t *request) {
 			svrs.append(Json::Value(item));
 		}
 		start += num;
+		j = 0;
 	} while (num >= kMaxNum);
 
 	root["svrs"] = Json::Value(svrs);
@@ -206,8 +227,146 @@ int RouterHttpTask::ListSvrReq(struct Request_t *request) {
 	return 0;
 }
 
+// @TODO
+// 单进程（没有同步worker逻辑）
+int RouterHttpTask::ReloadRltReq(struct Request_t *request) {
+	RouterConfig* config = Config<RouterConfig*>();
+	RouterServer* server = Server<RouterServer*>();
+
+	// 重新加载配置文件
+	config->CleanRlt();
+	config->ParseRltConf();
+	config->WriteFileRlt();
+
+	struct SvrReqInit_t vRRt;
+	server->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+
+	Json::Value root;
+	root["status"] = Json::Value("200");
+	root["msg"] = Json::Value("ok");
+	ResponseSet("Content-Type", "application/json; charset=UTF-8");
+	Write(root.toStyledString());
+	return 0;
+}
+
+// @TODO
+// 单进程（没有同步worker逻辑）
+int RouterHttpTask::SaveRltReq(struct Request_t *request) {
+	if (Method() != "POST") {
+		Error("", "405");
+		return -1;
+	}
+	RouterConfig* config = Config<RouterConfig*>();
+	RouterServer* server = Server<RouterServer*>();
+
+	std::string rlts = http::UrlDecode(FormGet("rlts"));
+	if (!rlts.empty()) {
+		Json::Value root;
+		struct Rlt_t* rlt = NULL;
+		int32_t num = ParseJsonRlt(rlts, &rlt);
+		if (num > 0) {
+			for (int32_t i = 0; i < num; i++) {
+				if (rlt[i].mGid > 0 && rlt[i].mXid && rlt[i].mHost[0] > 0 && rlt[i].mWeight >= 0) {
+					config->SaveRlt(rlt[i]);
+				}
+			}
+
+			config->WriteFileRlt();
+
+			struct SvrReqInit_t vRRt;
+			server->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+
+			root["status"] = Json::Value("200");
+			root["msg"] = Json::Value("ok");
+			ResponseSet("Content-Type", "application/json; charset=UTF-8");
+			Write(root.toStyledString());
+		} else {
+			Error("", "400");
+		}
+
+		HNET_DELETE_VEC(rlt);
+	} else {
+		Error("", "400");
+	}
+	return 0;
+}
+
+// @TODO
+// 单进程（没有同步worker逻辑）
+int RouterHttpTask::CoverRltReq(struct Request_t *request) {
+	if (Method() != "POST") {
+		Error("", "405");
+		return -1;
+	}
+	RouterConfig* config = Config<RouterConfig*>();
+	RouterServer* server = Server<RouterServer*>();
+	
+	std::string rlts = http::UrlDecode(FormGet("rlts"));
+	if (!rlts.empty()) {	// json格式svr
+		Json::Value root;
+		struct Rlt_t* rlt = NULL;
+		int32_t num = ParseJsonRlt(rlts, &rlt);
+
+		if (num > 0) {
+			// 清除原有Rlt记录
+			config->CleanRlt();
+			for (int32_t i = 0; i < num; i++) {
+				if (rlt[i].mGid > 0 && rlt[i].mXid && rlt[i].mHost[0] > 0 && rlt[i].mWeight >= 0) {
+					config->SaveRlt(rlt[i]);
+				}
+			}
+
+			config->WriteFileRlt();
+
+			struct SvrReqInit_t vRRt;
+			server->Broadcast(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+
+			root["status"] = Json::Value("200");
+			root["msg"] = Json::Value("ok");
+			ResponseSet("Content-Type", "application/json; charset=UTF-8");
+			Write(root.toStyledString());
+		} else {
+			Error("", "400");
+		}
+
+		HNET_DELETE_VEC(rlt);
+	} else {
+		Error("", "400");
+	}
+	return 0;
+}
+
+int RouterHttpTask::ListRltReq(struct Request_t *request) {
+	RouterConfig* config = Config<RouterConfig*>();
+	Json::Value root;
+	Json::Value rlts;
+	const RouterConfig::MapRlt_t& allrlts = config->GetRltsAll();
+	for (RouterConfig::MapRltCIt_t it = allrlts.begin(); it != allrlts.end(); it++) {
+		if (it->second.empty()) {
+			continue;
+		}
+		for (RouterConfig::vRltCIt_t rlt = it->second.begin(); rlt != it->second.end(); rlt++) {
+			Json::Value item;
+			item["gid"] = Json::Value(rlt->mGid);
+			item["xid"] = Json::Value(rlt->mXid);
+			item["host"] = Json::Value(rlt->mHost);
+			item["weight"] = Json::Value(rlt->mWeight);
+			rlts.append(Json::Value(item));
+		}
+	}
+
+	root["rlts"] = Json::Value(rlts);
+	root["status"] = Json::Value("200");
+	root["msg"] = Json::Value("ok");
+	ResponseSet("Content-Type", "application/json; charset=UTF-8");
+	Write(root.toStyledString());
+	return 0;
+}
+
+// ignore
 int RouterHttpTask::ReloadAgntReq(struct Request_t *request) {
 	RouterConfig* config = Config<RouterConfig*>();
+
 	// 重新加载配置文件
 	config->CleanAgnt();
 	config->ParseAgntConf();
@@ -234,12 +393,14 @@ int RouterHttpTask::ReloadAgntReq(struct Request_t *request) {
 	return 0;
 }
 
+// ignore
 int RouterHttpTask::SaveAgntReq(struct Request_t *request) {
 	if (Method() != "POST") {
 		Error("", "405");
 		return -1;
 	}
 	RouterConfig* config = Config<RouterConfig*>();
+
 	std::string agnts = http::UrlDecode(FormGet("agnts"));
 	if (!agnts.empty()) {
 		Json::Value root;
@@ -291,7 +452,6 @@ int RouterHttpTask::SaveAgntReq(struct Request_t *request) {
 			}
 
 			config->WriteFileAgnt();
-			SAFE_DELETE_VEC(agnt);
 
 			root["status"] = Json::Value("200");
 			root["msg"] = Json::Value("ok");
@@ -300,12 +460,15 @@ int RouterHttpTask::SaveAgntReq(struct Request_t *request) {
 		} else {
 			Error("", "400");
 		}
+
+		HNET_DELETE_VEC(agnt);
 	} else {
 		Error("", "400");
 	}
 	return 0;
 }
 
+// ignore
 int RouterHttpTask::CoverAgntReq(struct Request_t *request) {
 	if (Method() != "POST") {
 		Error("", "405");
@@ -406,7 +569,6 @@ int RouterHttpTask::CoverAgntReq(struct Request_t *request) {
 			}
 
 			config->WriteFileAgnt();
-			SAFE_DELETE_VEC(agnt);
 
 			root["status"] = Json::Value("200");
 			root["msg"] = Json::Value("ok");
@@ -415,12 +577,15 @@ int RouterHttpTask::CoverAgntReq(struct Request_t *request) {
 		} else {
 			Error("", "400");
 		}
+
+		HNET_DELETE_VEC(agnt);
 	} else {
 		Error("", "400");
 	}
 	return 0;
 }
 
+// ignore
 int RouterHttpTask::ListAgntReq(struct Request_t *request) {
 	RouterConfig* config = Config<RouterConfig*>();
 	Json::Value root;
@@ -441,6 +606,7 @@ int RouterHttpTask::ListAgntReq(struct Request_t *request) {
 			item["status"] = Json::Value(agnt[i].mStatus);
 			item["idc"] = Json::Value(agnt[i].mIdc);
 			item["version"] = Json::Value(agnt[i].mVersion);
+			item["name"] = Json::Value(agnt[i].mName);
 			agnts.append(Json::Value(item));
 		}
 		start += num;
@@ -517,7 +683,7 @@ int32_t RouterHttpTask::ParseJsonSvr(const std::string& svrs, struct SvrNet_t** 
 	Json::Reader reader;
 	Json::Value value;
 	if (reader.parse(svrs, value) && value.size() > 0) {
-		SAFE_NEW_VEC(value.size(), struct SvrNet_t, *svr);
+		HNET_NEW_VEC(value.size(), struct SvrNet_t, *svr);
 		for (unsigned int i = 0; i < value.size(); i++) {
 			if (value[i].isMember("gid") && value[i].isMember("xid") && value[i].isMember("host") && value[i].isMember("port")) {
 				(*svr)[i].mGid = value[i]["gid"].asInt();
@@ -548,7 +714,7 @@ int32_t RouterHttpTask::ParseJsonAgnt(const std::string& agnts, struct Agnt_t** 
 	Json::Reader reader;
 	Json::Value value;
 	if (reader.parse(agnts, value) && value.size() > 0) {
-		SAFE_NEW_VEC(value.size(), struct Agnt_t, *agnt);
+		HNET_NEW_VEC(value.size(), struct Agnt_t, *agnt);
 		for (unsigned int i = 0; i < value.size(); i++) {
 			if (value[i].isMember("host")) {
 				memcpy((*agnt)[i].mHost, value[i]["host"].asCString(), kMaxHost);
@@ -563,6 +729,33 @@ int32_t RouterHttpTask::ParseJsonAgnt(const std::string& agnts, struct Agnt_t** 
 				}
 				if (value[i].isMember("idc")) {
 					(*agnt)[i].mIdc = value[i]["idc"].asInt();
+				}
+				if (value[i].isMember("name")) {
+					memcpy((*agnt)[i].mName, value[i]["name"].asCString(), kMaxName);
+				}
+			}
+		}
+		return value.size();
+	}
+	return -1;
+}
+
+// [{"host":"192.168.8.13", "gid":1, "xid":1, "weight":1}]
+int32_t RouterHttpTask::ParseJsonRlt(const std::string& rlts, struct Rlt_t** rlt) {
+	Json::Reader reader;
+	Json::Value value;
+	if (reader.parse(rlts, value) && value.size() > 0) {
+		HNET_NEW_VEC(value.size(), struct Rlt_t, *rlt);
+		for (unsigned int i = 0; i < value.size(); i++) {
+			if (value[i].isMember("gid") && value[i].isMember("xid") && value[i].isMember("host")) {
+				(*rlt)[i].mGid = value[i]["gid"].asInt();
+				(*rlt)[i].mXid = value[i]["xid"].asInt();
+				memcpy((*rlt)[i].mHost, value[i]["host"].asCString(), kMaxHost);
+				if (value[i].isMember("weight")) {
+					int wt = value[i]["weight"].asInt();
+					if (wt >= 0) {
+						(*rlt)[i].mWeight = wt;
+					}
 				}
 			}
 		}

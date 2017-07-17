@@ -82,15 +82,15 @@ int ConnectAgent() {
 	
 	wSocket *sock = NULL;
 	if (kAgentSocket == 0) {
-		SAFE_NEW(wUnixSocket(kStConnect), sock);
+		HNET_NEW(wUnixSocket(kStConnect), sock);
 	} else if (kAgentSocket == 1) {
-		SAFE_NEW(wTcpSocket(kStConnect), sock);
+		HNET_NEW(wTcpSocket(kStConnect), sock);
 	} else if (kAgentSocket == 2) {
-		SAFE_NEW(wUdpSocket(kStConnect), sock);
+		HNET_NEW(wUdpSocket(kStConnect), sock);
 	}
 	
 	if (sock && sock->Open() == 0) {
-		SAFE_NEW(wTask(sock), g_handle.mTask);
+		HNET_NEW(wTask(sock), g_handle.mTask);
 		if (sock->Connect(kAgentHost, kAgentPort, kAgentTimeout) == 0) {
 			g_handle.mConnecting = true;
 			return kOk;
@@ -101,7 +101,7 @@ int ConnectAgent() {
 }
 
 int CloseAgent() {
-	SAFE_DELETE(g_handle.mTask);
+	HNET_DELETE(g_handle.mTask);
 	g_handle.mConnecting = false;
 	return kOk;
 }

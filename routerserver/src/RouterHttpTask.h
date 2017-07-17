@@ -38,9 +38,16 @@ const uint8_t MASTER_HTTP_RESTART = 1;
 const uint8_t MASTER_HTTP_STOP = 2;
 const uint8_t MASTER_HTTP_INFO = 3;
 
+//+++
+const uint8_t CMD_RLT_HTTP = 73;
+const uint8_t RLT_HTTP_RELOAD = 0;	// relation重载
+const uint8_t RLT_HTTP_SAVE = 1;	// relation更新
+const uint8_t RLT_HTTP_COVER = 2;	// relation重写
+const uint8_t RLT_HTTP_LIST = 3;	// relation列表
+
 class RouterHttpTask : public wHttpTask {
 public:
-	RouterHttpTask(wSocket *socket, int32_t type);
+	RouterHttpTask(wSocket *socket, int32_t type = 0);
 
 	int ReloadSvrReq(struct Request_t *request);
 	int SaveSvrReq(struct Request_t *request);
@@ -58,9 +65,15 @@ public:
 	int MasterStopReq(struct Request_t *request);
 	int MasterInfoReq(struct Request_t *request);
 
+	int ReloadRltReq(struct Request_t *request);
+	int SaveRltReq(struct Request_t *request);
+	int CoverRltReq(struct Request_t *request);
+	int ListRltReq(struct Request_t *request);
+
 protected:
 	int32_t ParseJsonSvr(const std::string& svrs, struct SvrNet_t** svr);
 	int32_t ParseJsonAgnt(const std::string& agnts, struct Agnt_t** agnt);
+	int32_t ParseJsonRlt(const std::string& rlts, struct Rlt_t** rlt);
 };
 
 #endif

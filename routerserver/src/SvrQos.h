@@ -10,7 +10,6 @@
 #include <map>
 #include <list>
 #include "wCore.h"
-#include "wStatus.h"
 #include "wNoncopyable.h"
 #include "SvrCmd.h"
 
@@ -40,35 +39,48 @@ public:
 
 	// 指定节点是否存在
 	bool IsExistNode(const struct SvrNet_t& svr);
+
 	// 节点version是否变化
 	bool IsVerChange(const struct SvrNet_t& svr);
+
 	// 节点weight、name、idc是否变化
 	bool IsWNIChange(const struct SvrNet_t& svr);
 
-	// 获取所有节点
-	const wStatus& GetNodeAll(struct SvrNet_t buf[], int32_t* num, int32_t start, int32_t size);
+	// 获取所有节点（调用者自行解决溢出问题）
+	// num为实际buf的缓冲索引起始地址
+	// start为从start索引开始获取mMapReqSvr的svr节点
+	// size为最大获取svr个数
+	int GetNodeAll(struct SvrNet_t buf[], int32_t num, int32_t start, int32_t size);
+	
 	// 保存节点信息
-	const wStatus& SaveNode(const struct SvrNet_t& svr);
+	int SaveNode(const struct SvrNet_t& svr);
+
 	// 添加新节点&&路由
-	const wStatus& AddNode(const struct SvrNet_t& svr);
+	int AddNode(const struct SvrNet_t& svr);
+
 	// 修改 节点&&路由 权重（权重为0删除节点）
-	const wStatus& ModifyNode(const struct SvrNet_t& svr);
+	int ModifyNode(const struct SvrNet_t& svr);
+
 	// 删除 节点&&路由
-	const wStatus& DeleteNode(const struct SvrNet_t& svr);
+	int DeleteNode(const struct SvrNet_t& svr);
+
 	// 清除所有路由信息
-	const wStatus& CleanNode();
+	int CleanNode();
+
+	// 过滤SVR
+	int FilterSvrBySid(struct SvrNet_t buf[], int32_t size, const std::vector<struct Rlt_t>& rlts);
 
 protected:
 	friend class RouterConfig;
 
 	// 添加新路由
-	const wStatus& AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t* stat);
+	int AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t* stat);
 	// 删除路由节点
-	const wStatus& DeleteRouteNode(const struct SvrNet_t& stSvr);
+	int DeleteRouteNode(const struct SvrNet_t& stSvr);
 	// 修改路由节点
-	const wStatus& ModifyRouteNode(const struct SvrNet_t& svr);
+	int ModifyRouteNode(const struct SvrNet_t& svr);
 	// 加载阈值配置
-	const wStatus& LoadStatCfg(const struct SvrNet_t& svr, struct SvrStat_t* stat);
+	int LoadStatCfg(const struct SvrNet_t& svr, struct SvrStat_t* stat);
 
 	struct SvrReqCfg_t	mReqCfg;	// 访问量控制
 	struct SvrDownCfg_t mDownCfg;	// 宕机控制
@@ -84,7 +96,6 @@ protected:
 	MapSvr_t mMapReqSvr;	// 节点信息。1:1，节点-统计
 	MapKind_t mRouteTable;	// 路由信息。1:n，种类-节点
 	MapNode_t mErrTable;	// 宕机路由表，1:n，种类-节点
-	wStatus mStatus;
 };
 
 #endif
