@@ -27,7 +27,7 @@ int AgentClientTask::Connect() {
 	// 自动注册agent
 	char hostname[kMaxName];
 	if (gethostname(hostname, kMaxName - 1) == 0) {
-		std::string ip = FilterLocalIp(Socket()->Host());
+		std::string ip = FilterLocalIp("0.0.0.0");	// 本机地址
 		uint16_t port = 10005;
 
 		struct AgntResSync_t vRRt;

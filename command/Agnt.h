@@ -29,9 +29,9 @@ public:
 	int8_t		mIdc;
 	int8_t 		mStatus;
 	int8_t 		mConfig;	// 是否是配置文件中记录
-	int32_t		mMemUsage;	// memory usage
+	int32_t	mMemUsage;	// memory usage
 	float		mMemRate;	// memory use
-	float 		mCpuRate;	// cpu use
+	float 	mCpuRate;	// cpu use
 
 	Agnt_t(): mPort(0), mWeight(1), mVersion(misc::GetTimeofday()/1000000), mIdc(0), mStatus(kAgntInit), mConfig(0),
 	mMemUsage(0), mMemRate(0.0), mCpuRate(0.0) {
