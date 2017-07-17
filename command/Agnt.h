@@ -21,16 +21,20 @@ using namespace hnet;
 // agent节点信息
 struct Agnt_t {
 public:
+	char		mName[kMaxName];// 服务名
 	char 		mHost[kMaxHost];
 	uint16_t 	mPort;		// 使用过程中，参考意义不大
 	int32_t 	mWeight;	// 是否删除（沿用SvrNet_t中的字段名）
 	int32_t		mVersion;
 	int8_t		mIdc;
 	int8_t 		mStatus;
-	int8_t 		mConfig;		// 是否是配置文件中记录
-	char		mName[kMaxName];// 服务名
+	int8_t 		mConfig;	// 是否是配置文件中记录
+	int32_t		mMemUsage;	// memory usage
+	float		mMemRate;	// memory use
+	float 		mCpuRate;	// cpu use
 
-	Agnt_t(): mPort(0), mWeight(1), mVersion(misc::GetTimeofday()/1000000), mIdc(0), mStatus(kAgntInit), mConfig(0) {
+	Agnt_t(): mPort(0), mWeight(1), mVersion(misc::GetTimeofday()/1000000), mIdc(0), mStatus(kAgntInit), mConfig(0),
+	mMemUsage(0), mMemRate(0.0), mCpuRate(0.0) {
 		memset(mHost, 0, kMaxHost);
 		memset(mName, 0, kMaxName);
 	}
