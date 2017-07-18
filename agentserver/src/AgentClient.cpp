@@ -33,11 +33,12 @@ int AgentClient::PrepareRun() {
 	return 0;
 }
 
+// 连接RouterSvr服务器
 int AgentClient::Run() {
 	int ret = 0;
 	if (mInitClient == false) {
 		ret = AddConnect(kType, mHost, mPort);
-		if (ret == -1) {
+		if (ret == 0) {
 			mInitClient = true;
 		}
 	}
