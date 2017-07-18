@@ -17,13 +17,13 @@ RouterTcpTask::RouterTcpTask(wSocket *socket, int32_t type) : wTcpTask(socket, t
 
 	On(CMD_AGNT_REQ, AGNT_REQ_INIT, &RouterTcpTask::InitAgntReq, this);
 	On(CMD_AGNT_REQ, AGNT_REQ_RELOAD, &RouterTcpTask::ReloadAgntReq, this);
-	On(CMD_AGNT_RES, AGNT_RES_SYNC, &RouterTcpTask::SyncAgntRes, this);
+	On(CMD_AGNT_RES, AGNT_RES_SYNC, &RouterTcpTask::SyncAgntRes, this);		// agent注册
 }
 
 int RouterTcpTask::Connect() {
 	RouterConfig* config = Config<RouterConfig*>();
 	struct Agnt_t agnt, old;
-	std::string ip = FilterLocalIp(Socket()->Host());
+	std::string ip = FilterLocalIp(Socket()->Host());	// 客户端地址
 	uint16_t port = 10005;
 
 	memcpy(agnt.mHost, ip.c_str(), kMaxHost);
@@ -177,6 +177,25 @@ int RouterTcpTask::ReloadSvrReq(struct Request_t *request) {
 	return 0;
 }
 
+// agent增量更新时请求（agent注册）
+int RouterTcpTask::SyncAgntRes(struct Request_t *request) {
+	struct AgntResSync_t* cmd = reinterpret_cast<struct AgntResSync_t*>(request->mBuf);
+	RouterConfig* config = Config<RouterConfig*>();
+	if (cmd->mCode >= 0 && cmd->mNum > 0) {
+		for (int32_t i = 0; i < cmd->mNum; i++) {
+			struct Agnt_t old;
+			if (cmd->mAgnt[i].mStatus == kAgntUreg && config->IsExistAgnt(cmd->mAgnt[i], &old) && old.mConfig == 0) {
+				cmd->mAgnt[i].mStatus = kAgntOk;
+				cmd->mAgnt[i].mConfig = old.mConfig;
+			}
+			config->SaveAgnt(cmd->mAgnt[i]);
+			config->WriteFileAgnt();
+		}
+		AsyncWorker(request->mBuf, request->mLen);	// 同步其他进程
+	}
+	return 0;
+}
+
 // ignore
 // agent v3.0.8以前版本，启动、重连时请求
 // 向单个agent发送init响应
@@ -215,24 +234,5 @@ int RouterTcpTask::ReloadAgntReq(struct Request_t *request) {
 		vRRt.mCode++;
 		start += vRRt.mNum;
 	} while (vRRt.mNum >= kMaxNum);
-	return 0;
-}
-
-// agent增量更新时请求（agent注册）
-int RouterTcpTask::SyncAgntRes(struct Request_t *request) {
-	struct AgntResSync_t* cmd = reinterpret_cast<struct AgntResSync_t*>(request->mBuf);
-	RouterConfig* config = Config<RouterConfig*>();
-	if (cmd->mCode >= 0 && cmd->mNum > 0) {
-		for (int32_t i = 0; i < cmd->mNum; i++) {
-			struct Agnt_t old;
-			if (cmd->mAgnt[i].mStatus == kAgntUreg && config->IsExistAgnt(cmd->mAgnt[i], &old) && old.mConfig == 0) {
-				cmd->mAgnt[i].mStatus = kAgntOk;
-				cmd->mAgnt[i].mConfig = old.mConfig;
-			}
-			config->SaveAgnt(cmd->mAgnt[i]);
-			config->WriteFileAgnt();
-		}
-		AsyncWorker(request->mBuf, request->mLen);	// 同步其他进程
-	}
 	return 0;
 }

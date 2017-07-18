@@ -56,7 +56,7 @@ int RouterChannelTask::ReloadAgntRes(struct Request_t *request) {
 		for (int32_t i = 0; i < cmd->mNum; i++) {
 			config->SaveAgnt(cmd->mAgnt[i]);
 		}
-		Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(cmd), sizeof(struct AgntResReload_t));
+		//Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(cmd), sizeof(struct AgntResReload_t));
 	}
 	return 0;
 }
@@ -68,7 +68,7 @@ int RouterChannelTask::SyncAgntRes(struct Request_t *request) {
 		for (int32_t i = 0; i < cmd->mNum; i++) {
 			config->SaveAgnt(cmd->mAgnt[i]);
 		}
-		Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(cmd), sizeof(struct AgntResSync_t));
+		//Server<RouterServer*>()->Broadcast(reinterpret_cast<char*>(cmd), sizeof(struct AgntResSync_t));
 	}
 	return 0;
 }

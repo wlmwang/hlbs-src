@@ -22,9 +22,8 @@ AgentClientTask::AgentClientTask(wSocket *socket, int32_t type) : wTcpTask(socke
 	On(CMD_AGNT_RES, AGNT_RES_SYNC, &AgentClientTask::SyncAgntRes, this);
 }
 
-// v3.0.8 agent自动注册
 int AgentClientTask::Connect() {
-	// 自动注册agent
+	// v3.0.8起 需手动注册agent主机名
 	char hostname[kMaxName];
 	if (gethostname(hostname, kMaxName - 1) == 0) {
 		std::string ip = FilterLocalIp("0.0.0.0");	// 本机地址
@@ -99,34 +98,6 @@ int AgentClientTask::SyncSvrRes(struct Request_t *request) {
 
 // ignore
 // v3.0.8 agent自动注册
-int AgentClientTask::InitAgntRes(struct Request_t *request) {
-	struct AgntResInit_t* cmd = reinterpret_cast<struct AgntResInit_t*>(request->mBuf);
-	AgentConfig* config = Config<AgentConfig*>();
-
-	if (cmd->mCode >= 0 && cmd->mNum > 0) {
-		std::vector<uint32_t> ips;
-		if (misc::GetIpList(ips) == 0) {
-			for (int32_t i = 0; i < cmd->mNum; i++) {
-				uint32_t ip = misc::Text2IP(cmd->mAgnt[i].mHost);
-				if (std::find(ips.begin(), ips.end(), ip) != ips.end()) {
-					config->Qos()->Idc() = cmd->mAgnt[i].mIdc;
-
-					if (cmd->mAgnt[i].mWeight == 0 || cmd->mAgnt[i].mStatus == kAgntUreg) {	// 删除或取消注册
-						config->Qos()->CleanNode();	
-					} else if (cmd->mAgnt[i].mStatus == kAgntOk) {	// 发送初始化svr配置请求
-						struct SvrReqInit_t vRRt0;
-						AsyncSend(reinterpret_cast<char*>(&vRRt0), sizeof(vRRt0));
-					}
-					break;
-				}
-			}
-		}
-	}
-	return 0;
-}
-
-// ignore
-// v3.0.8 agent自动注册
 int AgentClientTask::SyncAgntRes(struct Request_t *request) {
 	struct AgntResSync_t* cmd = reinterpret_cast<struct AgntResSync_t*>(request->mBuf);
 	AgentConfig* config = Config<AgentConfig*>();
@@ -141,6 +112,34 @@ int AgentClientTask::SyncAgntRes(struct Request_t *request) {
 					
 					if (cmd->mAgnt[i].mWeight == 0 || cmd->mAgnt[i].mStatus == kAgntUreg) {	// 删除或取消注册
 						config->Qos()->CleanNode();	// 清除原始svr
+					} else if (cmd->mAgnt[i].mStatus == kAgntOk) {	// 发送初始化svr配置请求
+						struct SvrReqInit_t vRRt0;
+						AsyncSend(reinterpret_cast<char*>(&vRRt0), sizeof(vRRt0));
+					}
+					break;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+// ignore
+// v3.0.8 agent自动注册
+int AgentClientTask::InitAgntRes(struct Request_t *request) {
+	struct AgntResInit_t* cmd = reinterpret_cast<struct AgntResInit_t*>(request->mBuf);
+	AgentConfig* config = Config<AgentConfig*>();
+
+	if (cmd->mCode >= 0 && cmd->mNum > 0) {
+		std::vector<uint32_t> ips;
+		if (misc::GetIpList(ips) == 0) {
+			for (int32_t i = 0; i < cmd->mNum; i++) {
+				uint32_t ip = misc::Text2IP(cmd->mAgnt[i].mHost);
+				if (std::find(ips.begin(), ips.end(), ip) != ips.end()) {
+					config->Qos()->Idc() = cmd->mAgnt[i].mIdc;
+
+					if (cmd->mAgnt[i].mWeight == 0 || cmd->mAgnt[i].mStatus == kAgntUreg) {	// 删除或取消注册
+						config->Qos()->CleanNode();	
 					} else if (cmd->mAgnt[i].mStatus == kAgntOk) {	// 发送初始化svr配置请求
 						struct SvrReqInit_t vRRt0;
 						AsyncSend(reinterpret_cast<char*>(&vRRt0), sizeof(vRRt0));
