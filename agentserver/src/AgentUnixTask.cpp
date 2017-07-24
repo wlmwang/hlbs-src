@@ -26,9 +26,9 @@ int AgentUnixTask::GetSvrByGXid(struct Request_t *request) {
 		AsyncSend(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 
 		// 同步其他worker进程调用数
-		struct SvrReqNty_t vRRt1;
-		vRRt1.mSvr = vRRt.mSvr;
-		AsyncWorker(reinterpret_cast<char*>(&vRRt1), sizeof(vRRt1));
+		//struct SvrReqNty_t vRRt1;
+		//vRRt1.mSvr = vRRt.mSvr;
+		//AsyncWorker(reinterpret_cast<char*>(&vRRt1), sizeof(vRRt1));
 	} else {
 		vRRt.mCode = -1;
 		vRRt.mNum = 0;
@@ -48,7 +48,7 @@ int AgentUnixTask::ReportSvr(struct Request_t *request) {
 		AsyncSend(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 
 		// 同步其他worker进程
-		AsyncWorker(reinterpret_cast<char*>(cmd), request->mLen);
+		//AsyncWorker(reinterpret_cast<char*>(cmd), request->mLen);
 	} else {
 		vRRt.mCode = -1;
 		AsyncSend(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));

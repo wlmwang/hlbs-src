@@ -36,10 +36,12 @@ int AgentClient::PrepareRun() {
 // 连接RouterSvr服务器
 int AgentClient::Run() {
 	int ret = 0;
-	if (mInitClient == false) {
-		ret = AddConnect(kType, mHost, mPort);
-		if (ret == 0) {
-			mInitClient = true;
+	if (mConnectTick.CheckTimer(mTick/1000)) {
+		if (mInitClient == false) {
+			ret = AddConnect(kType, mHost, mPort);
+			if (ret == 0) {
+				mInitClient = true;
+			}
 		}
 	}
 	return ret;

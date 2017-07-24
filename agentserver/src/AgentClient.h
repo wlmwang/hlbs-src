@@ -9,6 +9,7 @@
 
 #include "wCore.h"
 #include "wMultiClient.h"
+#include "wTimer.h"
 
 using namespace hnet;
 
@@ -16,7 +17,9 @@ const int kType = 0;
 
 class AgentClient : public wMultiClient {
 public:
-	AgentClient(wConfig* config, wServer* server = NULL): wMultiClient(config, server, true), mPort(0), mInitClient(false) { }
+	AgentClient(wConfig* config, wServer* server = NULL): wMultiClient(config, server, true), mPort(0), mInitClient(false) {
+		mConnectTick = wTimer(kKeepAliveTm);
+	}
 
 	virtual int PrepareRun();
 	virtual int Run();
@@ -27,6 +30,7 @@ protected:
 	uint16_t mPort;
 
 	bool mInitClient;
+	wTimer mConnectTick;
 };
 
 #endif

@@ -42,11 +42,11 @@ int RouterTcpTask::Connect() {
 	config->WriteFileAgnt();
 
 	// 同步更新其他进程agent队列
-	AgntResSync_t vRRt;
-	vRRt.mCode = 0;
-	vRRt.mNum = 1;
-	vRRt.mAgnt[0] = agnt;
-	AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+	//AgntResSync_t vRRt;
+	//vRRt.mCode = 0;
+	//vRRt.mNum = 1;
+	//vRRt.mAgnt[0] = agnt;
+	//AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 	return 0;
 }
 
@@ -73,11 +73,11 @@ int RouterTcpTask::DisConnect() {
 	config->WriteFileAgnt();
 
 	// 同步更新其他进程agent队列
-	AgntResSync_t vRRt;
-	vRRt.mCode = 0;
-	vRRt.mNum = 1;
-	vRRt.mAgnt[0] = agnt;
-	AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
+	//AgntResSync_t vRRt;
+	//vRRt.mCode = 0;
+	//vRRt.mNum = 1;
+	//vRRt.mAgnt[0] = agnt;
+	//AsyncWorker(reinterpret_cast<char*>(&vRRt), sizeof(vRRt));
 	return 0;
 }
 
@@ -191,7 +191,7 @@ int RouterTcpTask::SyncAgntRes(struct Request_t *request) {
 			config->SaveAgnt(cmd->mAgnt[i]);
 			config->WriteFileAgnt();
 		}
-		AsyncWorker(request->mBuf, request->mLen);	// 同步其他进程
+		//AsyncWorker(request->mBuf, request->mLen);	// 同步其他进程
 	}
 	return 0;
 }
