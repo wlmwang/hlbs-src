@@ -25,5 +25,7 @@
 
 ```
 通过更新RouterSvr下svr.xml配置文件，集中进行管理所有后端Svr。
+
+v3.0.8之后版本将使用RestFul接口。
 ```
 
