@@ -309,10 +309,10 @@ int RouterConfig::ParseSvrConf() {
 				if (svr.mWeight > 0 && !mSvrQos->IsExistNode(svr)) {
 					mSvrQos->SaveNode(svr);
 				} else {
-					HNET_ERROR(kSvrLog, "RouterConfig::ParseSvrConf Parse configure from svr.xml occur error(weight<=0 or exists this SvrNet_t), line : %d", i);
+					HNET_ERROR(soft::GetLogdirPath() + kSvrLogFilename, "RouterConfig::ParseSvrConf Parse configure from svr.xml occur error(weight<=0 or exists this SvrNet_t), line : %d", i);
 				}
 			} else {
-				HNET_ERROR(kSvrLog, "RouterConfig::ParseSvrConf Parse configure from svr.xml occur error, line : %d", i);
+				HNET_ERROR(soft::GetLogdirPath() + kSvrLogFilename, "RouterConfig::ParseSvrConf Parse configure from svr.xml occur error, line : %d", i);
 			}
 		}
 	} else {
@@ -368,10 +368,10 @@ int RouterConfig::ParseAgntConf() {
 				if (agnt.mWeight >= 0 && !IsExistAgnt(agnt)) {
 					SaveAgnt(agnt);
 				} else {
-					HNET_ERROR(kSvrLog, "RouterConfig::ParseAgntConf Parse configure from agent.xml occur error(exists this Agnt_t), line : %d", i);
+					HNET_ERROR(soft::GetLogdirPath() + kSvrLogFilename, "RouterConfig::ParseAgntConf Parse configure from agent.xml occur error(exists this Agnt_t), line : %d", i);
 				}
 			} else {
-				HNET_ERROR(kSvrLog, "RouterConfig::ParseAgntConf Parse configure from agent.xml occur error, line : %d", i);
+				HNET_ERROR(soft::GetLogdirPath() + kSvrLogFilename, "RouterConfig::ParseAgntConf Parse configure from agent.xml occur error, line : %d", i);
 			}
 		}
 	} else {
@@ -415,7 +415,7 @@ int RouterConfig::ParseRltConf() {
 				// 添加新配置
 				SaveRlt(rlt);
 			} else {
-				HNET_ERROR(kSvrLog, "RouterConfig::ParseRltConf Parse configure from relation.xml occur error, line : %d", i);
+				HNET_ERROR(soft::GetLogdirPath() + kSvrLogFilename, "RouterConfig::ParseRltConf Parse configure from relation.xml occur error, line : %d", i);
 			}
 		}
 	} else {
@@ -613,10 +613,10 @@ int RouterConfig::SaveAgnt(const struct Agnt_t& agnt) {
 }
 
 int RouterConfig::ModifyAgnt(const struct Agnt_t& agnt) {
-	HNET_DEBUG(kAgntLog, "RouterConfig::ModifyAgnt modify Agnt_t, HOST(%s),PORT(%d), WEIGHT(%d)", agnt.mHost, agnt.mPort, agnt.mWeight);
+	HNET_DEBUG(soft::GetLogdirPath() + kAgntLogFilename, "RouterConfig::ModifyAgnt modify Agnt_t, HOST(%s),PORT(%d), WEIGHT(%d)", agnt.mHost, agnt.mPort, agnt.mWeight);
 
 	if (agnt.mWeight < 0) {
-		HNET_ERROR(kAgntLog, "RouterConfig::ModifyAgnt modify Agnt_t failed, HOST(%s),PORT(%d), WEIGHT(%d)", agnt.mHost, agnt.mPort, agnt.mWeight);
+		HNET_ERROR(soft::GetLogdirPath() + kAgntLogFilename, "RouterConfig::ModifyAgnt modify Agnt_t failed, HOST(%s),PORT(%d), WEIGHT(%d)", agnt.mHost, agnt.mPort, agnt.mWeight);
 		return -1;
 	} else if (agnt.mWeight == 0 && agnt.mStatus == kAgntInit) {
 		return DelAgnt(agnt);
@@ -631,7 +631,7 @@ int RouterConfig::ModifyAgnt(const struct Agnt_t& agnt) {
 int RouterConfig::DelAgnt(const struct Agnt_t& agnt) {
 	std::vector<struct Agnt_t>::iterator it = std::find(mAgnts.begin(), mAgnts.end(), agnt);
 	if (it == mAgnts.end()) {
-		HNET_ERROR(kAgntLog, "RouterConfig::DelAgnt delete Agnt_t failed(cannot find the Agnt_t), HOST(%s),PORT(%d)", agnt.mHost, agnt.mPort);
+		HNET_ERROR(soft::GetLogdirPath() + kAgntLogFilename, "RouterConfig::DelAgnt delete Agnt_t failed(cannot find the Agnt_t), HOST(%s),PORT(%d)", agnt.mHost, agnt.mPort);
 		return -1;
 	}
 	mAgnts.erase(it);
@@ -639,7 +639,7 @@ int RouterConfig::DelAgnt(const struct Agnt_t& agnt) {
 }
 
 int RouterConfig::AddAgnt(const struct Agnt_t& agnt) {
-	HNET_DEBUG(kAgntLog, "RouterConfig::AddAgnt add Agnt_t success, HOST(%s),PORT(%d)", agnt.mHost, agnt.mPort);
+	HNET_DEBUG(soft::GetLogdirPath() + kAgntLogFilename, "RouterConfig::AddAgnt add Agnt_t success, HOST(%s),PORT(%d)", agnt.mHost, agnt.mPort);
 	
 	if (agnt.mWeight > 0) {
 		mAgnts.push_back(agnt);
@@ -648,12 +648,12 @@ int RouterConfig::AddAgnt(const struct Agnt_t& agnt) {
 }
 
 void RouterConfig::CleanAgnt() {
-	HNET_DEBUG(kAgntLog, "RouterConfig::CleanAgnt clean Agnt_t success");
+	HNET_DEBUG(soft::GetLogdirPath() + kAgntLogFilename, "RouterConfig::CleanAgnt clean Agnt_t success");
 	mAgnts.clear();
 }
 
 int RouterConfig::GetAgntAll(struct Agnt_t buf[], int32_t start, int32_t size) {
-	HNET_DEBUG(kAgntLog, "RouterConfig::GetAgntAll get all Agnt_t start, [%d, %d]", start, size);
+	HNET_DEBUG(soft::GetLogdirPath() + kAgntLogFilename, "RouterConfig::GetAgntAll get all Agnt_t start, [%d, %d]", start, size);
 
 	int num = 0;
 	if (static_cast<size_t>(start) >= mAgnts.size()) {
@@ -712,7 +712,7 @@ int RouterConfig::ModifyRlt(const struct Rlt_t& rlt) {
 				mRelations.erase(mapIt);
 			}
 
-			HNET_DEBUG(kRltLog, "RouterConfig::ModifyRlt delete Rlt_t success HOST(%s),GID(%d),XID(%d)", rlt.mHost,rlt.mGid, rlt.mXid);
+			HNET_DEBUG(soft::GetLogdirPath() + kRltLogFilename, "RouterConfig::ModifyRlt delete Rlt_t success HOST(%s),GID(%d),XID(%d)", rlt.mHost,rlt.mGid, rlt.mXid);
 			return 0;
 		}
 	}
@@ -721,7 +721,7 @@ int RouterConfig::ModifyRlt(const struct Rlt_t& rlt) {
 	mRelations.erase(mapIt);
 	mRelations.insert(std::make_pair(rlt.mHost, rlts));
 
-	HNET_DEBUG(kRltLog, "RouterConfig::ModifyRlt modify Rlt_t success HOST(%s),GID(%d),XID(%d)", rlt.mHost,rlt.mGid, rlt.mXid);
+	HNET_DEBUG(soft::GetLogdirPath() + kRltLogFilename, "RouterConfig::ModifyRlt modify Rlt_t success HOST(%s),GID(%d),XID(%d)", rlt.mHost,rlt.mGid, rlt.mXid);
 	return 0;
 }
 
@@ -731,12 +731,12 @@ int RouterConfig::AddRlt(const struct Rlt_t& rlt) {
 		rlts.push_back(rlt);
 		mRelations.insert(std::make_pair(rlt.mHost, rlts));
 
-		HNET_DEBUG(kRltLog, "RouterConfig::AddRlt add Rlt_t success, HOST(%s),GID(%d),XID(%d)", rlt.mHost,rlt.mGid, rlt.mXid);
+		HNET_DEBUG(soft::GetLogdirPath() + kRltLogFilename, "RouterConfig::AddRlt add Rlt_t success, HOST(%s),GID(%d),XID(%d)", rlt.mHost,rlt.mGid, rlt.mXid);
 	}
 	return 0;
 }
 
 void RouterConfig::CleanRlt() {
-	HNET_DEBUG(kRltLog, "RouterConfig::CleanRlt clean Rlt_t success");
+	HNET_DEBUG(soft::GetLogdirPath() + kRltLogFilename, "RouterConfig::CleanRlt clean Rlt_t success");
 	mRelations.clear();
 }

@@ -53,7 +53,7 @@ int SvrQos::SaveNode(const struct SvrNet_t& svr) {
 
 int SvrQos::AddNode(const struct SvrNet_t& svr) {
 	if (svr.mWeight <= 0) {
-		HNET_ERROR(kSvrLog, "SvrQos::AddNode add SvrNet_t failed(weight<=0), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		HNET_ERROR(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::AddNode add SvrNet_t failed(weight<=0), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		
 		return -1;
@@ -66,7 +66,7 @@ int SvrQos::AddNode(const struct SvrNet_t& svr) {
 	}
 
 	if (LoadStatCfg(svr, stat) == -1) {
-		HNET_ERROR(kSvrLog, "SvrQos::AddNode add SvrNet_t failed(LoadStatCfg failed), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		HNET_ERROR(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::AddNode add SvrNet_t failed(LoadStatCfg failed), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
 		HNET_DELETE(stat);
@@ -78,18 +78,18 @@ int SvrQos::AddNode(const struct SvrNet_t& svr) {
 	misc::GetTimeofday(&stat->mInfo.mBuildTm);
 	mMapReqSvr.insert(std::make_pair(svr, stat));
 
-	HNET_DEBUG(kSvrLog, "SvrQos::AddNode add SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+	HNET_DEBUG(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::AddNode add SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
 	return AddRouteNode(svr, stat);
 }
 
 int SvrQos::ModifyNode(const struct SvrNet_t& svr) {
-	HNET_DEBUG(kSvrLog, "SvrQos::ModifyNode modify SvrNet_t start, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+	HNET_DEBUG(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::ModifyNode modify SvrNet_t start, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
 	if (svr.mWeight < 0) {
-		HNET_ERROR(kSvrLog, "SvrQos::ModifyNode modify SvrNet_t failed(weight < 0), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		HNET_ERROR(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::ModifyNode modify SvrNet_t failed(weight < 0), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
 		return -1;
@@ -108,7 +108,7 @@ int SvrQos::ModifyNode(const struct SvrNet_t& svr) {
 int SvrQos::DeleteNode(const struct SvrNet_t& svr) {
 	MapSvrIt_t mapReqIt = mMapReqSvr.find(svr);
     if (mapReqIt == mMapReqSvr.end()) {
-		HNET_ERROR(kSvrLog, "SvrQos::DeleteNode delete SvrNet_t failed(cannot find the SvrNet_t), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		HNET_ERROR(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::DeleteNode delete SvrNet_t failed(cannot find the SvrNet_t), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
         return -1;
@@ -119,7 +119,7 @@ int SvrQos::DeleteNode(const struct SvrNet_t& svr) {
     DeleteRouteNode(svr);
     HNET_DELETE(stat);
 
-	HNET_DEBUG(kSvrLog, "SvrQos::DeleteNode delete SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+	HNET_DEBUG(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::DeleteNode delete SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
     return 0;
@@ -132,7 +132,7 @@ int SvrQos::LoadStatCfg(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
 }
 
 int SvrQos::GetNodeAll(struct SvrNet_t buf[], int32_t num, int32_t start, int32_t size) {
-	HNET_DEBUG(kSvrLog, "SvrQos::GetNodeAll getall SvrNet_t start, [%d, %d, %d]", num, start, size);
+	HNET_DEBUG(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::GetNodeAll getall SvrNet_t start, [%d, %d, %d]", num, start, size);
 
 	int i = 0;
 	if (static_cast<size_t>(start) >= mMapReqSvr.size()) {
@@ -155,7 +155,7 @@ int SvrQos::FilterSvrBySid(struct SvrNet_t buf[], int32_t size, const std::vecto
 		}
 	}
 
-	HNET_DEBUG(kSvrLog, "SvrQos::FilterSvrBySid filter all SvrNet_t start, [%d, %d, %d]", size, rlts.size(), num);
+	HNET_DEBUG(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::FilterSvrBySid filter all SvrNet_t start, [%d, %d, %d]", size, rlts.size(), num);
 	return num;
 }
 
@@ -193,7 +193,7 @@ int SvrQos::AddRouteNode(const struct SvrNet_t& svr, struct SvrStat_t* stat) {
     struct SvrNode_t node(svr, stat);
     table->insert(std::make_pair(node.mKey, node));
 
-	HNET_DEBUG(kSvrLog, "SvrQos::AddRouteNode add SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d),"
+	HNET_DEBUG(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::AddRouteNode add SvrNet_t success, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d),"
 			"ReqLimit(%d),ReqAll(%d),ReqSuc(%d),ReqErrRet(%d),ReqErrTm(%d),LoadX(%f),PreAll(%d)",
 			svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight,stat->mReqCfg.mReqLimit,
 			stat->mInfo.mReqAll,stat->mInfo.mReqSuc,stat->mInfo.mReqErrRet,stat->mInfo.mReqErrTm,stat->mInfo.mLoadX,stat->mInfo.mReqAll);
@@ -207,7 +207,7 @@ int SvrQos::DeleteRouteNode(const struct SvrNet_t& svr) {
     MapNodeIt_t etIt = mErrTable.find(kind);
 
 	if (rtIt == mRouteTable.end() && etIt == mErrTable.end()) {
-		HNET_ERROR(kSvrLog, "SvrQos::DeleteRouteNode delete SvrNet_t failed(cannot find node from mRouteTable or mErrTable), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		HNET_ERROR(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::DeleteRouteNode delete SvrNet_t failed(cannot find node from mRouteTable or mErrTable), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
         return -1;
@@ -231,7 +231,7 @@ int SvrQos::DeleteRouteNode(const struct SvrNet_t& svr) {
                 }
             }
         } else {
-    		HNET_DEBUG(kSvrLog, "SvrQos::DeleteRouteNode mRouteTable second(table) is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+    		HNET_DEBUG(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::DeleteRouteNode mRouteTable second(table) is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
     				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
         }
 	}
@@ -254,7 +254,7 @@ int SvrQos::DeleteRouteNode(const struct SvrNet_t& svr) {
 				}
 			}
 		} else {
-    		HNET_DEBUG(kSvrLog, "SvrQos::DeleteRouteNode mErrTable is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+    		HNET_DEBUG(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::DeleteRouteNode mErrTable is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
     				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		}
 	}
@@ -267,7 +267,7 @@ int SvrQos::ModifyRouteNode(const struct SvrNet_t& svr) {
     MapNodeIt_t etIt = mErrTable.find(kind);
 
 	if (rtIt == mRouteTable.end() && etIt == mErrTable.end()) {
-		HNET_ERROR(kSvrLog, "SvrQos::ModifyRouteNode modify SvrNet_t failed(cannot find node from mRouteTable or mErrTable), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+		HNET_ERROR(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::ModifyRouteNode modify SvrNet_t failed(cannot find node from mRouteTable or mErrTable), GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
 				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 
         return -1;
@@ -291,7 +291,7 @@ int SvrQos::ModifyRouteNode(const struct SvrNet_t& svr) {
                 }
             }
         } else {
-    		HNET_DEBUG(kSvrLog, "SvrQos::ModifyRouteNode mRouteTable second(table) is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+    		HNET_DEBUG(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::ModifyRouteNode mRouteTable second(table) is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
     				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
         }
 	}
@@ -314,7 +314,7 @@ int SvrQos::ModifyRouteNode(const struct SvrNet_t& svr) {
 				}
 			}
 		} else {
-    		HNET_DEBUG(kSvrLog, "SvrQos::ModifyRouteNode mRouteTable second(table) is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
+    		HNET_DEBUG(soft::GetLogdirPath() + kSvrLogFilename, "SvrQos::ModifyRouteNode mRouteTable second(table) is null, GID(%d),XID(%d),HOST(%s),PORT(%d),WEIGHT(%d)",
     				svr.mGid, svr.mXid, svr.mHost, svr.mPort, svr.mWeight);
 		}
 	}

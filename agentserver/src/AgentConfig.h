@@ -19,7 +19,7 @@ class AgentConfig : public wConfig {
 public:
 	AgentConfig();
 	virtual ~AgentConfig();
-
+	
 	int ParseBaseConf();
 	int ParseRouterConf();
 	int ParseQosConf();

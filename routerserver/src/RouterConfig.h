@@ -32,7 +32,7 @@ public:
 public:
 	RouterConfig();
 	virtual ~RouterConfig();
-
+	
 	int ParseBaseConf();
 	int ParseSvrConf();
 	int ParseQosConf();
