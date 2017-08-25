@@ -15,6 +15,12 @@
 using namespace hnet;
 
 int main(int argc, char *argv[]) {
+	// 设置运行目录
+	if (misc::SetBinPath() == -1) {
+		std::cout << "set bin path failed" << std::endl;
+		return -1;
+	}
+
 	// 创建配置对象
 	AgentConfig *config;
 	HNET_NEW(AgentConfig, config);

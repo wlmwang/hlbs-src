@@ -16,6 +16,12 @@
 using namespace hnet;
 
 int main(int argc, char *argv[]) {
+	// 设置运行目录
+	if (misc::SetBinPath() == -1) {
+		std::cout << "set bin path failed" << std::endl;
+		return -1;
+	}
+
 	RouterConfig *config;
 	HNET_NEW(RouterConfig, config);
 	if (!config) {
