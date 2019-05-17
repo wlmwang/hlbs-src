@@ -1,6 +1,6 @@
 # 概要
 
-HLBS全称为Hupu Load Balance System。顾名思义，它是一个由Hupu公司研发的动态负载均衡系统（具有过载保护）。该系统致力于为客户端（PHP、C/C++客户端）提供一个快速、可靠的发现服务端（SOA服务）的索引查询器。
+该系统致力于为客户端（PHP、C/C++客户端）提供一个快速、可靠的发现服务端（SOA服务）的索引查询器。
 
 **HLBS系统由RouterServer、AgentServer两部分组件组成**；同时随包发放有：~~AgentCmd组件（命令行工具）~~、C++客户端、C++压测工具、PHP扩展。
 
